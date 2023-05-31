@@ -1,35 +1,40 @@
-import graphics
-import util
+import scripts.graphics as graphics
+import scripts.util as util
 import os
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
-
 import pygame
 
+
+# Create window
 window = graphics.Window()
 
-vert = util.File.path("shaders/template.vert")
-frag = util.File.path("shaders/wave.frag")
-shader = graphics.shader.Shader(vert, frag)
+# Create and activate shader
+vert = util.File.path("data/shaders/template.vert")
+frag = util.File.path("data/shaders/wave.frag")
+shader = graphics.shader.Shader(vert, frag, time="uint")
 shader.activate()
 
-tree = pygame.image.load("tree.jpg")
+# Pygame stuff for testing
+tree = pygame.image.load("data/images/tree.jpg")
+world_surface = pygame.Surface(window.size)
+ui_surface = pygame.Surface(window.size)
+font = pygame.freetype.SysFont(None, 20)
 
-world_surface = pygame.Surface((window.width // 1, window.height // 1))
-ui_surface = pygame.Surface((window.width // 1, window.height // 1))
-
-font0 = pygame.freetype.SysFont(None, 20)
-
-running = True
-while running:
+time = 0
+while True:
+    time += 1
+    shader.setvar("time", time)
+    
+    # Reset
     world_surface.fill((0, 0, 0))
     ui_surface.fill((0, 0, 0))
 
+    # Draw
     pygame.draw.circle(ui_surface, (255, 0, 0), (200, 200), 60)
     pos = pygame.mouse.get_pos()
-    for _ in range(1):
-        world_surface.blit(tree, (pos[0] // 1, pos[1] // 1))
-    font0.render_to(ui_surface, (100, 100), str(window.clock.get_fps()),
-                    (255, 255, 255))
+    world_surface.blit(tree, pos)
+    font.render_to(ui_surface, (100, 100), str(window.clock.get_fps()), (255, 255, 255))
 
+    # Update window + shader
     window.update(world_surface, ui_surface)
