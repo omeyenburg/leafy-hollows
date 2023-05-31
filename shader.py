@@ -5,30 +5,26 @@ import numpy
 import os
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
-
 import pygame
 from pygame.locals import *
-
 if not pygame.display.get_init():
     pygame.init()
+
 
 # Explicitly use OpenGL 3.3 core
 pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MAJOR_VERSION, 3)
 pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MINOR_VERSION, 3)
 pygame.display.gl_set_attribute(pygame.GL_CONTEXT_PROFILE_MASK,
                                 pygame.GL_CONTEXT_PROFILE_CORE)
-
 # MacOS support
 if platform.system() == "Darwin":
-    pygame.display.gl_set_attribute(pygame.GL_CONTEXT_FORWARD_COMPATIBLE_FLAG,
-                                    True)
+    pygame.display.gl_set_attribute(pygame.GL_CONTEXT_FORWARD_COMPATIBLE_FLAG, True)
 
 
 def init(width, height, vsync):
     # Create pygame window
-    window = pygame.display.set_mode((width, height),
-                                     flags=DOUBLEBUF | OPENGL | RESIZABLE,
-                                     vsync=vsync)
+    flags = DOUBLEBUF | OPENGL | RESIZABLE
+    window = pygame.display.set_mode((width, height), flags=flags, vsync=vsync)
 
     # Set up OpenGL
     glViewport(0, 0, width, height)
@@ -38,10 +34,8 @@ def init(width, height, vsync):
     glDisable(GL_CULL_FACE)
 
     # Vertex data
-    Shader.vertices = numpy.array((0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0),
-                                  dtype=numpy.float32)
-    Shader.texcoords = numpy.array(
-        (-1.0, -1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0), dtype=numpy.float32)
+    Shader.vertices = numpy.array((0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0), dtype=numpy.float32)
+    Shader.texcoords = numpy.array((-1.0, -1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0), dtype=numpy.float32)
 
     # Create Vertex Array Object
     Shader.vao = glGenVertexArrays(1)
@@ -50,15 +44,13 @@ def init(width, height, vsync):
     # Create Vertex Buffer Object
     Shader.vbo_vertices = glGenBuffers(1)
     glBindBuffer(GL_ARRAY_BUFFER, Shader.vbo_vertices)
-    glBufferData(GL_ARRAY_BUFFER, Shader.vertices.nbytes, Shader.vertices,
-                 GL_STATIC_DRAW)
+    glBufferData(GL_ARRAY_BUFFER, Shader.vertices.nbytes, Shader.vertices, GL_STATIC_DRAW)
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, None)
     glEnableVertexAttribArray(0)
 
     Shader.vbo_texcoords = glGenBuffers(1)
     glBindBuffer(GL_ARRAY_BUFFER, Shader.vbo_texcoords)
-    glBufferData(GL_ARRAY_BUFFER, Shader.texcoords.nbytes, Shader.texcoords,
-                 GL_STATIC_DRAW)
+    glBufferData(GL_ARRAY_BUFFER, Shader.texcoords.nbytes, Shader.texcoords, GL_STATIC_DRAW)
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, None)
     glEnableVertexAttribArray(1)
 
@@ -84,13 +76,12 @@ def quit():
     glDeleteTextures(Shader.world_texture)
     glDeleteTextures(Shader.ui_texture)
     glDeleteBuffers(2, (Shader.vbo_vertices, Shader.vbo_texcoords))
-    glDeleteVertexArrays(1, (Shader.vao, ))
+    glDeleteVertexArrays(1, (Shader.vao,))
 
 
 def modify_window(width, height, vsync):
-    window = pygame.display.set_mode((width, height),
-                                     flags=DOUBLEBUF | OPENGL | RESIZABLE,
-                                     vsync=vsync)
+    flags = DOUBLEBUF | OPENGL | RESIZABLE
+    window = pygame.display.set_mode((width, height), flags=flags, vsync=vsync)
     glViewport(0, 0, width, height)
     return window
 
@@ -108,17 +99,23 @@ class Shader:
     active = None
 
     def __init__(self, vertex, fragment, **variables):
+        Shader.shaders.append(self)
         self.vertex = load_vertex(vertex)
         self.fragment = load_fragment(fragment)
-        self.variables = variables
         self.program = glCreateProgram()
+        
         glAttachShader(self.program, self.vertex)
         glAttachShader(self.program, self.fragment)
         glLinkProgram(self.program)
         glValidateProgram(self.program)
+
+        # Dict containing all variables which should be send to the fragment shader {variable1: (uniformLoc, glUniformFunc, value)}
+        self.variables = {variable: get_uniform(self.program, variable, variables[variable]) for variable in variables}
         self.worldLoc = glGetUniformLocation(self.program, "texWorld")
         self.uiLoc = glGetUniformLocation(self.program, "texUi")
-        Shader.shaders.append(self)
+
+    def setvar(self, variable, value):
+        self.variables[variable][2] = value
 
     def activate(self):
         glUseProgram(self.program)
@@ -141,6 +138,45 @@ def load_fragment(path):
         fragment = compileShader(file.read(), GL_FRAGMENT_SHADER)
     return fragment
 
+
+def get_uniform(program, variable, data_type):
+    """
+    glUniform1f(location, value): Sets a single float value (float).
+    glUniform1i(location, value): Sets a single integer value (int).
+    glUniform1ui(location, value): Sets a single unsigned integer value (uint).
+    glUniform2f(location, value1, value2): Sets a 2-component float vector (vec2).
+    glUniform2i(location, value1, value2): Sets a 2-component integer vector (ivec2).
+    glUniform2ui(location, value1, value2): Sets a 2-component unsigned integer vector (uvec2).
+    glUniform3f(location, value1, value2, value3): Sets a 3-component float vector (vec3).
+    glUniform3i(location, value1, value2, value3): Sets a 3-component integer vector (ivec3).
+    glUniform3ui(location, value1, value2, value3): Sets a 3-component unsigned integer vector (uvec3).
+    glUniform4f(location, value1, value2, value3, value4): Sets a 4-component float vector (vec4).
+    glUniform4i(location, value1, value2, value3, value4): Sets a 4-component integer vector (ivec4).
+    glUniform4ui(location, value1, value2, value3, value4): Sets a 4-component unsigned integer vector (uvec4).
+    glUniformMatrix2fv(location, count, transpose, value): Sets a 2x2 matrix or an array of 2x2 matrices (mat2).
+    glUniformMatrix3fv(location, count, transpose, value): Sets a 3x3 matrix or an array of 3x3 matrices (mat3).
+    glUniformMatrix4fv(location, count, transpose, value): Sets a 4x4 matrix or an array of 4x4 matrices (mat4).
+    """
+    loc = glGetUniformLocation(program, variable)
+    func = data_type_map = {'int': glUniform1i,
+                            'uint': glUniform1ui,
+                            'float': glUniform1f,
+                            'vec2': glUniform2f,
+                            'vec3': glUniform3f,
+                            'vec4': glUniform4f,
+                            'bvec2': glUniform2i,
+                            'bvec3': glUniform3i,
+                            'bvec4': glUniform4i,
+                            'ivec2': glUniform2i,
+                            'ivec3': glUniform3i,
+                            'ivec4': glUniform4i,
+                            'uvec2': glUniform2ui,
+                            'uvec3': glUniform3ui,
+                            'uvec4': glUniform4ui,
+                            'mat2': glUniformMatrix2fv,
+                            'mat3': glUniformMatrix3fv,
+                            'mat4': glUniformMatrix4fv}[data_type]
+    return [loc, func, None]
 
 def update(world_surface, ui_surface):
     glClear(GL_COLOR_BUFFER_BIT)
@@ -166,10 +202,11 @@ def update(world_surface, ui_surface):
     # Set texture uniforms in shader
     glUniform1i(Shader.active.worldLoc, 0)
     glUniform1i(Shader.active.uiLoc, 1)
-
-    glUniform1f(glGetUniformLocation(Shader.active.program, "player0"), 0.5)
-    glUniform1f(glGetUniformLocation(Shader.active.program, "player1"), 0.5)
-
+    for loc, func, value in Shader.active.variables.values():
+        if value is None:
+            continue
+        func(loc, value)
+    
     # Update window
     glBindVertexArray(Shader.vao)
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4)
