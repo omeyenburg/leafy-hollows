@@ -1,0 +1,29 @@
+Start:				26.5.2023
+Ferien:				13.7.2023 - 25.8.2023
+geschätzte Abgabe:	28.9.2023
+
+Mechanik (vor Ferien)
+- Window
+- OpenGL + GLSL
+- Input				2.6.2023
+- Menu				5.6.2023
+- Camera System		9.6.2023
+- World				9.6.2023
+- Physics System	14.6.2023
+- Entities			19.6.2023
+- Player			19.6.2023
+- Particle System	30.6.2023
+
+Gameplay (vor, nach und in Ferien)
+- World Generation
+- Structures
+- Items
+- Mobs
+
+Polish (nach Ferien)
+- Sprites
+- Sounds
+- Music
+- Light + Shadows
+- Shader
+- Pyinstaller
