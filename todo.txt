@@ -2,6 +2,10 @@ Start:                    26.5.2023
 Ferien:                   13.7.2023 - 25.8.2023
 geschätzte Abgabe:        28.9.2023
 
+requirements:
+get     -> pipreqs .
+install -> pip install -r requirements.txt
+
 Mechanik (vor Ferien)
 - Window
 - OpenGL + GLSL
