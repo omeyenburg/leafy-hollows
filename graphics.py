@@ -8,46 +8,33 @@ import shader
 
 
 def quit():
-    shader.quit()
+    shader.quit() # Shader connection
     pygame.quit()
     sys.exit()
 
-class Window:
 
+class Window:
     def __init__(self):
         info = pygame.display.Info()
         self.size = (int(info.current_w / 3 * 2), int(info.current_h / 5 * 3))
-        self.width, self.height = 300, 300#self.size
-        self.window = shader.init(self.width, self.height, 0)
+        self.width, self.height = self.size
+        self.window = shader.init(self.width, self.height, 0) # Shader connection
         self.clock = pygame.time.Clock()
+        self.max_fps = 60
+        self.events = None
 
     def resize(self, width, height):
         self.size = (width, height)
         self.width, self.height = self.size
-        self.window = shader.modify_window(self.width, self.height, 0)
+        self.window = shader.modify_window(self.width, self.height, 0) # Shader connection
 
     def update(self, world_surface, ui_surface):
-        shader.update(world_surface, ui_surface)
-        self.clock.tick(60)
-
-        for event in pygame.event.get():
+        shader.update(world_surface, ui_surface) # Shader connection
+        
+        self.clock.tick(self.max_fps)
+        self.events = pygame.event.get()
+        for event in self.events:
             if event.type == pygame.QUIT:
                 quit()
             if event.type == pygame.VIDEORESIZE:
                 self.resize(event.w, event.h)
-
-
-
-class File:
-
-    def read(path):
-        with open(path, "r") as f:
-            lines = f.readlines()
-        return lines
-
-    def path(relative_path):
-        try:
-            base_path = sys._MEIPASS
-        except Exception:
-            base_path = os.path.abspath(".")
-        return os.path.join(base_path, relative_path)
