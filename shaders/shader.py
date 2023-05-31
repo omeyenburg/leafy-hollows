@@ -31,9 +31,7 @@ def init(width, height, vsync):
                                      vsync=vsync)
 
     # Set up OpenGL
-    #glViewport(-width, -height, width * 2, height * 2)
-    glViewport(-width//2, -height//2, width, height);
-
+    glViewport(0, 0, width, height)
     glClearColor(0.0, 0.0, 0.0, 0.0)
     glDisable(GL_DEPTH_TEST)
     glDisable(GL_BLEND)
