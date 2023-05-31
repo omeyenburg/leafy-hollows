@@ -1,1 +1,2 @@
-
+- kein OpenGL Fallback
+- Shader erstellt neue Textur, ohne dass sich die UI ändert
