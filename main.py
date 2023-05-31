@@ -1,4 +1,5 @@
 import graphics
+import util
 import os
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
@@ -7,8 +8,8 @@ import pygame
 
 window = graphics.Window()
 
-vert = graphics.File.path("shaders/template.vert")
-frag = graphics.File.path("shaders/wave.frag")
+vert = util.File.path("shaders/template.vert")
+frag = util.File.path("shaders/wave.frag")
 shader = graphics.shader.Shader(vert, frag)
 shader.activate()
 
