@@ -8,7 +8,8 @@ class File:
         with open(path, "r") as f:
             lines = f.read()
         return lines
-
+    
+    @staticmethod
     def write(path, content):
         with open(path, "w") as f:
             lines = f.write(content)
