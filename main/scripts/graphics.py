@@ -1,5 +1,7 @@
 import sys, os
 import scripts.shader as shader
+if not shader.OPENGL_SUPPORTED:
+    import scripts.shader_fallback as shader
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 from pygame.locals import *
