@@ -1,7 +1,5 @@
 import sys, os
 import scripts.shader as shader
-if not shader.OPENGL_SUPPORTED:
-    import scripts.shader_fallback as shader
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 from pygame.locals import *
@@ -16,7 +14,7 @@ def quit():
 
 class Window:
     def __init__(self):
-        self.max_fps = 60
+        self.max_fps = 1000
         self.vsync = 0
         self.events = None
         
@@ -29,7 +27,7 @@ class Window:
     def resize(self, width, height):
         self.size = (width, height)
         self.width, self.height = self.size
-        self.window = shader.modify_window(self.width, self.height, self.vsync) # Shader connection
+        self.window = shader.modify(self.width, self.height, self.vsync) # Shader connection
 
     def update(self, world_surface, ui_surface):
         shader.update(world_surface, ui_surface) # Shader connection
