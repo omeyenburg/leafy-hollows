@@ -1,0 +1,38 @@
+Konzept: Höhle
+- unterirdisches Höhlensystem
+  -> verschiedene vorgegebene Biome
+  -> mehrere spezielle Strukturen, zB. Dörfer, Ruinen
+     > Spieler findet Relikte, Schriften
+  -> Spieler hat eine Karte von der Welt
+     > ergänzt sich automatisch
+      - oder -
+     > Spieler findet Teile der Karte
+- kleine Blöcke
+  -> mögliche Größen
+     > einheitliche 1x1 Pixel (ineffizient)
+     > einheitliche 4x4 Pixel
+     > einheitliche 4x4 Pixel, aber jeder Block wird beeinflusst von Nachbarblöcken gemalt
+       (Illusion von 1x1 Pixel)
+     > verstellbare Resolution
+  -> können feste Strukturen bilden
+  -> haben spezielle Eigenschaften bei Interaktion (darüber laufen, dagegen schlagen, uä.)
+     > Wasser
+     > Stein
+     > ...
+- Spieler
+  -> wird von Monstern gejagt?
+     > Pathfinding
+     > Spieler kann sterben... -> Dörfer = Checkpoints?
+  -> weitere Tode
+     > ersticken (wird von Erde begraben)
+     > ertrinken
+     > kann vielleicht verhungern? kann einen Faktor
+       einbauen, damit der Spieler sich beeilen muss und nicht sich mit
+       der Hand durch Wände gräbt
+- Ziel
+  -> Spieler versucht aus dem Höhlensystem den Weg hinauszufinden
+- Story
+  A: Es gibt periodisch auftretenenden Regen, der die Höhlen flutet. (vgl. Rain World)
+  B: Es gibt periodisch auftretenende Erdbeben / Giftige Nebel / Geister.
+  C: Es wird immer dunkler, um zu überleben, braucht man Licht. (zB. Fackel erlöscht)
+  -> für alle: Spieler muss Checkpoint erreichen im Zeitrahmen. 
