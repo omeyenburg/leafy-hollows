@@ -1,5 +1,3 @@
-from OpenGL.GL import *
-from OpenGL.GL.shaders import compileProgram, compileShader
 import platform
 import numpy
 import os
@@ -11,14 +9,21 @@ if not pygame.display.get_init():
     pygame.init()
 
 
-# Explicitly use OpenGL 3.3 core
-pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MAJOR_VERSION, 3)
-pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MINOR_VERSION, 3)
-pygame.display.gl_set_attribute(pygame.GL_CONTEXT_PROFILE_MASK,
-                                pygame.GL_CONTEXT_PROFILE_CORE)
-# MacOS support
-if platform.system() == "Darwin":
-    pygame.display.gl_set_attribute(pygame.GL_CONTEXT_FORWARD_COMPATIBLE_FLAG, True)
+OPENGL_SUPPORTED = True
+
+
+if OPENGL_SUPPORTED:
+    from OpenGL.GL import *
+    from OpenGL.GL.shaders import compileProgram, compileShader
+
+    # Explicitly use OpenGL 3.3 core
+    pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MAJOR_VERSION, 3)
+    pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MINOR_VERSION, 3)
+    pygame.display.gl_set_attribute(pygame.GL_CONTEXT_PROFILE_MASK,
+                                    pygame.GL_CONTEXT_PROFILE_CORE)
+    # MacOS support
+    if platform.system() == "Darwin":
+        pygame.display.gl_set_attribute(pygame.GL_CONTEXT_FORWARD_COMPATIBLE_FLAG, True)
 
 
 def init(width, height, vsync):
