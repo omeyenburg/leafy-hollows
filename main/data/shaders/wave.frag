@@ -2,7 +2,7 @@
 
 uniform sampler2D texWorld;
 uniform sampler2D texUi;
-uniform uint time;
+uniform int time;
 
 in vec2 uv;
 out vec4 fragColor;
