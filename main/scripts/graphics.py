@@ -21,13 +21,14 @@ class Window:
         info = pygame.display.Info()
         self.size = (int(info.current_w / 3 * 2), int(info.current_h / 5 * 3))
         self.width, self.height = self.size
-        self.window = shader.init(self.width, self.height, self.vsync) # Shader connection
+        self.window = pygame.display.set_mode((width, height), flags=RESIZABLE | OPENGL, vsync=vsync)
+        shader.init(self.width, self.height, self.vsync) # Shader connection
         self.clock = pygame.time.Clock()
 
     def resize(self, width, height):
         self.size = (width, height)
         self.width, self.height = self.size
-        self.window = shader.modify(self.width, self.height, self.vsync) # Shader connection
+        shader.modify(self.width, self.height, self.vsync) # Shader connection
 
     def update(self, world_surface, ui_surface):
         shader.update(world_surface, ui_surface) # Shader connection
