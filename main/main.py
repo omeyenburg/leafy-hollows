@@ -21,6 +21,7 @@ world_surface = pygame.Surface(window.size)
 ui_surface = pygame.Surface(window.size)
 font = pygame.freetype.SysFont(None, 20)
 
+
 time = 0
 while True:
     time += 1
