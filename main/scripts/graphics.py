@@ -67,7 +67,7 @@ class Window:
                 quit()
             elif event.type == VIDEORESIZE:
                 self.size = event.size
-                self.width, self,height = event.w, event.h
+                self.width, self.height = event.w, event.h
                 self.resize(event.w, event.h)
             elif event.type == KEYDOWN:
                 if event.unicode != "":
