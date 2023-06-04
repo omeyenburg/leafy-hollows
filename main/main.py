@@ -16,7 +16,7 @@ shader = graphics.shader.Shader(vert, frag, time="int")
 shader.activate()
 
 # Pygame stuff for testing
-tree = pygame.image.load("data/images/tree.jpg")
+tree = pygame.image.load("data/images/tree.jpg").convert()
 world_surface = pygame.Surface(window.size)
 ui_surface = pygame.Surface(window.size)
 font = graphics.Font(util.File.path("data/fonts/font.png"))
