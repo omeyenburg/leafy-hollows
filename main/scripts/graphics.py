@@ -13,7 +13,7 @@ def quit():
 
 
 class Window:
-    def __init__(self, keys=("w",)):
+    def __init__(self, caption, keys=("w",)):
         # Constants
         self.max_fps = 1000
         self.vsync = 0
@@ -25,16 +25,21 @@ class Window:
         self.mouse_pos = (0, 0, 0, 0) # x, y, relx, rely
         self.mouse_wheel = [0, 0, 0, 0] # x, y, relx, rely
 
-        # Window & clock
+        # Window
         info = pygame.display.Info()
         self.size = (int(info.current_w / 3 * 2), int(info.current_h / 5 * 3))
         self.width, self.height = self.size
         
         try:
-            self.window = pygame.display.set_mode((self.width, self.height), flags=DOUBLEBUF | RESIZABLE | OPENGL, vsync=self.vsync)
+            flags = DOUBLEBUF | RESIZABLE | OPENGL
+            self.window = pygame.display.set_mode((self.width, self.height), flags=flags, vsync=self.vsync)
             shader.init(self.width, self.height) # Shader connection
         except:
-            self.window = pygame.display.set_mode((self.width, self.height), flags=DOUBLEBUF | RESIZABLE)
+            flags = DOUBLEBUF | RESIZABLE | HWSURFACE
+            self.window = pygame.display.set_mode((self.width, self.height), flags=flags)
+
+        # Window caption & clock
+        pygame.display.set_caption(caption)
         self.clock = pygame.time.Clock()
 
     def resize(self, width, height):
@@ -42,10 +47,12 @@ class Window:
         self.width, self.height = self.size
         
         if shader.OPENGL_SUPPORTED:
-            self.window = pygame.display.set_mode((self.width, self.height), flags=DOUBLEBUF | RESIZABLE | OPENGL, vsync=self.vsync)
+            flags = DOUBLEBUF | RESIZABLE | OPENGL
+            self.window = pygame.display.set_mode((self.width, self.height), flags=flags, vsync=self.vsync)
             shader.modify(self.width, self.height) # Shader connection
         else:
-            self.window = pygame.display.set_mode((self.width, self.height), flags=DOUBLEBUF | RESIZABLE)
+            flags = DOUBLEBUF | RESIZABLE | HWSURFACE
+            self.window = pygame.display.set_mode((self.width, self.height), flags=flags)
 
     def events(self):
         events = pygame.event.get()
@@ -87,3 +94,68 @@ class Window:
         shader.update(world_surface, ui_surface) # Shader connection
         self.events()
         self.clock.tick(self.max_fps)
+
+
+class Font:
+    """
+    Create a font from a file.
+    """
+    def __init__(self, path):
+        font = pygame.image.load(path).convert()
+        self.letters = {}
+    
+        for i in range(0, 64):
+            subsurf = font.subsurface((i * 3, 0, 3, 5))
+            subsurf.set_colorkey((255, 255, 255))
+            self.letters[chr(i + 32)] = subsurf
+
+    def write(self, surf, text, color, size, coord):
+        """
+        Write text on a surface.
+        """
+        text = str(text)
+        if color == (0, 0, 0):
+            color = (1, 1, 1)
+        for index, letter in enumerate(text):
+            letter_surf = pygame.Surface((3, 5))
+            letter_surf.set_colorkey((0, 0, 0))
+            letter_surf.fill(color)
+            letter_surf.blit(self.letters[letter.upper()], (0, 0))
+            surf.blit(pygame.transform.scale(letter_surf, (3 * size, 5 * size)),
+                      (index * 4 * size + coord[0], coord[1]))
+
+    @staticmethod
+    def width(text, size):
+        """
+        Return the height of the text.
+        """
+        return 4 * size * (len(text) - 0.5) + size
+
+    @staticmethod
+    def height(size):
+        """
+        Return the height of the text.
+        """
+        return 5 * size
+
+
+class Camera:
+    def __init__(self, window):
+        self.pos = [0, 0]
+        self.vel = [0, 0]
+        self.dest = [0, 0]
+
+    def set(self, pos):
+        self.pos = pos
+        self.vel = [0, 0]
+        self.dest = pos
+
+    def move(self, pos):
+        self.dest = pos
+
+    def update(self):
+        self.vel[0] = round((self.pos[0] - self.dest[0]) / 5, 3)
+        self.vel[1] = round((self.pos[1] - self.dest[1]) / 5, 3)
+        self.pos[0] = round(self.pos[0] + vel[0], 3)
+        self.pos[1] = round(self.pos[0] + vel[0], 3)
+        

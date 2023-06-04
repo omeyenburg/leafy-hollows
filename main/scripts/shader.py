@@ -33,8 +33,15 @@ except:
 def init(width, height, vsync=1):
     global OPENGL_SUPPORTED
     
+    # Create pygame window
+    #flags = DOUBLEBUF | RESIZABLE
+    #if not OPENGL_SUPPORTED:
+    #    return pygame.display.set_mode((width, height), flags=flags)
+    
     # Test, if OpenGL is available
     try:
+        #window = pygame.display.set_mode((width, height), flags=flags | OPENGL, vsync=vsync)
+
         # Set up OpenGL
         glViewport(0, 0, width, height)
         glClearColor(0.0, 0.0, 0.0, 0.0)
@@ -80,8 +87,11 @@ def init(width, height, vsync=1):
     except:
         OPENGL_SUPPORTED = False
         print("OpenGL is not available")
-
+        #return init(width, height, 0)
         
+    #return window
+
+
 def quit():
     if not OPENGL_SUPPORTED:
         return
