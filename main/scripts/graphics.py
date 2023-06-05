@@ -57,9 +57,9 @@ class Window:
     def events(self):
         events = pygame.event.get()
 
-        self.keys = {k: (v if v != 1 else 2) for k, v in self.keys.items()}
+        self.keys = {key: (value if value != 1 else 2) for key, value in self.keys.items()}
         self.unicode = ""
-        self.mouse_buttons = [2 if v == 1 else v for v in self.mouse_buttons]
+        self.mouse_buttons = [2 if value == 1 else value for value in self.mouse_buttons]
         self.mouse_wheel[2], self.mouse_wheel[3] = 0, 0
         
         for event in events:
@@ -159,3 +159,4 @@ class Camera:
         self.pos[0] = round(self.pos[0] + vel[0], 3)
         self.pos[1] = round(self.pos[0] + vel[0], 3)
         
+
