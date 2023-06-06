@@ -29,12 +29,12 @@ class Window:
         info = pygame.display.Info()
         self.size = (int(info.current_w / 3 * 2), int(info.current_h / 5 * 3))
         self.width, self.height = self.size
-        
-        try:
+
+        if shader.OPENGL_SUPPORTED:
             flags = DOUBLEBUF | RESIZABLE | OPENGL
             self.window = pygame.display.set_mode((self.width, self.height), flags=flags, vsync=self.vsync)
             shader.init(self.width, self.height) # Shader connection
-        except:
+        else:
             flags = DOUBLEBUF | RESIZABLE | HWSURFACE
             self.window = pygame.display.set_mode((self.width, self.height), flags=flags)
 
