@@ -10,7 +10,7 @@ from pygame.locals import *
 if not pygame.display.get_init():
     pygame.init()
 
-    OPENGL_SUPPORTED = True
+    OPENGL_SUPPORTED = False
 
     # Test, if OpenGL is available
     try:
