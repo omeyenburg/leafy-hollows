@@ -5,36 +5,43 @@ import os
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 from pygame.locals import *
+
+
 if not pygame.display.get_init():
     pygame.init()
 
+    OPENGL_SUPPORTED = True
 
-OPENGL_SUPPORTED = True
+    # Test, if OpenGL is available
+    try:
+        from OpenGL.GL import *
+        from OpenGL.GL.shaders import compileProgram, compileShader
 
-
-# Test, if OpenGL is available
-try:
-    from OpenGL.GL import *
-    from OpenGL.GL.shaders import compileProgram, compileShader
-
-    # Explicitly use OpenGL 3.3 core
-    pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MAJOR_VERSION, 3)
-    pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MINOR_VERSION, 3)
-    pygame.display.gl_set_attribute(pygame.GL_CONTEXT_PROFILE_MASK,
-                                    pygame.GL_CONTEXT_PROFILE_CORE)
-    # MacOS support
-    if get_system() == "Darwin":
-        pygame.display.gl_set_attribute(pygame.GL_CONTEXT_FORWARD_COMPATIBLE_FLAG, True) 
-except:
-    OPENGL_SUPPORTED = False
-    print("OpenGL is not installed")
+        # Explicitly use OpenGL 3.3 core
+        pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MAJOR_VERSION, 3)
+        pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MINOR_VERSION, 3)
+        pygame.display.gl_set_attribute(pygame.GL_CONTEXT_PROFILE_MASK,
+                                        pygame.GL_CONTEXT_PROFILE_CORE)
+        # MacOS support
+        if get_system() == "Darwin":
+            pygame.display.gl_set_attribute(pygame.GL_CONTEXT_FORWARD_COMPATIBLE_FLAG, True) 
+    except:
+        OPENGL_SUPPORTED = False
+        print("OpenGL is not installed")
 
 
 def init(width, height, vsync=1):
     global OPENGL_SUPPORTED
     
+    # Create pygame window
+    #flags = DOUBLEBUF | RESIZABLE
+    #if not OPENGL_SUPPORTED:
+    #    return pygame.display.set_mode((width, height), flags=flags)
+    
     # Test, if OpenGL is available
     try:
+        #window = pygame.display.set_mode((width, height), flags=flags | OPENGL, vsync=vsync)
+
         # Set up OpenGL
         glViewport(0, 0, width, height)
         glClearColor(0.0, 0.0, 0.0, 0.0)
@@ -80,8 +87,11 @@ def init(width, height, vsync=1):
     except:
         OPENGL_SUPPORTED = False
         print("OpenGL is not available")
-
+        #return init(width, height, 0)
         
+    #return window
+
+
 def quit():
     if not OPENGL_SUPPORTED:
         return
