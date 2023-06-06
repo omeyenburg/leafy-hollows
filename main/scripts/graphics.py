@@ -156,7 +156,7 @@ class Camera:
     def update(self):
         self.vel[0] = round((self.pos[0] - self.dest[0]) / 5, 3)
         self.vel[1] = round((self.pos[1] - self.dest[1]) / 5, 3)
-        self.pos[0] = round(self.pos[0] + vel[0], 3)
-        self.pos[1] = round(self.pos[0] + vel[0], 3)
+        self.pos[0] = round(self.pos[0] + self.vel[0], 3)
+        self.pos[1] = round(self.pos[0] + self.vel[0], 3)
         
 
