@@ -1,1 +1,0 @@
-gcc -shared -o example.so example.c
