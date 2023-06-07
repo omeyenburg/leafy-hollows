@@ -54,8 +54,9 @@ air = wfc.State(
     )
 )
 
+block_count = (30, 80)  # y, x
 landscape_wave = wfc.Wave(
-    (10, 70),
+    block_count,
     [dirt, stone, air]
 )
 landscape = landscape_wave.collapse()
@@ -71,6 +72,7 @@ block_to_color = {
 }
 
 print(f"wfc time: {time.time() - t0}")
+print(f"block count: {sum( [ len(listElem) for listElem in block_map])}")
 
 time = -1
 while True:
@@ -88,9 +90,10 @@ while True:
     pos = pygame.mouse.get_pos()
     world_surface.blit(tree, pos)
     """
+    width_factor, height_factor = window.width // block_count[1], window.height // block_count[0]
     for y in range(len(block_map)):
         for x in range(len(block_map[0])):
-            pygame.draw.rect(world_surface, block_to_color[block_map[y][x]], (15*x, 15*y, 15, 15))
+            pygame.draw.rect(world_surface, block_to_color[block_map[y][x]], (width_factor*x, height_factor*y, width_factor, height_factor))
     
     font.write(ui_surface, str(window.clock.get_fps()), (255, 255, 0), 2, (0, 0))   # FPS Counter
 
