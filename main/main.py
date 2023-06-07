@@ -21,58 +21,11 @@ world_surface = pygame.Surface(window.size)
 ui_surface = pygame.Surface(window.size)
 font = graphics.Font(util.File.path("data/fonts/font.png"))
 
-#
-import time
-t0 = time.time()
-import wfc
+import scripts.map_generator as map_generator
 
-dirt = wfc.State(
-    "dirt",
-    wfc.Rule(
-        lambda x, y: {
-            (x, y+1): ["dirt", "grass"],
-            (x, y-1): ["stone", "dirt"]
-        }
-    )
-)
-
-stone = wfc.State(
-    "stone",
-    wfc.Rule(
-        lambda x, y : {
-            (x, y+1): ["stone", "dirt"]
-        }
-    )
-)
-
-air = wfc.State(
-    "air",
-    wfc.Rule(
-        lambda x, y : {
-            (x, y+1): ["air"]
-        }
-    )
-)
-
-block_count = (30, 80)  # y, x
-landscape_wave = wfc.Wave(
-    block_count,
-    [dirt, stone, air]
-)
-landscape = landscape_wave.collapse()
-
-block_map = []
-for row in landscape:
-    block_map.append([item.state.name for item in row])
-
-block_to_color = {
-    "air": pygame.Color(255, 255, 255),
-    "dirt": pygame.Color(255,248,220),
-    "stone": pygame.Color(128, 128, 128)
-}
-
-print(f"wfc time: {time.time() - t0}")
-print(f"block count: {sum( [ len(listElem) for listElem in block_map])}")
+world_width, world_height = window.width // 10, window.height // 10
+world_blocks = map_generator.default_states(world_width, world_height)
+blocks_to_color = {"air":(255,255,255), "dirt":(255,248,220), "stone":(128,128,128)}
 
 time = -1
 while True:
@@ -90,12 +43,12 @@ while True:
     pos = pygame.mouse.get_pos()
     world_surface.blit(tree, pos)
     """
-    width_factor, height_factor = window.width // block_count[1], window.height // block_count[0]
-    for y in range(len(block_map)):
-        for x in range(len(block_map[0])):
-            pygame.draw.rect(world_surface, block_to_color[block_map[y][x]], (width_factor*x, height_factor*y, width_factor, height_factor))
+    width_factor, height_factor = window.width // world_width, window.height // world_height   # scale to window
+    for y in range(len(world_blocks)):
+        for x in range(len(world_blocks[0])):
+            pygame.draw.rect(world_surface, blocks_to_color[world_blocks[y][x]], (width_factor*x, height_factor*y, width_factor, height_factor))
     
-    font.write(ui_surface, str(window.clock.get_fps()), (255, 255, 0), 2, (0, 0))   # FPS Counter
+    font.write(ui_surface, str(window.clock.get_fps()), (255, 0, 0), 2, (0, 0))   # FPS Counter
 
     # Update window + shader
     window.update(world_surface, ui_surface)
