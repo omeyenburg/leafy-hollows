@@ -20,21 +20,21 @@ class Window:
 
         # Events
         self.keys = dict.fromkeys(keys, 0) # 0 = Not pressed | 1 = Got pressed | 2 = Is pressed
-        self.unicode = "" # Backspace = "\x08"
-        self.mouse_buttons = [0, 0, 0] # Left, Middle, Right | 0 = Not pressed | 1 = Got pressed | 2 = Is pressed
-        self.mouse_pos = (0, 0, 0, 0) # x, y, relx, rely
-        self.mouse_wheel = [0, 0, 0, 0] # x, y, relx, rely
+        self.unicode = ""                  # Backspace = "\x08"
+        self.mouse_buttons = [0, 0, 0]     # Left, Middle, Right | 0 = Not pressed | 1 = Got pressed | 2 = Is pressed
+        self.mouse_pos = (0, 0, 0, 0)      # x, y, relx, rely
+        self.mouse_wheel = [0, 0, 0, 0]    # x, y, relx, rely
 
         # Window
         info = pygame.display.Info()
         self.size = (int(info.current_w / 3 * 2), int(info.current_h / 5 * 3))
         self.width, self.height = self.size
         
-        try:
+        if shader.OPENGL_SUPPORTED:
             flags = DOUBLEBUF | RESIZABLE | OPENGL
             self.window = pygame.display.set_mode((self.width, self.height), flags=flags, vsync=self.vsync)
             shader.init(self.width, self.height) # Shader connection
-        except:
+        else:
             flags = DOUBLEBUF | RESIZABLE | HWSURFACE
             self.window = pygame.display.set_mode((self.width, self.height), flags=flags)
 
