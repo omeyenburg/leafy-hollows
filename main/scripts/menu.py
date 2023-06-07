@@ -1,10 +1,9 @@
-import pygame
 import sys
+import os
 
-pygame.init()
-
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
-import sys
+
 
 
 class Widget:
@@ -20,7 +19,7 @@ class Widget:
             child.update()
 
     def coords(self):
-        return pygame.Rect(self.rect.x + (Page.window_size[0] - self.rect.w) // 2, self.rect.y + (Page.window_size[1] - self.rect.h) // 2, self.rect.w, self.rect.h)
+        return pygame.Rect(self.rect.x + (Page.window.size[0] - self.rect.w) // 2, self.rect.y + (Page.window.size[1] - self.rect.h) // 2, self.rect.w, self.rect.h)
 
     def draw(self):
         raise NotImplementedError("Subclasses of Widget must implement the draw method")
@@ -28,13 +27,14 @@ class Widget:
 
 class Page(Widget):
     opened = None
-    window_size = (0, 0)
+    window = None
     
-    def __init__(self, size, columns=1, spacing=20):
+    def __init__(self, window, columns=1, spacing=20):
         self.children = []
-        self.rect = pygame.Rect(0, 0, *size)
+        self.rect = pygame.Rect(0, 0, *window.size)
         self.columns = columns
         self.spacing = spacing
+        Page.window = window
 
     def layout(self):
         width = [0 for _ in range(self.columns)]
@@ -55,7 +55,6 @@ class Page(Widget):
             child.rect.centery = sum(height[:child.row + 1]) - self.spacing * (len(height) - 1 - child.row) - total_height//2
 
     def update(self, surface):
-        self.rect.size = Page.window_size
         self.draw(surface)
         for child in self.children:
             child.draw(surface)
@@ -79,14 +78,12 @@ class Button(Widget):
         pygame.draw.rect(surface, (255, 255, 255), self.coords(), 1)
 
         pos = pygame.mouse.get_pos()
-        if self.coords().collidepoint(pos):
-            if pygame.mouse.get_pressed()[0]:
+        if 1 in Page.window.mouse_buttons and self.coords().collidepoint(Page.window.mouse_pos[:2]):
                 pygame.draw.rect(surface, (255, 255, 255), self.coords())
                 if not self.callback is None:
                     self.callback()
 
-def update(surface, window_size):
-    Page.window_size = window_size
+def update(surface):
     if not Page.opened is None:
         Page.opened.update(surface)
 
