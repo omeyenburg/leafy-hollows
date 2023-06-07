@@ -6,17 +6,19 @@ os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 from pygame.locals import *
 
+try:
+    from OpenGL.GL import *
+    from OpenGL.GL.shaders import compileProgram, compileShader
+    OPENGL_SUPPORTED = True
+except:
+    OPENGL_SUPPORTED = False
 
-if not pygame.display.get_init():
+
+def init():
+    global OPENGL_SUPPORTED
     pygame.init()
 
-    OPENGL_SUPPORTED = True
-
-    # Test, if OpenGL is available
     try:
-        from OpenGL.GL import *
-        from OpenGL.GL.shaders import compileProgram, compileShader
-
         # Explicitly use OpenGL 3.3 core
         pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MAJOR_VERSION, 3)
         pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MINOR_VERSION, 3)
@@ -30,7 +32,7 @@ if not pygame.display.get_init():
         print("OpenGL is not installed")
 
 
-def init(width, height, vsync=1):
+def window(width, height):
     global OPENGL_SUPPORTED
 
     # Test, if OpenGL is available
@@ -92,7 +94,7 @@ def quit():
     glDeleteVertexArrays(1, (Shader.vao,))
 
 
-def modify(width, height, vsync=1):
+def modify(width, height):
     if not OPENGL_SUPPORTED:
         return
     glViewport(0, 0, width, height)

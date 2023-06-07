@@ -7,13 +7,16 @@ import pygame
 
 
 def quit():
-    shader.quit() # Shader connection
+    shader.quit()
     pygame.quit()
     sys.exit()
 
 
 class Window:
     def __init__(self, caption, keys=("w",)):
+        if shader.OPENGL_SUPPORTED:
+            shader.init()
+
         # Constants
         self.max_fps = 1000
         self.vsync = 0
@@ -33,7 +36,7 @@ class Window:
         if shader.OPENGL_SUPPORTED:
             flags = DOUBLEBUF | RESIZABLE | OPENGL
             self.window = pygame.display.set_mode((self.width, self.height), flags=flags, vsync=self.vsync)
-            shader.init(self.width, self.height) # Shader connection
+            shader.window(self.width, self.height)
         else:
             flags = DOUBLEBUF | RESIZABLE | HWSURFACE
             self.window = pygame.display.set_mode((self.width, self.height), flags=flags)
@@ -49,7 +52,7 @@ class Window:
         if shader.OPENGL_SUPPORTED:
             flags = DOUBLEBUF | RESIZABLE | OPENGL
             self.window = pygame.display.set_mode((self.width, self.height), flags=flags, vsync=self.vsync)
-            shader.modify(self.width, self.height) # Shader connection
+            shader.modify(self.width, self.height)
         else:
             flags = DOUBLEBUF | RESIZABLE | HWSURFACE
             self.window = pygame.display.set_mode((self.width, self.height), flags=flags)
@@ -91,7 +94,7 @@ class Window:
                 self.mouse_wheel = [self.mouse_wheel[0] + event.x, self.mouse_wheel[1] + event.y, event.x, event.y]
 
     def update(self, world_surface, ui_surface):
-        shader.update(world_surface, ui_surface) # Shader connection
+        shader.update(world_surface, ui_surface)
         self.events()
         self.clock.tick(self.max_fps)
 
@@ -109,10 +112,12 @@ class Font:
             subsurf.set_colorkey((255, 255, 255))
             self.letters[chr(i + 32)] = subsurf
 
-    def write(self, surf, text, color, size, coord):
+    def write(self, surf, text, color, size, coord, center=0):
         """
         Write text on a surface.
         """
+        if center:
+            coord = (coord[0] - self.width(text, size) // 2, coord[1] - self.height(size) // 2)
         text = str(text)
         if color == (0, 0, 0):
             color = (1, 1, 1)

@@ -3,8 +3,14 @@ import os
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
+import scripts.graphics as graphics
+import scripts.util as util
 
+class Style:
+    font = None
 
+    def __init__(self):
+        Style.font = graphics.Font(util.File.path("data/fonts/font.png"))
 
 class Widget:
     def __init__(self, parent=None, size=(0, 0)):
@@ -60,7 +66,7 @@ class Page(Widget):
             child.draw(surface)
 
     def draw(self, surface):
-        pygame.draw.rect(surface, (255, 255, 255), self.coords(), 1)
+        pass
 
     def open(self):
         Page.opened = self
@@ -77,11 +83,13 @@ class Button(Widget):
     def draw(self, surface):
         pygame.draw.rect(surface, (255, 255, 255), self.coords(), 1)
 
+        Style.font.write(surface, self.text, (255, 255, 255), 4, self.coords().center, center=1)
+
         pos = pygame.mouse.get_pos()
         if 1 in Page.window.mouse_buttons and self.coords().collidepoint(Page.window.mouse_pos[:2]):
-                pygame.draw.rect(surface, (255, 255, 255), self.coords())
-                if not self.callback is None:
-                    self.callback()
+            pygame.draw.rect(surface, (255, 255, 255), self.coords())
+            if not self.callback is None:
+                self.callback()
 
 def update(surface):
     if not Page.opened is None:
