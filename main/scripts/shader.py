@@ -14,9 +14,14 @@ except:
     OPENGL_SUPPORTED = False
 
 
-def init():
+def init(use_opengl):
     global OPENGL_SUPPORTED
     pygame.init()
+
+    if not use_opengl:
+        OPENGL_SUPPORTED = False
+        print("OpenGL is disabled")
+        return
 
     try:
         # Explicitly use OpenGL 3.3 core
@@ -95,8 +100,6 @@ def quit():
 
 
 def modify(width, height):
-    if not OPENGL_SUPPORTED:
-        return
     glViewport(0, 0, width, height)
 
 
