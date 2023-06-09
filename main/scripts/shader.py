@@ -6,17 +6,24 @@ os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 from pygame.locals import *
 
+try:
+    from OpenGL.GL import *
+    from OpenGL.GL.shaders import compileProgram, compileShader
+    OPENGL_SUPPORTED = True
+except:
+    OPENGL_SUPPORTED = False
 
-if not pygame.display.get_init():
+
+def init(use_opengl):
+    global OPENGL_SUPPORTED
     pygame.init()
 
-    OPENGL_SUPPORTED = True
+    if not use_opengl:
+        OPENGL_SUPPORTED = False
+        print("OpenGL is disabled")
+        return
 
-    # Test, if OpenGL is available
     try:
-        from OpenGL.GL import *
-        from OpenGL.GL.shaders import compileProgram, compileShader
-
         # Explicitly use OpenGL 3.3 core
         pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MAJOR_VERSION, 3)
         pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MINOR_VERSION, 3)
@@ -30,18 +37,11 @@ if not pygame.display.get_init():
         print("OpenGL is not installed")
 
 
-def init(width, height, vsync=1):
+def window(width, height):
     global OPENGL_SUPPORTED
-    
-    # Create pygame window
-    #flags = DOUBLEBUF | RESIZABLE
-    #if not OPENGL_SUPPORTED:
-    #    return pygame.display.set_mode((width, height), flags=flags)
-    
+
     # Test, if OpenGL is available
     try:
-        #window = pygame.display.set_mode((width, height), flags=flags | OPENGL, vsync=vsync)
-
         # Set up OpenGL
         glViewport(0, 0, width, height)
         glClearColor(0.0, 0.0, 0.0, 0.0)
@@ -87,9 +87,6 @@ def init(width, height, vsync=1):
     except:
         OPENGL_SUPPORTED = False
         print("OpenGL is not available")
-        #return init(width, height, 0)
-        
-    #return window
 
 
 def quit():
@@ -97,15 +94,12 @@ def quit():
         return
     for shader in Shader.shaders:
         shader.delete()
-    glDeleteTextures(Shader.world_texture)
-    glDeleteTextures(Shader.ui_texture)
+    glDeleteTextures(2, (Shader.world_texture, Shader.ui_texture))
     glDeleteBuffers(2, (Shader.vbo_vertices, Shader.vbo_texcoords))
     glDeleteVertexArrays(1, (Shader.vao,))
 
 
-def modify(width, height, vsync=1):
-    if not OPENGL_SUPPORTED:
-        return
+def modify(width, height):
     glViewport(0, 0, width, height)
 
 
@@ -175,24 +169,6 @@ def load_fragment(path):
 
 
 def get_uniform(program, variable, data_type):
-    # OpenGL functions to send data to a shader and glsl data types
-    """
-    glUniform1f(location, value): Sets a single float value (float).
-    glUniform1i(location, value): Sets a single integer value (int).
-    glUniform1ui(location, value): Sets a single unsigned integer value (uint).
-    glUniform2f(location, value1, value2): Sets a 2-component float vector (vec2).
-    glUniform2i(location, value1, value2): Sets a 2-component integer vector (ivec2).
-    glUniform2ui(location, value1, value2): Sets a 2-component unsigned integer vector (uvec2).
-    glUniform3f(location, value1, value2, value3): Sets a 3-component float vector (vec3).
-    glUniform3i(location, value1, value2, value3): Sets a 3-component integer vector (ivec3).
-    glUniform3ui(location, value1, value2, value3): Sets a 3-component unsigned integer vector (uvec3).
-    glUniform4f(location, value1, value2, value3, value4): Sets a 4-component float vector (vec4).
-    glUniform4i(location, value1, value2, value3, value4): Sets a 4-component integer vector (ivec4).
-    glUniform4ui(location, value1, value2, value3, value4): Sets a 4-component unsigned integer vector (uvec4).
-    glUniformMatrix2fv(location, count, transpose, value): Sets a 2x2 matrix or an array of 2x2 matrices (mat2).
-    glUniformMatrix3fv(location, count, transpose, value): Sets a 3x3 matrix or an array of 3x3 matrices (mat3).
-    glUniformMatrix4fv(location, count, transpose, value): Sets a 4x4 matrix or an array of 4x4 matrices (mat4).
-    """
     # Get location and convert glsl data type to valid function
     loc = glGetUniformLocation(program, variable)
     func = data_type_map = {'int': glUniform1i,

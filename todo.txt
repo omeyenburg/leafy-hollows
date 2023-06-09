@@ -9,10 +9,10 @@ install -> pip install -r requirements.txt
 Mechanik (vor Ferien)
 - Window
 - OpenGL + GLSL
-- Input                   2.6.2023
-- Menu                    5.6.2023
-- Camera System           9.6.2023
-- World                   9.6.2023
+- Input                   
+- Menu                    
+- Camera System           
+- World                   
 - Physics System          14.6.2023
 - Entities                19.6.2023
 - Player                  19.6.2023
