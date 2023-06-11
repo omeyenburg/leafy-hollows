@@ -39,13 +39,9 @@ class Player(Sprite):
         # check keys
         key = pygame.key.get_pressed()
         if key[pygame.K_LEFT]:
-            self.walk_animation()
             hsp = -self.speed
         elif key[pygame.K_RIGHT]:
-            self.walk_animation()
             hsp = self.speed
-        else:
-            self.image = self.stand_image
 
         if key[pygame.K_UP] and onground:
             self.vsp = -self.jumpspeed
@@ -59,7 +55,6 @@ class Player(Sprite):
 
         # gravity
         if self.vsp < 10 and not onground:  # 9.8 rounded up
-            self.jump_animation()
             self.vsp += self.gravity
 
         if onground and self.vsp > 0:

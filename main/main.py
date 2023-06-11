@@ -1,3 +1,4 @@
+import scripts.menu as menu
 import scripts.graphics as graphics
 import scripts.util as util
 import os
@@ -40,7 +41,7 @@ second_page.layout()
 
 b4.callback = second_page.open
 
-world_width, world_height = window.width // 10, window.height // 10
+world_width, world_height = 10, 10
 world_blocks = map_generator.default_states(world_width, world_height)
 blocks_to_color = {"air":(255,255,255), "dirt":(255,248,220), "stone":(128,128,128)}
 
