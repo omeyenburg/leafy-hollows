@@ -1,0 +1,2 @@
+// Only for Mac:
+gcc -shared -o graphics.so graphics.c ./glad/src/glad.c -I/Library/Frameworks/SDL2.framework/Headers -I./glad/include -F/Library/Frameworks -L/usr/local/Cellar/sdl2/2.26.2/lib -Wl,-rpath,/usr/local/Cellar/sdl2/2.26.2/lib -lSDL2 -lSDL2_image -lSDL2_ttf

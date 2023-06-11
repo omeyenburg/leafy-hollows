@@ -13,7 +13,7 @@ world_surface, ui_surface = window.surfaces()
 
 # Create and activate shader
 vert = util.File.path("data/shaders/template.vert")
-frag = util.File.path("data/shaders/wave.frag")
+frag = util.File.path("data/shaders/template.frag")
 shader = graphics.shader.Shader(vert, frag, time="int")
 shader.activate()
 
@@ -36,6 +36,8 @@ main_page.open()
 second_page = menu.Page(spacing=10)
 l2 = menu.Label(second_page, (150, 50), row=0, column=0, text="Second Page")
 b5 = menu.Button(second_page, (150, 50), row=1, column=0, callback=main_page.open, text="Back")
+s1 = menu.Slider(second_page, (150, 50), row=2, column=0, value=0)
+e1 = menu.Entry(second_page, (150, 50), row=3, column=0)
 second_page.layout()
 
 b4.callback = second_page.open
