@@ -76,8 +76,10 @@ class Widget:
         for child in self.children:
             child.update()
 
-    def coords(self):
-        return pygame.Rect(self.rect.x + (window.size[0] - self.rect.w) // 2, self.rect.y + (window.size[1] - self.rect.h) // 2, self.rect.w, self.rect.h)
+    def coords(self, rect=None):
+        if rect is None:
+            rect = self.rect
+        return pygame.Rect(rect.x + (window.size[0] - rect.w) // 2, rect.y + (window.size[1] - rect.h) // 2, rect.w, rect.h)
 
     def draw(self):
         raise NotImplementedError("Subclasses of Widget must implement the draw method")
@@ -106,11 +108,11 @@ class Button(Widget):
 
     def draw_idle(self):
         pygame.draw.rect(window.world_surface, (255, 255, 255), self.coords(), 1)
-        font.write(window.world_surface, self.text, (255, 255, 255), 4, self.coords().center, center=1)
+        font.write(window.world_surface, self.text, (255, 255, 255), 3, self.coords().center, center=1)
 
     def draw_clicked(self):
         pygame.draw.rect(window.world_surface, (255, 255, 255), self.coords())
-        font.write(window.world_surface, self.text, (0, 0, 0), 4, self.coords().center, center=1)
+        font.write(window.world_surface, self.text, (0, 0, 0), 3, self.coords().center, center=1)
 
 
 class Label(Widget):
@@ -131,15 +133,53 @@ class Space(Widget):
 
 
 class Slider(Widget):
-    def __init__(self, *args, text="", **kwargs):
+    def __init__(self, *args, value=0.0, **kwargs):
         super().__init__(*args, **kwargs)
-        self.text = text
+        self.value = value
+        self.selected = False
+        self.slider_rect = self.rect.copy()
 
     def update(self):
-        font.write(window.world_surface, self.text, (255, 255, 255), 4, self.coords().center, center=1)
+        self.slider_rect.w = self.slider_rect.h // 3
+        self.slider_rect.x = (self.rect.w - self.slider_rect.w) * self.value + self.coords().x
+        self.slider_rect.y = self.coords().y
+
+        if self.slider_rect.collidepoint(window.mouse_pos[:2]) and 1 in window.mouse_buttons:
+            self.selected = True
+        elif not any(window.mouse_buttons):
+            self.selected = False
+
+        if self.selected:
+            self.value = min(1.0, max(0.0, (window.mouse_pos[0] - self.coords().x) / self.rect.w))
+
+        self.draw()
+
+    def draw(self):
+        pygame.draw.rect(window.world_surface, (255, 255, 255), self.coords(), 1)
+        pygame.draw.rect(window.world_surface, (255, 255, 255), self.slider_rect, 1)
 
 
 class Entry(Widget):
+    def __init__(self, *args, text="", **kwargs):
+        super().__init__(*args, **kwargs)
+        self.text = text
+        self.selected = False
+        self.cursor = 0
+
+    def update(self):
+        if window.unicode == "\x08":
+            self.text = self.text[:-1]
+        elif window.unicode.isprintable():
+            self.text += window.unicode
+
+        self.draw()
+
+    def draw(self):
+        pygame.draw.rect(window.world_surface, (255, 255, 255), self.coords(), 1)
+        font.write(window.world_surface, self.text, (255, 255, 255), 4, self.coords().topleft)
+
+
+class Switch(Widget):
     def __init__(self, *args, text="", **kwargs):
         super().__init__(*args, **kwargs)
         self.text = text

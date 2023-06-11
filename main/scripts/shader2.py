@@ -1,5 +1,5 @@
 from platform import system as get_system
-import numpy
+import numpy as np
 import os
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
@@ -39,7 +39,7 @@ def init(use_opengl):
 
 
 def window(width, height):
-    global OPENGL_SUPPORTED
+    global OPENGL_SUPPORTED, vao, vbo_vertices, vbo_texcoords, world_texture, ui_texture
 
     # Test, if OpenGL is available
     try:
@@ -51,40 +51,42 @@ def window(width, height):
         glDisable(GL_CULL_FACE)
 
         # Vertex data
-        Shader.vertices = numpy.array((0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0), dtype=numpy.float32)
-        Shader.texcoords = numpy.array((-1.0, -1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0), dtype=numpy.float32)
+        vertices = np.array((0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0), dtype=np.float32)
+        texcoords = np.array((-1.0, -1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0), dtype=np.float32)
 
         # Create Vertex Array Object
-        Shader.vao = glGenVertexArrays(1)
-        glBindVertexArray(Shader.vao)
+        vao = glGenVertexArrays(1)
+        glBindVertexArray(vao)
 
-        # Create Vertex Buffer Object
-        Shader.vbo_vertices = glGenBuffers(1)
-        glBindBuffer(GL_ARRAY_BUFFER, Shader.vbo_vertices)
-        glBufferData(GL_ARRAY_BUFFER, Shader.vertices.nbytes, Shader.vertices, GL_STATIC_DRAW)
+        # Create Vertex Buffer Objects
+        vbo_vertices = glGenBuffers(1)
+        glBindBuffer(GL_ARRAY_BUFFER, vbo_vertices)
+        glBufferData(GL_ARRAY_BUFFER, vertices.nbytes, vertices, GL_STATIC_DRAW)
         glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, None)
         glEnableVertexAttribArray(0)
 
-        Shader.vbo_texcoords = glGenBuffers(1)
-        glBindBuffer(GL_ARRAY_BUFFER, Shader.vbo_texcoords)
-        glBufferData(GL_ARRAY_BUFFER, Shader.texcoords.nbytes, Shader.texcoords, GL_STATIC_DRAW)
+        vbo_texcoords = glGenBuffers(1)
+        glBindBuffer(GL_ARRAY_BUFFER, vbo_texcoords)
+        glBufferData(GL_ARRAY_BUFFER, texcoords.nbytes, texcoords, GL_STATIC_DRAW)
         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, None)
         glEnableVertexAttribArray(1)
 
         # Load textures
         # GL_LINEAR (smooth) or GL_NEAREST (pixelated)
-        Shader.world_texture = glGenTextures(1)
-        glBindTexture(GL_TEXTURE_2D, Shader.world_texture)
+        world_texture = glGenTextures(1)
+        glBindTexture(GL_TEXTURE_2D, world_texture)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
 
-        Shader.ui_texture = glGenTextures(1)
-        glBindTexture(GL_TEXTURE_2D, Shader.ui_texture)
+        ui_texture = glGenTextures(1)
+        glBindTexture(GL_TEXTURE_2D, ui_texture)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
 
         glBindTexture(GL_TEXTURE_2D, 0)
         
+        return vao, vbo_vertices, vbo_texcoords, world_texture, ui_texture
+    
     except:
         OPENGL_SUPPORTED = False
         print("OpenGL is not available")
@@ -93,11 +95,9 @@ def window(width, height):
 def quit():
     if not OPENGL_SUPPORTED:
         return
-    for shader in Shader.shaders:
-        shader.delete()
-    glDeleteTextures(2, (Shader.world_texture, Shader.ui_texture))
-    glDeleteBuffers(2, (Shader.vbo_vertices, Shader.vbo_texcoords))
-    glDeleteVertexArrays(1, (Shader.vao,))
+    glDeleteTextures(2, (world_texture, ui_texture))
+    glDeleteBuffers(2, (vbo_vertices, vbo_texcoords))
+    glDeleteVertexArrays(1, (vao,))
 
 
 def modify(width, height):
@@ -105,13 +105,6 @@ def modify(width, height):
 
 
 class Shader:
-    vertices = None
-    texcoords = None
-    vao = None
-    vbo_vertices = None
-    vbo_texcoords = None
-    world_texture = None
-    ui_texture = None
     shaders = []
     program = None
     active = None
@@ -172,24 +165,26 @@ def load_fragment(path):
 def get_uniform(program, variable, data_type):
     # Get location and convert glsl data type to valid function
     loc = glGetUniformLocation(program, variable)
-    func = data_type_map = {'int': glUniform1i,
-                            'uint': glUniform1ui,
-                            'float': glUniform1f,
-                            'vec2': glUniform2f,
-                            'vec3': glUniform3f,
-                            'vec4': glUniform4f,
-                            'bvec2': glUniform2i,
-                            'bvec3': glUniform3i,
-                            'bvec4': glUniform4i,
-                            'ivec2': glUniform2i,
-                            'ivec3': glUniform3i,
-                            'ivec4': glUniform4i,
-                            'uvec2': glUniform2ui,
-                            'uvec3': glUniform3ui,
-                            'uvec4': glUniform4ui,
-                            'mat2': glUniformMatrix2fv,
-                            'mat3': glUniformMatrix3fv,
-                            'mat4': glUniformMatrix4fv}[data_type]
+    func = {
+        'int': glUniform1i,
+        'uint': glUniform1ui,
+        'float': glUniform1f,
+        'vec2': glUniform2f,
+        'vec3': glUniform3f,
+        'vec4': glUniform4f,
+        'bvec2': glUniform2i,
+        'bvec3': glUniform3i,
+        'bvec4': glUniform4i,
+        'ivec2': glUniform2i,
+        'ivec3': glUniform3i,
+        'ivec4': glUniform4i,
+        'uvec2': glUniform2ui,
+        'uvec3': glUniform3ui,
+        'uvec4': glUniform4ui,
+        'mat2': glUniformMatrix2fv,
+        'mat3': glUniformMatrix3fv,
+        'mat4': glUniformMatrix4fv
+    }[data_type]
     return [loc, func, None]
 
 def update(world_surface, ui_surface):
@@ -199,22 +194,22 @@ def update(world_surface, ui_surface):
         width, height = world_surface.get_size()
 
         # Update world texture
-        glBindTexture(GL_TEXTURE_2D, Shader.world_texture)
+        glBindTexture(GL_TEXTURE_2D, world_texture)
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0,
                      GL_RGBA, GL_UNSIGNED_BYTE,
                      pygame.image.tostring(world_surface, "RGBA", 1))
 
         # Update UI texture
-        glBindTexture(GL_TEXTURE_2D, Shader.ui_texture)
+        glBindTexture(GL_TEXTURE_2D, ui_texture)
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0,
                      GL_RGBA, GL_UNSIGNED_BYTE,
                      pygame.image.tostring(ui_surface, "RGBA", 1))
 
         # Bind textures to texture units
         glActiveTexture(GL_TEXTURE0)
-        glBindTexture(GL_TEXTURE_2D, Shader.world_texture)
+        glBindTexture(GL_TEXTURE_2D, world_texture)
         glActiveTexture(GL_TEXTURE1)
-        glBindTexture(GL_TEXTURE_2D, Shader.ui_texture)
+        glBindTexture(GL_TEXTURE_2D, ui_texture)
 
         # Set texture uniforms in shader
         glUniform1i(Shader.active.worldLoc, 0)
@@ -225,7 +220,7 @@ def update(world_surface, ui_surface):
             func(loc, value)
         
         # Update window
-        glBindVertexArray(Shader.vao)
+        glBindVertexArray(vao)
         glDrawArrays(GL_TRIANGLE_FAN, 0, 4)
     else:
         ui_surface.set_colorkey((0, 0, 0))
