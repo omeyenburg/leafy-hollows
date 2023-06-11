@@ -8,7 +8,7 @@ import pygame
 
 
 # Create window
-window = graphics.Window("Test")
+window = graphics.Window("Test", use_opengl=False)
 world_surface, ui_surface = window.surfaces()
 
 # Create and activate shader
@@ -22,8 +22,8 @@ tree = pygame.image.load("data/images/tree.jpg").convert()
 font = graphics.Font(util.File.path("data/fonts/font.png"))
 
 # Menu
+"""
 menu.init(window)
-import scripts.map_generator as map_generator
 
 main_page = menu.Page(columns=2, spacing=10)
 l1 = menu.Label(main_page, (150, 50), row=0, column=0, columnspan=2, text="Main Page")
@@ -40,7 +40,9 @@ b5 = menu.Button(second_page, (150, 50), row=1, column=0, callback=main_page.ope
 second_page.layout()
 
 b4.callback = second_page.open
+"""
 
+import scripts.map_generator as map_generator
 world_width, world_height = 10, 10
 world_blocks = map_generator.default_states(world_width, world_height)
 blocks_to_color = {"air":(255,255,255), "dirt":(255,248,220), "stone":(128,128,128)}
@@ -55,20 +57,17 @@ while True:
     shader.setvar("time", time)
     
     # Reset surfaces
-    world_surface.fill((0, 100, 0))
+    world_surface.fill((0, 0, 0))
     ui_surface.fill((0, 0, 0))
 
     # Draw and update menu
     menu.update()
 
-    # Draw
-    font.write(ui_surface, str(window.clock.get_fps()), (255, 255, 0), 3, (20, 20))
-
     # drawing blocks
-    width_factor, height_factor = window.width // world_width, window.height // world_height   # scale to window
+    block_width, block_height = 10, 10   # scale to window
     for y in range(len(world_blocks)):
         for x in range(len(world_blocks[0])):
-            pygame.draw.rect(world_surface, blocks_to_color[world_blocks[y][x]], (width_factor*x, height_factor*y, width_factor, height_factor))
+            pygame.draw.rect(world_surface, blocks_to_color[world_blocks[y][x]], (block_width*x, block_height*y, block_width, block_height))
     
     font.write(ui_surface, str(window.clock.get_fps()), (255, 0, 0), 2, (0, 0))   # FPS Counter
 

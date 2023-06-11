@@ -13,9 +13,11 @@ def quit():
 
 
 class Window:
-    def __init__(self, caption, resolution=1, keys=("w",)):
-        if shader.OPENGL_SUPPORTED:
+    def __init__(self, caption, use_opengl:bool, keys, resolution=1):
+        if shader.OPENGL_SUPPORTED and use_opengl:
             shader.init(True) # True = use OpenGL
+        else:
+            shader.init(False)
 
         # Constants
         self.max_fps = 1000
