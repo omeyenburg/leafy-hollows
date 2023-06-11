@@ -43,16 +43,47 @@ b4.callback = second_page.open
 """
 
 class Player():
-    def __init__(self, spawn_pos, player_size) -> None:
+    def __init__(self, spawn_pos, size, speed) -> None:
         self.pos = spawn_pos
-        self.player_size = player_size
-
-    def update(self):
-        print(window.keys)
-        self.draw()
+        self.vel = [0, 0]
+        self.size = size
+        self.speed = speed
+        self.delta_time: float = 0.0
 
     def draw(self):
-        pygame.draw.rect(world_surface, (0,255,0), pygame.Rect((self.pos[0], self.pos[1]), (self.player_size[0], self.player_size[1])))
+        pygame.draw.rect(world_surface, (0,255,0), pygame.Rect((self.pos[0] - (self.size[0] // 2), self.pos[1] - (self.size[1] // 2)), (self.size[0], self.size[1])))
+
+    def move(self):
+        keys = window.keys
+        if keys["w"] > 0:
+            self.vel[1] = -self.speed 
+        if keys["a"] > 0:
+            self.vel[0] = -self.speed 
+        if keys["s"] > 0:
+            self.vel[1] = self.speed 
+        if keys["d"] > 0:
+            self.vel[0] = self.speed 
+
+        if self.pos[1] < window.height:
+            #print(window.height,self.pos[1])
+            #self.vel[1] += 10   # gravity
+            pass
+
+        dx, dy = int(self.vel[0] * self.delta_time), int(self.vel[1] * self.delta_time)
+
+        print(self.vel[0], dx)
+
+        self.vel[0] -= dx
+        self.vel[1] -= dy
+
+        self.pos[0] += dx
+        self.pos[1] += dy
+
+    def update(self):
+        if window.clock.get_fps() > 0:
+            self.delta_time = (1 / window.clock.get_fps())
+        self.move()
+        self.draw()
 
 
 import scripts.map_generator as map_generator
@@ -60,7 +91,7 @@ world_width, world_height = 12, 6
 world_blocks = map_generator.default_states(world_width, world_height)
 blocks_to_color = {"air":(255,255,255), "dirt":(255,248,220), "stone":(128,128,128)}
 
-player = Player(spawn_pos=[100, 100], player_size=[50, 100])
+player = Player(spawn_pos=[100, 100], size=[50, 100], speed=250)
 
 time = -1
 while True:
