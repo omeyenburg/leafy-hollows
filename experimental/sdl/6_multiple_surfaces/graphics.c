@@ -347,3 +347,34 @@ void quit() {
     SDL_DestroyWindow(sdl_window);
     SDL_Quit();
 }
+
+
+int main() {
+    c_window("Test", 1000);
+
+    int tree_image = c_load_image("tree.jpg");
+    int player_image = c_load_image("player.png");
+    int font = c_load_font("fonts/font.ttf", 50);
+
+    for (int i = 0; i < 3; i++) {
+        c_blit(tree_image, player_image, 5 + 20*i, 130 + 20*i);
+    }
+
+    int running = 1;
+    while (running) {
+        float fps = get_fps();
+        char c[50];
+        sprintf(c, "%g", fps);
+        c_write(0, font, c, 0, 0, 255, 500, 100);
+        c_blit(0, tree_image, 20, 40);
+        for (int x = 0; x < 20; x++) {
+            c_blit(0, player_image, 214 + x * 30, 320);
+        }
+        int x, y;
+        c_get_mousepos(&x, &y);
+        c_rect(0, 255, 0, 0, x, y, 110, 80);
+        running = update();
+    }
+
+    quit();
+}

@@ -1,7 +1,23 @@
 import ctypes
+import platform
+import subprocess
+import os
+
+os_name = platform.system()
+graphics_library_name = "graphics-" + os_name.lower()
+if os_name == 'Windows':
+    graphics_library_name += platform.architecture()[0] + ".dll"
+else:
+    graphics_library_name += ".so"
+
+
+# The shared library file doesn't exist, run setup.py to build it
+if not os.path.exists(graphics_library_name):
+    subprocess.check_call(['python', 'setup.py', 'build_ext', '--inplace'], stdout=subprocess.DEVNULL)
+
 
 # Load the shared library
-graphics = ctypes.CDLL('./graphics.so')
+graphics = ctypes.CDLL(graphics_library_name)
 
 # Function prototypes
 graphics.c_window.argtypes = [ctypes.c_char_p, ctypes.c_int]
