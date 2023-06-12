@@ -48,7 +48,9 @@ class Player():
         self.vel = [0, 0]
         self.size = size
         self.speed = speed
+
         self.delta_time: float = 0.0
+        self.vel_overhead = [0.0, 0.0]
 
     def draw(self):
         pygame.draw.rect(world_surface, (0,255,0), pygame.Rect((self.pos[0] - (self.size[0] // 2), self.pos[1] - (self.size[1] // 2)), (self.size[0], self.size[1])))
@@ -69,15 +71,34 @@ class Player():
             #self.vel[1] += 10   # gravity
             pass
 
-        dx, dy = int(self.vel[0] * self.delta_time), int(self.vel[1] * self.delta_time)
+        #dx = int((self.vel[0] * self.delta_time) + self.vel_overhead[0])
+        dy = int((self.vel[1] * self.delta_time) + self.vel_overhead[1])
+        
+        dx = (self.vel[0] * self.delta_time) + self.vel_overhead[0]
+        if  -1 < dx < 0:
+            self.vel_overhead[0] = dx
+        else:
+            int_dx = int(dx)
+            self.vel_overhead[0] = dx - int_dx
+            self.vel[0] -= int_dx
+            self.pos[0] += int_dx
+
+        dy = (self.vel[1] * self.delta_time) + self.vel_overhead[1]
+        if  -1 < dy < 0:
+            self.vel_overhead[1] = dy
+        else:
+            int_dy = int(dy)
+            self.vel_overhead[1] = dy - int_dy
+            self.vel[1] -= int_dy
+            self.pos[1] += int_dy
 
         print(self.vel[0], dx)
 
-        self.vel[0] -= dx
-        self.vel[1] -= dy
+        #self.vel[0] -= dx
+        #self.vel[1] -= dy
 
-        self.pos[0] += dx
-        self.pos[1] += dy
+        #self.pos[0] += dx
+        #self.pos[1] += dy
 
     def update(self):
         if window.clock.get_fps() > 0:
