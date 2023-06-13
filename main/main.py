@@ -5,6 +5,7 @@ import os
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
+import math
 
 
 # Create window
@@ -21,88 +22,61 @@ shader.activate()
 tree = pygame.image.load("data/images/tree.jpg").convert()
 font = graphics.Font(util.File.path("data/fonts/font.png"))
 
-# Menu
-"""
-menu.init(window)
+class Physics_Object():
+    def __init__(self, mass: int, gravity: bool, hitbox, position: list[float, float]) -> None:
+        self.mass: int = mass
+        self.gravity: bool = gravity
+        self.hitbox = hitbox
 
-main_page = menu.Page(columns=2, spacing=10)
-l1 = menu.Label(main_page, (150, 50), row=0, column=0, columnspan=2, text="Main Page")
-b1 = menu.Button(main_page, (150, 50), row=1, column=0, callback=lambda: print(1, 0), text="Hello")
-b2 = menu.Button(main_page, (150, 50), row=1, column=1, callback=lambda: print(1, 1), text="World")
-b3 = menu.Button(main_page, (150, 50), row=2, column=0, callback=window.toggle_fullscreen, text="Fullscreen")
-b4 = menu.Button(main_page, (150, 50), row=2, column=1, text="Swap Page")
-main_page.layout()
-main_page.open()
+        self.pos: list[float, float] = position
+        self.vel: list[float, float] = [0.0, 0.0]
 
-second_page = menu.Page(spacing=10)
-l2 = menu.Label(second_page, (150, 50), row=0, column=0, text="Second Page")
-b5 = menu.Button(second_page, (150, 50), row=1, column=0, callback=main_page.open, text="Back")
-second_page.layout()
+    
+    def apply_force(self, force: float, angle: int):    # angle in degrees; 0 straight up, clockwise
+        angle = math.radians(angle)
+        self.vel[0] += ((math.sin(angle) * force) / self.mass) * delta_time
+        self.vel[1] += ((-math.cos(angle) * force) / self.mass) * delta_time
+    
+    def update(self):
+        self.pos[0] += self.vel[0] * delta_time
+        self.pos[1] += self.vel[1] * delta_time
 
-b4.callback = second_page.open
-"""
 
-class Player():
-    def __init__(self, spawn_pos, size, speed) -> None:
-        self.pos = spawn_pos
-        self.vel = [0, 0]
-        self.size = size
-        self.speed = speed
+class Player(Physics_Object):
+    def __init__(self, spawn_pos: list[float, float], size: int, speed: int) -> None:
+        Physics_Object.__init__(self, 100, True, 0, spawn_pos)
 
-        self.delta_time: float = 0.0
-        self.vel_overhead = [0.0, 0.0]
+        #self.pos: list[float, float] = spawn_pos
+        #self.vel: list[float, float] = [0.0, 0.0]
+        self.size: int = size
+        self.speed: int = speed
 
     def draw(self):
         pygame.draw.rect(world_surface, (0,255,0), pygame.Rect((self.pos[0] - (self.size[0] // 2), self.pos[1] - (self.size[1] // 2)), (self.size[0], self.size[1])))
 
     def move(self):
         keys = window.keys
+        force = 1000
         if keys["w"] > 0:
-            self.vel[1] = -self.speed 
+            #self.vel[1] = -self.speed
+            self.apply_force(force, 0)
         if keys["a"] > 0:
-            self.vel[0] = -self.speed 
+            #self.vel[0] = -self.speed
+            self.apply_force(force, 270)
         if keys["s"] > 0:
-            self.vel[1] = self.speed 
+            #self.vel[1] = self.speed 
+            self.apply_force(force, 180)
         if keys["d"] > 0:
-            self.vel[0] = self.speed 
+            #self.vel[0] = self.speed 
+            self.apply_force(force, 90)
 
-        if self.pos[1] < window.height:
-            #print(window.height,self.pos[1])
-            #self.vel[1] += 10   # gravity
-            pass
 
-        #dx = int((self.vel[0] * self.delta_time) + self.vel_overhead[0])
-        dy = int((self.vel[1] * self.delta_time) + self.vel_overhead[1])
-        
-        dx = (self.vel[0] * self.delta_time) + self.vel_overhead[0]
-        if  -1 < dx < 0:
-            self.vel_overhead[0] = dx
-        else:
-            int_dx = int(dx)
-            self.vel_overhead[0] = dx - int_dx
-            self.vel[0] -= int_dx
-            self.pos[0] += int_dx
-
-        dy = (self.vel[1] * self.delta_time) + self.vel_overhead[1]
-        if  -1 < dy < 0:
-            self.vel_overhead[1] = dy
-        else:
-            int_dy = int(dy)
-            self.vel_overhead[1] = dy - int_dy
-            self.vel[1] -= int_dy
-            self.pos[1] += int_dy
-
-        print(self.vel[0], dx)
-
-        #self.vel[0] -= dx
-        #self.vel[1] -= dy
-
-        #self.pos[0] += dx
-        #self.pos[1] += dy
+        if window.mouse_buttons[0] == 1:
+            self.apply_force(force, 0)
 
     def update(self):
-        if window.clock.get_fps() > 0:
-            self.delta_time = (1 / window.clock.get_fps())
+        print(self.pos, self.vel)
+        Physics_Object.update(self)
         self.move()
         self.draw()
 
@@ -115,7 +89,11 @@ blocks_to_color = {"air":(255,255,255), "dirt":(255,248,220), "stone":(128,128,1
 player = Player(spawn_pos=[100, 100], size=[50, 100], speed=250)
 
 time = -1
+
+delta_time = 0
 while True:
+    delta_time = (1 / window.clock.get_fps()) if window.clock.get_fps() > 0 else delta_time
+
     world_surface, ui_surface = window.surfaces()
 
     # Send variables to the fragment shader
