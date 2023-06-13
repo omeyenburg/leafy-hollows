@@ -7,7 +7,7 @@
 
 // Window variables
 SDL_DisplayMode monitor_size;
-uint window_size[2];
+int window_size[2];
 SDL_Window* sdl_window;
 SDL_GLContext glContext;
 
@@ -455,7 +455,7 @@ int update() {
 
 
 // Main function for pure-C testing
-int main() {
+int main(int argc, char* argv[]) {
     c_window("Test", 1000);
 
     int tree_image = c_load_image("tree.jpg");
