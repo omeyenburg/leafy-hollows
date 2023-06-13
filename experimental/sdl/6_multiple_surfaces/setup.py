@@ -15,9 +15,7 @@ graphics_module = Extension(
     graphics_library_name,
     sources=['graphics.c', 'glad/src/glad.c'],
     include_dirs=['glad/include'],
-    libraries=['SDL2', 'SDL2_image', 'SDL2_ttf'],
-    #library_dirs=['.'],
-    #runtime_library_dirs=['.'],
+    libraries=['SDL2', 'SDL2_image', 'SDL2_ttf']
 )
 
 

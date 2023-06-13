@@ -1,8 +1,9 @@
 #include <stdio.h>
-#include "SDL2/SDL.h"
-#include "SDL2/SDL_image.h"
-#include "SDL2/SDL_ttf.h"
-#include "glad/include/glad/glad.h"
+#include <stdlib.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
+#include <SDL2/SDL_ttf.h>
+#include <glad/glad.h>
 
 
 // Window variables
@@ -60,7 +61,7 @@ int store_surface(SDL_Surface* surface) {
     if (numSurfaces == maxSurfaces) {
         // If the array is full, resize it by doubling its capacity
         int newMaxSurfaces = (maxSurfaces == 0) ? 1 : (maxSurfaces * 2);
-        SDL_Surface** newSurfaces = realloc(surfaces, newMaxSurfaces * sizeof(SDL_Surface));
+        SDL_Surface** newSurfaces = realloc(surfaces, newMaxSurfaces * sizeof(SDL_Surface*));
         if (newSurfaces == NULL) {
             // Error handling if realloc fails
             printf("Failed to resize the surfaces array.\n");
