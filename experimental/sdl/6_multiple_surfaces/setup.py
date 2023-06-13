@@ -16,7 +16,8 @@ graphics_module = Extension(
     sources=['graphics.c', 'glad/src/glad.c'],
     include_dirs=['glad/include'],
     libraries=['SDL2', 'SDL2_image', 'SDL2_ttf'],
-    extra_compile_args=['-Wno-error']
+    #library_dirs=['.'],
+    #runtime_library_dirs=['.'],
 )
 
 
@@ -27,6 +28,7 @@ setup(
     description='graphics',
     ext_modules=[graphics_module],
 )
+
 
 # Delete temporary build folder
 shutil.rmtree('build')
