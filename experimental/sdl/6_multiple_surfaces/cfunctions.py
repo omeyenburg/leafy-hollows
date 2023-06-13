@@ -24,9 +24,6 @@ graphics.c_window.argtypes = [ctypes.c_char_p, ctypes.c_int]
 graphics.c_window.restype = ctypes.c_int
 graphics.window = lambda caption, fps_limit: graphics.c_window(caption.encode("utf-8"), fps_limit)
 
-graphics.quit.argtypes = []
-graphics.quit.restype = None
-
 graphics.update.argtypes = []
 graphics.update.restype = ctypes.c_int
 
@@ -42,6 +39,14 @@ graphics.c_rect.argtypes = [ctypes.c_int] * 8
 graphics.c_rect.restype = None
 graphics.rect = lambda target, color, coords: graphics.c_rect(target, *color, *coords)
 
+graphics.c_circle.argtypes = [ctypes.c_int] * 8
+graphics.c_circle.restype = None
+graphics.circle = lambda target, color, coord, radius, width=0: graphics.c_circle(target, *color, *coord, radius, width)
+
+graphics.c_pixel.argtypes = [ctypes.c_int] * 6
+graphics.c_pixel.restype = None
+graphics.pixel = lambda target, color, coord: graphics.c_pixel(target, *color, *coord)
+
 graphics.c_load_font.argtypes = [ctypes.c_char_p, ctypes.c_int]
 graphics.c_load_font.restype = ctypes.c_int
 graphics.load_font = lambda path, size: graphics.c_load_font(path.encode("utf-8"), size)
@@ -49,6 +54,13 @@ graphics.load_font = lambda path, size: graphics.c_load_font(path.encode("utf-8"
 graphics.c_write.argtypes = [ctypes.c_int, ctypes.c_int, ctypes.c_char_p] + [ctypes.c_int] * 5
 graphics.c_write.restype = ctypes.c_int
 graphics.write = lambda target, font, text, color, coord: graphics.c_write(target, font, text.encode("utf-8"), *color, *coord)
+
+graphics.c_load_shader.argtypes = [ctypes.c_char_p, ctypes.c_char_p]
+graphics.c_load_shader.restype = ctypes.c_int
+graphics.load_shader = lambda vertexPath, fragmentPath: graphics.c_load_shader(vertexPath.encode("utf-8"), fragmentPath.encode("utf-8"))
+
+graphics.activate_shader.argtypes = [ctypes.c_int]
+graphics.activate_shader.restype = None
 
 graphics.c_get_mousepos.argtypes = [ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int)]
 graphics.c_get_mousepos.restype = None
