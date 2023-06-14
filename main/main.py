@@ -9,10 +9,12 @@ import math
 
 
 # Create window
-window = graphics.Window("Test", use_opengl=False, keys=("w", "a", "s", "d"))
+window = graphics.Window("Test", use_opengl=False, keys=("w", "a", "s", "d", "space"))
 world_surface, ui_surface = window.surfaces()
 
 font = graphics.Font(util.File.path("data/fonts/font.png"))
+
+PIXELS_PER_METER = 50
 
 class Physics_Object():
     def __init__(self, mass: int, gravity: bool, hitbox, position: list[float, float]) -> None:
@@ -30,17 +32,27 @@ class Physics_Object():
         self.vel[1] += -((math.sin(angle) * force) / self.mass) * delta_time
     
     def update(self):
+        if self.gravity:
+            self.apply_force((9.81 * PIXELS_PER_METER) * self.mass, 270)
+
+        if self.pos[1] + player.size[1] // 2 >= window.height:  # on the ground (temp)
+            if self.vel[1] > 0:
+                self.vel[1] = 0
+
         self.pos[0] += self.vel[0] * delta_time
         self.pos[1] += self.vel[1] * delta_time
 
+
 class Player(Physics_Object):
-    def __init__(self, spawn_pos: list[float, float], size: int, speed: int) -> None:
-        Physics_Object.__init__(self, 100, False, 0, spawn_pos)
+    def __init__(self, spawn_pos: list[float, float], size: list[int, int], speed: float, jump_force: float) -> None:   # stats in SI-Units
+        Physics_Object.__init__(self, 100, True, 0, spawn_pos)
 
         #self.pos: list[float, float] = spawn_pos
         #self.vel: list[float, float] = [0.0, 0.0]
-        self.size: int = size
-        self.speed: int = speed
+        self.size: list[int, int] = size
+
+        self.speed: float = speed * PIXELS_PER_METER
+        self.jump_force: float = jump_force * PIXELS_PER_METER
 
     def draw(self):
         #pygame.draw.rect(world_surface, (0,255,0), pygame.Rect((self.pos[0] - (self.size[0] // 2), self.pos[1] - (self.size[1] // 2)), (self.size[0], self.size[1])))
@@ -100,11 +112,13 @@ class Player(Physics_Object):
             else:
                 self.pos[0] += d_speed
 
-        if window.mouse_buttons[0] == 1:
-            mouse_pull()
+        if keys["space"] == 1:
+            jump_duration = 0.5   # how long is jump force applied --> variable jump height
+            self.apply_force(self.jump_force * (jump_duration / delta_time), 90)
 
-        if self.gravity:
-            self.apply_force((9.81 * 50) * self.mass, 270) # 50px = 1m
+
+        if window.mouse_buttons[0] == 1:
+            mouse_pull()    # constant activation balances out w/ gravity --> usable as rope
 
     def update(self):
         #print(self.pos, self.vel)
@@ -118,7 +132,7 @@ world_width, world_height = 12, 6
 world_blocks = map_generator.default_states(world_width, world_height)
 blocks_to_color = {"air":(255,255,255), "dirt":(255,248,220), "stone":(128,128,128)}
 
-player = Player(spawn_pos=[window.width / 2, window.height / 2], size=[50, 100], speed=250)
+player = Player(spawn_pos=[window.width / 2, window.height / 2], size=[50, 100], speed=5, jump_force=1000)
 
 delta_time = 0
 while True:
