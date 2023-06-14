@@ -8,7 +8,7 @@ if failed:
     sys.exit()
 
 
-shader = graphics.load_shader("shaders/vertexTemplate.glsl", "shaders/fragmentTemplate.glsl")
+shader = graphics.load_shader("shaders/vertexTemplate.glsl", "shaders/fragmentTemplate.glsl", time="float")
 graphics.activate_shader(shader)
 
 
@@ -19,8 +19,12 @@ font = graphics.load_font("fonts/font.ttf", 50)
 for i in range(3):
     graphics.blit(tree_image, player_image, (5 + 20*i, 130 + 20*i))
 
+t = 0.0
 running = True
 while running:
+    t += 0.01
+    graphics.update_shader_value(shader, 0, t)
+
     graphics.write(0, font, str(round(graphics.get_fps(), 3)), (0, 0, 255), (500, 100))
     graphics.blit(0, tree_image, (20, 40))
     for x in range(20):

@@ -20,8 +20,7 @@ int vsync;
 int mouseX, mouseY;
 
 // Shader variables
-GLuint vao, vbo, texture, program;
-int timeLocation;
+GLuint vao, vbo, texture;
 
 // Surface array
 SDL_Surface** surfaces = NULL; // Dynamic array to store surfaces
@@ -36,15 +35,18 @@ int maxFonts = 0;
 // Shader struct
 typedef struct Shader {
     GLuint program;
-    const char* variableNames;
-    void* variableValues;
     int variableNum;
+    const char* variableNames;
+    const char* variableTypes;
+    int* variableLocations;
+    void (**variableFunctions)(int, void*);
+    void** variableValues;
 } Shader;
 
 // Shader array
 Shader* shaders = NULL;
 int numShaders = 0;
-int activeShader = -1;
+int activeShader = 0;
 
 
 // Vertices constants
@@ -277,24 +279,77 @@ void c_write(int target, int font, const char* text, int r, int g, int b, int x,
 }
 
 
+// Cast types
+void uniform1f(int location, void* value) {
+    float typevar = *(float*)value;
+    glUniform1f(location, typevar);
+}
+void uniform1i(int location, void* value) {
+    int typevar = *(int*)value;
+    glUniform1i(location, typevar);
+}
+void uniform1ui(int location, void* value) {
+    int typevar = *(int*)value;
+    glUniform1ui(location, typevar);
+}
+void uniform2f(int location, void* value) {
+    const float* typevar = (float*)value;
+    glUniform2f(location, typevar[0], typevar[1]);
+}
+void uniform2i(int location, void* value) {
+    const int* typevar = (int*)value;
+    glUniform2i(location, typevar[0], typevar[1]);
+}
+void uniform2ui(int location, void* value) {
+    const int* typevar = (int*)value;
+    glUniform2ui(location, typevar[0], typevar[1]);
+}
+
+
 // Create and store a shader program
-int c_load_shader(const char* vertexPath, const char* fragmentPath, const char* variableNames, void* variableValues, int variableNum) {
-    program = glCreateProgram();
-	GLuint vertexShader, fragmentShader;
-	compile_shader(&vertexShader, GL_VERTEX_SHADER, vertexPath);
-	compile_shader(&fragmentShader, GL_FRAGMENT_SHADER, fragmentPath);
-	link_shader(program, &vertexShader, &fragmentShader);
+int c_load_shader(const char* vertexPath, const char* fragmentPath, const char** variableNames, const char** variableTypes, int variableNum) {
+    GLuint program = glCreateProgram();
+    GLuint vertexShader, fragmentShader;
+    compile_shader(&vertexShader, GL_VERTEX_SHADER, vertexPath);
+    compile_shader(&fragmentShader, GL_FRAGMENT_SHADER, fragmentPath);
+    link_shader(program, &vertexShader, &fragmentShader);
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
-    Shader shader = {program, variableNames, variableValues, variableNum};
+    int* variableLocations = malloc(variableNum * sizeof(int*));
+    void (**variableFunctions)(int, void*) = malloc(variableNum * sizeof(void*));
+    void** variableValues = malloc(variableNum * sizeof(void*));
+    for (int i = 0; i < variableNum; i++) {
+        variableLocations[i] = glGetUniformLocation(program, variableNames[i]);
+        if (strcmp(variableTypes[i], "float") == 0) {
+            variableFunctions[i] = uniform1f;
+        } else if (strcmp(variableTypes[i], "int") == 0) {
+            variableFunctions[i] = uniform1i;
+        } else if (strcmp(variableTypes[i], "uint") == 0) {
+            variableFunctions[i] = uniform1ui;
+        } else if (strcmp(variableTypes[i], "vec2") == 0) {
+            variableFunctions[i] = uniform2f;
+        } else if (strcmp(variableTypes[i], "ivec2") == 0) {
+            variableFunctions[i] = uniform2i;
+        } else if (strcmp(variableTypes[i], "uvec2") == 0) {
+            variableFunctions[i] = uniform1ui;
+        }
+    }
+    Shader shader = {program, variableNum, *variableNames, *variableTypes, variableLocations, variableFunctions, variableValues};
     return store_shader(shader);
+}
+
+
+void c_update_shader_value(int shader, int index, void* value) {
+    shaders[shader].variableValues[index] = malloc(sizeof(int));
+    *(int*)(shaders[shader].variableValues[index]) = *(int*)value;
+    
 }
 
 
 // Activate a shader (-1 -> no shader)
 void activate_shader(int shader) {
     glUseProgram(shader + 1);
-    activeShader = shader + 1;
+    activeShader = shader;
 }
 
 
@@ -375,9 +430,6 @@ int c_window(const char* caption, int fps_limit) {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glBindTexture(GL_TEXTURE_2D, 0);
-
-	// Send variables to shader
-    timeLocation = glGetUniformLocation(program, "time");
     return 0;
 }
 
@@ -436,9 +488,14 @@ int update() {
 	if (delta_time != 0) {
 		fps =  1000.0 / delta_time;
 	}
+
+    // Update shader variables
+    for (int i = 0; i < shaders[activeShader].variableNum; i++) {
+        shaders[activeShader].variableFunctions[i](shaders[activeShader].variableLocations[i],
+                                                   shaders[activeShader].variableValues[i]);
+    }
  
     // Update shader
-	glUniform1f(glGetUniformLocation(activeShader, "time"), current_time / 500.0);		
 	glBindTexture(GL_TEXTURE_2D, texture);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, window_size[0], window_size[1], 0,
                  GL_RGBA, GL_UNSIGNED_BYTE,
