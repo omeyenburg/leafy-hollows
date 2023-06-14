@@ -17,7 +17,7 @@ float last_tick_time, max_frame_time, current_time, delta_time, fps, delay = 0;
 int vsync;
 
 // Input variables
-int mouseX, mouseY;
+int mouse_buttons[3] = {0, 0, 0};
 
 // Shader variables
 GLuint vao, vbo, texture;
@@ -74,7 +74,6 @@ int store_surface(SDL_Surface* surface) {
     }
 
     // Add the new SurfaceData to the array
-    //SDL_FreeSurface(surfaces[numSurfaces]);
     surfaces[numSurfaces] = surface;
     numSurfaces++;
     return numSurfaces - 1;
@@ -109,19 +108,6 @@ int store_shader(Shader shader) {
     shaders[numShaders] = shader;
     numShaders++;
     return numShaders - 1;
-}
-
-
-// Query the mouse position
-void c_get_mousepos(int* x, int* y) {
-    *x = mouseX;
-    *y = mouseY;
-}
-
-
-// Query the fps
-float get_fps() {
-    return fps;
 }
 
 
@@ -310,39 +296,46 @@ void uniform2ui(int location, void* value) {
 int c_load_shader(const char* vertexPath, const char* fragmentPath, const char** variableNames, const char** variableTypes, int variableNum) {
     GLuint program = glCreateProgram();
     GLuint vertexShader, fragmentShader;
+
     compile_shader(&vertexShader, GL_VERTEX_SHADER, vertexPath);
     compile_shader(&fragmentShader, GL_FRAGMENT_SHADER, fragmentPath);
     link_shader(program, &vertexShader, &fragmentShader);
+
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
+
     int* variableLocations = malloc(variableNum * sizeof(int*));
     void (**variableFunctions)(int, void*) = malloc(variableNum * sizeof(void*));
     void** variableValues = malloc(variableNum * sizeof(void*));
+
     for (int i = 0; i < variableNum; i++) {
         variableLocations[i] = glGetUniformLocation(program, variableNames[i]);
         if (strcmp(variableTypes[i], "float") == 0) {
             variableFunctions[i] = uniform1f;
+            variableValues[i] = malloc(sizeof(float));
+            *(int*)(variableValues[i]) = 0.0f;
         } else if (strcmp(variableTypes[i], "int") == 0) {
             variableFunctions[i] = uniform1i;
+            variableValues[i] = malloc(sizeof(int));
+            *(int*)(variableValues[i]) = 0;
         } else if (strcmp(variableTypes[i], "uint") == 0) {
             variableFunctions[i] = uniform1ui;
-        } else if (strcmp(variableTypes[i], "vec2") == 0) {
+        } else if (strcmp(variableTypes[i], "vec2") == 0) {  // unsupported
             variableFunctions[i] = uniform2f;
-        } else if (strcmp(variableTypes[i], "ivec2") == 0) {
+        } else if (strcmp(variableTypes[i], "ivec2") == 0) { // unsupported
             variableFunctions[i] = uniform2i;
-        } else if (strcmp(variableTypes[i], "uvec2") == 0) {
+        } else if (strcmp(variableTypes[i], "uvec2") == 0) { // unsupported
             variableFunctions[i] = uniform1ui;
         }
     }
+
     Shader shader = {program, variableNum, *variableNames, *variableTypes, variableLocations, variableFunctions, variableValues};
     return store_shader(shader);
 }
 
 
 void c_update_shader_value(int shader, int index, void* value) {
-    shaders[shader].variableValues[index] = malloc(sizeof(int));
     *(int*)(shaders[shader].variableValues[index]) = *(int*)value;
-    
 }
 
 
@@ -353,10 +346,23 @@ void activate_shader(int shader) {
 }
 
 
-// Initialize the program and create a window
-int c_window(const char* caption, int fps_limit) {
-    vsync = (fps_limit == 0) ? 1 : 0;
+// Set fps limit
+void fps_limit(int max_fps) {
+    vsync = (max_fps == 0) ? 1 : 0;
+    max_frame_time = (vsync == 0) ? 1000.0 / max_fps : 0;
+    if (SDL_GL_SetSwapInterval(vsync) < 0) {
+        printf("Warning: Unable to enable VSync! %s\n", SDL_GetError());
+    }
+}
 
+
+int c_key_identifier(const char* name) {
+    return SDL_GetScancodeFromName(name);
+}
+
+
+// Initialize the program and create a window
+int c_window(const char* caption, int max_fps) {
     // Init SDL
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
         printf("Could not initailize SDL2, error: %s\n", SDL_GetError());
@@ -386,20 +392,15 @@ int c_window(const char* caption, int fps_limit) {
     window_size[0] = monitor_size.w / 3 * 2;
     window_size[1] = monitor_size.h / 5 * 3;
 
-    last_tick_time = SDL_GetTicks();
-    max_frame_time = (vsync == 0) ? 1000.0 / fps_limit : 0;
-	
 	// Create window
     sdl_window = SDL_CreateWindow(
         caption, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, window_size[0], window_size[1],
-        SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
-    );
+        SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+
 	glContext = SDL_GL_CreateContext(sdl_window);
 	gladLoadGLLoader(SDL_GL_GetProcAddress);
-
-    if (vsync && SDL_GL_SetSwapInterval(1) < 0) {
-        printf("Warning: Unable to enable VSync! %s\n", SDL_GetError());
-    }
+    fps_limit(max_fps);
+    last_tick_time = SDL_GetTicks();
 
 	// Set up OpenGL
     glViewport(0, 0, window_size[0], window_size[1]);
@@ -457,14 +458,24 @@ void quit() {
 
 
 // Update the window and query events
-int update() {
+const Uint8* c_update(int* p_running, float* p_fps, int* p_mouse_x, int* p_mouse_y, float* p_mouse_wx, float* p_mouse_wy, int* p_mouse_b1, int* p_mouse_b2, int* p_mouse_b3) {
+    // Update mouse
+    for (int i = 0; i < 3; i++) {
+        if (mouse_buttons[i] == 1) {
+            mouse_buttons[i] = 2;
+        }
+    }
+    *p_mouse_wx = 0.0;
+    *p_mouse_wy = 0.0;
+
     // Query events
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
     	switch (event.type) {
-            case SDL_QUIT: 
+            case SDL_QUIT:
                 quit();
-    	        return 0;
+                *p_running = 0;
+                return (const Uint8*)p_running;
             case SDL_WINDOWEVENT:
                 if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
                     window_size[0] = event.window.data1;
@@ -473,23 +484,39 @@ int update() {
                     glViewport(0, 0, window_size[0], window_size[1]);
                 }
                 break;
+            case SDL_MOUSEBUTTONDOWN:
+                mouse_buttons[event.button.button - 1] = 1;
+                break;
+            case SDL_MOUSEBUTTONUP:
+                mouse_buttons[event.button.button - 1] = 0;
+                break;
+            case SDL_MOUSEMOTION:
+                *p_mouse_x = event.motion.x;
+                *p_mouse_y = event.motion.y;
+                break;
+            case SDL_MOUSEWHEEL:
+                *p_mouse_wx = event.wheel.preciseX;
+                *p_mouse_wy = event.wheel.preciseY;
+                break; // wheel
             default:
                 break;
         }
     }
-
-	// Get mouse pos
-	SDL_GetMouseState(&mouseX, &mouseY);
-
+    *p_mouse_b1 = mouse_buttons[0];
+    *p_mouse_b2 = mouse_buttons[1];
+    *p_mouse_b3 = mouse_buttons[2];
+    
 	// Get ticks
     current_time = SDL_GetTicks();
 	delta_time = (current_time - last_tick_time + delta_time * 9.0) / 10.0;
     last_tick_time = current_time;
 	if (delta_time != 0) {
 		fps =  1000.0 / delta_time;
+        *p_fps = fps;
 	}
 
     // Update shader variables
+    
     for (int i = 0; i < shaders[activeShader].variableNum; i++) {
         shaders[activeShader].variableFunctions[i](shaders[activeShader].variableLocations[i],
                                                    shaders[activeShader].variableValues[i]);
@@ -500,45 +527,18 @@ int update() {
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, window_size[0], window_size[1], 0,
                  GL_RGBA, GL_UNSIGNED_BYTE,
                  surfaces[0]->pixels);
+
 	
     // Update display
 	glClear(GL_COLOR_BUFFER_BIT);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
     SDL_GL_SwapWindow(sdl_window);
 
-    // Reset surface
-	SDL_FillRect(surfaces[0], NULL, 0); // 0 == SDL_MapRGB(surface->format, 0, 0, 0));
-    return 1;
-}
+
+    // Reset surface (0 => SDL_MapRGB(surface->format, 0, 0, 0));)
+	SDL_FillRect(surfaces[0], NULL, 0);
 
 
-// Main function for pure-C testing
-int main(int argc, char* argv[]) {
-    c_window("Test", 1000);
-
-    int tree_image = c_load_image("tree.jpg");
-    int player_image = c_load_image("player.png");
-    int font = c_load_font("fonts/font.ttf", 50);
-
-    for (int i = 0; i < 3; i++) {
-        c_blit(tree_image, player_image, 5 + 20*i, 130 + 20*i);
-    }
-
-    int running = 1;
-    while (running) {
-        float fps = get_fps();
-        char c[50];
-        sprintf(c, "%g", fps);
-        c_write(0, font, c, 0, 0, 255, 500, 100);
-        c_blit(0, tree_image, 20, 40);
-        for (int x = 0; x < 20; x++) {
-            c_blit(0, player_image, 214 + x * 30, 320);
-        }
-        int x, y;
-        c_get_mousepos(&x, &y);
-        c_rect(0, 255, 0, 0, x, y, 110, 80);
-        running = update();
-    }
-
-    quit();
+    // Return array of keys (SDL_Scancode)
+    return SDL_GetKeyboardState(NULL);
 }

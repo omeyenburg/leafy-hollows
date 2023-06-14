@@ -19,13 +19,28 @@ if not os.path.exists(graphics_library_name):
 # Load the shared library
 graphics = ctypes.CDLL(graphics_library_name)
 
+# Pointers
+graphics.running = ctypes.c_int(1)
+graphics.fps = ctypes.c_float(0.0)
+graphics.mouse_pos = (ctypes.c_int(0), ctypes.c_int(0))
+graphics.mouse_wheel = (ctypes.c_float(0), ctypes.c_float(0))
+graphics.mouse_buttons = (ctypes.c_int(0), ctypes.c_int(0), ctypes.c_int(0))
+graphics.keys = None
+
 # Function prototypes
 graphics.c_window.argtypes = [ctypes.c_char_p, ctypes.c_int]
 graphics.c_window.restype = ctypes.c_int
 graphics.window = lambda caption, fps_limit: graphics.c_window(caption.encode("utf-8"), fps_limit)
 
-graphics.update.argtypes = []
-graphics.update.restype = ctypes.c_int
+graphics.c_update.argtypes = [ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_float), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_float), ctypes.POINTER(ctypes.c_float), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int)]
+graphics.c_update.restype = ctypes.POINTER(ctypes.c_uint8)
+def p_update():
+    graphics.keys = graphics.c_update(ctypes.byref(graphics.running), ctypes.byref(graphics.fps),
+                                      ctypes.byref(graphics.mouse_pos[0]), ctypes.byref(graphics.mouse_pos[1]),
+                                      ctypes.byref(graphics.mouse_wheel[0]), ctypes.byref(graphics.mouse_wheel[1]),
+                                      ctypes.byref(graphics.mouse_buttons[0]), ctypes.byref(graphics.mouse_buttons[1]), ctypes.byref(graphics.mouse_buttons[2]))
+    return graphics.running.value
+graphics.update = p_update
 
 graphics.c_load_image.argtypes = [ctypes.c_char_p]
 graphics.c_load_image.restype = ctypes.c_int
@@ -83,13 +98,6 @@ graphics.update_shader_value = p_update_shader_value
 graphics.activate_shader.argtypes = [ctypes.c_int]
 graphics.activate_shader.restype = None
 
-graphics.c_get_mousepos.argtypes = [ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int)]
-graphics.c_get_mousepos.restype = None
-def p_get_mousepos():
-    x, y = ctypes.c_int(), ctypes.c_int()
-    graphics.c_get_mousepos(ctypes.byref(x), ctypes.byref(y))
-    return x, y
-graphics.get_mousepos = p_get_mousepos
-
-graphics.get_fps.argtypes = []
-graphics.get_fps.restype = ctypes.c_float
+graphics.c_key_identifier.argtypes = [ctypes.c_char_p]
+graphics.c_key_identifier.restype = ctypes.c_int
+graphics.key_identifier = lambda name: graphics.c_key_identifier(name.encode("utf-8"))
