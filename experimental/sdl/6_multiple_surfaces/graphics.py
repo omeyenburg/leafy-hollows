@@ -28,9 +28,9 @@ graphics.mouse_buttons = (ctypes.c_int(0), ctypes.c_int(0), ctypes.c_int(0))
 graphics.keys = None
 
 # Function prototypes
-graphics.c_window.argtypes = [ctypes.c_char_p, ctypes.c_int]
+graphics.c_window.argtypes = [ctypes.c_char_p, ctypes.c_int, ctypes.c_int]
 graphics.c_window.restype = ctypes.c_int
-graphics.window = lambda caption, fps_limit: graphics.c_window(caption.encode("utf-8"), fps_limit)
+graphics.window = lambda caption, fps_limit, resolution: graphics.c_window(caption.encode("utf-8"), fps_limit, resolution)
 
 graphics.c_update.argtypes = [ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_float), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_float), ctypes.POINTER(ctypes.c_float), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int)]
 graphics.c_update.restype = ctypes.POINTER(ctypes.c_uint8)
@@ -41,6 +41,12 @@ def p_update():
                                       ctypes.byref(graphics.mouse_buttons[0]), ctypes.byref(graphics.mouse_buttons[1]), ctypes.byref(graphics.mouse_buttons[2]))
     return graphics.running.value
 graphics.update = p_update
+
+graphics.fps_limit.argtypes = [ctypes.c_int]
+graphics.fps_limit.restype = None
+
+graphics.toggle_fullscreen.argtypes = []
+graphics.toggle_fullscreen.restype = None
 
 graphics.c_load_image.argtypes = [ctypes.c_char_p]
 graphics.c_load_image.restype = ctypes.c_int

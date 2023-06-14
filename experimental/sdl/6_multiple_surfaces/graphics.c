@@ -6,32 +6,6 @@
 #include <glad/glad.h>
 
 
-// Window variables
-SDL_DisplayMode monitor_size;
-int window_size[2];
-SDL_Window* sdl_window;
-SDL_GLContext glContext;
-
-// Clock variables
-float last_tick_time, max_frame_time, current_time, delta_time, fps, delay = 0;
-int vsync;
-
-// Input variables
-int mouse_buttons[3] = {0, 0, 0};
-
-// Shader variables
-GLuint vao, vbo, texture;
-
-// Surface array
-SDL_Surface** surfaces = NULL; // Dynamic array to store surfaces
-int numSurfaces = 0;
-int maxSurfaces = 0;
-
-// Font array
-TTF_Font** fonts = NULL; // Dynamic array to store fonts
-int numFonts = 0;
-int maxFonts = 0;
-
 // Shader struct
 typedef struct Shader {
     GLuint program;
@@ -43,18 +17,53 @@ typedef struct Shader {
     void** variableValues;
 } Shader;
 
+
+// Window variables
+SDL_DisplayMode monitor_size;
+int window_size[2], res_window_size[2], resolution;
+int fullscreen = 0;
+Uint32 windowFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
+Uint32 windowFullscreenFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN_DESKTOP; // ? SDL_FULLSCREEN
+SDL_Window* sdl_window;
+SDL_GLContext glContext;
+
+// Clock variables
+float last_tick_time, max_frame_time, current_time, delta_time, update_fps, delay = 0;
+int vsync;
+
+// Input variables
+int mouse_buttons[3] = {0, 0, 0};
+
+// Shader variables
+GLuint vao, vbo, ebo, texture_world, texture_ui;
+
+// Surface array
+SDL_Surface** surfaces = NULL; // Dynamic array to store surfaces
+int numSurfaces = 0;
+int maxSurfaces = 0;
+
+// Font array
+TTF_Font** fonts = NULL; // Dynamic array to store fonts
+int numFonts = 0;
+int maxFonts = 0;
+
 // Shader array
 Shader* shaders = NULL;
 int numShaders = 0;
 int activeShader = 0;
 
-
-// Vertices constants
+// Vertices
 GLfloat vertices[] = {
     0.0f, 1.0f, -1.0f, -1.0f,  // bottom-left
     0.0f, 0.0f, -1.0f, 1.0f,   // bottom-right
     1.0f, 0.0f, 1.0f, 1.0f,    // top-right
     1.0f, 1.0f, 1.0f, -1.0f    // top-left
+};
+
+// Indices
+GLuint indices[] = {
+    0, 1, 2,   // triangle 1
+    2, 3, 0    // triangle 2
 };
 
 
@@ -67,6 +76,7 @@ int store_surface(SDL_Surface* surface) {
         if (newSurfaces == NULL) {
             // Error handling if realloc fails
             printf("Failed to resize the surfaces array.\n");
+            free(surfaces);
             return -1;
         }
         surfaces = newSurfaces;
@@ -79,6 +89,7 @@ int store_surface(SDL_Surface* surface) {
     return numSurfaces - 1;
 }
 
+
 // Add a new font to the array
 int store_font(TTF_Font* font) {
     if (numFonts == maxFonts) {
@@ -88,6 +99,7 @@ int store_font(TTF_Font* font) {
         if (newFonts == NULL) {
             // Error handling if realloc fails
             printf("Failed to resize the fonts array.\n");
+            free(fonts);
             return -1;
         }
         fonts = newFonts;
@@ -104,6 +116,12 @@ int store_font(TTF_Font* font) {
 // Add a new shader to the array
 int store_shader(Shader shader) {
     Shader* newShaders = realloc(shaders, sizeof(shaders) + sizeof(shader));
+    if (newShaders == NULL) {
+        // Error handling if realloc fails
+        printf("Failed to resize the fonts array.\n");
+        free(shaders);
+        return -1;
+    }
     shaders = newShaders;
     shaders[numShaders] = shader;
     numShaders++;
@@ -185,12 +203,16 @@ void link_shader(GLint program, GLuint* vertexShader, GLuint* fragmentShader) {
 
 // Create display surface (surfaces[0])
 void create_window_surface() {
-	SDL_Surface* window_surface = SDL_CreateRGBSurfaceWithFormat(0, window_size[0], window_size[1], 32, SDL_PIXELFORMAT_RGBA32);
+	SDL_Surface* surface_world = SDL_CreateRGBSurfaceWithFormat(0, res_window_size[0], res_window_size[1], 32, SDL_PIXELFORMAT_RGBA32);
+    SDL_Surface* surface_ui = SDL_CreateRGBSurfaceWithFormat(0, res_window_size[0], res_window_size[1], 32, SDL_PIXELFORMAT_RGBA32);
     if (numSurfaces) {
         free(surfaces[0]);
-        surfaces[0] = window_surface;
+        free(surfaces[1]);
+        surfaces[0] = surface_world;
+        surfaces[1] = surface_ui;
     } else {
-        store_surface(window_surface);
+        store_surface(surface_world);
+        store_surface(surface_ui);
     }
 }
 
@@ -221,6 +243,7 @@ void c_rect(int target, int r, int g, int b, int x, int y, int width, int height
 }
 
 
+// raw a circle on a surface (target = 0 -> displayed surface)
 void c_circle(int target, int r, int g, int b, int px, int py, int radius, int w) {
     Uint32 color = SDL_MapRGB(surfaces[target]->format, r, g, b);
     int sqrRadius = radius * radius;
@@ -242,6 +265,7 @@ void c_circle(int target, int r, int g, int b, int px, int py, int radius, int w
 }
 
 
+// Set a pixel on a surface (target = 0 -> displayed surface)
 void c_pixel(int target, int r, int g, int b, int x, int y) {
     Uint32 color = SDL_MapRGB(surfaces[target]->format, r, g, b);
     Uint32* pixel = (Uint32*)surfaces[target]->pixels + y * surfaces[target]->pitch / sizeof(Uint32) + x;
@@ -334,6 +358,7 @@ int c_load_shader(const char* vertexPath, const char* fragmentPath, const char**
 }
 
 
+// Overwrite a variable value with it's index
 void c_update_shader_value(int shader, int index, void* value) {
     *(int*)(shaders[shader].variableValues[index]) = *(int*)value;
 }
@@ -343,6 +368,12 @@ void c_update_shader_value(int shader, int index, void* value) {
 void activate_shader(int shader) {
     glUseProgram(shader + 1);
     activeShader = shader;
+}
+
+
+// Generate the SDL_Scancode from a key name
+int c_key_identifier(const char* name) {
+    return SDL_GetScancodeFromName(name);
 }
 
 
@@ -356,13 +387,19 @@ void fps_limit(int max_fps) {
 }
 
 
-int c_key_identifier(const char* name) {
-    return SDL_GetScancodeFromName(name);
+// Toggle fullscreen mode
+void toggle_fullscreen() {
+    fullscreen = !fullscreen;
+    if (fullscreen) {
+        SDL_SetWindowFullscreen(sdl_window, windowFullscreenFlags);
+    } else {
+        SDL_SetWindowFullscreen(sdl_window, windowFlags);
+    }
 }
 
 
 // Initialize the program and create a window
-int c_window(const char* caption, int max_fps) {
+int c_window(const char* caption, int max_fps, int screen_resolution) {
     // Init SDL
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
         printf("Could not initailize SDL2, error: %s\n", SDL_GetError());
@@ -380,6 +417,7 @@ int c_window(const char* caption, int max_fps) {
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 1);
 
     // Get screen size
     if (SDL_GetCurrentDisplayMode(0, &monitor_size) != 0) {
@@ -388,14 +426,16 @@ int c_window(const char* caption, int max_fps) {
         return 1;
     }
 
-    // Set window size and position
+    // Set window size and resolution
+    resolution = screen_resolution;
     window_size[0] = monitor_size.w / 3 * 2;
     window_size[1] = monitor_size.h / 5 * 3;
+    res_window_size[0] = window_size[0] / resolution;
+    res_window_size[1] = window_size[1] / resolution;
+    
 
 	// Create window
-    sdl_window = SDL_CreateWindow(
-        caption, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, window_size[0], window_size[1],
-        SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+    sdl_window = SDL_CreateWindow(caption, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, window_size[0], window_size[1], windowFlags);
 
 	glContext = SDL_GL_CreateContext(sdl_window);
 	gladLoadGLLoader(SDL_GL_GetProcAddress);
@@ -408,8 +448,8 @@ int c_window(const char* caption, int max_fps) {
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
 	glDisable(GL_CULL_FACE);
-	
-	// Create VAO and VBO
+
+    // Create VAO and VBO
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
 
@@ -417,20 +457,42 @@ int c_window(const char* caption, int max_fps) {
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), 0);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (GLvoid*)(2 * sizeof(GLfloat)));
-	glEnableVertexAttribArray(1);
+    glGenBuffers(1, &ebo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-    // Create window surface
+    // Specify vertex attributes
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), 0);
+    glEnableVertexAttribArray(0);
+
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (GLvoid*)(2 * sizeof(GLfloat)));
+    glEnableVertexAttribArray(1);
+
+    // Unbind VAO and buffers
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+    // Create world and ui surface
     create_window_surface();
 
-	// Create window texture
-	glGenTextures(1, &texture);
-	glBindTexture(GL_TEXTURE_2D, texture);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	// Create world and ui texture
+    glGenTextures(1, &texture_world);
+	glBindTexture(GL_TEXTURE_2D, texture_world);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);  // pixel
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // blur
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glBindTexture(GL_TEXTURE_2D, 0);
+
+	glGenTextures(1, &texture_ui);
+	glBindTexture(GL_TEXTURE_2D, texture_ui);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);  // pixel
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // blur
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
     return 0;
 }
 
@@ -451,8 +513,13 @@ void quit() {
         glDeleteProgram(shaders[i].program);
     }
     free(shaders);
+    glDeleteTextures(2, &texture_world);
+    glDeleteBuffers(1, &vbo);
+    glDeleteVertexArrays(1, &vao);
     SDL_GL_DeleteContext(glContext);
     SDL_DestroyWindow(sdl_window);
+    TTF_Quit();
+    IMG_Quit();
     SDL_Quit();
 }
 
@@ -480,6 +547,8 @@ const Uint8* c_update(int* p_running, float* p_fps, int* p_mouse_x, int* p_mouse
                 if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
                     window_size[0] = event.window.data1;
                     window_size[1] = event.window.data2;
+                    res_window_size[0] = window_size[0] / resolution;
+                    res_window_size[1] = window_size[1] / resolution;
                     create_window_surface();
                     glViewport(0, 0, window_size[0], window_size[1]);
                 }
@@ -491,8 +560,8 @@ const Uint8* c_update(int* p_running, float* p_fps, int* p_mouse_x, int* p_mouse
                 mouse_buttons[event.button.button - 1] = 0;
                 break;
             case SDL_MOUSEMOTION:
-                *p_mouse_x = event.motion.x;
-                *p_mouse_y = event.motion.y;
+                *p_mouse_x = event.motion.x / resolution;
+                *p_mouse_y = event.motion.y / resolution;
                 break;
             case SDL_MOUSEWHEEL:
                 *p_mouse_wx = event.wheel.preciseX;
@@ -508,36 +577,54 @@ const Uint8* c_update(int* p_running, float* p_fps, int* p_mouse_x, int* p_mouse
     
 	// Get ticks
     current_time = SDL_GetTicks();
-	delta_time = (current_time - last_tick_time + delta_time * 9.0) / 10.0;
+	delta_time = (current_time - last_tick_time + delta_time) / 2.0;
     last_tick_time = current_time;
+    update_fps += delta_time;
+    if (vsync == 0 && current_time - last_tick_time + 3 < max_frame_time) {
+        SDL_Delay(max_frame_time - current_time + last_tick_time - 3);
+    }
 	if (delta_time != 0) {
-		fps =  1000.0 / delta_time;
-        *p_fps = fps;
+        if (update_fps > 100) {
+            *p_fps = 1000.0 / delta_time;
+            update_fps = 0;
+        }
 	}
+ 
+    // Update textures
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glBindTexture(GL_TEXTURE_2D, texture_world);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, res_window_size[0], res_window_size[1], 0,
+                 GL_RGBA, GL_UNSIGNED_BYTE,
+                 surfaces[0]->pixels);
+
+    glBindTexture(GL_TEXTURE_2D, texture_ui);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, res_window_size[0], res_window_size[1], 0,
+                 GL_RGBA, GL_UNSIGNED_BYTE,
+                 surfaces[1]->pixels);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture_world);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, texture_ui);
 
     // Update shader variables
-    
+    glUniform1i(glGetUniformLocation(shaders[activeShader].program, "texWorld"), 0);
+    glUniform1i(glGetUniformLocation(shaders[activeShader].program, "texUi"), 1);
     for (int i = 0; i < shaders[activeShader].variableNum; i++) {
         shaders[activeShader].variableFunctions[i](shaders[activeShader].variableLocations[i],
                                                    shaders[activeShader].variableValues[i]);
     }
- 
-    // Update shader
-	glBindTexture(GL_TEXTURE_2D, texture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, window_size[0], window_size[1], 0,
-                 GL_RGBA, GL_UNSIGNED_BYTE,
-                 surfaces[0]->pixels);
 
-	
     // Update display
 	glClear(GL_COLOR_BUFFER_BIT);
+    glBindVertexArray(vao);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+    glBindVertexArray(0);
     SDL_GL_SwapWindow(sdl_window);
-
 
     // Reset surface (0 => SDL_MapRGB(surface->format, 0, 0, 0));)
 	SDL_FillRect(surfaces[0], NULL, 0);
-
 
     // Return array of keys (SDL_Scancode)
     return SDL_GetKeyboardState(NULL);
