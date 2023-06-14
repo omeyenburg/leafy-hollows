@@ -2,7 +2,7 @@ from graphics import graphics
 import sys
 
 
-failed = graphics.window("Test", 1000, 4)
+failed = graphics.window("Test", 1000, 1)
 if failed:
     print("Window creation failed.")
     sys.exit()
