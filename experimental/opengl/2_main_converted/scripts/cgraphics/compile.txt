@@ -1,0 +1,1 @@
+gcc graphics.c ./glad/src/glad.c -I./glad/include

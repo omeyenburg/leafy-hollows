@@ -1,5 +1,6 @@
 from graphics import graphics
 import sys
+from pygame import mixer
 
 
 failed = graphics.window("Test", 1000, 1)
@@ -26,7 +27,7 @@ for i in range(3):
 
 t = 0.0
 while graphics.update():
-    t += 0.01
+    t += 1.01
     graphics.update_shader_value(shader, 0, t)
 
     graphics.write(0, font, str(round(graphics.fps.value, 3)), (0, 0, 255), (10, 10))

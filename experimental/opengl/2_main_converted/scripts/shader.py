@@ -41,8 +41,6 @@ def init(use_opengl):
 def window(width, height):
     global OPENGL_SUPPORTED
 
-    print("Max texture size:", glGetIntegerv(GL_MAX_TEXTURE_SIZE))
-
     # Test, if OpenGL is available
     try:
         # Set up OpenGL

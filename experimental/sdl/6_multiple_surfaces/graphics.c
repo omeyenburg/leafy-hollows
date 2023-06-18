@@ -15,6 +15,7 @@ typedef struct Shader {
     int* variableLocations;
     void (**variableFunctions)(int, void*);
     void** variableValues;
+    int texLoc[2];
 } Shader;
 
 
@@ -35,7 +36,7 @@ int vsync;
 int mouse_buttons[3] = {0, 0, 0};
 
 // Shader variables
-GLuint vao, vbo, ebo, texture_world, texture_ui;
+GLuint vao, vbo, ebo, texture_world, texture_ui, gen_texture_ui;
 
 // Surface array
 SDL_Surface** surfaces = NULL; // Dynamic array to store surfaces
@@ -205,6 +206,8 @@ void link_shader(GLint program, GLuint* vertexShader, GLuint* fragmentShader) {
 void create_window_surface() {
 	SDL_Surface* surface_world = SDL_CreateRGBSurfaceWithFormat(0, res_window_size[0], res_window_size[1], 32, SDL_PIXELFORMAT_RGBA32);
     SDL_Surface* surface_ui = SDL_CreateRGBSurfaceWithFormat(0, res_window_size[0], res_window_size[1], 32, SDL_PIXELFORMAT_RGBA32);
+    //SDL_Surface* surface_world = SDL_CreateRGBSurface(0, res_window_size[0], res_window_size[1],4,0,0,0,0);
+    //SDL_Surface* surface_ui = SDL_CreateRGBSurface(0, res_window_size[0], res_window_size[1],4,0,0,0,0);
     if (numSurfaces) {
         free(surfaces[0]);
         free(surfaces[1]);
@@ -232,6 +235,9 @@ int c_load_image(const char* image_path) {
 void c_blit(int target, int image, int x, int y) {
     SDL_Rect dest_rect = {x, y, surfaces[image]->w, surfaces[image]->h};
     SDL_BlitSurface(surfaces[image], NULL, surfaces[target], &dest_rect);
+    if (target == 1) {
+        gen_texture_ui = 1;
+    }
 }
 
 
@@ -240,6 +246,9 @@ void c_rect(int target, int r, int g, int b, int x, int y, int width, int height
     SDL_Rect rect = {x, y, width, height};
     Uint32 color = SDL_MapRGB(surfaces[target]->format, r, g, b);
     SDL_FillRect(surfaces[target], &rect, color);
+    if (target == 1) {
+        gen_texture_ui = 1;
+    }
 }
 
 
@@ -262,6 +271,9 @@ void c_circle(int target, int r, int g, int b, int px, int py, int radius, int w
             }
         }
     }
+    if (target == 1) {
+        gen_texture_ui = 1;
+    }
 }
 
 
@@ -270,6 +282,18 @@ void c_pixel(int target, int r, int g, int b, int x, int y) {
     Uint32 color = SDL_MapRGB(surfaces[target]->format, r, g, b);
     Uint32* pixel = (Uint32*)surfaces[target]->pixels + y * surfaces[target]->pitch / sizeof(Uint32) + x;
     *pixel = color; 
+    if (target == 1) {
+        gen_texture_ui = 1;
+    }
+}
+
+
+// Fill a surface with black
+void fill(int target) {
+    SDL_FillRect(surfaces[target], NULL, 0);
+    if (target == 1) {
+        gen_texture_ui = 1;
+    }
 }
 
 
@@ -286,6 +310,9 @@ void c_write(int target, int font, const char* text, int r, int g, int b, int x,
     SDL_Rect dest_rect = {x, y, surf->w, surf->h};
     SDL_BlitSurface(surf, NULL, surfaces[target], &dest_rect);
     SDL_FreeSurface(surf);
+    if (target == 1) {
+        gen_texture_ui = 1;
+    }
 }
 
 
@@ -344,16 +371,20 @@ int c_load_shader(const char* vertexPath, const char* fragmentPath, const char**
             *(int*)(variableValues[i]) = 0;
         } else if (strcmp(variableTypes[i], "uint") == 0) {
             variableFunctions[i] = uniform1ui;
-        } else if (strcmp(variableTypes[i], "vec2") == 0) {  // unsupported
+        } else if (strcmp(variableTypes[i], "vec2") == 0) {  // currently unsupported
             variableFunctions[i] = uniform2f;
-        } else if (strcmp(variableTypes[i], "ivec2") == 0) { // unsupported
+        } else if (strcmp(variableTypes[i], "ivec2") == 0) { // currently unsupported
             variableFunctions[i] = uniform2i;
-        } else if (strcmp(variableTypes[i], "uvec2") == 0) { // unsupported
+        } else if (strcmp(variableTypes[i], "uvec2") == 0) { // currently unsupported
             variableFunctions[i] = uniform1ui;
         }
     }
 
-    Shader shader = {program, variableNum, *variableNames, *variableTypes, variableLocations, variableFunctions, variableValues};
+    int texLoc[2] = {glGetUniformLocation(program, "texWorld"),
+                     glGetUniformLocation(program, "texUi")};
+
+    Shader shader = {program, variableNum, *variableNames, *variableTypes, variableLocations,
+                     variableFunctions, variableValues, {texLoc[0], texLoc[1]}};
     return store_shader(shader);
 }
 
@@ -493,6 +524,11 @@ int c_window(const char* caption, int max_fps, int screen_resolution) {
 	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture_world);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, texture_ui);
+
     return 0;
 }
 
@@ -591,26 +627,23 @@ const Uint8* c_update(int* p_running, float* p_fps, int* p_mouse_x, int* p_mouse
 	}
  
     // Update textures
-    glClear(GL_COLOR_BUFFER_BIT);
-
     glBindTexture(GL_TEXTURE_2D, texture_world);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, res_window_size[0], res_window_size[1], 0,
                  GL_RGBA, GL_UNSIGNED_BYTE,
                  surfaces[0]->pixels);
 
-    glBindTexture(GL_TEXTURE_2D, texture_ui);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, res_window_size[0], res_window_size[1], 0,
-                 GL_RGBA, GL_UNSIGNED_BYTE,
-                 surfaces[1]->pixels);
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture_world);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, texture_ui);
+    // gen_texture_ui = 0, when surfaces[1] was changed
+    if (gen_texture_ui == 1) {
+        glBindTexture(GL_TEXTURE_2D, texture_ui);
+	    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, res_window_size[0], res_window_size[1], 0,
+                    GL_RGBA, GL_UNSIGNED_BYTE,
+                    surfaces[1]->pixels);
+        gen_texture_ui = 0;
+    }
 
     // Update shader variables
-    glUniform1i(glGetUniformLocation(shaders[activeShader].program, "texWorld"), 0);
-    glUniform1i(glGetUniformLocation(shaders[activeShader].program, "texUi"), 1);
+    glUniform1i(shaders[activeShader].texLoc[0], 0);
+    glUniform1i(shaders[activeShader].texLoc[1], 1);
     for (int i = 0; i < shaders[activeShader].variableNum; i++) {
         shaders[activeShader].variableFunctions[i](shaders[activeShader].variableLocations[i],
                                                    shaders[activeShader].variableValues[i]);
@@ -629,3 +662,5 @@ const Uint8* c_update(int* p_running, float* p_fps, int* p_mouse_x, int* p_mouse
     // Return array of keys (SDL_Scancode)
     return SDL_GetKeyboardState(NULL);
 }
+
+int main() {}
