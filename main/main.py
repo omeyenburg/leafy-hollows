@@ -9,7 +9,7 @@ import math
 
 
 # Create window
-window = graphics.Window("Test", use_opengl=False, keys=("w", "a", "s", "d", "space"))
+window = graphics.Window("Test", use_opengl=False, keys=("w", "a", "s", "d", "space", "left shift"))
 world_surface, ui_surface = window.surfaces()
 
 font = graphics.Font(util.File.path("data/fonts/font.png"))
@@ -81,11 +81,13 @@ class Physics_Object():
 
 
 class Player(Physics_Object):
-    def __init__(self, spawn_pos: list[float, float], speed: float, acceleration_time: float, jump_force: float) -> None:   # stats in SI-Units
+    def __init__(self, spawn_pos: list[float, float], speed: float, sprint_speed: float, acceleration_time: float, jump_force: float) -> None:   # stats in SI-Units
         Physics_Object.__init__(self, 100, GRAVITY_CONSTANT, pygame.Rect((0, 0), (50, 100)), spawn_pos)
 
         self.speed: float = speed * PIXELS_PER_METER
+        self.sprint_speed: float = sprint_speed * PIXELS_PER_METER
         self.acceleration_time: float = acceleration_time
+
         self.jump_force: float = jump_force * PIXELS_PER_METER
 
     def draw(self):
@@ -108,19 +110,25 @@ class Player(Physics_Object):
             self.apply_force(force, angle_to_mouse)
 
         keys = window.keys
-        d_speed = (delta_time / self.acceleration_time) * self.speed
+
+        max_speed = self.speed
+        if keys["left shift"] > 0:  # keeps sprinting once key pressed / stops faster as long as pressed
+            max_speed = self.sprint_speed
+
+        d_speed = (delta_time / self.acceleration_time) * max_speed
         
+
         if keys["d"] > 0:
-            if self.vel[0] < self.speed:
-                    if self.vel[0] + d_speed > self.speed:
-                        self.vel[0] = self.speed
+            if self.vel[0] < max_speed:
+                    if self.vel[0] + d_speed > max_speed:
+                        self.vel[0] = max_speed
                     else:
                         self.vel[0] += d_speed
 
         elif keys["a"] > 0:
-            if self.vel[0] > -self.speed:
-                if self.vel[0] - d_speed < -self.speed:
-                    self.vel[0] = -self.speed
+            if self.vel[0] > -max_speed:
+                if self.vel[0] - d_speed < -max_speed:
+                    self.vel[0] = -max_speed
                 else:
                     self.vel[0] -= d_speed
         
@@ -164,7 +172,7 @@ world_width, world_height = 12, 6
 world_blocks = map_generator.default_states(world_width, world_height)
 blocks_to_color = {"air":(0,0,0), "dirt":(255,248,220), "stone":(128,128,128)}
 
-player = Player(spawn_pos=[window.width / 2, window.height / 2], speed=5, acceleration_time=0.2, jump_force=1000)
+player = Player(spawn_pos=[window.width / 2, window.height / 2], speed=4, sprint_speed=10, acceleration_time=0.2, jump_force=1000)
 
 terrain: list[pygame.Rect] = []
 
