@@ -15,13 +15,14 @@ world_surface, ui_surface = window.surfaces()
 font = graphics.Font(util.File.path("data/fonts/font.png"))
 
 PIXELS_PER_METER = 50
+GRAVITY_CONSTANT = 9.81
 
 class Physics_Object():
-    def __init__(self, mass: int, gravity: bool, rect: pygame.Rect, position: list[float, float]) -> None:
+    def __init__(self, mass: int, gravity: float, rect: pygame.Rect, position: list[float, float]) -> None:
         self.mass: int = mass
-        self.gravity: bool = gravity
+        self.gravity_constant: float = gravity
 
-        self.pos: list[float, float] = position     # pos used for setting, rect used for reading
+        self.pos: list[float, float] = position     # pos used for writing, rect used for reading
         self.vel: list[float, float] = [0.0, 0.0]
         self.rect: pygame.Rect = rect
 
@@ -29,6 +30,15 @@ class Physics_Object():
         angle = math.radians(angle)
         self.vel[0] += ((math.cos(angle) * force) / self.mass) * delta_time
         self.vel[1] += -((math.sin(angle) * force) / self.mass) * delta_time
+
+    def gravity(self):
+        self.apply_force((self.gravity_constant * PIXELS_PER_METER) * self.mass, 270)
+    
+    def apply_velocity(self):
+        self.pos[0] += self.vel[0] * delta_time
+        self.horizontal_collide()
+        self.pos[1] += self.vel[1] * delta_time
+        self.vertical_collide()
     
     def horizontal_collide(self):
         for rect in terrain:
@@ -58,34 +68,24 @@ class Physics_Object():
                     self.vel[1] = 0
 
     def update(self):
-        
-        if self.gravity:
-            self.apply_force((9.81 * PIXELS_PER_METER) * self.mass, 270)
-
-        
+        if self.gravity != 0:
+            self.gravity()
         if self.rect.bottom >= window.height:  # on the ground (temp)
             if self.vel[1] > 0:
                 self.vel[1] = 0
-        
-        self.pos[0] += self.vel[0] * delta_time
-        self.horizontal_collide()
-        self.pos[1] += self.vel[1] * delta_time
-        self.vertical_collide()
-        #self.move_position([vel * delta_time for vel in self.vel])     # move by frame velocity
-        
 
-        self.rect.center = self.pos
+        self.apply_velocity()
+
+        self.rect.center = self.pos # update reading position
 
 
 
 class Player(Physics_Object):
     def __init__(self, spawn_pos: list[float, float], speed: float, jump_force: float) -> None:   # stats in SI-Units
-        Physics_Object.__init__(self, 100, True, pygame.Rect((0, 0), (50, 100)), spawn_pos)
+        Physics_Object.__init__(self, 100, GRAVITY_CONSTANT, pygame.Rect((0, 0), (50, 100)), spawn_pos)
 
         self.speed: float = speed * PIXELS_PER_METER
         self.jump_force: float = jump_force * PIXELS_PER_METER
-
-        self.mov_flags: list[bool, bool] = [False, False]   # 0d, 1a
 
     def draw(self):
         pygame.draw.rect(world_surface, (0,255,0), self.rect)
@@ -115,19 +115,19 @@ class Player(Physics_Object):
         #if keys["s"] > 0:
         #    self.vel[1] = self.speed
 
-        if self.mov_flags[0]:
-            self.vel[0] -= self.speed
-            self.mov_flags[0] = False
         if keys["d"] > 0:
-            self.vel[0] += self.speed
-            self.mov_flags[0] = True
-        
-        if self.mov_flags[1]:
-            self.vel[0] += self.speed
-            self.mov_flags[1] = False
+            if self.vel[0] < self.speed:
+                if self.vel[0] > 0:
+                    self.vel[0] = self.speed
+                else:
+                    self.vel[0] += self.speed
+
         if keys["a"] > 0:
-            self.vel[0] -= self.speed
-            self.mov_flags[1] = True
+            if self.vel[0] > -self.speed:
+                if self.vel[0] < 0:
+                    self.vel[0] = -self.speed
+                else:
+                    self.vel[0] -= self.speed
 
         if keys["space"] == 1:
             self.jump(0.5)   # how long is jump force applied --> variable jump height
