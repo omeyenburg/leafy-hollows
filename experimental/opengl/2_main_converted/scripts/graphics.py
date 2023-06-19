@@ -118,7 +118,7 @@ class Window:
 
         # Draw data
         self.image_draw_data = {}
-        self.text_draw_data = set()
+        self.text_draw_data = {}
 
     def resize(self):
         if self.fullscreen:
@@ -184,13 +184,24 @@ class Window:
             func(loc, value)
             Shader.active.variables[index] = None
 
-        # Use atlas to draw images
+        # Efficiency:
+        # https://learnopengl.com/Advanced-OpenGL/Instancing
+
+        # Better look:
+        # https://learnopengl.com/Advanced-OpenGL/Anti-Aliasing
+        # https://learnopengl.com/Advanced-OpenGL/Framebuffers
+    
+
+        # Draw rectangles
+        # ...
+
         glActiveTexture(GL_TEXTURE0)
         glBindTexture(GL_TEXTURE_2D, self.atlas)
 
         glUniform1i(Shader.active.variables["tex"][0], 0)
         glBindVertexArray(self.vao)
 
+        # Use atlas to draw images
         for image in self.image_draw_data:
             source_rect = self.atlas_rects[image]
             glUniform4fv(Shader.active.variables["source_rect"][0], 1, source_rect)
@@ -199,6 +210,9 @@ class Window:
                 glUniform4fv(Shader.active.variables["dest_rect"][0], 1, dest_rect)
                 glDrawArrays(GL_TRIANGLE_FAN, 0, 4)
 
+        # Draw circles
+        # ...
+
         # Use fonts to draw text
         self.text_shader.activate()
 
@@ -206,35 +220,36 @@ class Window:
         pos = (-0.8, 0.8)
         size = 1
 
-        for font, text, pos in self.text_draw_data:
+        for font in self.text_draw_data:
             glActiveTexture(GL_TEXTURE0)
             glBindTexture(GL_TEXTURE_2D, self.fonts[font])
 
             glUniform1i(Shader.active.variables["tex"][0], 0)
             glBindVertexArray(self.vao)
 
-            offset = 0
-            for letter in text:
-                if not letter in self.font_rects[font] and letter.isalpha():
-                    if letter.upper() in self.font_rects[font]:
-                        letter = letter.upper()
-                    else:
-                        letter = letter.lower()
-                if not letter in self.font_rects[font]:
-                    letter = "?"
-                rect = self.font_rects[font][letter]
-                source = (rect[0], rect[1])
-                dest_rect = (pos[0] + offset + rect[1], pos[1], rect[1], rect[2] * 2)
-                offset += rect[1] * 2.5
+            for text, pos in self.text_draw_data[font]:
+                offset = 0
+                for letter in text:
+                    if not letter in self.font_rects[font] and letter.isalpha():
+                        if letter.upper() in self.font_rects[font]:
+                            letter = letter.upper()
+                        else:
+                            letter = letter.lower()
+                    if not letter in self.font_rects[font]:
+                        letter = "?"
+                    rect = self.font_rects[font][letter]
+                    source = (rect[0], rect[1])
+                    dest_rect = (pos[0] + offset + rect[1], pos[1], rect[1], rect[2] * 2)
+                    offset += rect[1] * 2.5
 
-                glUniform4fv(Shader.active.variables["dest_rect"][0], 1, dest_rect)
-                glUniform2fv(Shader.active.variables["source"][0], 1, source)
-                glDrawArrays(GL_TRIANGLE_FAN, 0, 4)
+                    glUniform4fv(Shader.active.variables["dest_rect"][0], 1, dest_rect)
+                    glUniform2fv(Shader.active.variables["source"][0], 1, source)
+                    glDrawArrays(GL_TRIANGLE_FAN, 0, 4)
 
         pygame.display.flip()
 
         self.image_draw_data = {}
-        self.text_draw_data = set()
+        self.text_draw_data = {}
 
     def toggle_fullscreen(self):
         self.fullscreen = not self.fullscreen
@@ -259,24 +274,25 @@ class Window:
         sys.exit()
     
     def bind_atlas(self, atlas, blur=0):
+        data = pygame.image.tostring(atlas[1], "RGBA", 1)
         self.atlas = glGenTextures(1)
-        #glActiveTexture(GL_TEXTURE0)
         glBindTexture(GL_TEXTURE_2D, self.atlas)
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, *atlas.atlas_size, 0, GL_RGBA, GL_UNSIGNED_BYTE, atlas.data)
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, *atlas[1].get_size(), 0, GL_RGBA, GL_UNSIGNED_BYTE, data)
         glGenerateMipmap(GL_TEXTURE_2D)
         if blur:
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
         else:
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
         glBindTexture(GL_TEXTURE_2D, 0)
-        self.atlas_rects = atlas.image_rects
+        self.atlas_rects = atlas[0]
 
     def bind_font(self, font, blur=0):
         data = pygame.image.tostring(font[1], "RGBA", 1)
         texture = glGenTextures(1)
-        #glActiveTexture(GL_TEXTURE0)
         glBindTexture(GL_TEXTURE_2D, texture)
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, *font[1].get_size(), 0, GL_RGBA, GL_UNSIGNED_BYTE, data)
         glGenerateMipmap(GL_TEXTURE_2D)
@@ -284,8 +300,10 @@ class Window:
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
         else:
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
         glBindTexture(GL_TEXTURE_2D, 0)
         self.fonts.append(texture)
         self.font_rects.append(font[0])
@@ -298,7 +316,10 @@ class Window:
             self.image_draw_data[image] = {(pos, size)}
 
     def write(self, font, text, pos):
-        self.text_draw_data.add((font, text, pos))
+        if font in self.text_draw_data:
+            self.text_draw_data[font].add((text, pos))
+        else:
+            self.text_draw_data[font] = {(text, pos)}
 
 
 class TextureAtlas:
@@ -356,6 +377,23 @@ class TextureAtlas:
                 self.atlas_size[1] += 1
 
         raise Exception("Ran out of space to create texture atlas with maximum size of %d" % self.max_atlas_size)
+
+    def load(folder):
+        with open(folder + "/data.txt", "r") as f:
+            data_str = f.readlines()
+        image = pygame.image.load(folder + "/atlas.png")
+        rects = {}
+        for line in data_str:
+            if line:
+                line = line.replace(" ", "")
+                var, rect_str = line.split(":")
+                rect = tuple([float(val) if val.replace(".", "").isdecimal()
+                              and not val.replace("/", "", 1).replace(".", "").isdecimal()
+                              else eval(val) for val in rect_str.split(",")]) # eval() for "1/3", otherwise float("23.2")
+                rects[var] = rect
+        return rects, image
+                
+
 
 
 class Font:

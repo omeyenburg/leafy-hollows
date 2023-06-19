@@ -11,17 +11,17 @@ import pygame
 window = graphics.Window("Test")
 
 # Pygame stuff for testing
-player_image = pygame.image.load(util.File.path("data/images/tree.jpg", __file__)).convert()
+#player_image = pygame.image.load(util.File.path("data/images/tree.jpg", __file__)).convert()
 
-texture_atlas = graphics.TextureAtlas(player=player_image)
+texture_atlas = graphics.TextureAtlas.load(util.File.path("data/atlas", __file__))
 window.bind_atlas(texture_atlas)
 player = 0
 
 
 font = window.bind_font(graphics.Font.fromPNG(util.File.path("data/fonts/font.png", __file__)))
-print(font)
-font = window.bind_font(graphics.Font.fromSYS(None, 30))
-print(font)
+#print(font)
+#font = window.bind_font(graphics.Font.fromSYS(None, 30))
+#print(font)
 
 # Menu
 """
@@ -67,7 +67,9 @@ while True:
     #font.write(ui_surface, str(window.clock.get_fps()), (255, 255, 0), 3, (20, 20))
 
     # Update window + shader
-    window.draw(player, (-0.4, -0.4), 1)
+    window.draw("stone", (-0.65, -0.4), 1)
+    window.draw("dirt", (0, -0.4), 1)
+    window.draw("grass", (0.65, -0.4), 1)
     window.write(font, str(window.clock.get_fps()), (-0.8, 0.8))
 
     window.update()
