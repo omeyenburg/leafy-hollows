@@ -36,9 +36,9 @@ class Physics_Object():
     
     def apply_velocity(self):
         self.pos[0] += self.vel[0] * delta_time
-        self.horizontal_collide()
+        #self.horizontal_collide()
         self.pos[1] += self.vel[1] * delta_time
-        self.vertical_collide()
+        #self.vertical_collide()
     
     def horizontal_collide(self):
         for rect in terrain:
@@ -81,10 +81,11 @@ class Physics_Object():
 
 
 class Player(Physics_Object):
-    def __init__(self, spawn_pos: list[float, float], speed: float, jump_force: float) -> None:   # stats in SI-Units
+    def __init__(self, spawn_pos: list[float, float], speed: float, acceleration_time: float, jump_force: float) -> None:   # stats in SI-Units
         Physics_Object.__init__(self, 100, GRAVITY_CONSTANT, pygame.Rect((0, 0), (50, 100)), spawn_pos)
 
         self.speed: float = speed * PIXELS_PER_METER
+        self.acceleration_time: float = acceleration_time
         self.jump_force: float = jump_force * PIXELS_PER_METER
 
     def draw(self):
@@ -96,38 +97,41 @@ class Player(Physics_Object):
         self.apply_force(self.jump_force * (duration / delta_time), 90)
 
     def move(self):
-        def mouse_pull():
+        def mouse_pull(strenght: int):
             mouse_pos = [window.mouse_pos[0], window.mouse_pos[1]]
         
             dx, dy = mouse_pos[0] - self.rect.centerx, self.rect.centery - mouse_pos[1]
             angle_to_mouse = math.degrees(math.atan2(dy, dx))
 
-            force = math.dist(self.rect.center, mouse_pos) * (10**4)
+            force = math.dist(self.rect.center, mouse_pos) * (10**strenght)
 
             self.apply_force(force, angle_to_mouse)
 
         keys = window.keys
-        d_speed = self.speed * delta_time
-
-        #if keys["w"] > 0:
-        #    self.vel[1] = -self.speed
+        d_speed = (delta_time / self.acceleration_time) * self.speed
         
-        #if keys["s"] > 0:
-        #    self.vel[1] = self.speed
-
         if keys["d"] > 0:
             if self.vel[0] < self.speed:
-                if self.vel[0] > 0:
-                    self.vel[0] = self.speed
-                else:
-                    self.vel[0] += self.speed
+                    if self.vel[0] + d_speed > self.speed:
+                        self.vel[0] = self.speed
+                    else:
+                        self.vel[0] += d_speed
 
-        if keys["a"] > 0:
+        elif keys["a"] > 0:
             if self.vel[0] > -self.speed:
-                if self.vel[0] < 0:
+                if self.vel[0] - d_speed < -self.speed:
                     self.vel[0] = -self.speed
                 else:
-                    self.vel[0] -= self.speed
+                    self.vel[0] -= d_speed
+        
+        else:
+            if abs(self.vel[0]) <= d_speed:
+                self.vel[0] = 0
+            else:
+                if self.vel[0] > 0:
+                    self.vel[0] -= d_speed
+                else:
+                    self.vel[0] += d_speed
 
         if keys["space"] == 1:
             self.jump(0.5)   # how long is jump force applied --> variable jump height
@@ -135,7 +139,7 @@ class Player(Physics_Object):
 
 
         if window.mouse_buttons[0] == 1:
-            mouse_pull()    # constant activation balances out w/ gravity --> usable as rope
+            mouse_pull(5)    # constant activation balances out w/ gravity --> usable as rope
 
         """
         if self.vel[0] > 0:
@@ -160,7 +164,7 @@ world_width, world_height = 12, 6
 world_blocks = map_generator.default_states(world_width, world_height)
 blocks_to_color = {"air":(0,0,0), "dirt":(255,248,220), "stone":(128,128,128)}
 
-player = Player(spawn_pos=[window.width / 2, window.height / 2], speed=5, jump_force=1000)
+player = Player(spawn_pos=[window.width / 2, window.height / 2], speed=5, acceleration_time=0.2, jump_force=1000)
 
 terrain: list[pygame.Rect] = []
 
