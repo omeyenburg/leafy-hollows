@@ -38,11 +38,15 @@ class Physics_Object():
         self.pos[0] += self.vel[0] * delta_time # apply velocity
         self.rect.centerx = round(self.pos[0])
         self.x_collide()
-        self.rect.centerx = round(self.pos[0])
-
+    
         self.pos[1] += self.vel[1] * delta_time
         self.rect.centery = round(self.pos[1])
         self.y_collide()
+
+        self.update_rect()
+
+    def update_rect(self):
+        self.rect.centerx = round(self.pos[0])
         self.rect.centery = round(self.pos[1])
 
     def gravity(self):
