@@ -26,58 +26,63 @@ class Physics_Object():
         self.vel: list[float, float] = [0.0, 0.0]
         self.rect: pygame.Rect = rect
 
-    def apply_force(self, force: float, angle: int):    # angle in degrees; 0 right, counterclockwise
-        angle = math.radians(angle)
-        self.vel[0] += ((math.cos(angle) * force) / self.mass) * delta_time
-        self.vel[1] += -((math.sin(angle) * force) / self.mass) * delta_time
+        self.collision_flags: list[bool] = [False, False, False, False] # counterclockwise, 0 is right
+
+    def apply_force(self, force: float, angle: int):    # angle in degrees; 0 is right, counterclockwise
+        r_angle = math.radians(angle)
+
+        self.vel[0] += ((math.cos(r_angle) * force) / self.mass) * delta_time
+        self.vel[1] += -((math.sin(r_angle) * force) / self.mass) * delta_time
+    
+    def apply_velocity(self):
+        self.pos[0] += self.vel[0] * delta_time # apply velocity
+        self.rect.centerx = round(self.pos[0])
+        self.x_collide()
+        self.rect.centerx = round(self.pos[0])
+
+        self.pos[1] += self.vel[1] * delta_time
+        self.rect.centery = round(self.pos[1])
+        self.y_collide()
+        self.rect.centery = round(self.pos[1])
 
     def gravity(self):
         self.apply_force((self.gravity_constant * PIXELS_PER_METER) * self.mass, 270)
     
-    def apply_velocity(self):
-        self.pos[0] += self.vel[0] * delta_time
-        #self.horizontal_collide()
-        self.pos[1] += self.vel[1] * delta_time
-        #self.vertical_collide()
-    
-    def horizontal_collide(self):
-        for rect in terrain:
-            if self.rect.colliderect(rect):
-                print(self.vel)
-                if self.vel[0] < 0:
-                    self.rect.left = rect.right
-                    self.pos[0] = self.rect.centerx
-                    self.vel[0] = 0
+    def x_collide(self):
+        for rect in [terrain[i] for i in self.rect.collidelistall(terrain)]:    # list of colliding rects
+            if self.vel[0] < 0:
+                self.collision_flags[2] = True
+                self.pos[0] = rect.right + (self.rect.size[0] / 2)
+                self.vel[0] = 0
 
-                elif self.vel[0] > 0:
-                    self.rect.right = rect.left
-                    self.pos[0] = self.rect.centerx
-                    self.vel[0] = 0
+            if self.vel[0] > 0:
+                self.collision_flags[0] = True
+                self.pos[0] = rect.left - (self.rect.size[0] / 2)
+                self.vel[0] = 0
     
-    def vertical_collide(self):
-        for rect in terrain:
-            if self.rect.colliderect(rect):
-                if self.vel[1] < 0:
-                    self.rect.top = rect.bottom
-                    self.pos[1] = self.rect.centerx
+    def y_collide(self):
+        for rect in [terrain[i] for i in self.rect.collidelistall(terrain)]:
+            if self.vel[1] > 0:
+                    self.collision_flags[3] = True
+                    self.pos[1] = rect.top - (self.rect.size[1] / 2)
                     self.vel[1] = 0
 
-                elif self.vel[1] > 0:
-                    self.rect.bottom = rect.top
-                    self.pos[1] = self.rect.centerx
-                    self.vel[1] = 0
+            if self.vel[1] < 0:
+                self.collision_flags[1] = True
+                self.pos[1] = rect.bottom + (self.rect.size[1] / 2)
+                self.vel[1] = 0
 
     def update(self):
+        self.collision_flags: list[bool] = [False, False, False, False]
+
         if self.gravity != 0:
             self.gravity()
+
         if self.rect.bottom >= window.height:  # on the ground (temp)
             if self.vel[1] > 0:
                 self.vel[1] = 0
 
         self.apply_velocity()
-
-        self.rect.center = self.pos # update reading position
-
 
 
 class Player(Physics_Object):
@@ -140,9 +145,12 @@ class Player(Physics_Object):
                     self.vel[0] -= d_speed
                 else:
                     self.vel[0] += d_speed
-
+        
+        if any(self.collision_flags):
+            print(self.collision_flags, delta_time)
         if keys["space"] == 1:
-            self.jump(0.5)   # how long is jump force applied --> variable jump height
+            if self.collision_flags[3]: # on ground
+                self.jump(0.5)   # how long is jump force applied --> variable jump height
             
 
 
@@ -162,8 +170,8 @@ class Player(Physics_Object):
     def update(self):
         #print(self.rect.center, self.vel)
 
-        Physics_Object.update(self)
         self.move()
+        Physics_Object.update(self)
         self.draw()
 
 
@@ -178,6 +186,7 @@ terrain: list[pygame.Rect] = []
 
 delta_time = 0
 while True:
+    terrain = []
     delta_time = (1 / window.clock.get_fps()) if window.clock.get_fps() > 0 else delta_time
 
     world_surface, ui_surface = window.surfaces()
@@ -185,8 +194,9 @@ while True:
     # Reset surfaces
     world_surface.fill((0, 0, 0))
     ui_surface.fill((0, 0, 0))
-
+    
     # drawing blocks
+
     block_width, block_height = 90, 90   # scale to window
     for y in range(len(world_blocks)):
         for x in range(len(world_blocks[0])):
@@ -194,9 +204,8 @@ while True:
             if world_blocks[y][x] != "air":
                 terrain.append(block_rect)
             pygame.draw.rect(world_surface, blocks_to_color[world_blocks[y][x]], block_rect)
-    
+
     font.write(ui_surface, str(window.clock.get_fps()), (255, 0, 0), 2, (0, 0))   # FPS Counter
-    
     player.update()
 
     # Update window + shader
