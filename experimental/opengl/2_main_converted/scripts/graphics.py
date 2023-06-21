@@ -73,21 +73,23 @@ class Window:
         self.vao = glGenVertexArrays(1)
         glBindVertexArray(self.vao)
 
-        # Create vertex buffer object (VBO)
+        # Create vertex buffer objects (VBOs)
+        """
+        # Vertices & texcoords
         vertices = numpy.array([
             -1.0, -1.0, 0.0, 0.0,  # bottom-left
             -1.0, 1.0, 0.0, 1.0,   # top-left
             1.0, 1.0, 1.0, 1.0,    # top-right
             1.0, -1.0, 1.0, 0.0    # bottom-right
         ], dtype=numpy.float32)
-
         vbo = glGenBuffers(1)
         glBindBuffer(GL_ARRAY_BUFFER, vbo)
         glBufferData(GL_ARRAY_BUFFER, vertices.nbytes, vertices, GL_STATIC_DRAW)
 
+        # 
+
         # Create element buffer object (EBO) for indices
         indices = numpy.array([0, 1, 2, 0, 2, 3], dtype=numpy.uint32)
-
         ebo = glGenBuffers(1)
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo)
         #glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.nbytes, indices, GL_STATIC_DRAW)
@@ -98,10 +100,79 @@ class Window:
         glEnableVertexAttribArray(0)
         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * vertices.itemsize, ctypes.c_void_p(2 * vertices.itemsize))
         glEnableVertexAttribArray(1)
+        """
 
         #glBindBuffer(GL_ARRAY_BUFFER, 0)
         #glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0)
         #glBindVertexArray(0)
+
+        # vertex shader inputs
+        """
+        vec2 position
+        vec2 texcoord
+        instanced vec4 dest_rect
+        instanced vec4 source_rect
+        instanced vec4 color
+        instanced int shape -> 0=image, 1=rect, 2=circle
+        """
+
+        # VBOs
+        vertices_vbo, ebo, self.dest_vbo, self.source_vbo, self.color_vbo, self.shape_vbo = glGenBuffers(6)
+
+        # Instanced shader inputs
+        self.vbo_instances_length = 0
+        self.vbo_instances_index = 0
+        self.dest_vbo_data = numpy.zeros(0)
+        self.source_vbo_data = numpy.zeros(0)
+        self.color_vbo_data = numpy.zeros(0)
+        self.shape_vbo_data = numpy.zeros(0, dtype=int)
+
+        # Vertices & texcoords
+        vertices = numpy.array([
+            -1.0, -1.0, 0.0, 0.0,  # bottom-left
+            -1.0, 1.0, 0.0, 1.0,   # top-left
+            1.0, 1.0, 1.0, 1.0,    # top-right
+            1.0, -1.0, 1.0, 0.0    # bottom-right
+        ], dtype=numpy.float32)
+        glBindBuffer(GL_ARRAY_BUFFER, vertices_vbo)
+        glBufferData(GL_ARRAY_BUFFER, vertices.nbytes, vertices, GL_STATIC_DRAW)
+
+        # Create element buffer object (EBO) for indices
+        indices = numpy.array([0, 1, 2, 0, 2, 3], dtype=numpy.uint32)
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo)
+        #glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.nbytes, indices, GL_STATIC_DRAW)
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, len(indices) * 4, (GLuint * len(indices))(*indices), GL_STATIC_DRAW)
+
+        glBindBuffer(GL_ARRAY_BUFFER, vertices_vbo)
+        glEnableVertexAttribArray(0)
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * vertices.itemsize, ctypes.c_void_p(0))
+        glEnableVertexAttribArray(1)
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * vertices.itemsize, ctypes.c_void_p(2 * vertices.itemsize))
+        
+        glEnableVertexAttribArray(2)
+        glBindBuffer(GL_ARRAY_BUFFER, self.dest_vbo)
+        glBufferData(GL_ARRAY_BUFFER, 0, self.dest_vbo_data, GL_DYNAMIC_DRAW)
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, ctypes.c_void_p(0))
+        glVertexAttribDivisor(2, 1)
+
+        glEnableVertexAttribArray(3)
+        glBindBuffer(GL_ARRAY_BUFFER, self.source_vbo)
+        glBufferData(GL_ARRAY_BUFFER, 0, self.source_vbo_data, GL_DYNAMIC_DRAW)
+        glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 0, ctypes.c_void_p(0))
+        glVertexAttribDivisor(3, 1)
+
+        glEnableVertexAttribArray(4)
+        glBindBuffer(GL_ARRAY_BUFFER, self.color_vbo)
+        glBufferData(GL_ARRAY_BUFFER, 0, self.color_vbo_data, GL_DYNAMIC_DRAW)
+        glVertexAttribPointer(4, 2, GL_FLOAT, GL_FALSE, 0, ctypes.c_void_p(0))
+        glVertexAttribDivisor(4, 1)
+
+        glEnableVertexAttribArray(5)
+        glBindBuffer(GL_ARRAY_BUFFER, self.shape_vbo)
+        glBufferData(GL_ARRAY_BUFFER, 0, self.shape_vbo_data, GL_DYNAMIC_DRAW)
+        glVertexAttribPointer(5, 2, GL_INT, GL_FALSE, 0, ctypes.c_void_p(0))
+        glVertexAttribDivisor(5, 1)
+        
 
         # Assigned by bind_atlas
         self.atlas = None
@@ -123,6 +194,62 @@ class Window:
         # Draw data
         self.image_draw_data = {}
         self.text_draw_data = {}
+
+    def add_vbo_instance(self, dest, source, color, shape):
+        if self.vbo_instances_length == vbo_instances_index: # Resize all instanced vbos
+            if not self.vbo_instances_length:
+                self.vbo_instances_length = 1
+            else:
+                self.vbo_instances_length *= 2
+
+            new_dest_vbo_data = numpy.zeros(self.vbo_instances_length)
+            new_source_vbo_data = numpy.zeros(self.vbo_instances_length)
+            new_color_vbo_data = numpy.zeros(self.vbo_instances_length)
+            new_shape_vbo_data = numpy.zeros(self.vbo_instances_length, dtype=int)
+
+            new_dest_vbo_data[:len(self.dest_vbo_data)] = self.dest_vbo_data
+            self.dest_vbo_data = new_dest_vbo_data
+            new_source_vbo_data[:len(self.source_vbo_data)] = self.source_vbo_data
+            self.dest_vbo_data = new_source_vbo_data
+            new_color_vbo_data[:len(self.color_vbo_data)] = self.color_vbo_data
+            self.dest_vbo_data = new_color_vbo_data
+            new_shape_vbo_data[:len(self.shape_vbo_data)] = self.shape_vbo_data
+            self.dest_vbo_data = new_shape_vbo_data
+
+            glDeleteBuffers(4, (self.dest_vbo, self.source_vbo, self.color_vbo, self.shape_vbo))
+            self.dest_vbo, self.source_vbo, self.color_vbo, self.shape_vbo = glGenBuffers(4)
+
+            #glEnableVertexAttribArray(2)
+            glBindBuffer(GL_ARRAY_BUFFER, self.dest_vbo)
+            glBufferData(GL_ARRAY_BUFFER, 0, self.dest_vbo_data, GL_DYNAMIC_DRAW)
+            glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, ctypes.c_void_p(0))
+            glVertexAttribDivisor(2, 1)
+
+            #glEnableVertexAttribArray(3)
+            glBindBuffer(GL_ARRAY_BUFFER, self.source_vbo)
+            glBufferData(GL_ARRAY_BUFFER, 0, self.source_vbo_data, GL_DYNAMIC_DRAW)
+            glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 0, ctypes.c_void_p(0))
+            glVertexAttribDivisor(3, 1)
+
+            #glEnableVertexAttribArray(4)
+            glBindBuffer(GL_ARRAY_BUFFER, self.color_vbo)
+            glBufferData(GL_ARRAY_BUFFER, 0, self.color_vbo_data, GL_DYNAMIC_DRAW)
+            glVertexAttribPointer(4, 2, GL_FLOAT, GL_FALSE, 0, ctypes.c_void_p(0))
+            glVertexAttribDivisor(4, 1)
+
+            #glEnableVertexAttribArray(5)
+            glBindBuffer(GL_ARRAY_BUFFER, self.shape_vbo)
+            glBufferData(GL_ARRAY_BUFFER, 0, self.shape_vbo_data, GL_DYNAMIC_DRAW)
+            glVertexAttribPointer(5, 2, GL_FLOAT, GL_FALSE, 0, ctypes.c_void_p(0))
+            glVertexAttribDivisor(5, 1)
+
+        self.dest_vbo_data[4 * self.vbo_instances_index:4 * self.vbo_instances_index + 4] = dest
+        self.source_vbo_data[4 * self.vbo_instances_index:4 * self.vbo_instances_index + 4] = source
+        self.color_vbo_data[4 * self.vbo_instances_index:4 * self.vbo_instances_index + 4] = color
+        self.shape_vbo_data[self.vbo_instances_index:self.vbo_instances_index + 1] = shape
+
+        self.vbo_instances_index += 1
+
 
     def resize(self):
         if self.fullscreen:
