@@ -118,7 +118,7 @@ class Player(Physics_Object):
         d_speed = (delta_time / self.acceleration_time) * max_speed
         
 
-        if keys["d"] > 0:
+        if keys["d"] > 0:   # d priority over a
             if self.vel[0] < max_speed:
                     if self.vel[0] + d_speed > max_speed:
                         self.vel[0] = max_speed
@@ -132,7 +132,7 @@ class Player(Physics_Object):
                 else:
                     self.vel[0] -= d_speed
         
-        else:
+        else:   
             if abs(self.vel[0]) <= d_speed:
                 self.vel[0] = 0
             else:
