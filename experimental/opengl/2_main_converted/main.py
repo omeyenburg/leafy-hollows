@@ -9,6 +9,7 @@ import pygame
 
 # Create window
 window = graphics.Window("Test")
+#window.toggle_wire_frame(1)
 
 # Pygame stuff for testing
 #player_image = pygame.image.load(util.File.path("data/images/tree.jpg", __file__)).convert()

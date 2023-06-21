@@ -90,14 +90,18 @@ class Window:
 
         ebo = glGenBuffers(1)
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo)
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.nbytes, indices, GL_STATIC_DRAW)
+        #glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.nbytes, indices, GL_STATIC_DRAW)
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, len(indices) * 4, (GLuint * len(indices))(*indices), GL_STATIC_DRAW)
 
         glBindBuffer(GL_ARRAY_BUFFER, vbo)
         glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * vertices.itemsize, ctypes.c_void_p(0))
         glEnableVertexAttribArray(0)
         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * vertices.itemsize, ctypes.c_void_p(2 * vertices.itemsize))
         glEnableVertexAttribArray(1)
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo)
+
+        #glBindBuffer(GL_ARRAY_BUFFER, 0)
+        #glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0)
+        #glBindVertexArray(0)
 
         # Assigned by bind_atlas
         self.atlas = None
@@ -170,6 +174,12 @@ class Window:
             elif event.type == MOUSEWHEEL:
                 self.mouse_wheel = [self.mouse_wheel[0] + event.x, self.mouse_wheel[1] + event.y, event.x, event.y]
 
+    def toggle_wire_frame(self, state):
+        if state:
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
+        else:
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
+
     def update(self):
         self.events()
         self.clock.tick(self.max_fps)
@@ -199,7 +209,7 @@ class Window:
         glBindTexture(GL_TEXTURE_2D, self.atlas)
 
         glUniform1i(Shader.active.variables["tex"][0], 0)
-        glBindVertexArray(self.vao)
+        #glBindVertexArray(self.vao)
 
         # Use atlas to draw images
         for image in self.image_draw_data:
@@ -208,7 +218,8 @@ class Window:
             for pos, size in self.image_draw_data[image]:
                 dest_rect = (*pos, 0.3, 0.3)
                 glUniform4fv(Shader.active.variables["dest_rect"][0], 1, dest_rect)
-                glDrawArrays(GL_TRIANGLE_FAN, 0, 4)
+                #glDrawArrays(GL_TRIANGLE_FAN, 0, 4)
+                glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, None, 1)
 
         # Draw circles
         # ...
@@ -225,7 +236,7 @@ class Window:
             glBindTexture(GL_TEXTURE_2D, self.fonts[font])
 
             glUniform1i(Shader.active.variables["tex"][0], 0)
-            glBindVertexArray(self.vao)
+            #glBindVertexArray(self.vao)
 
             for text, pos in self.text_draw_data[font]:
                 offset = 0
@@ -244,7 +255,8 @@ class Window:
 
                     glUniform4fv(Shader.active.variables["dest_rect"][0], 1, dest_rect)
                     glUniform2fv(Shader.active.variables["source"][0], 1, source)
-                    glDrawArrays(GL_TRIANGLE_FAN, 0, 4)
+                    #glDrawArrays(GL_TRIANGLE_FAN, 0, 4)
+                    glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, None, 1)
 
         pygame.display.flip()
 
