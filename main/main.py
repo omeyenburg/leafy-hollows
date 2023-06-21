@@ -6,7 +6,7 @@ import os
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 import math
-
+import time
 
 # Create window
 window = graphics.Window("Test", use_opengl=False, keys=("w", "a", "s", "d", "space", "left shift"))
@@ -26,7 +26,10 @@ class Physics_Object():
         self.vel: list[float, float] = [0.0, 0.0]
         self.rect: pygame.Rect = rect
 
-        self.collision_flags: list[bool] = [False, False, False, False] # counterclockwise, 0 is right
+        self.collision_flags: list[bool] = [False] * 4 # counterclockwise, 0 is right
+
+        self.collision_frames_skipped: list[int] = [0] * 4  # collsions aren't detected every frame because of sub-pixel movements
+        self.collision_frame_duration = 10
 
     def apply_force(self, force: float, angle: int):    # angle in degrees; 0 is right, counterclockwise
         r_angle = math.radians(angle)
@@ -35,19 +38,18 @@ class Physics_Object():
         self.vel[1] += -((math.sin(r_angle) * force) / self.mass) * delta_time
     
     def apply_velocity(self):
-        self.pos[0] += self.vel[0] * delta_time # apply velocity
+        self.pos[0] += self.vel[0] * delta_time
         self.rect.centerx = round(self.pos[0])
         self.x_collide()
+        self.rect.centerx = round(self.pos[0])
     
         self.pos[1] += self.vel[1] * delta_time
         self.rect.centery = round(self.pos[1])
         self.y_collide()
-
-        self.update_rect()
-
-    def update_rect(self):
-        self.rect.centerx = round(self.pos[0])
         self.rect.centery = round(self.pos[1])
+
+        if self.rect.collidelist(terrain) > 0:
+            print("unresolved", delta_time)
 
     def gravity(self):
         self.apply_force((self.gravity_constant * PIXELS_PER_METER) * self.mass, 270)
@@ -56,36 +58,53 @@ class Physics_Object():
         for rect in [terrain[i] for i in self.rect.collidelistall(terrain)]:    # list of colliding rects
             if self.vel[0] < 0:
                 self.collision_flags[2] = True
+                self.collision_frames_skipped[2] = 0
+
                 self.pos[0] = rect.right + (self.rect.size[0] / 2)
                 self.vel[0] = 0
 
             if self.vel[0] > 0:
                 self.collision_flags[0] = True
+                self.collision_frames_skipped[0] = 0
+
                 self.pos[0] = rect.left - (self.rect.size[0] / 2)
                 self.vel[0] = 0
     
     def y_collide(self):
         for rect in [terrain[i] for i in self.rect.collidelistall(terrain)]:
             if self.vel[1] > 0:
-                    self.collision_flags[3] = True
-                    self.pos[1] = rect.top - (self.rect.size[1] / 2)
-                    self.vel[1] = 0
+                self.collision_flags[3] = True
+                self.collision_frames_skipped[3] = 0
+
+                self.pos[1] = rect.top - (self.rect.size[1] / 2)
+                self.vel[1] = 0
 
             if self.vel[1] < 0:
                 self.collision_flags[1] = True
+                self.collision_frames_skipped[1] = 0
+
                 self.pos[1] = rect.bottom + (self.rect.size[1] / 2)
                 self.vel[1] = 0
+            
+    def check_collision_skipping(self):
+        for i in range(4):
+            if self.collision_flags[i]:
+                self.collision_frames_skipped[i] += 1
+                if self.collision_frames_skipped[i] > self.collision_frame_duration:
+                    self.collision_flags[i] = False
 
     def update(self):
-        self.collision_flags: list[bool] = [False, False, False, False]
-
+        # self.collision_flags: list[bool] = [False] * 4
         if self.gravity != 0:
             self.gravity()
 
         if self.rect.bottom >= window.height:  # on the ground (temp)
             if self.vel[1] > 0:
                 self.vel[1] = 0
+            self.collision_flags[3] = True
+            self.collision_frames_skipped[3] = 0
 
+        self.check_collision_skipping()
         self.apply_velocity()
 
 
@@ -126,34 +145,31 @@ class Player(Physics_Object):
 
         d_speed = (delta_time / self.acceleration_time) * max_speed
         
+        if self.collision_flags[0] or self.collision_flags[2] or self.collision_flags[3]: # on ground or on wall?
+            if keys["d"] > 0:   # d has priority over a
+                if self.vel[0] < max_speed:
+                        if self.vel[0] + d_speed > max_speed:   # guaranteeing exact max speed
+                            self.vel[0] = max_speed
+                        else:
+                            self.vel[0] += d_speed
 
-        if keys["d"] > 0:   # d priority over a
-            if self.vel[0] < max_speed:
-                    if self.vel[0] + d_speed > max_speed:
-                        self.vel[0] = max_speed
+            elif keys["a"] > 0:
+                if self.vel[0] > -max_speed:
+                    if self.vel[0] - d_speed < -max_speed:
+                        self.vel[0] = -max_speed
+                    else:
+                        self.vel[0] -= d_speed
+            
+            else:   
+                if abs(self.vel[0]) <= d_speed:
+                    self.vel[0] = 0
+                else:
+                    if self.vel[0] > 0:
+                        self.vel[0] -= d_speed
                     else:
                         self.vel[0] += d_speed
-
-        elif keys["a"] > 0:
-            if self.vel[0] > -max_speed:
-                if self.vel[0] - d_speed < -max_speed:
-                    self.vel[0] = -max_speed
-                else:
-                    self.vel[0] -= d_speed
-        
-        else:   
-            if abs(self.vel[0]) <= d_speed:
-                self.vel[0] = 0
-            else:
-                if self.vel[0] > 0:
-                    self.vel[0] -= d_speed
-                else:
-                    self.vel[0] += d_speed
-        
-        if any(self.collision_flags):
-            print(self.collision_flags, delta_time)
-        if keys["space"] == 1:
-            if self.collision_flags[3]: # on ground
+            
+            if keys["space"] == 1:
                 self.jump(0.5)   # how long is jump force applied --> variable jump height
             
 
