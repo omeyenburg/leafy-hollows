@@ -3,26 +3,18 @@ import scripts.graphics as graphics
 import scripts.util as util
 import os
 
-os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
-import pygame
-
-
 # Create window
 window = graphics.Window("Test")
-#window.toggle_wire_frame(1)
+camera = graphics.Camera(window)
 
-# Pygame stuff for testing
-#player_image = pygame.image.load(util.File.path("data/images/tree.jpg", __file__)).convert()
+vertPath = util.File.path("data/shaders/template.vert", __file__)
+fragPath = util.File.path("data/shaders/template.frag", __file__)
+shader = graphics.Shader(vertPath, fragPath, ("texAtlas", "texFont"))
+shader.activate()
 
-texture_atlas = graphics.TextureAtlas.load(util.File.path("data/atlas", __file__))
-window.bind_atlas(texture_atlas)
-player = 0
+window.bind_atlas(graphics.TextureAtlas.load(util.File.path("data/atlas", __file__)))
+window.bind_font(graphics.Font.fromPNG(util.File.path("data/fonts/font.png", __file__)))
 
-
-font = window.bind_font(graphics.Font.fromPNG(util.File.path("data/fonts/font.png", __file__)))
-#print(font)
-#font = window.bind_font(graphics.Font.fromSYS(None, 30))
-#print(font)
 
 # Menu
 """
@@ -47,30 +39,12 @@ second_page.layout()
 b4.callback = second_page.open
 """
 
-time = -1
 while True:
-
-    # Send variables to the fragment shader
-    time += 1
-    time += window.mouse_wheel[3] * 10 # y-axis-scroll
-
-
-    #shader.setvar("time", time)
+    for x in range(30):
+        for y in range(20):
+            rect = camera.map_coord((x * 30, y * 30, 15, 15), fcentered=False)
+            window.draw_image(("stone", "dirt", "grass")[(x+y * 3)%3], rect[:2], rect[2:])
+    window.draw_circle((0.6, 0), 0.3, (0.5, 0, 1, 1))
+    window.draw_text((0.5, 0), str(round(window.clock.get_fps(), 3)), (0, 1, 0.5, 1))
     
-    # Reset surfaces
-    #world_surface.fill((0, 100, 0))
-    #ui_surface.fill((0, 0, 0))
-
-    # Draw and update menu
-    #menu.update()
-
-    # Draw
-    #font.write(ui_surface, str(window.clock.get_fps()), (255, 255, 0), 3, (20, 20))
-
-    # Update window + shader
-    window.draw("stone", (-0.65, -0.4), 1)
-    window.draw("dirt", (0, -0.4), 1)
-    window.draw("grass", (0.65, -0.4), 1)
-    window.write(font, str(window.clock.get_fps()), (-0.8, 0.8))
-
     window.update()

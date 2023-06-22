@@ -1,4 +1,3 @@
-from pygame import Rect, Vector2 as Vector # pygame.org/docs/
 import sys
 import os
 
