@@ -38,7 +38,7 @@ class Physics_Object():
         self.collision_flags: list[bool] = [False] * 4 # counterclockwise, 0 is right
 
         self.collision_frames_skipped: list[int] = [0] * 4  # collsions aren't detected every frame because of sub-pixel movements
-        self.collision_frame_duration = 25
+        self.collision_frame_duration: int = 25  # collisions are held for x frames
 
     def apply_force(self, force: float, angle: int):    # angle in degrees; 0 is right, counterclockwise
         r_angle = math.radians(angle)
@@ -57,7 +57,7 @@ class Physics_Object():
         self.y_collide()
         self.rect.centery = round(self.pos[1])
 
-        if self.rect.collidelist(terrain) > 0:
+        if self.rect.collidelist(terrain) > 0 and delta_time != 0:
             print("unresolved", delta_time)
 
     def gravity(self):
@@ -187,16 +187,6 @@ class Player(Physics_Object):
 
         if window.mouse_buttons[0] == 1:
             mouse_pull(5)    # constant activation balances out w/ gravity --> usable as rope
-
-        """
-        if self.vel[0] > 0:
-                if  self.vel[0] < d_speed:
-                    self.vel[0] = 0
-                else:
-                    self.vel[0] -= d_speed
-            else:
-                self.pos[0] -= d_speed 
-        """
 
     def update(self):
         #print(self.rect.center, self.vel)
