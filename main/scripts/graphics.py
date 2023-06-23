@@ -13,9 +13,11 @@ def quit():
 
 
 class Window:
-    def __init__(self, caption, resolution=1, keys=("w",)):
-        if shader.OPENGL_SUPPORTED:
+    def __init__(self, caption, use_opengl:bool, keys, resolution=1):
+        if shader.OPENGL_SUPPORTED and use_opengl:
             shader.init(True) # True = use OpenGL
+        else:
+            shader.init(False)
 
         # Constants
         self.max_fps = 1000
@@ -196,7 +198,7 @@ class Camera:
     def update(self):
         self.vel[0] = round((self.pos[0] - self.dest[0]) / 5, 3)
         self.vel[1] = round((self.pos[1] - self.dest[1]) / 5, 3)
-        self.pos[0] = round(self.pos[0] + vel[0], 3)
-        self.pos[1] = round(self.pos[0] + vel[0], 3)
+        self.pos[0] = round(self.pos[0] + self.vel[0], 3)
+        self.pos[1] = round(self.pos[0] + self.vel[0], 3)
         
 
