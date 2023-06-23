@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "glad.h": "c",
+        "chrono": "c",
+        "sdl_image.h": "c",
+        "stdlib.h": "c"
+    }
+}

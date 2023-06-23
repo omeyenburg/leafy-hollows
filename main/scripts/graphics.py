@@ -30,13 +30,14 @@ class Window:
         self.mouse_pos = (0, 0, 0, 0)      # x, y, relx, rely
         self.mouse_wheel = [0, 0, 0, 0]    # x, y, relx, rely
 
-        # Window
+        # Window variables
         info = pygame.display.Info()
         self.screen_size = info.current_w, info.current_h
         self.width, self.height = self.size = self.pre_fullscreen = (int(info.current_w / 3 * 2), int(info.current_h / 5 * 3))
         self.fullscreen = False
         self.resize_supress = False
         
+        # Window
         if shader.OPENGL_SUPPORTED:
             flags = DOUBLEBUF | RESIZABLE | OPENGL
             self.window = pygame.display.set_mode((self.width, self.height), flags=flags, vsync=self.vsync)
@@ -45,7 +46,7 @@ class Window:
             flags = DOUBLEBUF | RESIZABLE | HWSURFACE
             self.window = pygame.display.set_mode((self.width, self.height), flags=flags)
 
-        # Window caption & clock
+        # Caption & clock
         pygame.display.set_caption(caption)
         self.clock = pygame.time.Clock()
 
@@ -159,6 +160,8 @@ class Font:
             letter_surf = pygame.Surface((3, 5))
             letter_surf.set_colorkey((0, 0, 0))
             letter_surf.fill(color)
+            if not letter.upper() in self.letters:
+                continue
             letter_surf.blit(self.letters[letter.upper()], (0, 0))
             surf.blit(pygame.transform.scale(letter_surf, (3 * size, 5 * size)),
                       (index * 4 * size + coord[0], coord[1]))

@@ -12,6 +12,15 @@ import time
 window = graphics.Window("Test", use_opengl=False, keys=("w", "a", "s", "d", "space", "left shift"))
 world_surface, ui_surface = window.surfaces()
 
+
+# Create and activate shader
+vert = util.File.path("data/shaders/template.vert")
+frag = util.File.path("data/shaders/template.frag")
+shader = graphics.shader.Shader(vert, frag, time="int")
+shader.activate()
+
+# Pygame stuff for testing
+tree = pygame.image.load("data/images/tree.jpg").convert()
 font = graphics.Font(util.File.path("data/fonts/font.png"))
 
 PIXELS_PER_METER = 50
