@@ -9,19 +9,16 @@ import math
 import time
 
 # Create window
-window = graphics.Window("Test", use_opengl=False, keys=("w", "a", "s", "d", "space", "left shift"))
-world_surface, ui_surface = window.surfaces()
+window = graphics.Window("Test", keys=("w", "a", "s", "d", "space", "left shift"))
+camera = graphics.Camera(window)
 
-
-# Create and activate shader
-vert = util.File.path("data/shaders/template.vert")
-frag = util.File.path("data/shaders/template.frag")
-shader = graphics.shader.Shader(vert, frag, time="int")
+vertPath = util.File.path("data/shaders/template.vert", __file__)
+fragPath = util.File.path("data/shaders/template.frag", __file__)
+shader = graphics.Shader(vertPath, fragPath, ("texAtlas", "texFont"))
 shader.activate()
 
-# Pygame stuff for testing
-tree = pygame.image.load("data/images/tree.jpg").convert()
-font = graphics.Font(util.File.path("data/fonts/font.png"))
+window.bind_atlas(graphics.TextureAtlas.load(util.File.path("data/atlas", __file__)))
+window.bind_font(graphics.Font.fromPNG(util.File.path("data/fonts/font.png", __file__)))
 
 PIXELS_PER_METER = 50
 GRAVITY_CONSTANT = 9.81
@@ -80,7 +77,8 @@ class Physics_Object():
                 self.vel[0] = 0
     
     def y_collide(self):
-        for rect in [terrain[i] for i in self.rect.collidelistall(terrain)]:
+        for i in self.rect.collidelistall(terrain):
+            rect = terrain[i]
             if self.vel[1] > 0:
                 self.collision_flags[3] = True
                 self.collision_frames_skipped[3] = 0
@@ -128,9 +126,10 @@ class Player(Physics_Object):
         self.jump_force: float = jump_force * PIXELS_PER_METER
 
     def draw(self):
-        pygame.draw.rect(world_surface, (0,255,0), self.rect)
+        rect = camera.map_coord(self.rect, fcentered=False)
+        window.draw_rect(rect[:2], rect[2:], (255, 0, 0))
 
-        pygame.draw.line(ui_surface, (255, 0, 0), self.rect.center, (window.mouse_pos[0], window.mouse_pos[1]), width=1)
+        #pygame.draw.line(ui_surface, (255, 0, 0), self.rect.center, (window.mouse_pos[0], window.mouse_pos[1]), width=1)
     
     def jump(self, duration: float):
         self.apply_force(self.jump_force * (duration / delta_time), 90)
@@ -142,7 +141,7 @@ class Player(Physics_Object):
             dx, dy = mouse_pos[0] - self.rect.centerx, self.rect.centery - mouse_pos[1]
             angle_to_mouse = math.degrees(math.atan2(dy, dx))
 
-            force = math.dist(self.rect.center, mouse_pos) * (10**strenght)
+            force = math.dist(self.rect.topleft, mouse_pos) * (10**strenght)
 
             self.apply_force(force, angle_to_mouse)
 
@@ -161,14 +160,12 @@ class Player(Physics_Object):
                             self.vel[0] = max_speed
                         else:
                             self.vel[0] += d_speed
-
             elif keys["a"] > 0:
                 if self.vel[0] > -max_speed:
                     if self.vel[0] - d_speed < -max_speed:
                         self.vel[0] = -max_speed
                     else:
                         self.vel[0] -= d_speed
-            
             else:   
                 if abs(self.vel[0]) <= d_speed:
                     self.vel[0] = 0
@@ -177,11 +174,8 @@ class Player(Physics_Object):
                         self.vel[0] -= d_speed
                     else:
                         self.vel[0] += d_speed
-            
             if keys["space"] == 1:
                 self.jump(0.5)   # how long is jump force applied --> variable jump height
-            
-
 
         if window.mouse_buttons[0] == 1:
             mouse_pull(5)    # constant activation balances out w/ gravity --> usable as rope
@@ -217,12 +211,6 @@ delta_time = 0
 while True:
     terrain = []
     delta_time = (1 / window.clock.get_fps()) if window.clock.get_fps() > 0 else delta_time
-
-    world_surface, ui_surface = window.surfaces()
-    
-    # Reset surfaces
-    world_surface.fill((0, 0, 0))
-    ui_surface.fill((0, 0, 0))
     
     # drawing blocks
 
@@ -232,9 +220,10 @@ while True:
             block_rect = pygame.Rect(block_width*x, block_height*y, block_width, block_height)
             if world_blocks[y][x] != "air":
                 terrain.append(block_rect)
-            pygame.draw.rect(world_surface, blocks_to_color[world_blocks[y][x]], block_rect)
+            rect = camera.map_coord(block_rect, fcentered=False)
+            window.draw_rect(rect[:2], rect[2:], blocks_to_color[world_blocks[y][x]])
 
-    font.write(ui_surface, str(window.clock.get_fps()), (255, 0, 0), 2, (0, 0))   # FPS Counter
+    window.draw_text((-0.98, 0.9), str(round(window.clock.get_fps(), 3)), (255, 0, 0))
     player.update()
 
     # Update window + shader
