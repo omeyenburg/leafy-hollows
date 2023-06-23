@@ -1,0 +1,5 @@
+// On Mac compile to .out with (outdated):
+gcc main.c ./glad/src/glad.c -I/Library/Frameworks/SDL2.framework/Headers -I./glad/include -F/Library/Frameworks -L/usr/local/Cellar/sdl2/2.26.2/lib -Wl,-rpath,/usr/local/Cellar/sdl2/2.26.2/lib -lSDL2 -lSDL2_image
+
+// On Mac compile to .so with:
+gcc -shared -o graphics.so graphics.c ./glad/src/glad.c -I/Library/Frameworks/SDL2.framework/Headers -I./glad/include -F/Library/Frameworks -L/usr/local/Cellar/sdl2/2.26.2/lib -Wl,-rpath,/usr/local/Cellar/sdl2/2.26.2/lib -lSDL2 -lSDL2_image

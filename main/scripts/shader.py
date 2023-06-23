@@ -12,6 +12,7 @@ try:
     OPENGL_SUPPORTED = True
 except:
     OPENGL_SUPPORTED = False
+    print("OpenGL is not installed")
 
 
 def init(use_opengl):
@@ -34,11 +35,13 @@ def init(use_opengl):
             pygame.display.gl_set_attribute(pygame.GL_CONTEXT_FORWARD_COMPATIBLE_FLAG, True) 
     except:
         OPENGL_SUPPORTED = False
-        print("OpenGL is not installed")
+        print("OpenGL 3.3 core is not available")
 
 
 def window(width, height):
     global OPENGL_SUPPORTED
+
+    print("Max texture size:", glGetIntegerv(GL_MAX_TEXTURE_SIZE))
 
     # Test, if OpenGL is available
     try:
@@ -195,15 +198,17 @@ def update(world_surface, ui_surface):
     if OPENGL_SUPPORTED:
         glClear(GL_COLOR_BUFFER_BIT)
 
+        width, height = world_surface.get_size()
+
         # Update world texture
         glBindTexture(GL_TEXTURE_2D, Shader.world_texture)
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, *world_surface.get_size(), 0,
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0,
                      GL_RGBA, GL_UNSIGNED_BYTE,
                      pygame.image.tostring(world_surface, "RGBA", 1))
 
         # Update UI texture
         glBindTexture(GL_TEXTURE_2D, Shader.ui_texture)
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, *ui_surface.get_size(), 0,
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0,
                      GL_RGBA, GL_UNSIGNED_BYTE,
                      pygame.image.tostring(ui_surface, "RGBA", 1))
 
