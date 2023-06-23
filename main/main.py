@@ -195,15 +195,27 @@ class Player(Physics_Object):
         Physics_Object.update(self)
         self.draw()
 
+def spawn_particle():
+    particle: Physics_Object = Physics_Object()
 
-import scripts.map_generator as map_generator
-world_width, world_height = 12, 6
-world_blocks = map_generator.default_states(world_width, world_height)
-blocks_to_color = {"air":(0,0,0), "dirt":(255,248,220), "stone":(128,128,128)}
+def draw_map():
+    global world_blocks
+    blocks_to_color = {"air":(0,0,0), "dirt":(255,248,220), "stone":(128,128,128)}
+    block_width, block_height = 90, 90   # scale to window
+
+    for y in range(len(world_blocks)):
+        for x in range(len(world_blocks[0])):
+            block_rect = pygame.Rect(block_width*x, block_height*y, block_width, block_height)
+            if world_blocks[y][x] != "air":
+                terrain.append(block_rect)
+            pygame.draw.rect(world_surface, blocks_to_color[world_blocks[y][x]], block_rect)
 
 player = Player(spawn_pos=[window.width / 2, window.height / 2], speed=4, sprint_speed=10, acceleration_time=0.2, jump_force=1000)
 
 terrain: list[pygame.Rect] = []
+
+import scripts.map_generator as map_generator
+world_blocks = map_generator.default_states(12, 6)
 
 delta_time = 0
 while True:
@@ -215,16 +227,11 @@ while True:
     # Reset surfaces
     world_surface.fill((0, 0, 0))
     ui_surface.fill((0, 0, 0))
-    
-    # drawing blocks
 
-    block_width, block_height = 90, 90   # scale to window
-    for y in range(len(world_blocks)):
-        for x in range(len(world_blocks[0])):
-            block_rect = pygame.Rect(block_width*x, block_height*y, block_width, block_height)
-            if world_blocks[y][x] != "air":
-                terrain.append(block_rect)
-            pygame.draw.rect(world_surface, blocks_to_color[world_blocks[y][x]], block_rect)
+    if window.mouse_buttons[2] == 1:
+        spawn_particle()
+
+    draw_map()
 
     font.write(ui_surface, str(window.clock.get_fps()), (255, 0, 0), 2, (0, 0))   # FPS Counter
     player.update()
