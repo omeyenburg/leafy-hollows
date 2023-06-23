@@ -38,7 +38,7 @@ class Physics_Object():
         self.collision_flags: list[bool] = [False] * 4 # counterclockwise, 0 is right
 
         self.collision_frames_skipped: list[int] = [0] * 4  # collsions aren't detected every frame because of sub-pixel movements
-        self.collision_frame_duration = 10
+        self.collision_frame_duration = 25
 
     def apply_force(self, force: float, angle: int):    # angle in degrees; 0 is right, counterclockwise
         r_angle = math.radians(angle)
@@ -114,6 +114,7 @@ class Physics_Object():
             self.collision_frames_skipped[3] = 0
 
         self.check_collision_skipping()
+
         self.apply_velocity()
 
 
@@ -180,8 +181,9 @@ class Player(Physics_Object):
             
             if keys["space"] == 1:
                 self.jump(0.5)   # how long is jump force applied --> variable jump height
-            
 
+        elif  keys["space"] == 1:            
+            print("no jump", delta_time)
 
         if window.mouse_buttons[0] == 1:
             mouse_pull(5)    # constant activation balances out w/ gravity --> usable as rope
