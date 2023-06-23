@@ -354,13 +354,13 @@ class Window:
         Draw a rectangle on the window.
         """
         rect = (position[0] + size[0], position[1] + size[1], size[0] / 2, size[1] / 2)
-        self.add_vbo_instance(rect, (0, 0, 0, 0), color, 1)
+        self.add_vbo_instance(rect, (0, 0, 0, 0), self.camera.map_color(color), 1)
 
     def draw_circle(self, position, radius, color):
         """
         Draw a circle on the window.
         """
-        self.add_vbo_instance((*position, radius, radius), (0, 0, 0, 0), color, 2)
+        self.add_vbo_instance((*position, radius, radius), (0, 0, 0, 0), self.camera.map_color(color), 2)
 
     def draw_text(self, position, text, color):
         """
@@ -379,7 +379,7 @@ class Window:
             source_rect = (rect[0], 0, rect[1], 1)
             dest_rect = (position[0] + offset + rect[1], position[1], rect[1], rect[2] * 2)
             offset += rect[1] * 2.5
-            self.add_vbo_instance(dest_rect, source_rect, color, 3)
+            self.add_vbo_instance(dest_rect, source_rect, self.camera.map_color(color), 3)
 
 
 class TextureAtlas:
@@ -595,6 +595,13 @@ class Camera:
                 coord[i] += 1
 
         return coord
+
+    def map_color(self, color):
+        if not float in color:
+            color = [i / 255 for i in color]
+        if len(color) == 3:
+            color = (*color, 1)
+        return color
 
 
 class Shader:

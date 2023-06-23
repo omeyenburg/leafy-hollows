@@ -44,7 +44,7 @@ while True:
         for y in range(20):
             rect = camera.map_coord((x * 30, y * 30, 15, 15), fcentered=False)
             window.draw_image(("stone", "dirt", "grass")[(x+y * 3)%3], rect[:2], rect[2:])
-    window.draw_circle((0.6, 0), 0.3, (0.5, 0, 1, 1))
-    window.draw_text((0.5, 0), str(round(window.clock.get_fps(), 3)), (0, 1, 0.5, 1))
+    window.draw_circle((0.6, 0), 0.3, (150, 0, 255))
+    window.draw_text((0.5, 0), str(round(window.clock.get_fps(), 3)), (0, 255, 150, 150))
     
     window.update()
