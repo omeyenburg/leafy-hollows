@@ -1,16 +1,32 @@
 #version 330 core
 
-uniform sampler2D texWorld;
-uniform sampler2D texUi;
+in vec2 vertTexcoord;
+in vec2 vertSize;
+in vec4 vertSource_rect;
+in vec4 vertColor;
+in float vertShape;
 
-in vec2 uv;
 out vec4 fragColor;
 
+uniform sampler2D texAtlas;
+uniform sampler2D texFont;
+
 void main() {
-	vec4 uiColor = texture(texUi, uv);
-	if (uiColor == vec4(0, 0, 0, 1)) {
-		fragColor = texture(texWorld, uv);
-	} else {
-		fragColor = uiColor;
-	}
+    float shape = floor(vertShape);
+    if (shape == 0) {
+        // image
+        fragColor = texture(texAtlas, vertTexcoord * vertSource_rect.zw + vertSource_rect.xy);
+    } else if (shape == 1) {
+        // rectangle
+        fragColor = vertColor;
+    } else if (shape == 2 && length(vertTexcoord - 0.5) <= 0.5) {
+        // circle
+        fragColor = vertColor;
+    } else if (shape == 3 && texture(texFont, vertTexcoord * vertSource_rect.zw + vertSource_rect.xy) == vec4(1.0, 1.0, 1.0, 1.0)) {
+        // text
+        fragColor = vertColor;
+    } else {
+        // transparency
+        fragColor = vec4(0.0, 0.0, 0.0, 0.0);
+    }
 }
