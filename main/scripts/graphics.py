@@ -1,6 +1,7 @@
 from platform import system
 import scripts.util as util
 import numpy
+import math
 import sys
 import os
 
@@ -71,14 +72,13 @@ class Window:
         glBindVertexArray(self.vao)
 
         # Create vertex buffer objects
-        vertices_vbo, ebo, self.dest_vbo, self.source_vbo, self.color_vbo, self.shape_vbo = glGenBuffers(6)
+        vertices_vbo, ebo, self.dest_vbo, self.source_or_color_vbo, self.shape_vbo = glGenBuffers(5)
 
         # Instanced shader inputs
         self.vbo_instances_length = 0
         self.vbo_instances_index = 0
         self.dest_vbo_data = numpy.zeros(0, dtype=numpy.float32)
-        self.source_vbo_data = numpy.zeros(0, dtype=numpy.float32)
-        self.color_vbo_data = numpy.zeros(0, dtype=numpy.float32)
+        self.source_or_color_vbo_data = numpy.zeros(0, dtype=numpy.float32)
         self.shape_vbo_data = numpy.zeros(0, dtype=numpy.float32)
 
         # Vertices & texcoords
@@ -111,22 +111,16 @@ class Window:
         glVertexAttribDivisor(2, 1)
 
         glEnableVertexAttribArray(3)
-        glBindBuffer(GL_ARRAY_BUFFER, self.source_vbo)
-        glBufferData(GL_ARRAY_BUFFER, 0, self.source_vbo_data, GL_DYNAMIC_DRAW)
+        glBindBuffer(GL_ARRAY_BUFFER, self.source_or_color_vbo)
+        glBufferData(GL_ARRAY_BUFFER, 0, self.source_or_color_vbo_data, GL_DYNAMIC_DRAW)
         glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 0, ctypes.c_void_p(0))
         glVertexAttribDivisor(3, 1)
 
         glEnableVertexAttribArray(4)
-        glBindBuffer(GL_ARRAY_BUFFER, self.color_vbo)
-        glBufferData(GL_ARRAY_BUFFER, 0, self.color_vbo_data, GL_DYNAMIC_DRAW)
-        glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 0, ctypes.c_void_p(0))
-        glVertexAttribDivisor(4, 1)
-
-        glEnableVertexAttribArray(5)
         glBindBuffer(GL_ARRAY_BUFFER, self.shape_vbo)
         glBufferData(GL_ARRAY_BUFFER, 0, self.shape_vbo_data, GL_DYNAMIC_DRAW)
-        glVertexAttribPointer(5, 1, GL_FLOAT, GL_FALSE, 0, ctypes.c_void_p(0))
-        glVertexAttribDivisor(5, 1)
+        glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, 0, ctypes.c_void_p(0))
+        glVertexAttribDivisor(4, 1)
         
         # Assigned by bind_atlas
         self.atlas = None
@@ -136,7 +130,7 @@ class Window:
         self.font = None
         self.font_rects = None
 
-    def add_vbo_instance(self, dest, source, color, shape):
+    def add_vbo_instance(self, dest, source_or_color, shape):
         """
         Queue a object to be drawn on the screen and resize buffers as necessary.
         """
@@ -147,34 +141,27 @@ class Window:
                 self.vbo_instances_length *= 2
 
             new_dest_vbo_data = numpy.zeros(self.vbo_instances_length * 4, dtype=numpy.float32)
-            new_source_vbo_data = numpy.zeros(self.vbo_instances_length * 4, dtype=numpy.float32)
-            new_color_vbo_data = numpy.zeros(self.vbo_instances_length * 4, dtype=numpy.float32)
+            new_source_or_color_vbo_data = numpy.zeros(self.vbo_instances_length * 4, dtype=numpy.float32)
             new_shape_vbo_data = numpy.zeros(self.vbo_instances_length, dtype=numpy.float32)
 
             new_dest_vbo_data[:len(self.dest_vbo_data)] = self.dest_vbo_data
             self.dest_vbo_data = new_dest_vbo_data
-            new_source_vbo_data[:len(self.source_vbo_data)] = self.source_vbo_data
-            self.source_vbo_data = new_source_vbo_data
-            new_color_vbo_data[:len(self.color_vbo_data)] = self.color_vbo_data
-            self.color_vbo_data = new_color_vbo_data
+            new_source_or_color_vbo_data[:len(self.source_or_color_vbo_data)] = self.source_or_color_vbo_data
+            self.source_or_color_vbo_data = new_source_or_color_vbo_data
             new_shape_vbo_data[:len(self.shape_vbo_data)] = self.shape_vbo_data
             self.shape_vbo_data = new_shape_vbo_data
 
             glBindBuffer(GL_ARRAY_BUFFER, self.dest_vbo)
             glBufferData(GL_ARRAY_BUFFER, self.dest_vbo_data.nbytes, self.dest_vbo_data, GL_DYNAMIC_DRAW)
  
-            glBindBuffer(GL_ARRAY_BUFFER, self.source_vbo)
-            glBufferData(GL_ARRAY_BUFFER, self.source_vbo_data.nbytes, self.source_vbo_data, GL_DYNAMIC_DRAW)
-
-            glBindBuffer(GL_ARRAY_BUFFER, self.color_vbo)
-            glBufferData(GL_ARRAY_BUFFER, self.color_vbo_data.nbytes, self.color_vbo_data, GL_DYNAMIC_DRAW)
+            glBindBuffer(GL_ARRAY_BUFFER, self.source_or_color_vbo)
+            glBufferData(GL_ARRAY_BUFFER, self.source_or_color_vbo_data.nbytes, self.source_or_color_vbo_data, GL_DYNAMIC_DRAW)
 
             glBindBuffer(GL_ARRAY_BUFFER, self.shape_vbo)
             glBufferData(GL_ARRAY_BUFFER, self.shape_vbo_data.nbytes, self.shape_vbo_data, GL_DYNAMIC_DRAW)
             
         self.dest_vbo_data[4 * self.vbo_instances_index:4 * self.vbo_instances_index + 4] = dest
-        self.source_vbo_data[4 * self.vbo_instances_index:4 * self.vbo_instances_index + 4] = source
-        self.color_vbo_data[4 * self.vbo_instances_index:4 * self.vbo_instances_index + 4] = color
+        self.source_or_color_vbo_data[4 * self.vbo_instances_index:4 * self.vbo_instances_index + 4] = source_or_color
         self.shape_vbo_data[self.vbo_instances_index:self.vbo_instances_index + 1] = shape
 
         self.vbo_instances_index += 1
@@ -185,7 +172,7 @@ class Window:
         else:
             flags = DOUBLEBUF | RESIZABLE
 
-        # Called twice, because VSYNC...
+        # Called twice, because of VSYNC...
         self.window = pygame.display.set_mode((self.width, self.height), flags=flags | OPENGL, vsync=self.vsync)
         self.window = pygame.display.set_mode((self.width, self.height), flags=flags | OPENGL, vsync=self.vsync)
         glViewport(0, 0, self.width, self.height)
@@ -259,10 +246,8 @@ class Window:
         # Send instance data to shader
         glBindBuffer(GL_ARRAY_BUFFER, self.dest_vbo)
         glBufferSubData(GL_ARRAY_BUFFER, 0, self.dest_vbo_data.nbytes, self.dest_vbo_data)
-        glBindBuffer(GL_ARRAY_BUFFER, self.source_vbo)
-        glBufferSubData(GL_ARRAY_BUFFER, 0, self.source_vbo_data.nbytes, self.source_vbo_data)
-        glBindBuffer(GL_ARRAY_BUFFER, self.color_vbo)
-        glBufferSubData(GL_ARRAY_BUFFER, 0, self.color_vbo_data.nbytes, self.color_vbo_data)
+        glBindBuffer(GL_ARRAY_BUFFER, self.source_or_color_vbo)
+        glBufferSubData(GL_ARRAY_BUFFER, 0, self.source_or_color_vbo_data.nbytes, self.source_or_color_vbo_data)
         glBindBuffer(GL_ARRAY_BUFFER, self.shape_vbo)
         glBufferSubData(GL_ARRAY_BUFFER, 0, self.shape_vbo_data.nbytes, self.shape_vbo_data)
 
@@ -354,26 +339,30 @@ class Window:
         Draw an image on the window.
         """
         rect = (position[0] + size[0], position[1] + size[1], size[0] / 2, size[1] / 2)
-        self.add_vbo_instance(rect, self.atlas_rects[image], (0, 0, 0, 0), 0)
+        self.add_vbo_instance(rect, self.atlas_rects[image], 0)
 
     def draw_rect(self, position, size, color):
         """
         Draw a rectangle on the window.
         """
         rect = (position[0] + size[0] / 2, position[1] + size[1] / 2, size[0] / 2, size[1] / 2)
-        self.add_vbo_instance(rect, (0, 0, 0, 0), self.camera.map_color(color), 1)
+        self.add_vbo_instance(rect, self.camera.map_color(color), 1)
 
     def draw_circle(self, position, radius, color):
         """
         Draw a circle on the window.
         """
-        self.add_vbo_instance((*position, radius, radius), (0, 0, 0, 0), self.camera.map_color(color), 2)
+        self.add_vbo_instance((*position, radius, radius), self.camera.map_color(color), 2)
 
     def draw_text(self, position, text, color):
         """
         Draw text on the window.
         """
         offset = 0
+
+        if len(color) == 3:
+            color = (*color, 255)
+
         for letter in text:
             if not letter in self.font_rects and letter.isalpha():
                 if letter.upper() in self.font_rects:
@@ -383,10 +372,10 @@ class Window:
             if not letter in self.font_rects:
                 letter = "?"
             rect = self.font_rects[letter]
-            source_rect = (rect[0], 0, rect[1], 1)
+            source_and_color = (color[0] + rect[0], color[1] + rect[1], color[2], color[3])
             dest_rect = (position[0] + offset + rect[1], position[1], rect[1], rect[2] * 2)
             offset += rect[1] * 2.5
-            self.add_vbo_instance(dest_rect, source_rect, self.camera.map_color(color), 3)
+            self.add_vbo_instance(dest_rect, source_and_color, 3)
 
 
 class TextureAtlas:

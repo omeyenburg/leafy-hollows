@@ -1,4 +1,3 @@
-from pygame import Rect, Vector2 as Vector # pygame.org/docs/
 import sys
 import os
 
@@ -16,9 +15,12 @@ class File:
         return lines
     
     @staticmethod
-    def path(relative_path):
-        try:
-            base_path = sys._MEIPASS
-        except Exception:
-            base_path = os.path.abspath(".")
-        return os.path.join(base_path, relative_path)
+    def path(relative_path, script=None):
+        if script is None:
+            try:
+                base_path = sys._MEIPASS
+            except Exception:
+                base_path = os.path.abspath(".")
+            return os.path.join(base_path, relative_path)
+        else:
+            return os.path.dirname(os.path.realpath(script)) + "/" + relative_path

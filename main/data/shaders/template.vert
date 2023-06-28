@@ -3,14 +3,12 @@
 layout (location = 0) in vec2 position;
 layout (location = 1) in vec2 texcoord;
 layout (location = 2) in vec4 dest_rect;
-layout (location = 3) in vec4 source_rect;
-layout (location = 4) in vec4 color;
-layout (location = 5) in float shape;
+layout (location = 3) in vec4 source_or_color;
+layout (location = 4) in float shape;
 
 out vec2 vertTexcoord;
 out vec2 vertSize;
-out vec4 vertSource_rect;
-out vec4 vertColor;
+out vec4 vertSourceOrColor;
 out float vertShape;
 
 void main() {
@@ -18,7 +16,6 @@ void main() {
     
     vertTexcoord = texcoord;
     vertSize = dest_rect.wz;
-    vertSource_rect = source_rect;
-    vertColor = color;
+    vertSourceOrColor = source_or_color;
     vertShape = shape;
 }
