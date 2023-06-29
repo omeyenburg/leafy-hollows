@@ -1,21 +1,23 @@
 import sys
 import os
 
+realistic = True # only for testing purposes
+
 class File:
     @staticmethod
-    def read(path):
+    def read(path: str):
         with open(path, "r") as f:
             lines = f.read()
         return lines
     
     @staticmethod
-    def write(path, content):
+    def write(path: str, content: str):
         with open(path, "w") as f:
             lines = f.write(content)
         return lines
     
     @staticmethod
-    def path(relative_path, script=None):
+    def path(relative_path: str, script: str=None):
         if script is None:
             try:
                 base_path = sys._MEIPASS

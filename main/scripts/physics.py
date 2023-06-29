@@ -1,27 +1,33 @@
 import math
 import scripts.geometry as geometry
 
-GRAVITY_CONSTANT = 38 # 9.81
-FRICTION_X = 0.1
-FRICTION_Y = 0.04
-JUMP_THRESHOLD = 3 # time to jump after leaving the ground in ticks
-WALL_JUMP_THRESHOLD = 0.3 # time to jump after leaving a wall in seconds
+from scripts.util import realistic
+
+if realistic:
+    GRAVITY_CONSTANT: float = 9.81
+else:
+    GRAVITY_CONSTANT: float = 38
+
+FRICTION_X: float = 0.1
+FRICTION_Y: float = 0.04
+JUMP_THRESHOLD: int = 3 # time to jump after leaving the ground in ticks
+WALL_JUMP_THRESHOLD: float = 0.3 # time to jump after leaving a wall in seconds
 
 
 class Physics_Object:
-    def __init__(self, game, mass, position, size):
-        self.window = game.window
-        self.world = game.world
+    def __init__(self, game, mass: float, position: [float], size: [float]):
+        self.window: graphics.Window = game.window
+        self.world: world.World = game.world
 
-        self.mass = mass
-        self.rect = geometry.Rect(*position, *size)
-        self.vel = [0.0, 0.0]
+        self.mass: float = mass
+        self.rect: geometry.Rect = geometry.Rect(*position, *size)
+        self.vel: [float] = [0.0, 0.0]
 
-        self.onGround = 0
-        self.onWallLeft = 0
-        self.onWallRight = 0
+        self.onGround: int = 0
+        self.onWallLeft: int = 0
+        self.onWallRight: int = 0
 
-    def apply_force(self, force, angle): # angle in degrees; 0 is right, counterclockwise
+    def apply_force(self, force: float, angle: float): # angle in degrees; 0 is right, counterclockwise
         r_angle = math.radians(angle)
         self.vel[0] += (math.cos(r_angle) * force / self.mass) * self.window.delta_time
         self.vel[1] += (math.sin(r_angle) * force / self.mass) * self.window.delta_time
@@ -31,10 +37,6 @@ class Physics_Object:
         self.x_collide()
     
         self.rect.y += self.vel[1] * self.window.delta_time
-        if self.rect.y <= 0:
-            self.onGround = JUMP_THRESHOLD
-            self.vel[1] = 0
-        self.rect.y = max(self.rect.y, 0)
         self.y_collide()
 
         for x in range(math.floor(self.rect.left), math.ceil(self.rect.right)):
@@ -52,25 +54,27 @@ class Physics_Object:
                     if self.vel[0] < 0:
                         self.rect.left = x + 1
                         self.vel[0] = 0
-
+                        """   
                         if self.vel[1] < 0:
                             friction = self.window.delta_time / FRICTION_Y
                             if friction + self.vel[1] > 0:
                                 self.vel[1] = 0
                             else:
                                 self.vel[1] += friction
+                        """
                         self.onWallRight = max(2, int(WALL_JUMP_THRESHOLD * self.window.fps))
 
                     if self.vel[0] > 0:
                         self.rect.right = x
                         self.vel[0] = 0
-
+                        """
                         if self.vel[1] < 0:
                             friction = self.window.delta_time / FRICTION_Y
                             if friction + self.vel[1] > 0:
                                 self.vel[1] = 0
                             else:
                                 self.vel[1] += friction
+                        """
                         self.onWallLeft = max(2, int(WALL_JUMP_THRESHOLD * self.window.fps))
     
     def y_collide(self):

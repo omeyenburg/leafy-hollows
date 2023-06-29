@@ -34,17 +34,17 @@ class Window:
             pygame.display.gl_set_attribute(pygame.GL_CONTEXT_FORWARD_COMPATIBLE_FLAG, True)
 
         # Constants
-        self.max_fps = 1000
-        self.vsync = 0
+        self.max_fps: int = 1000
+        self.vsync: bool = False
 
         # Events
-        self.keys = dict.fromkeys(keys, 0) # 0 = Not pressed | 1 = Got pressed | 2 = Is pressed
-        self.unicode = ""                  # Backspace = "\x08"
-        self.mouse_buttons = [0, 0, 0]     # Left, Middle, Right | 0 = Not pressed | 1 = Got pressed | 2 = Is pressed
-        self.mouse_pos = (0, 0, 0, 0)      # x, y, relx, rely
-        self.mouse_wheel = [0, 0, 0, 0]    # x, y, relx, rely
-        self.fps = 0
-        self.delta_time = 1
+        self.keys: dict = dict.fromkeys(keys, 0) # 0 = Not pressed | 1 = Got pressed | 2 = Is pressed
+        self.unicode: str = ""                  # Backspace = "\x08"
+        self.mouse_buttons: [int] = [0, 0, 0]     # Left, Middle, Right | 0 = Not pressed | 1 = Got pressed | 2 = Is pressed
+        self.mouse_pos: [int] = (0, 0, 0, 0)      # x, y, relx, rely
+        self.mouse_wheel: [int] = [0, 0, 0, 0]    # x, y, relx, rely
+        self.fps: int = 0
+        self.delta_time: float = 1
 
         # Window variables
         info = pygame.display.Info()
@@ -58,7 +58,7 @@ class Window:
         self.window = pygame.display.set_mode((self.width, self.height), flags=flags, vsync=self.vsync)
         pygame.display.set_caption(caption)
         self.clock = pygame.time.Clock()
-        self.camera = None
+        self.camera: Camera = Camera(self)
 
         # OpenGL setup
         glViewport(0, 0, self.width, self.height)
@@ -222,6 +222,7 @@ class Window:
         self.clock.tick(self.max_fps)
         self.fps = self.clock.get_fps()
         self.delta_time = (1 / self.fps) if self.fps > 0 else self.delta_time
+        self.camera.update()
 
         # Reset
         glClear(GL_COLOR_BUFFER_BIT)
@@ -338,7 +339,7 @@ class Window:
         """
         Draw an image on the window.
         """
-        rect = (position[0] + size[0], position[1] + size[1], size[0] / 2, size[1] / 2)
+        rect = (position[0] + size[0] / 2, position[1] + size[1] / 2, size[0] / 2, size[1] / 2)
         self.add_vbo_instance(rect, self.atlas_rects[image], 0)
 
     def draw_rect(self, position, size, color):
@@ -533,73 +534,6 @@ class Font:
         return (letters, image)
 
 
-class Camera:
-    def __init__(self, window):
-        self.pos = [0, 0]
-        self.vel = [0, 0]
-        self.dest = [0, 0]
-        self.window = window
-        window.camera = self
-
-    def set(self, pos):
-        """
-        Set the camera position.
-        Use move() for slow movement.
-        """
-        self.pos = pos
-        self.vel = [0, 0]
-        self.dest = pos
-
-    def move(self, pos):
-        """
-        Move the camera slowly to a position.
-        Use set() for instant movement.
-        """
-        self.dest = pos
-
-    def update(self):
-        """
-        Update the camera.
-        """
-        self.vel[0] = round((self.pos[0] - self.dest[0]) / 5, 3)
-        self.vel[1] = round((self.pos[1] - self.dest[1]) / 5, 3)
-        self.pos[0] = round(self.pos[0] + vel[0], 3)
-        self.pos[1] = round(self.pos[1] + vel[1], 3)
-
-    def map_coord(self, coord, fpixel=True, fcentered=True, fworld=False, pixel=False, centered=True, world=False):
-        """
-        Convert a coordinate to a different format.
-        Current format specified by fpixel, fcentered, fworld.
-        Output format specified by pixel, centered, world.
-        """
-        if fworld:
-            fpixel = True
-        if world:
-            pixel = True
-        coord = list(coord)
-        if fpixel and not pixel:
-            for i in range(len(coord)):
-                coord[i] /= (self.window.width, self.window.height)[i%2] / 2
-        elif not fpixel and fpixel:
-            for i in range(len(coord)):
-                coord[i] /= (self.window.width, self.window.height)[i%2] / 2
-        if not fcentered and centered:
-            for i in range(2):
-                coord[i] -= 1
-        elif fcentered and not centered:
-            for i in range(2):
-                coord[i] += 1
-
-        return coord
-
-    def map_color(self, color):
-        if not float in color:
-            color = [i / 255 for i in color]
-        if len(color) == 3:
-            color = (*color, 1)
-        return color
-
-
 class Shader:
     active = None
 
@@ -657,3 +591,96 @@ class Shader:
                                 'mat3': glUniformMatrix3fv,
                                 'mat4': glUniformMatrix4fv}[data_type]
         return [loc, func, None]
+
+
+class Camera:
+    def __init__(self, window):
+        self.pixels_per_meter: int = 32
+        self.threshold = 0.1
+
+        self.pos: [float] = [0, 0]
+        self.vel: [float] = [0, 0]
+        self.dest: [float] = [0, 0]
+        self.window: Window = window
+
+    def set(self, pos):
+        """
+        Set the camera position.
+        Use move() for slow movement.
+        """
+        self.pos = pos
+        self.vel = [0, 0]
+        self.dest = pos
+
+    def move(self, pos: [float]):
+        """
+        Move the camera slowly to a position.
+        Use set() for instant movement.
+        """
+        self.dest = pos
+
+    def update(self):
+        """
+        Update the camera.
+        """
+        xvel = round((self.dest[0] - self.pos[0]) / 10, 3)
+        yvel = round((self.dest[1] - self.pos[1]) / 10, 3)
+
+        xvel = math.copysign(max(abs(xvel) - self.threshold, 0), xvel)
+        yvel = math.copysign(max(abs(yvel) - self.threshold, 0), yvel)
+
+        self.vel[0] = xvel
+        self.vel[1] = yvel
+        self.pos[0] += self.vel[0]
+        self.pos[1] += self.vel[1]
+
+    def map_coord(self, coord: [float], from_pixel: bool=True, from_centered: bool=True, from_world: bool=False, pixel: bool=False, centered: bool=True, world: bool=False):
+        """
+        Convert a coordinate to a different format.
+        Current format specified by from_pixel, from_centered, from_world.
+        Output format specified by pixel, centered, world.
+        """
+        if from_world:
+            fpixel = True
+        if world:
+            pixel = True
+        coord = list(coord)
+        if from_world and not world:
+            for i in range(len(coord)):
+                if i < 2:
+                    coord[i] = (coord[i] - self.pos[i]) * self.pixels_per_meter
+                else:
+                    coord[i] = coord[i] * self.pixels_per_meter
+        elif not from_world and world:
+            for i in range(len(coord)):
+                coord[i] = coord[i] / self.pixels_per_meter + self.pos[i % 2]
+        if from_pixel and not pixel:
+            for i in range(len(coord)):
+                coord[i] /= (self.window.width, self.window.height)[i%2] / 2
+        elif not from_pixel and fpixel:
+            for i in range(len(coord)):
+                coord[i] /= (self.window.width, self.window.height)[i%2] / 2
+        if not from_centered and centered:
+            for i in range(2):
+                coord[i] -= 1
+        elif from_centered and not centered:
+            for i in range(2):
+                coord[i] += 1
+
+        return coord
+
+    def map_color(self, color):
+        if not float in color:
+            color = [i / 255 for i in color]
+        if len(color) == 3:
+            color = (*color, 1)
+        return color
+
+    def visible_blocks(self):
+        center = (int(self.pos[0]),
+                  int(self.pos[1]))
+        start = (center[0] - math.floor(self.window.width / 2 / self.pixels_per_meter) - 2,
+                 center[1] - math.floor(self.window.height / 2 / self.pixels_per_meter) - 2)
+        end = (center[0] + math.ceil(self.window.width / 2 / self.pixels_per_meter) + 2,
+               center[1] + math.ceil(self.window.height / 2 / self.pixels_per_meter) + 2)
+        return start, end

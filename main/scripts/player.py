@@ -1,20 +1,21 @@
 from scripts.physics import *
 
+from scripts.util import realistic
 
 class Player(Physics_Object):
-    def __init__(self, game, spawn_pos, speed, sprint_speed, acceleration_time, jump_force):
-        Physics_Object.__init__(self, game, 50, (0, 0), (0.9, 1.8))
+    def __init__(self, game, spawn_pos: [float], speed: float, sprint_speed: float, acceleration_time: float, jump_force: int):
+        Physics_Object.__init__(self, game, 50, spawn_pos, (0.9, 1.8))
 
-        self.speed = speed
-        self.sprint_speed = sprint_speed
-        self.acceleration_time = acceleration_time
-        self.jump_force = jump_force
+        self.speed: float = speed
+        self.sprint_speed: float = sprint_speed
+        self.acceleration_time: float = acceleration_time
+        self.jump_force: int = jump_force
 
     def draw(self):
-        rect = self.window.camera.map_coord((self.rect.x * self.world.PIXELS_PER_METER, self.rect.y * self.world.PIXELS_PER_METER, self.rect.w * self.world.PIXELS_PER_METER, self.rect.h * self.world.PIXELS_PER_METER))
+        rect = self.window.camera.map_coord((self.rect.x, self.rect.y, self.rect.w, self.rect.h), from_world=True)
         self.window.draw_rect(rect[:2], rect[2:], (255, 0, 0))
     
-    def jump(self, duration):
+    def jump(self, duration: float):
         force = self.jump_force * duration / self.window.delta_time
         if self.onGround: # Normal jump
             self.apply_force(force, 90)
@@ -31,7 +32,7 @@ class Player(Physics_Object):
         
     def move(self):
         def mouse_pull(strenght):
-            mouse_pos = (self.window.mouse_pos[0] / self.world.PIXELS_PER_METER, self.window.mouse_pos[1] / self.world.PIXELS_PER_METER)
+            mouse_pos = self.window.camera.map_coord(self.window.mouse_pos[:2], world=True)
         
             dx, dy = mouse_pos[0] - self.rect.centerx, mouse_pos[1] - self.rect.centery
             angle_to_mouse = math.degrees(math.atan2(dy, dx))
@@ -47,7 +48,10 @@ class Player(Physics_Object):
 
         d_speed = (self.window.delta_time / self.acceleration_time) * max_speed
         if not (self.onGround or self.onWallLeft or self.onWallRight):
-            d_speed /= 10
+            if realistic:
+                d_speed = 0
+            else:
+                d_speed /= 10
         
         if keys["d"]: # d has priority over a
             if self.vel[0] < max_speed:
@@ -75,7 +79,7 @@ class Player(Physics_Object):
         if self.window.mouse_buttons[0] == 1:
             mouse_pull(4.5) # constant activation balances out w/ gravity --> usable as rope
         if self.window.mouse_buttons[2] == 1:
-            mouse_pos = (self.window.mouse_pos[0] / self.world.PIXELS_PER_METER, self.window.mouse_pos[1] / self.world.PIXELS_PER_METER)
+            mouse_pos = self.window.camera.map_coord(self.window.mouse_pos[:2], world=True)
             self.world[math.floor(mouse_pos[0]), math.floor(mouse_pos[1])] = not self.world[math.floor(mouse_pos[0]), math.floor(mouse_pos[1])]
 
     def update(self):

@@ -1,5 +1,6 @@
-import numpy
 import random
+import numpy
+import noise
 
 
 CHUNK_SIZE = 32
@@ -7,32 +8,30 @@ CHUNK_SIZE = 32
 
 class World:
     def __init__(self):
-        self.PIXELS_PER_METER = 25
+        self.SEED: float = random.randint(-99999, 99999) + random.random()
 
-        self.chunks = {} # indexed with a tuple (x, y) -> numpy.array(shape=(32, 32))
+        self.chunks: dict = {} # indexed with a tuple (x, y) -> numpy.array(shape=(32, 32))
+        self.empty_chunk: numpy.array = numpy.zeros((CHUNK_SIZE, CHUNK_SIZE), dtype=int) # Chunk template, which can be copied later
 
-        # Chunk template, which can be copied later
-        self.empty_chunk = numpy.zeros((CHUNK_SIZE, CHUNK_SIZE), dtype=int)
-
-    def __getitem__(self, coord):
+    def __getitem__(self, coord: [int]):
         return self.get_block(coord[0], coord[1])
 
-    def __setitem__(self, coord, data):
+    def __setitem__(self, coord: [int], data: int):
         self.set_block(coord[0], coord[1], data)
 
-    def create_chunk(self, chunk_coord):
+    def create_chunk(self, chunk_coord: [int]):
         self.chunks[chunk_coord] = self.empty_chunk.copy()
         self.generate_chunk(chunk_coord)
 
-    def set_block(self, x, y, data):
-        chunk_x, mod_x = divmod(x, CHUNK_SIZE) # = (x // CHUNK_SIZE, x % CHUNK_SIZE)
-        chunk_y, mod_y = divmod(y, CHUNK_SIZE) # = (y // CHUNK_SIZE, y % CHUNK_SIZE)
+    def set_block(self, x: int, y: int, data: int):
+        chunk_x, mod_x = divmod(x, CHUNK_SIZE) # (x // CHUNK_SIZE, x % CHUNK_SIZE)
+        chunk_y, mod_y = divmod(y, CHUNK_SIZE) # (y // CHUNK_SIZE, y % CHUNK_SIZE)
 
         if not (chunk_x, chunk_y) in self.chunks: # create chunk, if chunk is not generated
             self.create_chunk((chunk_x, chunk_y))
         self.chunks[(chunk_x, chunk_y)][mod_x, mod_y] = data
     
-    def get_block(self, x, y, generate=1, default=0):
+    def get_block(self, x: int, y: int, generate: bool=True, default: int=0):
         chunk_x, mod_x = divmod(x, CHUNK_SIZE)
         chunk_y, mod_y = divmod(y, CHUNK_SIZE)
         if not (chunk_x, chunk_y) in self.chunks:
@@ -42,59 +41,28 @@ class World:
                 return default
         return self.chunks[(chunk_x, chunk_y)][mod_x , mod_y]
 
-    def generate_chunk(self, chunk_coord):
-        for x, y in numpy.ndindex((CHUNK_SIZE, CHUNK_SIZE)):
-            data = random.randint(0, 10)
-            if data == 0:
-                self.chunks[chunk_coord][x, y] = 1
-            else:
-                self.chunks[chunk_coord][x, y] = 0
+    def generate_chunk(self, chunk_coord: [int]):
+        for dx, dy in numpy.ndindex((CHUNK_SIZE, CHUNK_SIZE)):
+            x, y = dx + chunk_coord[0] * CHUNK_SIZE, dy + chunk_coord[1] * CHUNK_SIZE
+            self.chunks[chunk_coord][dx, dy] = self.generate_block(x, y)
+    
+    def generate_block(self, x: int, y: int):
+        z = noise.snoise2(x / 30 + self.SEED + 0.1, y / 30 + self.SEED + 0.1)
+        block = z > 0.1
+        if z > 0 and noise.snoise2(x / 30 + self.SEED + 0.1, (y + 1) / 30 + self.SEED + 0.1) > 0.1:
+            block = 2
+        return block
 
     def draw(self, window):
-        for x in range(-25, 20):
-            for y in range(-25, 20):
-                if self[x, y]:
-                    rect = window.camera.map_coord((x * self.PIXELS_PER_METER, y * self.PIXELS_PER_METER, self.PIXELS_PER_METER, self.PIXELS_PER_METER))
-                    window.draw_rect(rect[:2], rect[2:], (0, 255, 0))
-
-
-"""
-#World generation?
-
-
-import pygame
-import opensimplex
-import numpy
-import noise
-import random
-
-
-
-pygame.init()
-window = pygame.display.set_mode((500, 500))
-
-
-world = numpy.zeros((50, 50))
-
-clock = pygame.time.Clock()
-
-while True:
-    seed = random.randint(-999999, 999999)
-    window.fill((0, 0, 0))
-    opensimplex.seed(seed)
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            import sys
-            sys.exit()
-    for x, y in numpy.ndindex(world.shape):
-        world[x, y] = opensimplex.noise2(x=x / 10, y=y / 10)
-        way_Y = abs(y - noise.pnoise1(x / 100 + seed) * 20 - 25)
-        way_H = (noise.pnoise1(x + seed) + 2) * 2
-        way_M = max(0, way_H - way_Y) ** 3
-        if world[x, y] < max(0.1 - way_M, 0) and way_M < 2:
-            pygame.draw.rect(window, (255, 255, 255), (x*10, y*10, 10, 10))
-    pygame.display.flip()
-    clock.tick(1)
-
-"""
+        start, end = window.camera.visible_blocks()
+        for x in range(start[0], end[0]):
+            for y in range(start[1], end[1]):
+                if self[x, y] == 1:
+                    rect = window.camera.map_coord((x, y, 1, 1), from_world=True)
+                    window.draw_image("grass", rect[:2], rect[2:])
+                elif self[x, y] == 2:
+                    rect = window.camera.map_coord((x, y, 1, 1), from_world=True)
+                    window.draw_image("dirt", rect[:2], rect[2:])
+                if not (x % CHUNK_SIZE and y % CHUNK_SIZE):
+                    rect = window.camera.map_coord((x, y, .4, .4), from_world=True)
+                    window.draw_rect(rect[:2], rect[2:], (255, 0, 0, 50))

@@ -1,11 +1,11 @@
 class Rect:
     def __init__(self, x, y, w, h):
-        self.x = x
-        self.y = y
-        self.w = w
-        self.h = h
-        self.w_half = w/2
-        self.h_half = h/2
+        self.x: float = x
+        self.y: float = y
+        self.w: float = w
+        self.h: float = h
+        self.w_half: float = w/2
+        self.h_half: float = h/2
 
     def __repr__(self):
         return f"Rect({self.x}, {self.y}, {self.w}, {self.h})"
