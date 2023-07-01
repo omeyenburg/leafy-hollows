@@ -34,52 +34,56 @@ class Physics_Object:
     
     def apply_velocity(self):
         self.rect.x += self.vel[0] * self.window.delta_time
+        self.rect.x = round(self.rect.x, 5) # bugs occur at higher precision
         self.x_collide()
     
         self.rect.y += self.vel[1] * self.window.delta_time
+        self.rect.y = round(self.rect.y, 5)
         self.y_collide()
 
         for x in range(math.floor(self.rect.left), math.ceil(self.rect.right)):
             for y in range(math.floor(self.rect.top), math.ceil(self.rect.bottom)):
                 if self.world[x, y]:
-                    print("unresolved collision:", (x, y))
+                    ...#print("unresolved collision:", (x, y))
 
     def gravity(self):
         self.apply_force(GRAVITY_CONSTANT * self.mass, 270)
     
     def x_collide(self):
-        for x in range(math.floor(self.rect.left), math.ceil(self.rect.right)):
-            for y in range(math.floor(self.rect.top), math.ceil(self.rect.bottom)):
+        for x in range(math.floor(round(self.rect.left, 5)), math.ceil(round(self.rect.right, 5))):
+            for y in range(math.floor(round(self.rect.top, 5)), math.ceil(round(self.rect.bottom, 5))):
                 if self.world[x, y]:
                     if self.vel[0] < 0:
                         self.rect.left = x + 1
                         self.vel[0] = 0
-                        """   
-                        if self.vel[1] < 0:
-                            friction = self.window.delta_time / FRICTION_Y
-                            if friction + self.vel[1] > 0:
-                                self.vel[1] = 0
-                            else:
-                                self.vel[1] += friction
-                        """
+                        
+                        if not realistic:
+                            if self.vel[1] < 0:
+                                friction = self.window.delta_time / FRICTION_Y
+                                if friction + self.vel[1] > 0:
+                                    self.vel[1] = 0
+                                else:
+                                    self.vel[1] += friction
+                        
                         self.onWallRight = max(2, int(WALL_JUMP_THRESHOLD * self.window.fps))
 
                     if self.vel[0] > 0:
                         self.rect.right = x
                         self.vel[0] = 0
-                        """
-                        if self.vel[1] < 0:
-                            friction = self.window.delta_time / FRICTION_Y
-                            if friction + self.vel[1] > 0:
-                                self.vel[1] = 0
-                            else:
-                                self.vel[1] += friction
-                        """
+                        
+                        if not realistic:
+                            if self.vel[1] < 0:
+                                friction = self.window.delta_time / FRICTION_Y
+                                if friction + self.vel[1] > 0:
+                                    self.vel[1] = 0
+                                else:
+                                    self.vel[1] += friction
+                        
                         self.onWallLeft = max(2, int(WALL_JUMP_THRESHOLD * self.window.fps))
     
     def y_collide(self):
-        for x in range(math.floor(self.rect.left), math.ceil(self.rect.right)):
-            for y in range(math.floor(self.rect.top), math.ceil(self.rect.bottom)):
+        for x in range(math.floor(round(self.rect.left, 5)), math.ceil(round(self.rect.right, 5))):
+            for y in range(math.floor(round(self.rect.top, 5)), math.ceil(round(self.rect.bottom, 5))):
                 if self.world[x, y]:
                     if self.vel[1] > 0:
                         self.rect.bottom = y

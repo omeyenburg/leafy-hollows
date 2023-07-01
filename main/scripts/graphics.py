@@ -355,7 +355,7 @@ class Window:
         """
         self.add_vbo_instance((*position, radius, radius), self.camera.map_color(color), 2)
 
-    def draw_text(self, position, text, color):
+    def draw_text(self, position, text, color, size=1, centered=False):
         """
         Draw text on the window.
         """
@@ -364,20 +364,44 @@ class Window:
         if len(color) == 3:
             color = (*color, 255)
 
-        for letter in text:
-            if not letter in self.font_rects and letter.isalpha():
-                if letter.upper() in self.font_rects:
-                    letter = letter.upper()
-                else:
-                    letter = letter.lower()
-            if not letter in self.font_rects:
-                letter = "?"
-            rect = self.font_rects[letter]
-            source_and_color = (color[0] + rect[0], color[1] + rect[1], color[2], color[3])
-            dest_rect = (position[0] + offset + rect[1], position[1], rect[1], rect[2] * 2)
-            offset += rect[1] * 2.5
-            self.add_vbo_instance(dest_rect, source_and_color, 3)
+        if centered:
+            for letter in text:
+                if not letter in self.font_rects and letter.isalpha():
+                    if letter.upper() in self.font_rects:
+                        letter = letter.upper()
+                    else:
+                        letter = letter.lower()
+                if not letter in self.font_rects:
+                    letter = "?"
+                offset -= self.font_rects[letter][1] * 1.25 * size
 
+            for letter in text:
+                if not letter in self.font_rects and letter.isalpha():
+                    if letter.upper() in self.font_rects:
+                        letter = letter.upper()
+                    else:
+                        letter = letter.lower()
+                if not letter in self.font_rects:
+                    letter = "?"
+                rect = self.font_rects[letter]
+                source_and_color = (color[0] + rect[0], color[1] + rect[1], color[2], color[3])
+                dest_rect = (position[0] + offset + rect[1], position[1], rect[1] * size, rect[2] * 2 * size)
+                offset += rect[1] * 2.5 * size
+                self.add_vbo_instance(dest_rect, source_and_color, 3)
+        else:
+            for letter in text:
+                if not letter in self.font_rects and letter.isalpha():
+                    if letter.upper() in self.font_rects:
+                        letter = letter.upper()
+                    else:
+                        letter = letter.lower()
+                if not letter in self.font_rects:
+                    letter = "?"
+                rect = self.font_rects[letter]
+                source_and_color = (color[0] + rect[0], color[1] + rect[1], color[2], color[3])
+                dest_rect = (position[0] + offset + rect[1], position[1] - rect[2] * 2, rect[1] * size, rect[2] * 2 * size)
+                offset += rect[1] * 2.5 * size
+                self.add_vbo_instance(dest_rect, source_and_color, 3)
 
 class TextureAtlas:
     def __init__(self, **images):
