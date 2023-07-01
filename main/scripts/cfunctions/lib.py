@@ -1,30 +1,32 @@
-import ctypes
-import platform
 import subprocess
+import platform
+import ctypes
+import glob
 import sys
 import os
 
 
+library_prefix = "lib"
+
+# Create platform-specific path
 directory = os.path.dirname(os.path.realpath(__file__))
-
 os_name = platform.system()
-graphics_library_name = directory + "/lib-" + os_name.lower()
+library_name = directory + "/" + library_prefix + "-" + os_name.lower()
 if os_name == 'Windows':
-    graphics_library_name += platform.architecture()[0] + ".dll"
-else:
-    graphics_library_name += ".so"
+    library_name += platform.architecture()[0]
+library_paths = glob.glob(library_name + "*")
 
-
-# The shared library file doesn't exist, run setup.py to build it
-if not os.path.exists(graphics_library_name):
+# Search for shared library or build it
+if not library_paths:
     subprocess.check_call(['python', f'{directory}/setup.py', 'build_ext', '--inplace'], stdout=subprocess.DEVNULL)
-
+library_path = glob.glob(library_name + "*")[0]
 
 # Load the shared library
-lib = ctypes.CDLL(graphics_library_name)
+lib = ctypes.CDLL(library_path)
 
 lib.c_print.argtypes = []
 lib.c_print.restype = None
+
 
 """
 # Function prototypes

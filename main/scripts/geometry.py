@@ -20,9 +20,6 @@ class Rect:
         for value in (self.x, self.y, self.w, self.h):
             yield value
 
-    def __copy__(self):
-        return Rect(self.x, self.y, self.w, self.h)
-
     def __eq__(self, rect):
         return self.x == rect.x and self.y == rect.y and self.w == rect.w and self.h == rect.h and self.angle == rect.angle
 
@@ -89,3 +86,9 @@ class Rect:
     @bottom.setter
     def bottom(self, value):
         self.y = value - self.h
+
+    def copy(self):
+        return Rect(self.x, self.y, self.w, self.h)
+
+    def collidepoint(self, point):
+        return self.x < point[0] < self.right and self.y < point[1] < self.bottom
