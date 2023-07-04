@@ -1,3 +1,8 @@
+noise==1.2.2
 numpy==1.20.2
 pygame==2.1.2
+pyinstaller==5.13.0
+pyinstaller-hooks-contrib==2023.4
 PyOpenGL==3.1.7
+PyOpenGL-accelerate==3.1.7
+setuptools==65.5.0

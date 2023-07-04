@@ -384,7 +384,7 @@ class Window:
                 if not letter in self.font_rects:
                     letter = "?"
                 rect = self.font_rects[letter]
-                source_and_color = (color[0] + rect[0], color[1] + rect[1], color[2], color[3])
+                source_and_color = (color[0] + rect[0], color[1] + rect[1] - 0.00001, color[2], color[3])
                 dest_rect = (position[0] + offset + rect[1], position[1], rect[1] * size, rect[2] * 2 * size)
                 offset += rect[1] * 2.5 * size
                 self.add_vbo_instance(dest_rect, source_and_color, 3)

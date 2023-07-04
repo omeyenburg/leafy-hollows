@@ -1,8 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
+import platform
 
-
-block_cipher = None
-
+name = "Hello World"
 
 a = Analysis(
     ['main.py'],
@@ -16,26 +15,22 @@ a = Analysis(
     excludes=[],
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
-    cipher=block_cipher,
+    cipher=None,
     noarchive=False,
 )
 
-pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+pyz = PYZ(a.pure, a.zipped_data, cipher=None)
 
 exe = EXE(
     pyz,
     a.scripts,
-    a.binaries,
-    a.zipfiles,
-    a.datas,
     [],
-    name='main',
+    exclude_binaries=True,
+    name=name,
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    upx_exclude=[],
-    runtime_tmpdir=None,
     console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
@@ -44,9 +39,28 @@ exe = EXE(
     entitlements_file=None,
 )
 
-app = BUNDLE(
+coll = COLLECT(
     exe,
-    name='Main.app',
-    icon='./icon/icon.icns',
-    bundle_identifier=None,
+    a.binaries,
+    a.zipfiles,
+    a.datas,
+    strip=False,
+    upx=True,
+    upx_exclude=[],
+    name='Hello World',
 )
+
+if platform.system() == "Darwin":
+    app = BUNDLE(
+        coll,
+        name=name + '.app',
+        icon='./icon/icon.icns',
+        bundle_identifier=None,
+    )
+else:
+    app = BUNDLE(
+        coll,
+        name=name + '.exe',
+        icon='./icon/icon/ico',
+        bundle_identifier=None,
+    )

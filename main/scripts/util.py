@@ -1,7 +1,9 @@
 import sys
 import os
 
-realistic = True # only for testing purposes
+
+realistic = False # only for testing purposes
+
 
 class File:
     @staticmethod

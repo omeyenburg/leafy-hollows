@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import scripts.menu as menu
 import scripts.graphics as graphics
 import scripts.util as util

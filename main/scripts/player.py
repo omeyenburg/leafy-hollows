@@ -73,10 +73,10 @@ class Player(Physics_Object):
         if keys["space"]:
             self.jump(5) # how long is jump force applied --> variable jump height
 
-        if self.window.mouse_buttons[1] == 1:
+        if self.window.mouse_buttons[0] == 1:
             mouse_pull(4.5) # constant activation balances out w/ gravity --> usable as rope
 
-        if self.window.mouse_buttons[0] == 1:
+        if self.window.mouse_buttons[1] == 1:
             mouse_pos = self.window.camera.map_coord(self.window.mouse_pos[:2], world=True)
             spawn_particle(self, mouse_pos)
 
@@ -97,7 +97,7 @@ def spawn_particle(self, pos: list[float, float]):
     from scripts.game import Game
     g = Game(self.window)
     g.world = self.world
-    particle_list.append(Physics_Object(g, 10, pos, [1, 1]))
+    particle_list.append(Physics_Object(g, 10, pos, [0.5, 0.5]))
 
 def tmp_draw_rect(self, pos, size, color):
     rect = self.window.camera.map_coord((pos[0], pos[1], size[0], size[1]), from_world=True)
