@@ -1,3 +1,4 @@
+from threading import Thread
 import random
 import numpy
 import noise
@@ -6,12 +7,38 @@ import noise
 CHUNK_SIZE = 32
 
 
+class Chunk:
+    template: numpy.array = numpy.zeros((CHUNK_SIZE, CHUNK_SIZE), dtype=int) # Chunk template, which can be copied later
+
+    def __init__(self, x: int, y: int, seed: float):
+        self.x = x
+        self.y = y
+        self.array = Chunk.template.copy()
+        self.generate(seed)
+
+    def __getitem__(self, index):
+        return self.array[index]
+
+    def __setitem__(self, index, value):
+        self.array[index] = value
+
+    def generate(self, seed: float):
+        for dx, dy in numpy.ndindex((CHUNK_SIZE, CHUNK_SIZE)):
+            x, y = dx + self.x * CHUNK_SIZE, dy + self.y * CHUNK_SIZE
+            self.array[dx, dy] = self.generate_block(x, y, seed)
+
+    def generate_block(self, x: int, y: int, seed: float):
+        z = noise.snoise2(x / 30 + seed + 0.1, y / 30 + seed + 0.1)
+        block = z > 0.1
+        if z > 0 and noise.snoise2(x / 30 + seed + 0.1, (y + 1) / 30 + seed + 0.1) > 0.1:
+            block = 2
+        return block
+
+
 class World:
     def __init__(self):
         self.SEED: float = random.randint(-99999, 99999) + random.random()
-
         self.chunks: dict = {} # indexed with a tuple (x, y) -> numpy.array(shape=(32, 32))
-        self.empty_chunk: numpy.array = numpy.zeros((CHUNK_SIZE, CHUNK_SIZE), dtype=int) # Chunk template, which can be copied later
 
     def __getitem__(self, coord: [int]):
         return self.get_block(coord[0], coord[1])
@@ -20,8 +47,7 @@ class World:
         self.set_block(coord[0], coord[1], data)
 
     def create_chunk(self, chunk_coord: [int]):
-        self.chunks[chunk_coord] = self.empty_chunk.copy()
-        self.generate_chunk(chunk_coord)
+        self.chunks[chunk_coord] = Chunk(*chunk_coord, self.SEED)
 
     def set_block(self, x: int, y: int, data: int):
         chunk_x, mod_x = divmod(x, CHUNK_SIZE) # (x // CHUNK_SIZE, x % CHUNK_SIZE)
@@ -40,18 +66,6 @@ class World:
             else:
                 return default
         return self.chunks[(chunk_x, chunk_y)][mod_x , mod_y]
-
-    def generate_chunk(self, chunk_coord: [int]):
-        for dx, dy in numpy.ndindex((CHUNK_SIZE, CHUNK_SIZE)):
-            x, y = dx + chunk_coord[0] * CHUNK_SIZE, dy + chunk_coord[1] * CHUNK_SIZE
-            self.chunks[chunk_coord][dx, dy] = self.generate_block(x, y)
-    
-    def generate_block(self, x: int, y: int):
-        z = noise.snoise2(x / 30 + self.SEED + 0.1, y / 30 + self.SEED + 0.1)
-        block = z > 0.1
-        if z > 0 and noise.snoise2(x / 30 + self.SEED + 0.1, (y + 1) / 30 + self.SEED + 0.1) > 0.1:
-            block = 2
-        return block
 
     def draw(self, window):
         start, end = window.camera.visible_blocks()

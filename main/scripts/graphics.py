@@ -2,6 +2,7 @@ from platform import system
 import scripts.util as util
 import numpy
 import math
+import glob
 import sys
 import os
 
@@ -14,7 +15,10 @@ import pygame
 
 
 class Window:
-    def __init__(self, caption, keys=()):
+    def __init__(self, caption):
+        # Load options
+        self.options = self.load_options()
+
         # Callbacks
         self.callback_quit = None
 
@@ -38,7 +42,7 @@ class Window:
         self.vsync: bool = False
 
         # Events
-        self.keys: dict = dict.fromkeys(keys, 0) # 0 = Not pressed | 1 = Got pressed | 2 = Is pressed
+        self.keys: dict = dict.fromkeys([value for key, value in self.options.items() if key.startswith("key.")], 0) # 0 = Not pressed | 1 = Got pressed | 2 = Is pressed
         self.unicode: str = ""                  # Backspace = "\x08"
         self.mouse_buttons: [int] = [0, 0, 0]     # Left, Middle, Right | 0 = Not pressed | 1 = Got pressed | 2 = Is pressed
         self.mouse_pos: [int] = (0, 0, 0, 0)      # x, y, relx, rely
@@ -121,14 +125,32 @@ class Window:
         glBufferData(GL_ARRAY_BUFFER, 0, self.shape_vbo_data, GL_DYNAMIC_DRAW)
         glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, 0, ctypes.c_void_p(0))
         glVertexAttribDivisor(4, 1)
-        
-        # Assigned by bind_atlas
-        self.atlas = None
-        self.atlas_rects = None
 
-        # Assigned by bind_font
-        self.font = None
-        self.font_rects = None
+        # Atlas texture
+        self.atlas_rects, image = TextureAtlas.loadAtlas()
+        self.texAtlas = self.texture(image)
+
+        # Font texture
+        self.font_rects, image = Font.fromPNG(util.File.path("data/fonts/font.png"))
+        self.texFont = self.texture(image)
+
+        # Block texture
+        self.block_rects, image = TextureAtlas.loadBlocks()
+        self.texBlocks = self.texture(image)
+        
+        # Instance shader
+        vertPath: str = util.File.path("data/shaders/instance.vert")
+        fragPath: str = util.File.path("data/shaders/instance.frag")
+        self.instance_shader = Shader(vertPath, fragPath, texAtlas="int", texFont="int")
+        self.instance_shader.setvar("texAtlas", 0)
+        self.instance_shader.setvar("texFont", 1)
+        
+        # World shader
+        vertPath: str = util.File.path("data/shaders/world.vert")
+        fragPath: str = util.File.path("data/shaders/world.frag")
+        self.world_shader = Shader(vertPath, fragPath, replace={key: value for key, (value, *_) in self.block_rects.items()}, texBlocks="int", texWorld="int")
+        self.world_shader.setvar("texBlocks", 0)
+        self.world_shader.setvar("texWorld", 1)
 
     def add_vbo_instance(self, dest, source_or_color, shape):
         """
@@ -223,12 +245,15 @@ class Window:
         self.fps = self.clock.get_fps()
         self.delta_time = (1 / self.fps) if self.fps > 0 else self.delta_time
         self.camera.update()
-
+        
         # Reset
         glClear(GL_COLOR_BUFFER_BIT)
 
         # Use VAO
         glBindVertexArray(self.vao)
+
+        # Use instance shader
+        self.instance_shader.activate()
 
         # Send variables to shader
         for index, (loc, func, value) in Shader.active.variables.items():
@@ -239,10 +264,10 @@ class Window:
 
         # Bind texture
         glActiveTexture(GL_TEXTURE0)
-        glBindTexture(GL_TEXTURE_2D, self.atlas)
+        glBindTexture(GL_TEXTURE_2D, self.texAtlas)
 
         glActiveTexture(GL_TEXTURE1)
-        glBindTexture(GL_TEXTURE_2D, self.font)
+        glBindTexture(GL_TEXTURE_2D, self.texFont)
 
         # Send instance data to shader
         glBindBuffer(GL_ARRAY_BUFFER, self.dest_vbo)
@@ -281,6 +306,49 @@ class Window:
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
         else:
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
+        
+    def load_options(self):
+        options_string = """
+        enableVsync: False
+        maxFps: 1000
+        particles: 1
+        key.left: "a"
+        key.right: "d"
+        key.jump: "space"
+        key.sprint: "left shift"
+        key.return: "escape"
+        """
+        options = {line.split(":")[0].strip(): eval(line.split(":")[1].strip()) for line in options_string.split("\n") if line.split(":")[0].strip()}
+
+        try:
+            with open(util.File.path("data/user/options.txt"), "r") as file:
+                options_string = file.read()
+        except:
+            ...
+        for line in options_string.split("\n"):
+            keyword = line.split(":")[0].strip()
+            if not keyword in options or len(line.split(":")) != 2:
+                continue
+            value = line.split(":")[1].strip()
+            if value.isdecimal():
+                value = int(value)
+            elif value.replace(".", "", 1).isdecimal():
+                value = float(value)
+            elif (value in ("True", "False") or
+                  value.count("\"") == 2 and value[0] == value[-1] == "\"" or
+                  value.count("'") == 2 and value[0] == value[-1] == "'"):
+                value = eval(value)
+            else:
+                raise ValueError("Invalid value (\"" + str(value) + "\") for " + keyword)
+            if ((isinstance(options[keyword], (int, bool)) and not isinstance(value, (int, bool))) or
+                (isinstance(options[keyword], float) and not isinstance(value, (float, int, bool))) or
+                (isinstance(options[keyword], str) and not isinstance(value, str))):
+                raise ValueError("Invalid value type (\"" + str(value) + "\") for " + keyword)
+            options[keyword] = value            
+        return options
+
+    def keybind(self, key):
+        return self.keys[self.options["key." + key]]
 
     def callback(self, function):
         if not function is None:
@@ -291,16 +359,14 @@ class Window:
         pygame.quit()
         sys.exit()
     
-    def bind_atlas(self, atlas, blur=0):
+    def texture(self, image, blur=0):
         """
-        Set the currently used texture atlas.
+        Create a texture from an image.
         """
-        data = pygame.image.tostring(atlas[1], "RGBA", 1)
-        if not self.atlas is None:
-            glDeleteTextures(1, (self.atlas,))
-        self.atlas = glGenTextures(1)
-        glBindTexture(GL_TEXTURE_2D, self.atlas)
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, *atlas[1].get_size(), 0, GL_RGBA, GL_UNSIGNED_BYTE, data)
+        data = pygame.image.tostring(image, "RGBA", 1)
+        texture = glGenTextures(1)
+        glBindTexture(GL_TEXTURE_2D, texture)
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, *image.get_size(), 0, GL_RGBA, GL_UNSIGNED_BYTE, data)
         glGenerateMipmap(GL_TEXTURE_2D)
         if blur:
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR)
@@ -311,29 +377,7 @@ class Window:
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
         glBindTexture(GL_TEXTURE_2D, 0)
-        self.atlas_rects = atlas[0]
-
-    def bind_font(self, font, blur=0):
-        """
-        Set the currently used font.
-        """
-        data = pygame.image.tostring(font[1], "RGBA", 1)
-        if not self.font is None:
-            glDeleteTextures(1, (self.font,))
-        self.font = glGenTextures(1)
-        glBindTexture(GL_TEXTURE_2D, self.font)
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, *font[1].get_size(), 0, GL_RGBA, GL_UNSIGNED_BYTE, data)
-        glGenerateMipmap(GL_TEXTURE_2D)
-        if blur:
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR)
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-        else:
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST)
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
-        glBindTexture(GL_TEXTURE_2D, 0)
-        self.font_rects = font[0]
+        return texture
     
     def draw_image(self, image, position, size):
         """
@@ -459,13 +503,13 @@ class TextureAtlas:
 
         raise Exception("Ran out of space to create texture atlas with maximum size of %d" % self.max_atlas_size)
 
-    def load(folder):
+    def loadAtlas():
         """
         Load texture atlas data from files in a folder.
         """
-        with open(folder + "/data.txt", "r") as f:
+        with open(util.File.path("data/atlas/data.txt"), "r") as f:
             data_str = f.readlines()
-        image = pygame.image.load(folder + "/atlas.png")
+        image = pygame.image.load(util.File.path("data/atlas/atlas.png"))
         rects = {}
         for line in data_str:
             if line:
@@ -476,7 +520,26 @@ class TextureAtlas:
                               else eval(val) for val in rect_str.split(",")]) # eval() for "1/3", otherwise float("23.2")
                 rects[var] = rect
         return rects, image
-                
+
+    def loadBlocks():
+        """
+        Load block texture atlas from files in a folder.
+        """
+        paths = glob.glob(util.File.path("data/blocks/*.png"))
+        width = math.ceil(math.sqrt(len(paths)))
+        height = math.ceil(len(paths) / width)
+        image = pygame.Surface((width * 16, height * 16))
+        blocks = {}
+
+        for i, path in enumerate(paths):
+            x, y = divmod(i, width)
+            block = os.path.basename(path).split(".")[0]
+            blocks[block] = (i, x / width, y / height, 1 / width, 1 / height)
+            block_surface = pygame.image.load(path)
+            image.blit(block_surface, (x * 16, y * 16))
+
+        return blocks, image
+
 
 class Font:
     def fromPNG(path):
@@ -561,14 +624,17 @@ class Font:
 class Shader:
     active = None
 
-    def __init__(self, vertex, fragment, textures, **variables):
+    def __init__(self, vertex, fragment, replace={}, **variables):
         self.program = glCreateProgram()
-        self.texAtlas, self.texFont = textures
-        variables[self.texAtlas] = "int"
-        variables[self.texFont] = "int"
+        #self.texAtlas, self.texFont = textures
+        #variables[self.texAtlas] = "int"
+        #variables[self.texFont] = "int"
         
         with open(vertex, "r") as file:
-            vertex_shader = compileShader(file.read(), GL_VERTEX_SHADER)
+            content = file.read()
+            for search, replacement in replace.items():
+                content.replace(str(search), str(replacement))
+            vertex_shader = compileShader(content, GL_VERTEX_SHADER)
         with open(fragment, "r") as file:
             fragment_shader = compileShader(file.read(), GL_FRAGMENT_SHADER)
         glAttachShader(self.program, vertex_shader)
@@ -581,8 +647,8 @@ class Shader:
         # Dict containing all variables which should be send to the fragment shader {variable1: (uniformLoc, glUniformFunc, value)}
         self.variables = {variable: Shader.get_uniform_loc(self.program, variable, variables[variable]) for variable in variables}
 
-        self.setvar(self.texAtlas, 0)
-        self.setvar(self.texFont, 1)
+        #self.setvar(self.texAtlas, 0)
+        #self.setvar(self.texFont, 1)
 
     def setvar(self, variable, value):
         self.variables[variable][2] = value

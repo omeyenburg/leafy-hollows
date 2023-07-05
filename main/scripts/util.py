@@ -17,14 +17,17 @@ class File:
         with open(path, "w") as f:
             lines = f.write(content)
         return lines
-    
+
+    """
     @staticmethod
-    def path(relative_path: str, script: str=None):
-        if script is None:
-            try:
-                base_path = sys._MEIPASS
-            except Exception:
-                base_path = os.path.abspath(".")
-            return os.path.join(base_path, relative_path)
-        else:
-            return os.path.dirname(os.path.realpath(script)) + "/" + relative_path
+    def path(relative_path: str):
+        try:
+            base_path = sys._MEIPASS
+        except Exception:
+            base_path = os.path.abspath(".")
+        return os.path.abspath(os.path.join(base_path, relative_path))
+    """
+
+    @staticmethod
+    def path(relative_path: str):
+        return os.path.abspath(os.path.join(__file__, "../..", relative_path))
