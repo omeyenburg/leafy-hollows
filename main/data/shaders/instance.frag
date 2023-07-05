@@ -1,7 +1,6 @@
 #version 330 core
 
 in vec2 vertTexcoord;
-in vec2 vertSize;
 in vec4 vertSourceOrColor;
 in float vertShape;
 

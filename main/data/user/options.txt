@@ -1,0 +1,8 @@
+enableVsync: True
+maxFps: 999
+particles: 2
+key.move_left: "a"
+key.move_right: "d"
+key.jump: "space"
+key.sprint: "left shift"
+key.return: "escape"
