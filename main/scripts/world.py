@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from threading import Thread
 import random
 import numpy

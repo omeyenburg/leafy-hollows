@@ -1,8 +1,8 @@
+# -*- coding: utf-8 -*-
 import scripts.world as world
 import scripts.geometry as geometry
 import scripts.physics as physics
 import scripts.player as player
-
 from scripts.util import realistic
 
 class Game:

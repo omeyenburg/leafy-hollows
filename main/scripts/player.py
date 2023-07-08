@@ -1,11 +1,11 @@
+# -*- coding: utf-8 -*-
+from scripts.util import realistic
 from scripts.physics import *
 
-from scripts.util import realistic
 
-
-class Player(Physics_Object):
+class Player(PhysicsObject):
     def __init__(self, spawn_pos: [float], speed: float, sprint_speed: float, acceleration_time: float, jump_force: int):
-        Physics_Object.__init__(self, 50, spawn_pos, (0.9, 1.8))
+        super().__init__(50, spawn_pos, (0.9, 1.8))
 
         self.speed: float = speed
         self.sprint_speed: float = sprint_speed
@@ -84,7 +84,7 @@ class Player(Physics_Object):
 
     def update(self, world, window):
         self.move(world, window)
-        Physics_Object.update(self, world, window.delta_time)
+        super().update(world, window.delta_time)
         self.draw(window)
         for particle in particle_list:
             particle.update(world, window.delta_time)
@@ -92,11 +92,11 @@ class Player(Physics_Object):
 
 
 def spawn_particle(pos: list[float, float]):
-    particle_list.append(Physics_Object(10, pos, [0.5, 0.5]))
+    particle_list.append(PhysicsObject(10, pos, [0.5, 0.5]))
 
 def tmp_draw_rect(window, pos, size, color):
     rect = window.camera.map_coord((pos[0], pos[1], size[0], size[1]), from_world=True)
     window.draw_rect(rect[:2], rect[2:], color)
 
 
-particle_list: list[Physics_Object] = []
+particle_list: list[PhysicsObject] = []

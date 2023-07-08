@@ -1,20 +1,20 @@
-import math
-import scripts.geometry as geometry
-
+# -*- coding: utf-8 -*-
 from scripts.util import realistic
+import scripts.geometry as geometry
+import math
+
 
 if realistic:
     GRAVITY_CONSTANT: float = 9.81
 else:
     GRAVITY_CONSTANT: float = 38
-
 FRICTION_X: float = 0.1
 FRICTION_Y: float = 0.04
 JUMP_THRESHOLD: int = 3 # time to jump after leaving the ground in ticks
 WALL_JUMP_THRESHOLD: float = 0.3 # time to jump after leaving a wall in seconds
 
 
-class Physics_Object:
+class PhysicsObject:
     def __init__(self, mass: float, position: [float], size: [float]):
         self.mass: float = mass
         self.rect: geometry.Rect = geometry.Rect(*position, *size)

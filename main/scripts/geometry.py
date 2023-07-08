@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+
+
 class Rect:
     def __init__(self, x, y, w, h):
         self.x: float = x

@@ -1,8 +1,8 @@
 enableVsync: False
 maxFps: 1000
-particles: 2
-key.move_left: "a"
-key.move_right: "d"
+particles: 0
+key.left: "a"
+key.right: "d"
 key.jump: "space"
 key.sprint: "left shift"
 key.return: "escape"

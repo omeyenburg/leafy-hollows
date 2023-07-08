@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import math
 import sys
 import os
@@ -10,18 +11,14 @@ import scripts.graphics as graphics
 import scripts.util as util
 
 
-def update(window: graphics.Window): # Executed from main
-    if not Page.opened is None:
-        Page.opened.update(window)
-
-
 class Page:
     opened = None
     
-    def __init__(self, columns: int=1, spacing: int=0):
+    def __init__(self, columns: int=1, spacing: int=0, callback=None):
         self.children = []
         self.columns = columns
         self.spacing = spacing
+        self.callback = callback
 
     def layout(self):
         """
@@ -41,28 +38,7 @@ class Page:
         total_height = sum(height) + self.spacing * (len(height) - 1)
 
         for i, child in enumerate(self.children):
-            child.rect.right = sum(width[:child.column + 1]) - total_width / 2 + self.spacing * (child.column + (child.columnspan - 1) / 2) + width[child.column] * (child.columnspan - 1) / 2
-            child.rect.bottom = sum(height[:child.row + 1]) - total_height / 2 + self.spacing * child.row - height[child.row] + child.rect.h
-            child.rect.centery = -child.rect.centery
-
-    def layout(self):
-        """
-        Position all widgets in a grid on a page.
-        """
-        width = [0 for _ in range(self.columns)]
-        height = []
-
-        for i, child in enumerate(self.children):
-            width[child.column] = max(width[child.column], child.rect.w / child.columnspan - self.spacing * (child.columnspan - 1))
-            if len(height) > child.row:
-                height[child.row] = max(height[child.row], child.rect.h)
-            else:
-                height.append(child.rect.h)
-
-        total_width = sum(width) + self.spacing * (self.columns - 1)
-        total_height = sum(height) + self.spacing * (len(height) - 1)
-
-        for i, child in enumerate(self.children):
+            child.row = min(child.row, len(height) - 1)
             child.rect.centerx = sum(width[:child.column + 1]) - total_width / 2 + self.spacing * (child.column + (child.columnspan - 1) / 2) + width[child.column] * (child.columnspan - 1) / 2 - width[child.column] / 2
             child.rect.centery = sum(height[:child.row + 1]) - total_height / 2 + self.spacing * child.row - height[child.row] + child.rect.h - height[child.row] / 2
             child.rect.centery = -child.rect.centery
@@ -71,19 +47,18 @@ class Page:
         self.draw(window)
         for child in self.children:
             child.update(window)
+        if not self.callback is None:
+            self.callback()
 
     def draw(self, window: graphics.Window):
         pass
-
-    #def coords(self):
-    #    return pygame.Rect(self.rect.x + (window.size[0] - self.rect.w) // 2, self.rect.y + (window.size[1] - self.rect.h) // 2, self.rect.w, self.rect.h)
 
     def open(self):
         Page.opened = self
 
 
 class Widget:
-    def __init__(self, parent, size: [float], row: int=0, column: int=0, columnspan: int=1):
+    def __init__(self, parent, size: [float], row: int=0, column: int=0, columnspan: int=1, fontsize: float=1.0):
         self.parent = parent
         self.children = []
         self.rect = geometry.Rect(0, 0, *size)
@@ -91,20 +66,25 @@ class Widget:
         self.row = row
         self.column = column
         self.columnspan = columnspan
+        self.fontsize = fontsize
+
+        if not 0 <= self.column < parent.columns:
+            raise ValueError("Invalid Column " + str(self.column) + " for parent with " + str(parent.columns) + " column(s).")
 
     def update(self, window: graphics.Window):
         self.draw()
         for child in self.children:
             child.update(window)
 
-    #def coords(self, rect=None):
-    #    if rect is None:
-    #        rect = self.rect
-    #    return pygame.Rect(rect.x + (window.size[0] - rect.w) // 2, rect.y + (window.size[1] - rect.h) // 2, rect.w, rect.h)
 
-    #def draw(self, window: graphics.Window):
-    #    raise NotImplementedError("Subclasses of Widget must implement the draw method.")
-             
+class Label(Widget):
+    def __init__(self, *args, text: str="", **kwargs):
+        super().__init__(*args, **kwargs)
+        self.text = text
+
+    def update(self, window: graphics.Window):
+        window.draw_text(self.rect.center, self.text, (255, 255, 255, 255), self.fontsize, centered=True)
+
 
 class Button(Widget):
     def __init__(self, *args, text: str="", callback=None, duration: float=0.2, **kwargs):
@@ -116,69 +96,67 @@ class Button(Widget):
 
     def update(self, window: graphics.Window):
         pos = window.camera.map_coord(window.mouse_pos[:2], from_pixel=1, from_centered=1)
-        if 1 in window.mouse_buttons and self.rect.collidepoint(pos):
-            self.clicked = int(self.duration / window.delta_time)
-            if not self.callback is None:
-                self.callback()
+        if window.mouse_buttons[0] and self.rect.collidepoint(pos):
+            self.clicked = max(2, int(self.duration / window.delta_time))
 
         if self.clicked:
             self.clicked -= 1
             self.draw_clicked(window)
+            if self.clicked == 0 and not self.callback is None:
+                self.callback()
         else:
             self.draw_idle(window)
 
     def draw_idle(self, window: graphics.Window):
         window.draw_rect(self.rect[:2], self.rect[2:], (255, 0, 0, 255))
-        window.draw_text(self.rect.center, self.text, (0, 0, 0, 255), 1.13, centered=True)
+        window.draw_text(self.rect.center, self.text, (0, 0, 0, 255), self.fontsize, centered=True)
 
     def draw_clicked(self, window: graphics.Window):
         window.draw_rect(self.rect[:2], self.rect[2:], (255, 0, 0, 200))
-        window.draw_text(self.rect.center, self.text, (0, 0, 0, 255), 1.13, centered=True)
-
-
-class Label(Widget):
-    def __init__(self, *args, text: str="", **kwargs):
-        super().__init__(*args, **kwargs)
-        self.text = text
-
-    def update(self, window: graphics.Window):
-        #font.write(window.world_surface, self.text, (255, 255, 255), 4, self.coords().center, center=1)
-        window.draw_text(self.rect.center, self.text, (255, 255, 255, 255), 1.3, centered=True)
+        window.draw_text(self.rect.center, self.text, (0, 0, 0, 255), self.fontsize, centered=True)
 
 
 class Space(Widget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def update(self):
-        pass
+    def update(self, window: graphics.Window):
+        ...
 
 
 class Slider(Widget):
-    def __init__(self, *args, value=0.0, **kwargs):
+    def __init__(self, *args, callback=None, value=0.0, **kwargs):
         super().__init__(*args, **kwargs)
+        self.callback = callback
         self.value = value
         self.selected = False
         self.slider_rect = self.rect.copy()
 
-    def update(self):
-        self.slider_rect.w = self.slider_rect.h // 3
-        self.slider_rect.x = (self.rect.w - self.slider_rect.w) * self.value + self.coords().x
-        self.slider_rect.y = self.coords().y
+    def update(self, window: graphics.Window):
+        self.slider_rect.h = self.rect.h
+        self.slider_rect.w = self.rect.h / 6
+        self.slider_rect.x = self.rect.x + (self.rect.w - self.slider_rect.w) * self.value
+        self.slider_rect.y = self.rect.y
 
-        if self.slider_rect.collidepoint(window.mouse_pos[:2]) and 1 in window.mouse_buttons:
+        if self.slider_rect.collidepoint((window.mouse_pos[0] / window.width * 2, window.mouse_pos[1] / window.height * 2)) and window.mouse_buttons[0] == 1:
             self.selected = True
-        elif not any(window.mouse_buttons):
+        elif not window.mouse_buttons[0]:
             self.selected = False
 
         if self.selected:
-            self.value = min(1.0, max(0.0, (window.mouse_pos[0] - self.coords().x) / self.rect.w))
+            value = min(1.0, max(0.0, (window.mouse_pos[0] / window.width * 2 - self.rect.x) / self.rect.w))
+            if value != self.value and not self.callback is None:
+                self.callback()
+            self.value = value
 
-        self.draw()
+        self.draw(window)
 
-    def draw(self):
-        pygame.draw.rect(window.world_surface, (255, 255, 255), self.coords(), 1)
-        pygame.draw.rect(window.world_surface, (255, 255, 255), self.slider_rect, 1)
+    def draw(self, window: graphics.Window):
+        window.draw_rect(self.rect[:2], self.rect[2:], (50, 0, 0, 200))
+        window.draw_rect(self.slider_rect[:2], self.slider_rect[2:], (100, 0, 0, 200))
+        #window.draw_rect((self.rect[0], self.rect.centery - self.rect[3] / 8), (self.rect[2], self.rect[3] / 4), (50, 0, 0, 200))
+        #window.draw_rect(self.slider_rect[:2], self.slider_rect[2:], (100, 0, 0, 200))
+        #window.draw_circle(self.slider_rect.center, self.slider_rect.h_half, (200, 0, 0, 255))
 
 
 class Entry(Widget):
@@ -197,8 +175,10 @@ class Entry(Widget):
         self.draw()
 
     def draw(self):
-        pygame.draw.rect(window.world_surface, (255, 255, 255), self.coords(), 1)
-        font.write(window.world_surface, self.text, (255, 255, 255), 4, self.coords().topleft)
+        window.draw_rect(self.rect[:2], self.rect[2:], (255, 0, 0, 200))
+        window.draw_text(self.rect.center, self.text, (0, 0, 0, 255), self.fontsize, centered=True)
+        #pygame.draw.rect(window.world_surface, (255, 255, 255), self.coords(), 1)
+        #font.write(window.world_surface, self.text, (255, 255, 255), 4, self.coords().topleft)
 
 
 class Switch(Widget):
@@ -209,3 +189,138 @@ class Switch(Widget):
     def update(self):
         font.write(window.world_surface, self.text, (255, 255, 255), 4, self.coords().center, center=1)
 
+
+"""
+class ScrollBox(Widget):
+    layout = Page.layout
+
+    def __init__(self, *args, columns=1, spacing=0.1, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.children = []
+        self.columns = columns
+        self.spacing = spacing
+        self.offset = 0
+
+    def update(self, window: graphics.Window):
+        self.draw(window)
+        for child in self.children:
+            y = child.rect.y
+            adjust_offset = max(self.offset, child.rect.y - self.rect.y)
+            adjust_offset = min(adjust_offset, child.rect.bottom - self.rect.bottom)
+            
+            
+            child.rect.y -= self.offset# - 0.5
+            #print(child.rect.y)
+            #print(self.offset)
+            child.update(window)
+            child.rect.y = y
+            #child.rect.y -= self.offset
+
+        self.offset = adjust_offset
+
+        #self.offset = max(0, min(1, self.offset + window.mouse_wheel[3] / window.height))
+        self.offset += window.mouse_wheel[3] / window.height * 5
+        #print(self.offset)
+        #if window.mouse_wheel[3]:
+        #    print(self.offset)
+        
+
+
+    def draw(self, window: graphics.Window):
+        window.draw_rect(self.rect[:2], self.rect[2:], (60, 60, 60, 200))
+"""
+
+
+class Menu:
+    def __init__(self, window: graphics.Window):
+        self.window = window
+
+        self.in_game = False
+        def toggle_in_game():
+            self.in_game = not self.in_game
+
+        # Main page
+        main_page = Page(columns=2, spacing=0.1)
+        Label(main_page, (1, .3), row=0, column=0, columnspan=2, text="Hello, World!", fontsize=2)
+        button_play = Button(main_page, (1.4, .2), row=1, column=0, columnspan=2, callback=toggle_in_game, text="Play")
+        button_settings = Button(main_page, (.65, .2), row=2, column=0, text="Settings")
+        Button(main_page, (.65, .2), row=2, column=1, callback=window.quit, text="Quit")
+        main_page.layout()
+        main_page.open()
+
+        # Settings page
+        settings_page = Page(columns=2, spacing=0.1)
+        Label(settings_page, (1, .3), row=0, column=0, columnspan=2, text="Options", fontsize=2)
+        button_settings_video_open = Button(settings_page, (.65, .2), row=1, column=0, text="Video Settings")
+        button_settings_audio_open = Button(settings_page, (.65, .2), row=1, column=1, text="Audio Settings")
+        button_settings_controls_open = Button(settings_page, (.65, .2), row=2, column=0, text="Controls")
+        button_settings_back = Button(settings_page, (1.4, .2), row=3, column=0, columnspan=2, callback=main_page.open, text="Back")
+        settings_page.layout()
+        button_settings.callback = settings_page.open
+
+        # Video settings page
+        settings_video_page = Page(columns=2, spacing=0.1)
+        Label(settings_video_page, (1, .3), row=0, column=0, columnspan=2, text="Video Settings", fontsize=2)
+
+        if window.options["enableVsync"]:
+            value = 0
+        else:
+            value = window.options["maxFps"] / 1000
+        slider_fps = Slider(settings_video_page, (.65, 0.2), row=1, column=0, value=value)
+        label_fps = Label(settings_video_page, (.65, 0.2), row=1, column=0)
+        def slider_fps_update():
+            fps = round(slider_fps.value * 100) * 10
+            if fps:
+                show_fps = str(fps)
+                window.options["maxFps"] = fps
+                if window.options["enableVsync"]:
+                    window.options["enableVsync"] = False
+                    window.resize()
+            else:
+                show_fps = "Vsync"
+                window.options["maxFps"] = 1000
+                if not window.options["enableVsync"]:
+                    window.options["enableVsync"] = True
+                    window.resize()
+            label_fps.text = "Max FPS: " + show_fps
+        slider_fps_update()
+        slider_fps.callback = slider_fps_update
+
+        value = window.options["particles"] / 10
+        slider_particles = Slider(settings_video_page, (.65, 0.2), row=1, column=1, value=value)
+        label_particles = Label(settings_video_page, (.65, 0.2), row=1, column=1)
+        def slider_particles_update():
+            particles = int(slider_particles.value * 10)
+            label_particles.text = "Particle Density: " + str(particles)
+            window.options["particles"] = particles
+        slider_particles.callback = slider_particles_update
+        slider_particles_update()
+
+        button_settings_back = Button(settings_video_page, (0.65, .2), row=2, column=0, callback=window.toggle_fullscreen, text="Fullscreen")
+        button_settings_back = Button(settings_video_page, (0.65, .2), row=2, column=1, callback=window.toggle_wire_frame, text="Wireframe")
+
+        button_settings_back = Button(settings_video_page, (1.4, .2), row=3, column=0, columnspan=2, callback=settings_page.open, text="Back")
+        settings_video_page.layout()
+        button_settings_video_open.callback = settings_video_page.open
+
+        # Audio settings page
+        settings_audio_page = Page(columns=1, spacing=0.1)
+        Label(settings_audio_page, (1, .3), row=0, column=0, text="Audio Settings", fontsize=2)
+        Button(settings_audio_page, (1.4, .2), row=1, column=0, callback=settings_page.open, text="Back")
+        settings_audio_page.layout()
+        button_settings_audio_open.callback = settings_audio_page.open
+
+        # Controls settings page
+        settings_controls_page = Page(columns=1, spacing=0.1)
+        Label(settings_controls_page, (1, .3), row=0, column=0, text="Controls", fontsize=2)
+        Button(settings_controls_page, (1.4, .2), row=1, column=0, callback=settings_page.open, text="Back")
+        settings_controls_page.layout()
+        button_settings_controls_open.callback = settings_controls_page.open
+
+
+    def update(self):
+        """
+        Update all widgets on the currently opened page.
+        """
+        if not Page.opened is None:
+            Page.opened.update(self.window)
