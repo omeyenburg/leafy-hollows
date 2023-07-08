@@ -1,10 +1,12 @@
 from platform import system
-import scripts.util as util
 import numpy
 import math
 import glob
 import sys
 import os
+
+import scripts.world as world
+import scripts.util as util
 
 from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
@@ -37,10 +39,6 @@ class Window:
         if system() == "Darwin":
             pygame.display.gl_set_attribute(pygame.GL_CONTEXT_FORWARD_COMPATIBLE_FLAG, True)
 
-        # Constants
-        self.max_fps: int = 1000
-        self.vsync: bool = False
-
         # Events
         self.keys: dict = dict.fromkeys([value for key, value in self.options.items() if key.startswith("key.")], 0) # 0 = Not pressed | 1 = Got pressed | 2 = Is pressed
         self.unicode: str = ""                  # Backspace = "\x08"
@@ -59,7 +57,7 @@ class Window:
         
         # Window
         flags = DOUBLEBUF | RESIZABLE | OPENGL
-        self.window = pygame.display.set_mode((self.width, self.height), flags=flags, vsync=self.vsync)
+        self.window = pygame.display.set_mode((self.width, self.height), flags=flags, vsync=self.options["enableVsync"])
         pygame.display.set_caption(caption)
         self.clock = pygame.time.Clock()
         self.camera: Camera = Camera(self)
@@ -72,11 +70,11 @@ class Window:
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
         # Create vertex array object
-        self.vao = glGenVertexArrays(1)
-        glBindVertexArray(self.vao)
+        self.instance_vao = glGenVertexArrays(1)
+        glBindVertexArray(self.instance_vao)
 
         # Create vertex buffer objects
-        vertices_vbo, ebo, self.dest_vbo, self.source_or_color_vbo, self.shape_vbo = glGenBuffers(5)
+        self.vertices_vbo, self.ebo, self.dest_vbo, self.source_or_color_vbo, self.shape_vbo = glGenBuffers(5)
 
         # Instanced shader inputs
         self.vbo_instances_length = 0
@@ -92,21 +90,19 @@ class Window:
             1.0, 1.0, 1.0, 1.0,    # top-right
             1.0, -1.0, 1.0, 0.0    # bottom-right
         ], dtype=numpy.float32)
-        glBindBuffer(GL_ARRAY_BUFFER, vertices_vbo)
+
+        glBindBuffer(GL_ARRAY_BUFFER, self.vertices_vbo)
         glBufferData(GL_ARRAY_BUFFER, vertices.nbytes, vertices, GL_STATIC_DRAW)
-
-        # Create element buffer object (EBO) for indices
-        indices = numpy.array([0, 1, 2, 0, 2, 3], dtype=numpy.uint32)
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo)
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, len(indices) * 4, (GLuint * len(indices))(*indices), GL_STATIC_DRAW)
-
-        # Create vertex buffer object (VBO) for vertices
-        glBindBuffer(GL_ARRAY_BUFFER, vertices_vbo)
         glEnableVertexAttribArray(0)
         glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * vertices.itemsize, ctypes.c_void_p(0))
         glEnableVertexAttribArray(1)
         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * vertices.itemsize, ctypes.c_void_p(2 * vertices.itemsize))
         
+        # Create element buffer object (EBO) for indices
+        indices = numpy.array([0, 1, 2, 0, 2, 3], dtype=numpy.uint32)
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.ebo)
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, len(indices) * 4, (GLuint * len(indices))(*indices), GL_STATIC_DRAW)
+
         # Create vertex buffer objects (VBOs) for draw data
         glEnableVertexAttribArray(2)
         glBindBuffer(GL_ARRAY_BUFFER, self.dest_vbo)
@@ -126,31 +122,51 @@ class Window:
         glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, 0, ctypes.c_void_p(0))
         glVertexAttribDivisor(4, 1)
 
-        # Atlas texture
+        # Create vertex array object
+        self.world_vao = glGenVertexArrays(1)
+        glBindVertexArray(self.world_vao)
+
+        # Vertices & texcoords
+        glBindBuffer(GL_ARRAY_BUFFER, self.vertices_vbo)
+        glEnableVertexAttribArray(0)
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * vertices.itemsize, ctypes.c_void_p(0))
+        glEnableVertexAttribArray(1)
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * vertices.itemsize, ctypes.c_void_p(2 * vertices.itemsize))
+
+        # Create element buffer object (EBO) for indices
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.ebo)
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, len(indices) * 4, (GLuint * len(indices))(*indices), GL_STATIC_DRAW)
+
+        # Atlas texture (contains images)
         self.atlas_rects, image = TextureAtlas.loadAtlas()
         self.texAtlas = self.texture(image)
 
-        # Font texture
+        # Font texture (contains letter images)
         self.font_rects, image = Font.fromPNG(util.File.path("data/fonts/font.png"))
         self.texFont = self.texture(image)
 
-        # Block texture
+        # Block texture (contains block images)
         self.block_rects, image = TextureAtlas.loadBlocks()
         self.texBlocks = self.texture(image)
+
+        # World texture (contains map data)
+        self.world_size = (0, 0)
+        self.texWorld = None
         
         # Instance shader
-        vertPath: str = util.File.path("data/shaders/instance.vert")
-        fragPath: str = util.File.path("data/shaders/instance.frag")
+        vertPath: str = util.File.path("scripts/shaders/instance.vert")
+        fragPath: str = util.File.path("scripts/shaders/instance.frag")
         self.instance_shader = Shader(vertPath, fragPath, texAtlas="int", texFont="int")
         self.instance_shader.setvar("texAtlas", 0)
         self.instance_shader.setvar("texFont", 1)
         
         # World shader
-        vertPath: str = util.File.path("data/shaders/world.vert")
-        fragPath: str = util.File.path("data/shaders/world.frag")
-        self.world_shader = Shader(vertPath, fragPath, replace={key: value for key, (value, *_) in self.block_rects.items()}, texBlocks="int", texWorld="int")
+        vertPath: str = util.File.path("scripts/shaders/world.vert")
+        fragPath: str = util.File.path("scripts/shaders/world.frag")
+        self.world_shader = Shader(vertPath, fragPath, replace={key: value for key, (value, *_) in self.block_rects.items()}, texBlocks="int", texWorld="int", offset="vec2", resolution="int")
         self.world_shader.setvar("texBlocks", 0)
         self.world_shader.setvar("texWorld", 1)
+        self.world_shader.setvar("resolution", self.camera.resolution)
 
     def add_vbo_instance(self, dest, source_or_color, shape):
         """
@@ -195,8 +211,8 @@ class Window:
             flags = DOUBLEBUF | RESIZABLE
 
         # Called twice, because of VSYNC...
-        self.window = pygame.display.set_mode((self.width, self.height), flags=flags | OPENGL, vsync=self.vsync)
-        self.window = pygame.display.set_mode((self.width, self.height), flags=flags | OPENGL, vsync=self.vsync)
+        self.window = pygame.display.set_mode((self.width, self.height), flags=flags | OPENGL)
+        self.window = pygame.display.set_mode((self.width, self.height), flags=flags | OPENGL, vsync=self.options["enableVsync"])
         glViewport(0, 0, self.width, self.height)
 
     def events(self):
@@ -238,29 +254,48 @@ class Window:
             elif event.type == MOUSEWHEEL:
                 self.mouse_wheel = [self.mouse_wheel[0] + event.x, self.mouse_wheel[1] + event.y, event.x, event.y]
 
-    def update(self):
+    def update(self, world_data=numpy.zeros((0, 0))):
+        """
+        Update the window and inputs.
+        """
+
         # Update pygame
         self.events()
-        self.clock.tick(self.max_fps)
+        self.clock.tick(self.options["maxFps"])
         self.fps = self.clock.get_fps()
         self.delta_time = (1 / self.fps) if self.fps > 0 else self.delta_time
-        self.camera.update()
         
         # Reset
         glClear(GL_COLOR_BUFFER_BIT)
 
         # Use VAO
-        glBindVertexArray(self.vao)
+        glBindVertexArray(self.world_vao)
+
+        # Use world shader
+        self.world_shader.activate()
+
+        # Send variables to shader
+        self.update_world(world_data)
+        self.world_shader.update()
+
+        # Bind texture
+        glActiveTexture(GL_TEXTURE0)
+        glBindTexture(GL_TEXTURE_2D, self.texBlocks)
+
+        glActiveTexture(GL_TEXTURE1)
+        glBindTexture(GL_TEXTURE_2D, self.texWorld)
+
+        # Draw
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, None)
+
+        # Use VAO
+        glBindVertexArray(self.instance_vao)
 
         # Use instance shader
         self.instance_shader.activate()
 
         # Send variables to shader
-        for index, (loc, func, value) in Shader.active.variables.items():
-            if value is None:
-                continue
-            func(loc, value)
-            Shader.active.variables[index][2] = None
+        self.instance_shader.update()
 
         # Bind texture
         glActiveTexture(GL_TEXTURE0)
@@ -277,10 +312,12 @@ class Window:
         glBindBuffer(GL_ARRAY_BUFFER, self.shape_vbo)
         glBufferSubData(GL_ARRAY_BUFFER, 0, self.shape_vbo_data.nbytes, self.shape_vbo_data)
 
+        # Draw
         glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, None, self.vbo_instances_index)
         pygame.display.flip()
 
         self.vbo_instances_index = 0
+        self.camera.update() # Better at the start, but currently at the end for sync of world and instanced rendering
 
     def toggle_fullscreen(self):
         """
@@ -308,6 +345,9 @@ class Window:
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
         
     def load_options(self):
+        """
+        Loads the options from the options.txt file.
+        """
         options_string = """
         enableVsync: False
         maxFps: 1000
@@ -325,6 +365,7 @@ class Window:
                 options_string = file.read()
         except:
             ...
+
         for line in options_string.split("\n"):
             keyword = line.split(":")[0].strip()
             if not keyword in options or len(line.split(":")) != 2:
@@ -348,6 +389,9 @@ class Window:
         return options
 
     def keybind(self, key):
+        """
+        Returns the state of an action key.
+        """
         return self.keys[self.options["key." + key]]
 
     def callback(self, function):
@@ -355,7 +399,20 @@ class Window:
             function()
 
     def quit(self):
+        """
+        Quit the program
+        """
+        # Quit callback
         self.callback(self.callback_quit)
+
+        # OpenGL cleanup
+        glDeleteBuffers(5, (self.vertices_vbo, self.ebo, self.dest_vbo, self.source_or_color_vbo, self.shape_vbo))
+        glDeleteVertexArrays(2, (self.instance_vao, self.world_vao))
+        glDeleteTextures(4, (self.texAtlas, self.texFont, self.texBlocks, self.texWorld))
+        self.instance_shader.delete()
+        self.world_shader.delete()
+
+        # Quit
         pygame.quit()
         sys.exit()
     
@@ -368,6 +425,7 @@ class Window:
         glBindTexture(GL_TEXTURE_2D, texture)
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, *image.get_size(), 0, GL_RGBA, GL_UNSIGNED_BYTE, data)
         glGenerateMipmap(GL_TEXTURE_2D)
+
         if blur:
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
@@ -376,8 +434,44 @@ class Window:
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
+
         glBindTexture(GL_TEXTURE_2D, 0)
         return texture
+
+    def update_world(self, data, blur=0):
+        """
+        Update the world texture.
+        """
+        data = numpy.transpose(data)
+        start = (int(self.camera.pos[0]) - math.floor(self.width / 2 / self.camera.pixels_per_meter) - 2,
+                 int(self.camera.pos[1]) - math.floor(self.height / 2 / self.camera.pixels_per_meter) - 2)
+        chunk_start = (math.floor(start[0] / world.CHUNK_SIZE),
+                       math.floor(start[1] / world.CHUNK_SIZE))
+
+        offset = (self.camera.pos[0] % 1 + (start[0] - chunk_start[0] * world.CHUNK_SIZE) % self.camera.pixels_per_meter - self.width / (self.camera.pixels_per_meter / 2) % 1 - int(self.camera.pos[0] < 0) + 2,
+                  self.camera.pos[1] % 1 + (start[1] - chunk_start[1] * world.CHUNK_SIZE) % self.camera.pixels_per_meter - self.height / (self.camera.pixels_per_meter / 2) % 1 - int(self.camera.pos[1] < 0) + 1 + 1 / self.camera.resolution)
+        self.world_shader.setvar("offset", *offset) 
+
+        size = data.shape[::-1]
+        if self.world_size != size:
+            if not self.texWorld is None:
+                glDeleteTextures(1, (self.texWorld,))
+                self.texWorld = None
+            self.world_size = size
+        
+        if self.texWorld is None:
+            texture = glGenTextures(1)
+            glBindTexture(GL_TEXTURE_2D, texture)
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_R32I, *self.world_size, 0, GL_RED_INTEGER, GL_INT, data)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
+            glBindTexture(GL_TEXTURE_2D, 0)
+            self.texWorld = texture
+        else:
+            glBindTexture(GL_TEXTURE_2D, self.texWorld)
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_R32I, *self.world_size, 0, GL_RED_INTEGER, GL_INT, data)
     
     def draw_image(self, image, position, size):
         """
@@ -532,11 +626,11 @@ class TextureAtlas:
         blocks = {}
 
         for i, path in enumerate(paths):
-            x, y = divmod(i, width)
+            y, x = divmod(i, width)
             block = os.path.basename(path).split(".")[0]
-            blocks[block] = (i, x / width, y / height, 1 / width, 1 / height)
+            blocks[block] = (i, x / width, 1 - y / height, 1 / width, 1 / height)
             block_surface = pygame.image.load(path)
-            image.blit(block_surface, (x * 16, y * 16))
+            image.blit(block_surface, (x * 16, (height - y - 1) * 16))
 
         return blocks, image
 
@@ -626,9 +720,6 @@ class Shader:
 
     def __init__(self, vertex, fragment, replace={}, **variables):
         self.program = glCreateProgram()
-        #self.texAtlas, self.texFont = textures
-        #variables[self.texAtlas] = "int"
-        #variables[self.texFont] = "int"
         
         with open(vertex, "r") as file:
             content = file.read()
@@ -647,17 +738,23 @@ class Shader:
         # Dict containing all variables which should be send to the fragment shader {variable1: (uniformLoc, glUniformFunc, value)}
         self.variables = {variable: Shader.get_uniform_loc(self.program, variable, variables[variable]) for variable in variables}
 
-        #self.setvar(self.texAtlas, 0)
-        #self.setvar(self.texFont, 1)
-
-    def setvar(self, variable, value):
+    def setvar(self, variable, *value):
+        """
+        Set the value of a variable, which is send to the shader by update
+        """
         self.variables[variable][2] = value
 
     def activate(self):
+        """
+        Activate the shader.
+        """
         glUseProgram(self.program)
         Shader.active = self
 
     def delete(self):
+        """
+        Delete the shader.
+        """
         glDeleteProgram(self.program)
 
     def get_uniform_loc(program, variable, data_type): # Get location and convert glsl data type to valid function
@@ -682,10 +779,21 @@ class Shader:
                                 'mat4': glUniformMatrix4fv}[data_type]
         return [loc, func, None]
 
+    def update(self):
+        """
+        Update all variables.
+        """
+        for index, (loc, func, value) in self.variables.items():
+            if value is None:
+                continue
+            func(loc, *value)
+            self.variables[index][2] = None
+
 
 class Camera:
     def __init__(self, window):
-        self.pixels_per_meter: int = 32
+        self.resolution: int = 2 # currently only working with 1 & 2
+        self.pixels_per_meter: int = self.resolution * 16
         self.threshold = 0.1
 
         self.pos: [float] = [0, 0]
@@ -731,26 +839,29 @@ class Camera:
         Output format specified by pixel, centered, world.
         """
         if from_world:
-            fpixel = True
+            from_pixel = True
         if world:
             pixel = True
         coord = list(coord)
+
         if from_world and not world:
             for i in range(len(coord)):
                 if i < 2:
                     coord[i] = (coord[i] - self.pos[i]) * self.pixels_per_meter
                 else:
                     coord[i] = coord[i] * self.pixels_per_meter
-        elif not from_world and world:
+        elif (not from_world) and world:
             for i in range(len(coord)):
                 coord[i] = coord[i] / self.pixels_per_meter + self.pos[i % 2]
+
         if from_pixel and not pixel:
             for i in range(len(coord)):
                 coord[i] /= (self.window.width, self.window.height)[i%2] / 2
-        elif not from_pixel and fpixel:
+        elif (not from_pixel) and pixel:
             for i in range(len(coord)):
                 coord[i] /= (self.window.width, self.window.height)[i%2] / 2
-        if not from_centered and centered:
+
+        if (not from_centered) and centered:
             for i in range(2):
                 coord[i] -= 1
         elif from_centered and not centered:

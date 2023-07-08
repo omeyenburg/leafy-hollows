@@ -4,12 +4,12 @@ import scripts.graphics as graphics
 import scripts.util as util
 from scripts.game import Game
 
+import numpy
 import math
 import time
 import os
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
-import pygame
 
 
 # C test
@@ -64,6 +64,9 @@ while True:
 
         if window.keybind("return") == 1:
             in_game = False
+
+        data = game.world.view(*window.camera.visible_blocks())
+        window.update(data)
     else:
         # Update and draw the menu
         menu.update(window)
@@ -72,4 +75,9 @@ while True:
         window.draw_text((-0.98, 0.95), str(round(window.fps, 3)), (255, 255, 255, 200), 1.3)
 
     # Update window + shader
-    window.update()
+    #map_data = numpy.zeros((40, 40), dtype=numpy.int32)
+    #map_data[0:40, 5] = 1
+    #map_data[0:40, 6] = 2
+    #map_data[0:40, 7] = 3
+    #data = 
+        window.update()
