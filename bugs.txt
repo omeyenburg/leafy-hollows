@@ -1,1 +1,0 @@
-- Shader erstellt neue Textur, ohne dass sich die UI ändert -> weniger FPS

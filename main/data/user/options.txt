@@ -1,5 +1,5 @@
-enableVsync: True
-maxFps: 999
+enableVsync: False
+maxFps: 1000
 particles: 2
 key.move_left: "a"
 key.move_right: "d"

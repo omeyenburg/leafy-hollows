@@ -15,5 +15,5 @@ class Game:
             self.player: player.Player = player.Player(spawn_pos=[0, 0], speed=6, sprint_speed=10, acceleration_time=0.1, jump_force=36)
 
     def update(self):
-        self.world.draw(self.window)
+        #self.world.draw(self.window)
         self.player.update(self.world, self.window)
