@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from platform import system
 import numpy
 import math
@@ -53,6 +54,7 @@ class Window:
         self.screen_size = info.current_w, info.current_h
         self.width, self.height = self.size = self.pre_fullscreen = (int(info.current_w / 3 * 2), int(info.current_h / 5 * 3))
         self.fullscreen = False
+        self.wireframe = False
         self.resize_supress = False
         
         # Window
@@ -139,15 +141,16 @@ class Window:
 
         # Atlas texture (contains images)
         self.atlas_rects, image = TextureAtlas.loadAtlas()
-        self.texAtlas = self.texture(image)
+        self.texAtlas = self.texture(image, blur=True)
 
         # Font texture (contains letter images)
-        self.font_rects, image = Font.fromPNG(util.File.path("data/fonts/font.png"))
+        #self.font_rects, image = Font.fromPNG(util.File.path("data/fonts/font.png"))
+        self.font_rects, image = Font.fromSYS(None, size=30, bold=True, antialias=True, lower=True)
         self.texFont = self.texture(image)
 
         # Block texture (contains block images)
         self.block_rects, image = TextureAtlas.loadBlocks()
-        self.texBlocks = self.texture(image)
+        self.texBlocks = self.texture(image, blur=True)
 
         # World texture (contains map data)
         self.world_size = (0, 0)
@@ -335,11 +338,12 @@ class Window:
 
         self.resize()
 
-    def toggle_wire_frame(self, state):
+    def toggle_wire_frame(self):
         """
         Toggle between drawing only outlines and filled shapes.
         """
-        if state:
+        self.wireframe = ~self.wireframe
+        if self.wireframe:
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
         else:
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
@@ -388,6 +392,20 @@ class Window:
             options[keyword] = value            
         return options
 
+    def save_options(self):
+        """
+        Save the options in the options.txt file.
+        """
+        options_string = ""
+        for key, value in self.options.items():
+            if isinstance(value, str):
+                options_string += str(key) + ": \"" + str(value) + "\"\n"
+            else:
+                options_string += str(key) + ": " + str(value) + "\n"
+
+        with open(util.File.path("data/user/options.txt"), "w") as file:
+            file.write(options_string)
+
     def keybind(self, key):
         """
         Returns the state of an action key.
@@ -412,11 +430,14 @@ class Window:
         self.instance_shader.delete()
         self.world_shader.delete()
 
+        # Save options
+        self.save_options()
+
         # Quit
         pygame.quit()
         sys.exit()
     
-    def texture(self, image, blur=0):
+    def texture(self, image, blur=False):
         """
         Create a texture from an image.
         """
@@ -424,13 +445,12 @@ class Window:
         texture = glGenTextures(1)
         glBindTexture(GL_TEXTURE_2D, texture)
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, *image.get_size(), 0, GL_RGBA, GL_UNSIGNED_BYTE, data)
-        glGenerateMipmap(GL_TEXTURE_2D)
 
         if blur:
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
         else:
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
@@ -442,24 +462,24 @@ class Window:
         """
         Update the world texture.
         """
-        data = numpy.transpose(data)
         start = (int(self.camera.pos[0]) - math.floor(self.width / 2 / self.camera.pixels_per_meter) - 2,
                  int(self.camera.pos[1]) - math.floor(self.height / 2 / self.camera.pixels_per_meter) - 2)
         chunk_start = (math.floor(start[0] / world.CHUNK_SIZE),
                        math.floor(start[1] / world.CHUNK_SIZE))
-
         offset = (self.camera.pos[0] % 1 + (start[0] - chunk_start[0] * world.CHUNK_SIZE) % self.camera.pixels_per_meter - self.width / (self.camera.pixels_per_meter / 2) % 1 - int(self.camera.pos[0] < 0) + 2,
                   self.camera.pos[1] % 1 + (start[1] - chunk_start[1] * world.CHUNK_SIZE) % self.camera.pixels_per_meter - self.height / (self.camera.pixels_per_meter / 2) % 1 - int(self.camera.pos[1] < 0) + 1 + 1 / self.camera.resolution)
         self.world_shader.setvar("offset", *offset) 
 
-        size = data.shape[::-1]
+        # View size
+        size = data.shape
+        data = numpy.transpose(data) # flip axis
         if self.world_size != size:
             if not self.texWorld is None:
                 glDeleteTextures(1, (self.texWorld,))
                 self.texWorld = None
             self.world_size = size
         
-        if self.texWorld is None:
+        if self.texWorld is None: # Generate texture if necessary
             texture = glGenTextures(1)
             glBindTexture(GL_TEXTURE_2D, texture)
             glTexImage2D(GL_TEXTURE_2D, 0, GL_R32I, *self.world_size, 0, GL_RED_INTEGER, GL_INT, data)
@@ -469,7 +489,7 @@ class Window:
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
             glBindTexture(GL_TEXTURE_2D, 0)
             self.texWorld = texture
-        else:
+        else: # Write world data into texture
             glBindTexture(GL_TEXTURE_2D, self.texWorld)
             glTexImage2D(GL_TEXTURE_2D, 0, GL_R32I, *self.world_size, 0, GL_RED_INTEGER, GL_INT, data)
     
@@ -493,7 +513,7 @@ class Window:
         """
         self.add_vbo_instance((*position, radius, radius), self.camera.map_color(color), 2)
 
-    def draw_text(self, position, text, color, size=1, centered=False):
+    def draw_text(self, position, text, color, size=1, centered=False, spacing=1.25):
         """
         Draw text on the window.
         """
@@ -511,7 +531,7 @@ class Window:
                         letter = letter.lower()
                 if not letter in self.font_rects:
                     letter = "?"
-                offset -= self.font_rects[letter][1] * 1.25 * size
+                offset -= self.font_rects[letter][1] * spacing * size
 
             for letter in text:
                 if not letter in self.font_rects and letter.isalpha():
@@ -523,8 +543,9 @@ class Window:
                     letter = "?"
                 rect = self.font_rects[letter]
                 source_and_color = (color[0] + rect[0], color[1] + rect[1] - 0.00001, color[2], color[3])
+                offset += rect[1] * spacing * size
                 dest_rect = (position[0] + offset + rect[1], position[1], rect[1] * size, rect[2] * 2 * size)
-                offset += rect[1] * 2.5 * size
+                offset += rect[1] * spacing * size
                 self.add_vbo_instance(dest_rect, source_and_color, 3)
         else:
             for letter in text:
@@ -536,9 +557,10 @@ class Window:
                 if not letter in self.font_rects:
                     letter = "?"
                 rect = self.font_rects[letter]
-                source_and_color = (color[0] + rect[0], color[1] + rect[1], color[2], color[3])
+                source_and_color = (color[0] + rect[0], color[1] + rect[1] - 0.00001, color[2], color[3])
+                offset += rect[1] * spacing * size
                 dest_rect = (position[0] + offset + rect[1], position[1] - rect[2] * 2, rect[1] * size, rect[2] * 2 * size)
-                offset += rect[1] * 2.5 * size
+                offset += rect[1] * spacing * size
                 self.add_vbo_instance(dest_rect, source_and_color, 3)
 
 class TextureAtlas:
@@ -648,23 +670,27 @@ class Font:
 
         return (letters, image)
 
-    def fromTTF(path, size=1):
+    def fromTTF(path, size=1, antialias=False, lower=True):
         """
         Load a font from a TrueTypeFont file.
         """
         font = pygame.font.Font(path, size)
         images = []
         letters = {}
+        if lower: # upper letters :96 | lower letters :123
+            limit = 123
+        else:
+            limit = 96
 
-        font_height = font.render("".join([chr(i) for i in range(32, 96)]), 0, (0, 0, 0)).get_height()
+        font_height = font.render("".join([chr(i) for i in range(32, limit)]), antialias, (0, 0, 0)).get_height()
         font_width = 0
 
-        space = font.render("A", 0, (0, 0, 0))
+        space = font.render("A", antialias, (0, 0, 0))
 
-        for i in range(32, 96):
+        for i in range(32, limit):
             letter = chr(i)
             if letter != " ":
-                image = font.render(letter, 0, (255, 255, 255))
+                image = font.render(letter, antialias, (255, 255, 255))
             else:
                 image = space
             letter_width = image.get_width()
@@ -681,23 +707,26 @@ class Font:
 
         return (letters, image)
 
-    def fromSYS(name, size=1):
+    def fromSYS(name, size=1, bold=False, antialias=False, lower=True):
         """
         Load a font from the system.
         """
-        font = pygame.font.SysFont(name, size)
+        font = pygame.font.SysFont(name, size, bold=bold)
         images = []
         letters = {}
+        if lower: # upper letters 32:96 | upper & lower letters 32:123
+            limit = 123
+        else:
+            limit = 96
 
-        font_height = font.render("".join([chr(i) for i in range(32, 96)]), 0, (0, 0, 0)).get_height()
+        font_height = font.render("".join([chr(i) for i in range(32, limit)]), antialias, (0, 0, 0)).get_height()
         font_width = 0
 
-        space = font.render("A", 0, (0, 0, 0))
-
-        for i in range(32, 96):
+        space = font.render("A", antialias, (0, 0, 0))
+        for i in range(32, limit):
             letter = chr(i)
             if letter != " ":
-                image = font.render(letter, 0, (255, 255, 255))
+                image = font.render(letter, antialias, (255, 255, 255))
             else:
                 image = space
             letter_width = image.get_width()
@@ -705,12 +734,13 @@ class Font:
 
             font_width += letter_width
             images.append(image)
+            #print(letter, i)
 
         image = pygame.Surface((font_width, font_height))
-
         for letter in letters:
             image.blit(images[ord(letter) - 32], (letters[letter][0], 0))
             letters[letter] = (letters[letter][0] / font_width, letters[letter][1] / font_width, font_height / font_width)
+            #print(letters[letter][0] / font_width)
 
         return (letters, image)
 

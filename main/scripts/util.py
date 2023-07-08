@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import sys
 import os
 
@@ -17,16 +18,6 @@ class File:
         with open(path, "w") as f:
             lines = f.write(content)
         return lines
-
-    """
-    @staticmethod
-    def path(relative_path: str):
-        try:
-            base_path = sys._MEIPASS
-        except Exception:
-            base_path = os.path.abspath(".")
-        return os.path.abspath(os.path.join(base_path, relative_path))
-    """
 
     @staticmethod
     def path(relative_path: str):

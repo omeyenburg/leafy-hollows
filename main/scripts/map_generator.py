@@ -2,7 +2,6 @@ import time
 import wfc
 
 
-
 dirt = wfc.State(
     "dirt",
     wfc.Rule(
