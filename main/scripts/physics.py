@@ -15,10 +15,12 @@ WALL_JUMP_THRESHOLD: float = 0.3 # time to jump after leaving a wall in seconds
 
 
 class PhysicsObject:
-    def __init__(self, mass: float, position: [float], size: [float]):
+    def __init__(self, mass: float, position: [float], size: [float], force_func=None):
         self.mass: float = mass
         self.rect: geometry.Rect = geometry.Rect(*position, *size)
         self.vel: [float] = [0.0, 0.0]
+        if not force_func is None:
+            self.apply_force = force_func
 
         self.onGround: int = 0
         self.onWallLeft: int = 0

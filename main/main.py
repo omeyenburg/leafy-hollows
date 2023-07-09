@@ -29,9 +29,11 @@ while True:
 
         # Write fps & player position
         window.draw_text((-0.98, 0.95), "FPS: " + str(round(window.fps, 3)), (255, 255, 255, 200))
-        window.draw_text((-0.98, 0.75), "Player: " + str((round(game.player.rect.centerx, 1), round(game.player.rect.centery, 1))), (255, 255, 255, 200))
+        window.draw_text((-0.98, 0.8), "Player: " + str((round(game.player.rect.centerx, 1), round(game.player.rect.centery, 1))), (255, 255, 255, 200))
         pos = window.camera.map_coord(window.mouse_pos[:2], from_pixel=1, world=1)
-        window.draw_text((-0.98, 0.55), "Mouse: " + str((math.floor(pos[0]), math.floor(pos[1]))), (255, 255, 255, 200))
+        window.draw_text((-0.98, 0.65), "Mouse: " + str((math.floor(pos[0]), math.floor(pos[1]))), (255, 255, 255, 200))
+        window.draw_text((-0.98, 0.5), "Seed: " + str(game.world.seed), (255, 255, 255, 200))
+
 
         # Move camera
         pos = (game.player.rect.centerx - game.player.vel[0] / 50, game.player.rect.centery - game.player.vel[0] / 50)

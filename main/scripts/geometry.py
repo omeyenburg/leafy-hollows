@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import math
 
 
 class Rect:
@@ -90,8 +91,20 @@ class Rect:
     def bottom(self, value):
         self.y = value - self.h
 
+    @property
+    def size(self):
+        return self.w, self.h
+
+    @size.setter
+    def size(self, value):
+        self.w, self.h = value
+
     def copy(self):
         return Rect(self.x, self.y, self.w, self.h)
 
     def collidepoint(self, point):
         return self.x < point[0] < self.right and self.y < point[1] < self.bottom
+
+
+def angle(a):
+    return a % (2 * math.pi)

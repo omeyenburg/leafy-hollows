@@ -1,4 +1,4 @@
-enableVsync: False
+enableVsync: True
 maxFps: 1000
 particles: 0
 key.left: "a"

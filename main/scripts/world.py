@@ -39,7 +39,8 @@ class Chunk:
 
 class World:
     def __init__(self):
-        self.SEED: float = random.randint(-99999, 99999) + random.random()
+        self.seed: float = random.randint(-99999, 99999) + random.random()
+        self.seed = 18125.25
         self.chunks: dict = {} # indexed with a tuple (x, y) -> numpy.array(shape=(32, 32))
         self.view_cache = None
         self.view_cache_size = (0, 0)
@@ -51,7 +52,7 @@ class World:
         self.set_block(coord[0], coord[1], data)
 
     def create_chunk(self, chunk_coord: [int]):
-        self.chunks[chunk_coord] = Chunk(*chunk_coord, self.SEED)
+        self.chunks[chunk_coord] = Chunk(*chunk_coord, self.seed)
 
     def set_block(self, x: int, y: int, data: int):
         chunk_x, mod_x = divmod(x, CHUNK_SIZE) # (x // CHUNK_SIZE, x % CHUNK_SIZE)
