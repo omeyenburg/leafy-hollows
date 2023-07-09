@@ -190,7 +190,6 @@ class Switch(Widget):
         font.write(window.world_surface, self.text, (255, 255, 255), 4, self.coords().center, center=1)
 
 
-"""
 class ScrollBox(Widget):
     layout = Page.layout
 
@@ -228,7 +227,6 @@ class ScrollBox(Widget):
 
     def draw(self, window: graphics.Window):
         window.draw_rect(self.rect[:2], self.rect[2:], (60, 60, 60, 200))
-"""
 
 
 class Menu:
