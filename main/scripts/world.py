@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
+import scripts.worldnoise as noise
 from threading import Thread
 import random
 import numpy
-import noise
 import math
 
 
@@ -12,11 +12,11 @@ CHUNK_SIZE = 16
 class Chunk:
     template: numpy.array = numpy.zeros((CHUNK_SIZE, CHUNK_SIZE), dtype=int) # Chunk template, which can be copied later
 
-    def __init__(self, x: int, y: int, seed: float):
+    def __init__(self, x: int, y: int, seed: float, blocks: dict):
         self.x = x
         self.y = y
         self.array = Chunk.template.copy()
-        self.generate(seed)
+        self.generate(seed, blocks)
 
     def __getitem__(self, index):
         return self.array[index]
@@ -24,29 +24,41 @@ class Chunk:
     def __setitem__(self, index, value):
         self.array[index] = value
 
-    def generate(self, seed: float):
+    def generate(self, seed: float, blocks: dict):
         for dx, dy in numpy.ndindex((CHUNK_SIZE, CHUNK_SIZE)):
             x, y = dx + self.x * CHUNK_SIZE, dy + self.y * CHUNK_SIZE
-            self.array[dx, dy] = self.generate_block(x, y, seed)
+            self.array[dx, dy] = self.generate_block(x, y, seed, blocks)
 
-    def generate_block(self, x: int, y: int, seed: float):
-        z = noise.snoise2(x / 30 + seed + 0.1, y / 30 + seed + 0.1)
-        block = int(z > 0.1) * 2
-        if z > 0 and noise.snoise2(x / 30 + seed + 0.1, (y + 1) / 30 + seed + 0.1) > 0.1:
-            block = 1
+    def generate_block(self, x: int, y: int, seed: float, blocks: dict):
+        z = noise.terrain(x, y, seed)
+        z_top1 = noise.terrain(x, y + 1, seed)
+        z_top3 = noise.terrain(x, y + 3, seed)
+        if z > 0 and z_top1 <= 0:
+            block = blocks["grass"]
+        elif z > 0 and z_top3 <= 0:
+            block = blocks["dirt"]
+        elif z > 0:
+            block = blocks["stone"]
+        elif z > -0.3:
+            block = -blocks["stone"]
+        else:
+            block = 0 # air
         return block
 
         # Generate drip stone: 1dnoise(x) -> change treshold
         # Generate spaced points: spaced_noise + check for free space
+        # noise.snoise2(x, y, octaves=1, persistence=0.5, lacunarity=2.0, repeatx=None, repeaty=None, base=0.0)
+
 
 
 class World:
-    def __init__(self):
-        self.seed: float = random.randint(-99999, 99999) + random.random()
+    def __init__(self, blocks: dict):
+        self.seed: float = noise.seed()
         self.seed = 18125.25
         self.chunks: dict = {} # indexed with a tuple (x, y) -> numpy.array(shape=(32, 32))
-        self.view_cache = None
-        self.view_cache_size = (0, 0)
+        self.view_cache: numpy.array = None
+        self.view_cache_size: tuple = (0, 0)
+        self.blocks: dict = blocks # {"block_name": id}
 
     def __getitem__(self, coord: [int]):
         return self.get_block(coord[0], coord[1])
@@ -55,7 +67,7 @@ class World:
         self.set_block(coord[0], coord[1], data)
 
     def create_chunk(self, chunk_coord: [int]):
-        self.chunks[chunk_coord] = Chunk(*chunk_coord, self.seed)
+        self.chunks[chunk_coord] = Chunk(*chunk_coord, self.seed, self.blocks)
 
     def set_block(self, x: int, y: int, data: int):
         chunk_x, mod_x = divmod(x, CHUNK_SIZE) # (x // CHUNK_SIZE, x % CHUNK_SIZE)
@@ -100,7 +112,6 @@ class World:
             chunk_view = numpy.zeros((chunks_size[0] * CHUNK_SIZE, chunks_size[1] * CHUNK_SIZE))
             self.view_cache = chunk_view
             self.view_cache_size = chunks_size
-
 
         for d_chunk_x in range(chunks_size[0]):
             for d_chunk_y in range(chunks_size[1]):
