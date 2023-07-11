@@ -174,7 +174,8 @@ class Window:
         self.texFont = self.texture(image)
 
         # Block texture (contains block images)
-        self.block_rects, image = TextureAtlas.loadBlocks()
+        self.block_indices, image = TextureAtlas.loadBlocks()
+        pygame.image.save(image, util.File.path("image.png"))
         self.texBlocks = self.texture(image, blur=True)
 
         # World texture (contains map data)
@@ -191,7 +192,7 @@ class Window:
         # World shader
         vertPath: str = util.File.path("scripts/shaders/world.vert")
         fragPath: str = util.File.path("scripts/shaders/world.frag")
-        self.world_shader = Shader(vertPath, fragPath, replace={key: value for key, (value, *_) in self.block_rects.items()}, texBlocks="int", texWorld="int", offset="vec2", resolution="int")
+        self.world_shader = Shader(vertPath, fragPath, replace={"block." + key: value for key, value in self.block_indices.items()}, texBlocks="int", texWorld="int", offset="vec2", resolution="int")
         self.world_shader.setvar("texBlocks", 0)
         self.world_shader.setvar("texWorld", 1)
         self.world_shader.setvar("resolution", self.camera.resolution)
@@ -745,16 +746,16 @@ class TextureAtlas:
         width = math.ceil(math.sqrt(len(paths)))
         height = math.ceil(len(paths) / width)
         image = pygame.Surface((width * 16, height * 16))
-        blocks = {}
+        block_indices = {}
 
         for i, path in enumerate(paths):
             y, x = divmod(i, width)
             block = os.path.basename(path).split(".")[0]
-            blocks[block] = (i, x / width, 1 - y / height, 1 / width, 1 / height)
+            block_indices[block] = i + 1
             block_surface = pygame.image.load(path)
             image.blit(block_surface, (x * 16, (height - y - 1) * 16))
 
-        return blocks, image
+        return block_indices, image
 
 
 class Font:

@@ -42,7 +42,7 @@ class PhysicsObject:
 
         for x in range(math.floor(self.rect.left), math.ceil(self.rect.right)):
             for y in range(math.floor(self.rect.top), math.ceil(self.rect.bottom)):
-                if world[x, y]:
+                if world[x, y] > 0:
                     ...#print("unresolved collision:", (x, y))
 
     def gravity(self, delta_time):
@@ -51,7 +51,7 @@ class PhysicsObject:
     def x_collide(self, world, delta_time):
         for x in range(math.floor(round(self.rect.left, 5)), math.ceil(round(self.rect.right, 5))):
             for y in range(math.floor(round(self.rect.top, 5)), math.ceil(round(self.rect.bottom, 5))):
-                if world[x, y]:
+                if world[x, y] > 0:
                     if self.vel[0] < 0:
                         self.rect.left = x + 1
                         self.vel[0] = 0
@@ -83,7 +83,7 @@ class PhysicsObject:
     def y_collide(self, world):
         for x in range(math.floor(round(self.rect.left, 5)), math.ceil(round(self.rect.right, 5))):
             for y in range(math.floor(round(self.rect.top, 5)), math.ceil(round(self.rect.bottom, 5))):
-                if world[x, y]:
+                if world[x, y] > 0:
                     if self.vel[1] > 0:
                         self.rect.bottom = y
                         self.vel[1] = 0

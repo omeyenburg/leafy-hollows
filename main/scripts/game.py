@@ -9,7 +9,7 @@ from scripts.util import realistic
 class Game:
     def __init__(self, window):
         self.window: graphics.Window = window
-        self.world: world.World = world.World()
+        self.world: world.World = world.World(window.block_indices)
         if realistic:
             self.player: player.Player = player.Player(spawn_pos=[0, 0], speed=6, sprint_speed=10, acceleration_time=0.2, jump_force=17)
         else:
