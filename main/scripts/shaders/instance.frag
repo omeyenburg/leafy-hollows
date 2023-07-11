@@ -27,9 +27,13 @@ void main() {
             break;
         case 3: // text
             vec4 color = floor(vertSourceOrColor) / 255.0;
-            vec2 source = fract(vertSourceOrColor.xy);
+            vec4 source = fract(vertSourceOrColor);
 
-            if (texture(texFont, vec2(vertTexcoord.x * source.y + source.x, vertTexcoord.y)) == vec4(1.0, 1.0, 1.0, 1.0)) {
+            if (source.w == 0) {
+                source.w = 1;
+            }
+
+            if (texture(texFont, vec2(vertTexcoord.x * source.z + source.x, vertTexcoord.y * source.w + source.y)) == vec4(1.0, 1.0, 1.0, 1.0)) {
                 fragColor = color;
             }
             break;

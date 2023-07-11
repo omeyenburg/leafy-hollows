@@ -17,7 +17,7 @@ void main() {
     vec2 dest = vec2(gl_FragCoord.x / BLOCKSIZEDEST + offset.x, gl_FragCoord.y / BLOCKSIZEDEST + offset.y);
     int block = texelFetch(texWorld, ivec2(dest), 0).r;
     if (block == 0) {
-        fragColor = vec4(0, 0, 0, 0);
+        fragColor = vec4(sin(vertTexcoord.x) / 2 + 0.5, cos(vertTexcoord.y) / 2 + 0.5, cos(vertTexcoord.x), 0.5);
         return;
     }
     ivec2 source_offset = 16 * ivec2(mod(block - 1, BLOCKCOUNT.x), (block - 1) / BLOCKCOUNT.x);

@@ -158,11 +158,11 @@ imports:
  &#8226;   <a href="#locale">locale</a>
  &#8226;   <a href="#math">math</a>
  &#8226;   <a href="#ntpath">ntpath</a>
+ &#8226;   <a href="#numpy">numpy</a>
  &#8226;   <a href="#operator">operator</a>
  &#8226;   <a href="#os">os</a>
  &#8226;   <a href="#pathlib">pathlib</a>
  &#8226;   <a href="#posixpath">posixpath</a>
- &#8226;   <a href="#pygame">pygame</a>
  &#8226;   <a href="#pyi_rth_inspect.py">pyi_rth_inspect.py</a>
  &#8226;   <a href="#pyi_rth_multiprocessing.py">pyi_rth_multiprocessing.py</a>
  &#8226;   <a href="#pyi_rth_pkgres.py">pyi_rth_pkgres.py</a>
@@ -15472,9 +15472,12 @@ imported by:
  &#8226;   <a href="#numpy.lib.index_tricks">numpy.lib.index_tricks</a>
  &#8226;   <a href="#pkg_resources._vendor.more_itertools.more">pkg_resources._vendor.more_itertools.more</a>
  &#8226;   <a href="#random">random</a>
+ &#8226;   <a href="#scripts.baseentity">scripts.baseentity</a>
+ &#8226;   <a href="#scripts.geometry">scripts.geometry</a>
  &#8226;   <a href="#scripts.graphics">scripts.graphics</a>
  &#8226;   <a href="#scripts.menu">scripts.menu</a>
  &#8226;   <a href="#scripts.physics">scripts.physics</a>
+ &#8226;   <a href="#scripts.world">scripts.world</a>
  &#8226;   <a href="#selectors">selectors</a>
  &#8226;   <a href="#statistics">statistics</a>
 
@@ -16558,6 +16561,7 @@ imported by:
     <a href="#OpenGL.arrays.numpybuffers">OpenGL.arrays.numpybuffers</a>
  &#8226;   <a href="#OpenGL.arrays.numpymodule">OpenGL.arrays.numpymodule</a>
  &#8226;   <a href="#OpenGL.arrays.vbo">OpenGL.arrays.vbo</a>
+ &#8226;   <a href="#main.py">main.py</a>
  &#8226;   <a href="#numpy">numpy</a>
  &#8226;   <a href="#numpy.__config__">numpy.__config__</a>
  &#8226;   <a href="#numpy._distributor_init">numpy._distributor_init</a>
@@ -23309,8 +23313,7 @@ imports:
   </div>
   <div class="import">
 imported by:
-    <a href="#main.py">main.py</a>
- &#8226;   <a href="#pygame._freetype">pygame._freetype</a>
+    <a href="#pygame._freetype">pygame._freetype</a>
  &#8226;   <a href="#pygame.base">pygame.base</a>
  &#8226;   <a href="#pygame.bufferproxy">pygame.bufferproxy</a>
  &#8226;   <a href="#pygame.color">pygame.color</a>
@@ -24438,7 +24441,9 @@ imported by:
   <a target="code" href="-" type="text/plain"><tt>scripts</tt></a>
 <span class="moduletype">NamespacePackage</span>  <div class="import">
 imported by:
-    <a href="#scripts.cfunctions">scripts.cfunctions</a>
+    <a href="#scripts.baseentity">scripts.baseentity</a>
+ &#8226;   <a href="#scripts.cfunctions">scripts.cfunctions</a>
+ &#8226;   <a href="#scripts.entity">scripts.entity</a>
  &#8226;   <a href="#scripts.game">scripts.game</a>
  &#8226;   <a href="#scripts.geometry">scripts.geometry</a>
  &#8226;   <a href="#scripts.graphics">scripts.graphics</a>
@@ -24447,6 +24452,25 @@ imported by:
  &#8226;   <a href="#scripts.player">scripts.player</a>
  &#8226;   <a href="#scripts.util">scripts.util</a>
  &#8226;   <a href="#scripts.world">scripts.world</a>
+
+  </div>
+
+</div>
+
+<div class="node">
+  <a name="scripts.baseentity"></a>
+  <a target="code" href="/Users/oskar/Documents/GitHub/Info_Project_Q3/main/scripts/baseentity.py" type="text/plain"><tt>scripts.baseentity</tt></a>
+<span class="moduletype">SourceModule</span>  <div class="import">
+imports:
+    <a href="#math">math</a>
+ &#8226;   <a href="#scripts">scripts</a>
+ &#8226;   <a href="#scripts.geometry">scripts.geometry</a>
+ &#8226;   <a href="#scripts.physics">scripts.physics</a>
+
+  </div>
+  <div class="import">
+imported by:
+    <a href="#scripts.entity">scripts.entity</a>
 
   </div>
 
@@ -24491,11 +24515,29 @@ imported by:
 </div>
 
 <div class="node">
+  <a name="scripts.entity"></a>
+  <a target="code" href="/Users/oskar/Documents/GitHub/Info_Project_Q3/main/scripts/entity.py" type="text/plain"><tt>scripts.entity</tt></a>
+<span class="moduletype">SourceModule</span>  <div class="import">
+imports:
+    <a href="#scripts">scripts</a>
+ &#8226;   <a href="#scripts.baseentity">scripts.baseentity</a>
+
+  </div>
+  <div class="import">
+imported by:
+    <a href="#scripts.game">scripts.game</a>
+
+  </div>
+
+</div>
+
+<div class="node">
   <a name="scripts.game"></a>
   <a target="code" href="/Users/oskar/Documents/GitHub/Info_Project_Q3/main/scripts/game.py" type="text/plain"><tt>scripts.game</tt></a>
 <span class="moduletype">SourceModule</span>  <div class="import">
 imports:
     <a href="#scripts">scripts</a>
+ &#8226;   <a href="#scripts.entity">scripts.entity</a>
  &#8226;   <a href="#scripts.geometry">scripts.geometry</a>
  &#8226;   <a href="#scripts.physics">scripts.physics</a>
  &#8226;   <a href="#scripts.player">scripts.player</a>
@@ -24516,12 +24558,14 @@ imported by:
   <a target="code" href="/Users/oskar/Documents/GitHub/Info_Project_Q3/main/scripts/geometry.py" type="text/plain"><tt>scripts.geometry</tt></a>
 <span class="moduletype">SourceModule</span>  <div class="import">
 imports:
-    <a href="#scripts">scripts</a>
+    <a href="#math">math</a>
+ &#8226;   <a href="#scripts">scripts</a>
 
   </div>
   <div class="import">
 imported by:
-    <a href="#scripts.game">scripts.game</a>
+    <a href="#scripts.baseentity">scripts.baseentity</a>
+ &#8226;   <a href="#scripts.game">scripts.game</a>
  &#8226;   <a href="#scripts.menu">scripts.menu</a>
  &#8226;   <a href="#scripts.physics">scripts.physics</a>
 
@@ -24545,6 +24589,7 @@ imports:
  &#8226;   <a href="#pygame.locals">pygame.locals</a>
  &#8226;   <a href="#scripts">scripts</a>
  &#8226;   <a href="#scripts.util">scripts.util</a>
+ &#8226;   <a href="#scripts.world">scripts.world</a>
  &#8226;   <a href="#sys">sys</a>
 
   </div>
@@ -24593,7 +24638,8 @@ imports:
   </div>
   <div class="import">
 imported by:
-    <a href="#scripts.game">scripts.game</a>
+    <a href="#scripts.baseentity">scripts.baseentity</a>
+ &#8226;   <a href="#scripts.game">scripts.game</a>
  &#8226;   <a href="#scripts.player">scripts.player</a>
 
   </div>
@@ -24646,7 +24692,8 @@ imported by:
   <a target="code" href="/Users/oskar/Documents/GitHub/Info_Project_Q3/main/scripts/world.py" type="text/plain"><tt>scripts.world</tt></a>
 <span class="moduletype">SourceModule</span>  <div class="import">
 imports:
-    <a href="#noise">noise</a>
+    <a href="#math">math</a>
+ &#8226;   <a href="#noise">noise</a>
  &#8226;   <a href="#numpy">numpy</a>
  &#8226;   <a href="#random">random</a>
  &#8226;   <a href="#scripts">scripts</a>
@@ -24656,6 +24703,7 @@ imports:
   <div class="import">
 imported by:
     <a href="#scripts.game">scripts.game</a>
+ &#8226;   <a href="#scripts.graphics">scripts.graphics</a>
 
   </div>
 
@@ -26623,7 +26671,6 @@ imported by:
 <span class="moduletype">Package</span>  <div class="import">
 imports:
     <a href="#xml">xml</a>
- &#8226;   <a href="#xml.parsers.expat">xml.parsers.expat</a>
 
   </div>
   <div class="import">
@@ -26649,7 +26696,6 @@ imports:
   <div class="import">
 imported by:
     <a href="#plistlib">plistlib</a>
- &#8226;   <a href="#xml.parsers">xml.parsers</a>
  &#8226;   <a href="#xml.sax.expatreader">xml.sax.expatreader</a>
  &#8226;   <a href="#xmlrpc.client">xmlrpc.client</a>
 

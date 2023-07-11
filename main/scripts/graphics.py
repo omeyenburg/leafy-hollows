@@ -17,6 +17,9 @@ from pygame.locals import *
 import pygame
 
 
+operating_system = system()
+
+
 class Window:
     def __init__(self, caption):
         # Load options
@@ -37,7 +40,7 @@ class Window:
         #pygame.display.gl_set_attribute(pygame.GL_MULTISAMPLESAMPLES, 4)
 
         # MacOS support
-        if system() == "Darwin":
+        if operating_system == "Darwin":
             pygame.display.gl_set_attribute(pygame.GL_CONTEXT_FORWARD_COMPATIBLE_FLAG, True)
 
         # Events
@@ -49,6 +52,26 @@ class Window:
         self.fps: int = 0
         self.delta_time: float = 1
 
+        # Key functions
+        if operating_system == "Darwin":
+            self.mod_names = {
+                pygame.__dict__[identifier]: identifier[4:].replace("_R", "Right ").replace("_L", "Left ").replace("_", "").replace("META", "Cmd").title()
+                for index, identifier in enumerate(pygame.__dict__.keys())
+                if identifier.startswith("KMOD_") and not identifier[5:] in ("NONE", "CTRL", "SHIFT", "ALT", "GUI", "META")
+            }
+        else:
+            self.mod_names = {
+                pygame.__dict__[identifier]: identifier[4:].replace("_R", "Right ").replace("_L", "Left ").replace("_", "").title()
+                for index, identifier in enumerate(pygame.__dict__.keys())
+                if identifier.startswith("KMOD_") and not identifier[5:] in ("NONE", "CTRL", "SHIFT", "ALT", "GUI", "META")
+            }
+        self.key_names = [pygame.__dict__[identifier] for identifier in pygame.__dict__.keys() if identifier.startswith("K_")]
+
+        self.get_keys_all = pygame.key.get_pressed
+        self.get_keys_all = pygame.key.get_mods
+        self.get_key_name = pygame.key.name
+        self.get_mod_name = lambda mod: self.mod_names[mod]
+
         # Window variables
         info = pygame.display.Info()
         self.screen_size = info.current_w, info.current_h
@@ -56,14 +79,16 @@ class Window:
         self.fullscreen = False
         self.wireframe = False
         self.resize_supress = False
+        self.stencil_rect = None
         
         # Window
         flags = DOUBLEBUF | RESIZABLE | OPENGL
         self.window = pygame.display.set_mode((self.width, self.height), flags=flags, vsync=self.options["enableVsync"])
         pygame.display.set_caption(caption)
+        pygame.key.set_repeat(1000, 10)
         self.clock = pygame.time.Clock()
         self.camera: Camera = Camera(self)
-
+        
         # OpenGL setup
         glViewport(0, 0, self.width, self.height)
         glClearColor(0.0, 0.0, 0.0, 1.0)
@@ -206,6 +231,14 @@ class Window:
         self.shape_vbo_data[self.vbo_instances_index:self.vbo_instances_index + 1] = shape
 
         self.vbo_instances_index += 1
+
+    def get_pressed_keys(self):
+        keys = pygame.key.get_pressed()
+        return [pygame.key.name(i).title() for i in self.key_names if keys[i]]
+
+    def get_pressed_mods(self):
+        mods = pygame.key.get_mods()
+        return [self.mod_names[mod] for mod in self.mod_names if mods & mod]
 
     def resize(self):
         if self.fullscreen:
@@ -497,15 +530,45 @@ class Window:
         """
         Draw an image on the window.
         """
-        rect = (position[0] + size[0] / 2, position[1] + size[1] / 2, size[0] / 2, size[1] / 2)
-        self.add_vbo_instance(rect, self.atlas_rects[image], 0)
+        dest_rect = (position[0] + size[0] / 2, position[1] + size[1] / 2, size[0] / 2, size[1] / 2)
+        if not self.stencil_rect is None:
+            org = dest_rect[:]
+
+            left = max(dest_rect[0] - dest_rect[2], self.stencil_rect[0] - self.stencil_rect[2])
+            right = min(dest_rect[0] + dest_rect[2], self.stencil_rect[0] + self.stencil_rect[2])
+            top = max(dest_rect[1] - dest_rect[3], self.stencil_rect[1] - self.stencil_rect[3])
+            bottom = min(dest_rect[1] + dest_rect[3], self.stencil_rect[1] + self.stencil_rect[3])
+
+            width = (right - left) / 2
+            height = (bottom - top) / 2
+
+            if width > 0 and height > 0:
+                dest_rect = [left + width, top + height, width, height]
+                self.add_vbo_instance(dest_rect, self.atlas_rects[image], 0)
+        else:
+            self.add_vbo_instance(dest_rect, self.atlas_rects[image], 0)
 
     def draw_rect(self, position, size, color):
         """
         Draw a rectangle on the window.
         """
-        rect = (position[0] + size[0] / 2, position[1] + size[1] / 2, size[0] / 2, size[1] / 2)
-        self.add_vbo_instance(rect, self.camera.map_color(color), 1)
+        dest_rect = (position[0] + size[0] / 2, position[1] + size[1] / 2, size[0] / 2, size[1] / 2)
+        if not self.stencil_rect is None:
+            org = dest_rect[:]
+
+            left = max(dest_rect[0] - dest_rect[2], self.stencil_rect[0] - self.stencil_rect[2])
+            right = min(dest_rect[0] + dest_rect[2], self.stencil_rect[0] + self.stencil_rect[2])
+            top = max(dest_rect[1] - dest_rect[3], self.stencil_rect[1] - self.stencil_rect[3])
+            bottom = min(dest_rect[1] + dest_rect[3], self.stencil_rect[1] + self.stencil_rect[3])
+
+            width = (right - left) / 2
+            height = (bottom - top) / 2
+
+            if width > 0 and height > 0:
+                dest_rect = [left + width, top + height, width, height]
+                self.add_vbo_instance(dest_rect, self.camera.map_color(color), 1)
+        else:
+            self.add_vbo_instance(dest_rect, self.camera.map_color(color), 1)
 
     def draw_circle(self, position, radius, color):
         """
@@ -542,11 +605,32 @@ class Window:
                 if not letter in self.font_rects:
                     letter = "?"
                 rect = self.font_rects[letter]
-                source_and_color = (color[0] + rect[0], color[1] + rect[1] - 0.00001, color[2], color[3])
                 offset += rect[1] * spacing * size
-                dest_rect = (position[0] + offset + rect[1], position[1], rect[1] * size, rect[2] * 2 * size)
+                dest_rect = [position[0] + offset + rect[1], position[1], rect[1] * size, rect[2] * 2 * size]
                 offset += rect[1] * spacing * size
-                self.add_vbo_instance(dest_rect, source_and_color, 3)
+                
+                if not self.stencil_rect is None:
+                    org = dest_rect[:]
+
+                    left = max(dest_rect[0] - dest_rect[2], self.stencil_rect[0] - self.stencil_rect[2])
+                    right = min(dest_rect[0] + dest_rect[2], self.stencil_rect[0] + self.stencil_rect[2])
+                    top = max(dest_rect[1] - dest_rect[3], self.stencil_rect[1] - self.stencil_rect[3])
+                    bottom = min(dest_rect[1] + dest_rect[3], self.stencil_rect[1] + self.stencil_rect[3])
+
+                    width = (right - left) / 2
+                    height = (bottom - top) / 2
+
+                    if width > 0 and height > 0:
+                        dest_rect = [left + width, top + height, width, height]
+                        source_and_color = (color[0] + rect[0] + rect[1] * ((1 - dest_rect[2] / org[2]) if dest_rect[0] > org[0] else 0),
+                                            color[1] + (round(1 - dest_rect[3] / org[3], 6) if dest_rect[1] > org[1] else 0),
+                                            color[2] + rect[1] * (width / org[2]) - 0.00001,
+                                            color[3] + ((height / org[3]) if (height / org[3]) < 1 else 0))
+                        self.add_vbo_instance(dest_rect, source_and_color, 3)
+                        
+                else:
+                    source_and_color = (color[0] + rect[0], color[1], color[2] + rect[1] - 0.00001, color[3])
+                    self.add_vbo_instance(dest_rect, source_and_color, 3)
         else:
             for letter in text:
                 if not letter in self.font_rects and letter.isalpha():
@@ -557,11 +641,27 @@ class Window:
                 if not letter in self.font_rects:
                     letter = "?"
                 rect = self.font_rects[letter]
-                source_and_color = (color[0] + rect[0], color[1] + rect[1] - 0.00001, color[2], color[3])
+                source_and_color = (color[0] + rect[0], color[1], color[2] + rect[1] - 0.00001, color[3])
                 offset += rect[1] * spacing * size
-                dest_rect = (position[0] + offset + rect[1], position[1] - rect[2] * 2, rect[1] * size, rect[2] * 2 * size)
+                dest_rect = [position[0] + offset + rect[1], position[1] - rect[2] * 2, rect[1] * size, rect[2] * 2 * size]
                 offset += rect[1] * spacing * size
-                self.add_vbo_instance(dest_rect, source_and_color, 3)
+                if not self.stencil_rect is None:
+                    org = dest_rect[:]
+
+                    left = max(dest_rect[0] - dest_rect[2], self.stencil_rect[0] - self.stencil_rect[2])
+                    right = min(dest_rect[0] + dest_rect[2], self.stencil_rect[0] + self.stencil_rect[2])
+                    top = max(dest_rect[1] - dest_rect[3], self.stencil_rect[1] - self.stencil_rect[3])
+                    bottom = min(dest_rect[1] + dest_rect[3], self.stencil_rect[1] + self.stencil_rect[3])
+
+                    width = (right - left) / 2
+                    height = (bottom - top) / 2
+
+                    if width > 0 and height > 0:
+                        dest_rect = [left + width, top + height, width, height]
+                        source_and_color = (color[0] + rect[0] + rect[1] * (1 - dest_rect[0] / org[0]), color[1] + (1 - dest_rect[1] / org[1]), color[2] + rect[1] * (width / org[2]) - 0.00001, color[3] + ((height / org[3]) if (height / org[3]) < 1 else 0))
+                        self.add_vbo_instance(dest_rect, source_and_color, 3)
+                else:
+                    self.add_vbo_instance(dest_rect, source_and_color, 3)
 
 class TextureAtlas:
     def __init__(self, **images):

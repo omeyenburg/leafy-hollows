@@ -42,6 +42,7 @@ class Page:
             child.rect.centerx = sum(width[:child.column + 1]) - total_width / 2 + self.spacing * (child.column + (child.columnspan - 1) / 2) + width[child.column] * (child.columnspan - 1) / 2 - width[child.column] / 2
             child.rect.centery = sum(height[:child.row + 1]) - total_height / 2 + self.spacing * child.row - height[child.row] + child.rect.h - height[child.row] / 2
             child.rect.centery = -child.rect.centery
+            child.layout()
 
     def update(self, window: graphics.Window):
         self.draw(window)
@@ -75,6 +76,9 @@ class Widget:
         self.draw()
         for child in self.children:
             child.update(window)
+
+    def layout(self):
+        return
 
 
 class Label(Widget):
@@ -146,6 +150,10 @@ class Slider(Widget):
         if self.selected:
             value = min(1.0, max(0.0, (window.mouse_pos[0] / window.width * 2 - self.rect.x) / self.rect.w))
             if value != self.value and not self.callback is None:
+                if value < 0.02:
+                    value = 0
+                elif value > 0.98:
+                    value = 1
                 self.callback()
             self.value = value
 
@@ -177,8 +185,6 @@ class Entry(Widget):
     def draw(self):
         window.draw_rect(self.rect[:2], self.rect[2:], (255, 0, 0, 200))
         window.draw_text(self.rect.center, self.text, (0, 0, 0, 255), self.fontsize, centered=True)
-        #pygame.draw.rect(window.world_surface, (255, 255, 255), self.coords(), 1)
-        #font.write(window.world_surface, self.text, (255, 255, 255), 4, self.coords().topleft)
 
 
 class Switch(Widget):
@@ -191,39 +197,38 @@ class Switch(Widget):
 
 
 class ScrollBox(Widget):
-    layout = Page.layout
-
-    def __init__(self, *args, columns=1, spacing=0.1, **kwargs):
+    def __init__(self, *args, columns=1, spacing=0.1, callback=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.children = []
         self.columns = columns
         self.spacing = spacing
         self.offset = 0
+        self.start_offset = 0
+        self.callback = callback
 
     def update(self, window: graphics.Window):
+        adjust_offset = min(self.offset, self.children[0].rect.bottom - self.rect.bottom + self.spacing)
+        adjust_offset = max(adjust_offset, self.children[-1].rect.y - self.rect.y - self.spacing)
+        self.offset += window.mouse_wheel[3] / window.height * 6
+        if adjust_offset != self.offset:
+            self.offset = (adjust_offset + self.offset * 3) / 4
+
         self.draw(window)
+        window.stencil_rect = (self.rect[0] + self.rect[2] / 2, self.rect[1] + self.rect[3] / 2, self.rect[2] / 2, self.rect[3] / 2)
         for child in self.children:
             y = child.rect.y
-            adjust_offset = max(self.offset, child.rect.y - self.rect.y)
-            adjust_offset = min(adjust_offset, child.rect.bottom - self.rect.bottom)
-            
-            
-            child.rect.y -= self.offset# - 0.5
-            #print(child.rect.y)
-            #print(self.offset)
+            child.rect.y -= self.offset
             child.update(window)
             child.rect.y = y
-            #child.rect.y -= self.offset
+        window.stencil_rect = None
 
-        self.offset = adjust_offset
+        if not self.callback is None:
+            self.callback()
 
-        #self.offset = max(0, min(1, self.offset + window.mouse_wheel[3] / window.height))
-        self.offset += window.mouse_wheel[3] / window.height * 5
-        #print(self.offset)
-        #if window.mouse_wheel[3]:
-        #    print(self.offset)
-        
-
+    def layout(self):
+        Page.layout(self)
+        self.offset = self.children[0].rect.bottom - self.rect.bottom + self.spacing
+        self.start_offset = self.offset
 
     def draw(self, window: graphics.Window):
         window.draw_rect(self.rect[:2], self.rect[2:], (60, 60, 60, 200))
@@ -251,7 +256,7 @@ class Menu:
         Label(settings_page, (1, .3), row=0, column=0, columnspan=2, text="Options", fontsize=2)
         button_settings_video_open = Button(settings_page, (.65, .2), row=1, column=0, text="Video Settings")
         button_settings_audio_open = Button(settings_page, (.65, .2), row=1, column=1, text="Audio Settings")
-        button_settings_controls_open = Button(settings_page, (.65, .2), row=2, column=0, text="Controls")
+        button_settings_control_open = Button(settings_page, (.65, .2), row=2, column=0, text="Control Settings")
         button_settings_back = Button(settings_page, (1.4, .2), row=3, column=0, columnspan=2, callback=main_page.open, text="Back")
         settings_page.layout()
         button_settings.callback = settings_page.open
@@ -309,12 +314,37 @@ class Menu:
         button_settings_audio_open.callback = settings_audio_page.open
 
         # Controls settings page
-        settings_controls_page = Page(columns=1, spacing=0.1)
-        Label(settings_controls_page, (1, .3), row=0, column=0, text="Controls", fontsize=2)
-        Button(settings_controls_page, (1.4, .2), row=1, column=0, callback=settings_page.open, text="Back")
-        settings_controls_page.layout()
-        button_settings_controls_open.callback = settings_controls_page.open
+        settings_control_page = Page(columns=1, spacing=0.1)
+        Label(settings_control_page, (1, .3), row=0, column=0, text="Control Settings", fontsize=2)
 
+        scrollbox = ScrollBox(settings_control_page, (1.4, 1.2), row=1, column=0, columns=2)
+        keys = list(filter(lambda x: x.startswith("key."), window.options))
+        buttons = {}
+        selected = None
+
+        def select_key(key):
+            nonlocal selected
+            selected = key
+
+        def update_key():
+            nonlocal selected
+            if not selected is None:
+                keys = window.get_pressed_keys() + window.get_pressed_mods()
+                if keys:
+                    buttons[selected].text = keys[0]
+                    window.options[buttons[selected].key_identifer] = keys[0].lower()
+                    window.keys: dict = dict.fromkeys([value for key, value in window.options.items() if key.startswith("key.")], 0)
+                    selected = None
+
+        for i, key in enumerate(keys):
+            Label(scrollbox, (0.6, .2), row=i, column=0, text=key.split(".")[1].title())
+            buttons[key] = Button(scrollbox, (0.6, .2), row=i, column=1, callback=lambda key=key: select_key(key), text=window.options[key].title())
+            buttons[key].key_identifer = key
+        scrollbox.callback = update_key
+
+        Button(settings_control_page, (1.4, .2), row=2, column=0, callback=settings_page.open, text="Back")
+        settings_control_page.layout()
+        button_settings_control_open.callback = settings_control_page.open
 
     def update(self):
         """
