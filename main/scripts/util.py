@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
+import platform
 import sys
 import os
 
 
+# Global variables
 realistic = True # only for testing purposes
 
 

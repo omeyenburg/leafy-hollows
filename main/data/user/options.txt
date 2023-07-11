@@ -1,6 +1,6 @@
 enableVsync: True
 maxFps: 1000
-particles: 0
+particles: 10
 key.left: "a"
 key.right: "d"
 key.jump: "space"

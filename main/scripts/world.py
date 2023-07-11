@@ -36,6 +36,9 @@ class Chunk:
             block = 1
         return block
 
+        # Generate drip stone: 1dnoise(x) -> change treshold
+        # Generate spaced points: spaced_noise + check for free space
+
 
 class World:
     def __init__(self):
