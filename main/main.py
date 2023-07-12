@@ -18,9 +18,9 @@ import os
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 
 # C test
-from scripts.cfunctions.lib import lib
-print("Hello World from Python!")
-lib.c_print()
+#from scripts.cfunctions.lib import lib
+#print("Hello World from Python!")
+#lib.c_print()
 
 # Create window
 window: graphics.Window = graphics.Window("Test")
@@ -34,11 +34,11 @@ while True:
         game.update()
 
         # Write fps & player position
-        window.draw_text((-0.98, 0.95), "FPS: " + str(round(window.fps, 3)), (250, 250, 250, 200), size=0.6)
-        window.draw_text((-0.98, 0.8), "Player: " + str((round(game.player.rect.centerx, 1), round(game.player.rect.centery, 1))), (250, 250, 250, 200), size=0.6)
+        window.draw_text((-0.98, 0.95), "FPS: " + str(round(window.fps, 3)), (250, 250, 250, 200))
+        window.draw_text((-0.98, 0.8), "Player: " + str((round(game.player.rect.centerx, 1), round(game.player.rect.centery, 1))), (250, 250, 250, 200))
         pos = window.camera.map_coord(window.mouse_pos[:2], from_pixel=1, world=1)
-        window.draw_text((-0.98, 0.65), "Mouse: " + str((math.floor(pos[0]), math.floor(pos[1]))), (250, 250, 250, 200), size=0.6)
-        window.draw_text((-0.98, 0.5), "Seed: " + str(game.world.seed), (250, 250, 250, 200), size=0.6)
+        window.draw_text((-0.98, 0.65), "Mouse: " + str((math.floor(pos[0]), math.floor(pos[1]))), (250, 250, 250, 200))
+        window.draw_text((-0.98, 0.5), "Seed: " + str(game.world.seed), (250, 250, 250, 200))
 
 
         # Move camera
@@ -57,7 +57,7 @@ while True:
         menu.update()
 
         # Write fps
-        window.draw_text((-0.98, 0.95), str(round(window.fps, 3)), (250, 250, 250, 200), size=0.6)
+        window.draw_text((-0.98, 0.95), str(round(window.fps, 3)), (250, 250, 250, 200))
 
         # Update window + shader
         window.update()
