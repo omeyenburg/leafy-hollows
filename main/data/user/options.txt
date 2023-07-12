@@ -1,6 +1,7 @@
 enableVsync: True
 maxFps: 1000
 particles: 10
+map buffers: True
 key.left: "a"
 key.right: "d"
 key.jump: "space"

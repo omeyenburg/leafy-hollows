@@ -47,8 +47,11 @@ class Page:
 
     def update(self, window: graphics.Window):
         self.draw(window)
+        mouse_pos = window.camera.map_coord(window.mouse_pos[:2], from_pixel=1, from_centered=1)
         for child in self.children:
             child.update(window)
+            if (not child.hover_callback is None) and child.rect.collidepoint(mouse_pos):
+                child.hover_callback()
         if not self.callback is None:
             self.callback()
         if window.keybind("return") == 1 and not self.parent is None:
@@ -62,7 +65,7 @@ class Page:
 
 
 class Widget:
-    def __init__(self, parent, size: [float], row: int=0, column: int=0, columnspan: int=1, fontsize: float=1.0):
+    def __init__(self, parent, size: [float], row: int=0, column: int=0, columnspan: int=1, fontsize: float=1.0, hover_callback=None):
         self.parent = parent
         self.children = []
         self.rect = geometry.Rect(0, 0, *size)
@@ -71,6 +74,7 @@ class Widget:
         self.column = column
         self.columnspan = columnspan
         self.fontsize = fontsize
+        self.hover_callback = hover_callback
 
         if not 0 <= self.column < parent.columns:
             raise ValueError("Invalid Column " + str(self.column) + " for parent with " + str(parent.columns) + " column(s).")
@@ -102,8 +106,8 @@ class Button(Widget):
         self.duration = duration # When button pressed: self.clicked > 0 for [duration] seconds
 
     def update(self, window: graphics.Window):
-        pos = window.camera.map_coord(window.mouse_pos[:2], from_pixel=1, from_centered=1)
-        if window.mouse_buttons[0] and self.rect.collidepoint(pos):
+        mouse_pos = window.camera.map_coord(window.mouse_pos[:2], from_pixel=1, from_centered=1)
+        if window.mouse_buttons[0] and self.rect.collidepoint(mouse_pos):
             if self.duration > 0:
                 self.clicked = max(2, int(self.duration / window.delta_time))
             else:
@@ -125,7 +129,7 @@ class Button(Widget):
         window.draw_text(self.rect.center, self.text, (50, 0, 0, 250), self.fontsize, centered=True)
 
     def draw_clicked(self, window: graphics.Window):
-        window.draw_rect(self.rect[:2], self.rect[2:], (200, 0, 0, 250))
+        window.draw_rect(self.rect[:2], self.rect[2:], (200, 0, 0, 200))
         window.draw_text(self.rect.center, self.text, (0, 0, 0, 250), self.fontsize, centered=True)
 
 
@@ -216,13 +220,14 @@ class ScrollBox(Widget):
         self.callback = callback
 
     def update(self, window: graphics.Window):
-        adjust_offset = min(self.offset, self.children[0].rect.bottom - self.rect.bottom + self.spacing)
-        adjust_offset = max(adjust_offset, self.children[-1].rect.y - self.rect.y - self.spacing)
+        adjust_offset = max(self.offset, self.children[-1].rect.y - self.rect.y - self.spacing)
+        adjust_offset = min(adjust_offset, self.children[0].rect.bottom - self.rect.bottom + self.spacing)
         self.offset += window.mouse_wheel[3] / window.height * 10
         if adjust_offset != self.offset:
             self.offset = (adjust_offset + self.offset * 3) / 4
 
         self.draw(window)
+        mouse_pos = window.camera.map_coord(window.mouse_pos[:2], from_pixel=1, from_centered=1)
         window.stencil_rect = (self.rect[0] + self.rect[2] / 2, self.rect[1] + self.rect[3] / 2, self.rect[2] / 2, self.rect[3] / 2)
         for child in self.children:
             y = child.rect.y
@@ -230,6 +235,12 @@ class ScrollBox(Widget):
             child.update(window)
             child.rect.y = y
         window.stencil_rect = None
+
+        for child in self.children:
+            rect = child.rect.copy()
+            rect.y -= self.offset
+            if (not child.hover_callback is None) and rect.collidepoint(mouse_pos):
+                child.hover_callback()
 
         if not self.callback is None:
             self.callback()
@@ -241,6 +252,25 @@ class ScrollBox(Widget):
 
     def draw(self, window: graphics.Window):
         window.draw_rect(self.rect[:2], self.rect[2:], (60, 60, 60, 200))
+
+
+def HoverBox(window: graphics.Window, rect: list, text: list):
+    """
+    Draw a box with multi colored text.
+    text: [("text", (r, g, b, a))]
+    """
+    window.draw_rect(rect[:2], rect[2:], (60, 60, 60, 250))
+    start = (0.02, rect[3] - 0.04)
+    x = 0
+    y = 0
+    for text, fontsize, color in text:
+        for i, text_snippet in enumerate(text.split("\n")):
+            pos = (rect[0] + start[0] + x,
+                   rect[1] + start[1] + y)
+            x += window.draw_text(pos, text_snippet, color, size=fontsize)
+            if i != len(text.split("\n")) - 1:
+                y -= 0.1 * fontsize
+                x = 0
 
 
 class Menu:
@@ -271,15 +301,29 @@ class Menu:
         button_settings.callback = settings_page.open
 
         # Video settings page
-        settings_video_page = Page(parent=settings_page, columns=2, spacing=0.1)
-        Label(settings_video_page, (1, .3), row=0, column=0, columnspan=2, text="Video Settings", fontsize=2)
+        settings_video_page = Page(parent=settings_page, spacing=0.1)
+        Label(settings_video_page, (1, .3), row=0, column=0, text="Video Settings", fontsize=2)
+        settings_video_scrollbox = ScrollBox(settings_video_page, (1.4, 1.1), row=1, column=0, columns=2)
+
+        def settings_video_hover(side, *description):
+            HoverBox(window, (settings_video_scrollbox.rect[2] / 2 * side + settings_video_scrollbox.rect[0] + settings_video_scrollbox.spacing / 4,
+                              settings_video_scrollbox.rect[1] + settings_video_scrollbox.spacing / 2,
+                              settings_video_scrollbox.rect[2] / 2 - settings_video_scrollbox.spacing / 2,
+                              settings_video_scrollbox.rect[3] - settings_video_scrollbox.spacing),
+                              description)
 
         if window.options["enableVsync"]:
             value = 0
         else:
             value = window.options["maxFps"] / 1000
-        slider_fps = Slider(settings_video_page, (.65, 0.2), row=1, column=0, value=value)
-        label_fps = Label(settings_video_page, (.65, 0.2), row=1, column=0)
+        slider_fps = Slider(settings_video_scrollbox, (.6, 0.18), row=1, column=0, value=value)
+        label_fps = Label(settings_video_scrollbox, (.6, 0.18), row=1, column=0)
+        label_fps.hover_callback = lambda: settings_video_hover(1,
+            ("Max Fps\n", 1, (250, 250, 250, 200)),
+            ("Performance impact:\n", 0.8, (250, 250, 250, 200)),
+            ("high\n\n", 0.8, (250, 0, 0, 200)),
+            ("Limit the Fps at a cap.\nVsync: Fps limit is\nsynchronized with your\nscreen's refresh rate.", 0.8, (250, 250, 250, 200))
+        )
 
         def slider_fps_update():
             fps = round(slider_fps.value * 100) * 10
@@ -301,8 +345,14 @@ class Menu:
         slider_fps.callback = slider_fps_update
 
         value = window.options["particles"] / 10
-        slider_particles = Slider(settings_video_page, (.65, 0.2), row=1, column=1, value=value)
-        label_particles = Label(settings_video_page, (.65, 0.2), row=1, column=1)
+        slider_particles = Slider(settings_video_scrollbox, (.6, 0.18), row=1, column=1, value=value)
+        label_particles = Label(settings_video_scrollbox, (.6, 0.18), row=1, column=1)
+        label_particles.hover_callback = lambda: settings_video_hover(0,
+            ("Particle Density\n", 1, (250, 250, 250, 200)),
+            ("Performance impact:\n", 0.8, (250, 250, 250, 200)),
+            ("high\n\n", 0.8, (250, 0, 0, 200)),
+            ("Limit the amount of\nparticles, which can be\nspawned at once.", 0.8, (250, 250, 250, 200))
+        )
 
         def slider_particles_update():
             particles = int(slider_particles.value * 10)
@@ -312,10 +362,33 @@ class Menu:
         slider_particles.callback = slider_particles_update
         slider_particles_update()
 
-        Button(settings_video_page, (0.65, .2), row=2, column=0, callback=window.toggle_fullscreen, text="Fullscreen")
-        #Button(settings_video_page, (0.65, .2), row=2, column=1, callback=window.toggle_wire_frame, text="Wireframe")
+        def button_fullscreen_update():
+            window.toggle_fullscreen()
+            button_fullscreen.text = "Fullscreen: " + str(window.fullscreen)
 
-        button_settings_back = Button(settings_video_page, (1.4, .2), row=3, column=0, columnspan=2, callback=settings_page.open, text="Back")
+        button_fullscreen = Button(settings_video_scrollbox, (0.6, .18), row=2, column=0, callback=button_fullscreen_update, text="Fullscreen: False")
+        button_fullscreen.hover_callback = lambda: settings_video_hover(1,
+            ("Fullscreen\n", 1, (250, 250, 250, 200)),
+            ("Performance impact:\n", 0.8, (250, 250, 250, 200)),
+            ("none", 0.8, (250, 250, 0, 200))
+        )
+
+        def button_map_buffers_update():
+            window.toggle_map_buffers()
+            button_map_buffers.text = "Map Buffers: " + str(window.options["map buffers"])
+
+        button_map_buffers = Button(settings_video_scrollbox, (0.6, .18), row=2, column=1, callback=button_map_buffers_update, text="Map Buffers: " + str(window.options["map buffers"]))
+        button_map_buffers.hover_callback = lambda: settings_video_hover(0,
+            ("Map Buffers\n", 1, (250, 250, 250, 200)),
+            ("Performane impact:\n", 0.8, (250, 250, 250, 200)),
+            ("slight improvement\n\n", 0.8, (0, 250, 0, 200)),
+            ("When enabled, rendering\ndata is directly copied\ninto buffers.", 0.8, (250, 250, 250, 200))
+        )
+
+
+        #Button(settings_video_scrollbox, (0.65, .2), row=2, column=1, callback=window.toggle_wire_frame, text="Wireframe")
+
+        button_settings_back = Button(settings_video_page, (1.4, .2), row=2, column=0, callback=settings_page.open, text="Back")
         settings_video_page.layout()
         button_settings_video_open.callback = settings_video_page.open
 
@@ -363,8 +436,8 @@ class Menu:
                 buttons[option].text = value.title()
 
         for i, key in enumerate(keys):
-            Label(scrollbox, (0.6, .2), row=i, column=0, text=key.split(".")[1].title())
-            buttons[key] = Button(scrollbox, (0.6, .2), row=i, column=1, callback=lambda key=key: select_key(key), text=window.options[key].title(), duration=-1)
+            Label(scrollbox, (0.6, .18), row=i, column=0, text=key.split(".")[1].title())
+            buttons[key] = Button(scrollbox, (0.6, .18), row=i, column=1, callback=lambda key=key: select_key(key), text=window.options[key].title(), duration=-1)
             buttons[key].key_identifer = key
         scrollbox.callback = update_key
 

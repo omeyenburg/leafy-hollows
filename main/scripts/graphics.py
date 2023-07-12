@@ -27,6 +27,7 @@ class Window:
             "enableVsync": False,
             "maxFps": 1000,
             "particles": 1,
+            "map buffers": True,
             "key.left": "a",
             "key.right": "d",
             "key.jump": "space",
@@ -116,9 +117,18 @@ class Window:
         # Instanced shader inputs
         self.vbo_instances_length = 0
         self.vbo_instances_index = 0
-        self.dest_vbo_data = numpy.zeros(0, dtype=numpy.float32)
-        self.source_or_color_vbo_data = numpy.zeros(0, dtype=numpy.float32)
-        self.shape_vbo_data = numpy.zeros(0, dtype=numpy.float32)
+        #self.dest_vbo_array = numpy.zeros(0, dtype=numpy.float32)
+        #self.dest_
+        #self.source_or_color_vbo_array = numpy.zeros(0, dtype=numpy.float32)
+        #self.shape_vbo_array = numpy.zeros(0, dtype=numpy.float32)
+
+        self.dest_vbo_array = numpy.zeros(0, dtype=numpy.float32)
+        self.source_or_color_vbo_array = numpy.zeros(0, dtype=numpy.float32)
+        self.shape_vbo_array = numpy.zeros(0, dtype=numpy.float32)
+        #self.dest_vbo_array_size = 0
+        #self.source_or_color_vbo_array_size = 0
+        #self.shape_vbo_array_size = 0
+        self.render_buffers_mapped = False
 
         # Vertices & texcoords
         vertices = numpy.array([
@@ -136,26 +146,30 @@ class Window:
         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * vertices.itemsize, ctypes.c_void_p(2 * vertices.itemsize))
         
         # Create element buffer object (EBO) for indices
-        indices = numpy.array([0, 1, 2, 0, 2, 3], dtype=numpy.uint32)
+        indices = numpy.array([
+            0, 1, 2,
+            0, 2, 3
+        ], dtype=numpy.uint32)
+
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.ebo)
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, len(indices) * 4, (GLuint * len(indices))(*indices), GL_STATIC_DRAW)
 
         # Create vertex buffer objects (VBOs) for draw data
         glEnableVertexAttribArray(2)
         glBindBuffer(GL_ARRAY_BUFFER, self.dest_vbo)
-        glBufferData(GL_ARRAY_BUFFER, 0, self.dest_vbo_data, GL_DYNAMIC_DRAW)
+        glBufferData(GL_ARRAY_BUFFER, 0, self.dest_vbo_array, GL_DYNAMIC_DRAW)
         glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 0, ctypes.c_void_p(0))
         glVertexAttribDivisor(2, 1)
 
         glEnableVertexAttribArray(3)
         glBindBuffer(GL_ARRAY_BUFFER, self.source_or_color_vbo)
-        glBufferData(GL_ARRAY_BUFFER, 0, self.source_or_color_vbo_data, GL_DYNAMIC_DRAW)
+        glBufferData(GL_ARRAY_BUFFER, 0, self.source_or_color_vbo_array, GL_DYNAMIC_DRAW)
         glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 0, ctypes.c_void_p(0))
         glVertexAttribDivisor(3, 1)
 
         glEnableVertexAttribArray(4)
         glBindBuffer(GL_ARRAY_BUFFER, self.shape_vbo)
-        glBufferData(GL_ARRAY_BUFFER, 0, self.shape_vbo_data, GL_DYNAMIC_DRAW)
+        glBufferData(GL_ARRAY_BUFFER, 0, self.shape_vbo_array, GL_DYNAMIC_DRAW)
         glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, 0, ctypes.c_void_p(0))
         glVertexAttribDivisor(4, 1)
 
@@ -221,26 +235,92 @@ class Window:
             new_source_or_color_vbo_data = numpy.zeros(self.vbo_instances_length * 4, dtype=numpy.float32)
             new_shape_vbo_data = numpy.zeros(self.vbo_instances_length, dtype=numpy.float32)
 
-            new_dest_vbo_data[:len(self.dest_vbo_data)] = self.dest_vbo_data
-            self.dest_vbo_data = new_dest_vbo_data
-            new_source_or_color_vbo_data[:len(self.source_or_color_vbo_data)] = self.source_or_color_vbo_data
-            self.source_or_color_vbo_data = new_source_or_color_vbo_data
-            new_shape_vbo_data[:len(self.shape_vbo_data)] = self.shape_vbo_data
-            self.shape_vbo_data = new_shape_vbo_data
+            new_dest_vbo_data[:len(self.dest_vbo_array)] = self.dest_vbo_array
+            self.dest_vbo_array = new_dest_vbo_data
+            new_source_or_color_vbo_data[:len(self.source_or_color_vbo_array)] = self.source_or_color_vbo_array
+            self.source_or_color_vbo_array = new_source_or_color_vbo_data
+            new_shape_vbo_data[:len(self.shape_vbo_array)] = self.shape_vbo_array
+            self.shape_vbo_array = new_shape_vbo_data
 
             glBindBuffer(GL_ARRAY_BUFFER, self.dest_vbo)
-            glBufferData(GL_ARRAY_BUFFER, self.dest_vbo_data.nbytes, self.dest_vbo_data, GL_DYNAMIC_DRAW)
+            glBufferData(GL_ARRAY_BUFFER, self.dest_vbo_array.nbytes, self.dest_vbo_array, GL_DYNAMIC_DRAW)
  
             glBindBuffer(GL_ARRAY_BUFFER, self.source_or_color_vbo)
-            glBufferData(GL_ARRAY_BUFFER, self.source_or_color_vbo_data.nbytes, self.source_or_color_vbo_data, GL_DYNAMIC_DRAW)
+            glBufferData(GL_ARRAY_BUFFER, self.source_or_color_vbo_array.nbytes, self.source_or_color_vbo_array, GL_DYNAMIC_DRAW)
 
             glBindBuffer(GL_ARRAY_BUFFER, self.shape_vbo)
-            glBufferData(GL_ARRAY_BUFFER, self.shape_vbo_data.nbytes, self.shape_vbo_data, GL_DYNAMIC_DRAW)
+            glBufferData(GL_ARRAY_BUFFER, self.shape_vbo_array.nbytes, self.shape_vbo_array, GL_DYNAMIC_DRAW)
             
-        self.dest_vbo_data[4 * self.vbo_instances_index:4 * self.vbo_instances_index + 4] = dest
-        self.source_or_color_vbo_data[4 * self.vbo_instances_index:4 * self.vbo_instances_index + 4] = source_or_color
-        self.shape_vbo_data[self.vbo_instances_index:self.vbo_instances_index + 1] = shape
+        self.dest_vbo_array[4 * self.vbo_instances_index:4 * self.vbo_instances_index + 4] = dest
+        self.source_or_color_vbo_array[4 * self.vbo_instances_index:4 * self.vbo_instances_index + 4] = source_or_color
+        self.shape_vbo_array[self.vbo_instances_index:self.vbo_instances_index + 1] = shape
 
+        """
+        glBindBuffer(GL_ARRAY_BUFFER, self.dest_vbo)
+        dest = numpy.array(dest, dtype=numpy.float32)
+        glBufferSubData(GL_ARRAY_BUFFER, dest.nbytes * self.vbo_instances_index, dest.nbytes, dest)#  * (self.vbo_instances_index + 1)
+
+        source_or_color = numpy.array(source_or_color, dtype=numpy.float32)
+        glBindBuffer(GL_ARRAY_BUFFER, self.source_or_color_vbo)
+        glBufferSubData(GL_ARRAY_BUFFER, source_or_color.nbytes * self.vbo_instances_index, source_or_color.nbytes, source_or_color)
+
+        shape = numpy.array((shape,), dtype=numpy.float32)
+        glBindBuffer(GL_ARRAY_BUFFER, self.shape_vbo)
+        glBufferSubData(GL_ARRAY_BUFFER, shape.nbytes * self.vbo_instances_index, shape.nbytes, shape)
+        """
+        
+        self.vbo_instances_index += 1
+
+    def add_vbo_instance(self, dest, source_or_color, shape):
+        """
+        Queue a object to be drawn on the screen and resize buffers as necessary.
+        """
+        if (not self.render_buffers_mapped) and self.options["map buffers"]:
+            return
+
+        if self.vbo_instances_length == self.vbo_instances_index: # Resize all instanced vbos
+            self.vbo_instances_length = int(1 + self.vbo_instances_length * 1.5)
+
+            new_dest_vbo_array = numpy.zeros(self.vbo_instances_length * 4, dtype=numpy.float32)
+            new_dest_vbo_array[:len(self.dest_vbo_array)] = self.dest_vbo_array
+            glBindBuffer(GL_ARRAY_BUFFER, self.dest_vbo)
+            if self.options["map buffers"]:
+                glUnmapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)
+            glBufferData(GL_ARRAY_BUFFER, new_dest_vbo_array.nbytes, new_dest_vbo_array, GL_DYNAMIC_DRAW)
+            if self.options["map buffers"]:
+                address = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)
+                self.dest_vbo_array = (GLfloat * len(new_dest_vbo_array)).from_address(address)
+            else:
+                self.dest_vbo_array = new_dest_vbo_array
+ 
+            new_source_or_color_vbo_array = numpy.zeros(self.vbo_instances_length * 4, dtype=numpy.float32)
+            new_source_or_color_vbo_array[:len(self.source_or_color_vbo_array)] = self.source_or_color_vbo_array
+            glBindBuffer(GL_ARRAY_BUFFER, self.source_or_color_vbo)
+            if self.options["map buffers"]:
+                glUnmapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)
+            glBufferData(GL_ARRAY_BUFFER, new_source_or_color_vbo_array.nbytes, new_source_or_color_vbo_array, GL_DYNAMIC_DRAW)
+            if self.options["map buffers"]:
+                address = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)
+                self.source_or_color_vbo_array = (GLfloat * len(new_source_or_color_vbo_array)).from_address(address)
+            else:
+                self.source_or_color_vbo_array = new_source_or_color_vbo_array
+
+            new_shape_vbo_array = numpy.zeros(self.vbo_instances_length, dtype=numpy.float32)
+            new_shape_vbo_array[:len(self.shape_vbo_array)] = self.shape_vbo_array
+            glBindBuffer(GL_ARRAY_BUFFER, self.shape_vbo)
+            if self.options["map buffers"]:
+                glUnmapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)
+            glBufferData(GL_ARRAY_BUFFER, new_shape_vbo_array.nbytes, new_shape_vbo_array, GL_DYNAMIC_DRAW)
+            if self.options["map buffers"]:
+                address = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)
+                self.shape_vbo_array = (GLfloat * len(new_shape_vbo_array)).from_address(address)
+            else:
+                self.shape_vbo_array = new_shape_vbo_array
+
+        self.dest_vbo_array[4 * self.vbo_instances_index:4 * self.vbo_instances_index + 4] = dest
+        self.source_or_color_vbo_array[4 * self.vbo_instances_index:4 * self.vbo_instances_index + 4] = source_or_color
+        self.shape_vbo_array[self.vbo_instances_index:self.vbo_instances_index + 1] = [shape]
+        
         self.vbo_instances_index += 1
 
     def get_pressed_keys(self):
@@ -352,16 +432,73 @@ class Window:
         glBindTexture(GL_TEXTURE_2D, self.texFont)
 
         # Send instance data to shader
+        """
         glBindBuffer(GL_ARRAY_BUFFER, self.dest_vbo)
-        glBufferSubData(GL_ARRAY_BUFFER, 0, self.dest_vbo_data.nbytes, self.dest_vbo_data)
+        glBufferSubData(GL_ARRAY_BUFFER, 0, self.dest_vbo_array.nbytes, self.dest_vbo_array)
+
+        map_data = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)
+        map_array = (GLfloat * len(self.dest_vbo_array)).from_address(map_data)
+        print(map_array[1])# = value
+        #print(self.dest_vbo_array[1])
+
         glBindBuffer(GL_ARRAY_BUFFER, self.source_or_color_vbo)
-        glBufferSubData(GL_ARRAY_BUFFER, 0, self.source_or_color_vbo_data.nbytes, self.source_or_color_vbo_data)
+        glBufferSubData(GL_ARRAY_BUFFER, 0, self.source_or_color_vbo_array.nbytes, self.source_or_color_vbo_array)
         glBindBuffer(GL_ARRAY_BUFFER, self.shape_vbo)
-        glBufferSubData(GL_ARRAY_BUFFER, 0, self.shape_vbo_data.nbytes, self.shape_vbo_data)
+        glBufferSubData(GL_ARRAY_BUFFER, 0, self.shape_vbo_array.nbytes, self.shape_vbo_array)
+
+
+        glBindBuffer(GL_ARRAY_BUFFER, self.dest_vbo)
+        glUnmapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)
+        """
+        if not self.options["map buffers"]:
+            glBindBuffer(GL_ARRAY_BUFFER, self.dest_vbo)
+            glBufferSubData(GL_ARRAY_BUFFER, 0, self.dest_vbo_array.nbytes, self.dest_vbo_array)
+            glBindBuffer(GL_ARRAY_BUFFER, self.source_or_color_vbo)
+            glBufferSubData(GL_ARRAY_BUFFER, 0, self.source_or_color_vbo_array.nbytes, self.source_or_color_vbo_array)
+            glBindBuffer(GL_ARRAY_BUFFER, self.shape_vbo)
+            glBufferSubData(GL_ARRAY_BUFFER, 0, self.shape_vbo_array.nbytes, self.shape_vbo_array)
+        elif self.render_buffers_mapped:
+            glBindBuffer(GL_ARRAY_BUFFER, self.dest_vbo)
+            dest_vbo_size = len(self.dest_vbo_array)
+            glUnmapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)
+
+            glBindBuffer(GL_ARRAY_BUFFER, self.source_or_color_vbo)
+            source_or_color_vbo_size = len(self.source_or_color_vbo_array)
+            glUnmapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)
+
+            glBindBuffer(GL_ARRAY_BUFFER, self.shape_vbo)
+            shape_vbo_size = len(self.shape_vbo_array)
+            glUnmapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)
+            self.render_buffers_mapped = True
+        else:
+            dest_vbo_size = source_or_color_vbo_size = shape_vbo_size = 0
+            self.render_buffers_mapped = True
 
         # Draw
         glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, None, self.vbo_instances_index)
         pygame.display.flip()
+
+        if self.options["map buffers"]:
+            glBindBuffer(GL_ARRAY_BUFFER, self.dest_vbo)
+            address = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)
+            if dest_vbo_size:
+                self.dest_vbo_array = (GLfloat * dest_vbo_size).from_address(address)
+            else:
+                self.dest_vbo_array = numpy.zeros(0, dtype=numpy.float32)
+
+            glBindBuffer(GL_ARRAY_BUFFER, self.source_or_color_vbo)
+            address = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)
+            if source_or_color_vbo_size:
+                self.source_or_color_vbo_array = (GLfloat * source_or_color_vbo_size).from_address(address)
+            else:
+                self.dest_vbo_array = numpy.zeros(0, dtype=numpy.float32)
+
+            glBindBuffer(GL_ARRAY_BUFFER, self.shape_vbo)
+            address = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)
+            if shape_vbo_size:
+                self.shape_vbo_array = (GLfloat * shape_vbo_size).from_address(address)
+            else:
+                self.dest_vbo_array = numpy.zeros(0, dtype=numpy.float32)
 
         self.vbo_instances_index = 0
         self.camera.update() # Better at the start, but currently at the end for sync of world and instanced rendering
@@ -391,6 +528,26 @@ class Window:
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
         else:
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
+
+    def toggle_map_buffers(self):
+        """
+        Toggle mapping buffers for drawing.
+        """
+        if self.options["map buffers"]:
+            glBindBuffer(GL_ARRAY_BUFFER, self.dest_vbo)
+            glUnmapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)
+            glBindBuffer(GL_ARRAY_BUFFER, self.source_or_color_vbo)
+            glUnmapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)
+            glBindBuffer(GL_ARRAY_BUFFER, self.shape_vbo)
+            glUnmapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)
+    
+        self.options["map buffers"] = not self.options["map buffers"]
+        self.render_buffers_mapped = False
+        self.dest_vbo_array = numpy.array([], dtype=numpy.float32)
+        self.source_or_color_vbo_array = numpy.array([], dtype=numpy.float32)
+        self.shape_vbo_array = numpy.array([], dtype=numpy.float32)
+        self.vbo_instances_length = 0
+        self.vbo_instances_index = 0
         
     def load_options(self):
         """
@@ -618,17 +775,17 @@ class Window:
                     letter = "?"
                 rect = self.font_rects[letter]
                 if fixed_size == 0:
-                    offset += rect[1] * spacing * size
+                    #offset += rect[1] * spacing * size
                     dest_rect = [position[0] + offset + rect[1], position[1], rect[1] * size, rect[2] * 2 * size]
-                    offset += rect[1] * spacing * size
+                    offset += rect[1] * spacing * size * 2
                 elif fixed_size == 1:
-                    offset += rect[1] * spacing * size
+                    #offset += rect[1] * spacing * size
                     dest_rect = [position[0] + offset + rect[1], position[1], rect[1] * size, rect[2] * 2 * size * y_factor_relational]
-                    offset += rect[1] * spacing * size
+                    offset += rect[1] * spacing * size * 2
                 else:
-                    offset += rect[1] * spacing * size * x_factor_fixed
+                    #offset += rect[1] * spacing * size * x_factor_fixed
                     dest_rect = [position[0] + offset + rect[1], position[1], rect[1] * size * x_factor_fixed, rect[2] * 2 * size * y_factor_fixed]
-                    offset += rect[1] * spacing * size * x_factor_fixed
+                    offset += rect[1] * spacing * size * x_factor_fixed * 2
                 
                 if not self.stencil_rect is None:
                     org = dest_rect[:]
@@ -664,17 +821,17 @@ class Window:
                 rect = self.font_rects[letter]
                 source_and_color = (color[0] + rect[0], color[1], color[2] + rect[1] - 0.00001, color[3])
                 if fixed_size == 0:
-                    offset += rect[1] * spacing * size
+                    #offset += rect[1] * spacing * size
                     dest_rect = [position[0] + offset + rect[1], position[1] - rect[2] * 2, rect[1] * size, rect[2] * 2 * size]
-                    offset += rect[1] * spacing * size
-                elif fixed_size == 0:
-                    offset += rect[1] * spacing * size
+                    offset += rect[1] * spacing * size * 2
+                elif fixed_size == 1:
+                    #offset += rect[1] * spacing * size * 2
                     dest_rect = [position[0] + offset + rect[1], position[1] - rect[2] * 2, rect[1] * size, rect[2] * 2 * size * y_factor_relational]
-                    offset += rect[1] * spacing * size
+                    offset += rect[1] * spacing * size * 2
                 else:
-                    offset += rect[1] * spacing * size * x_factor_fixed
+                    #offset += rect[1] * spacing * size * x_factor_fixed
                     dest_rect = [position[0] + offset + rect[1], position[1] - rect[2] * 2, rect[1] * size * x_factor_fixed, rect[2] * 2 * size * y_factor_fixed]
-                    offset += rect[1] * spacing * size * x_factor_fixed
+                    offset += rect[1] * spacing * size * x_factor_fixed * 2
                 if not self.stencil_rect is None:
                     org = dest_rect[:]
 
@@ -692,6 +849,8 @@ class Window:
                         self.add_vbo_instance(dest_rect, source_and_color, 3)
                 else:
                     self.add_vbo_instance(dest_rect, source_and_color, 3)
+
+        return offset
 
 class TextureAtlas:
     def __init__(self, **images):
