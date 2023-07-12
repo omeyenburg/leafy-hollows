@@ -34,7 +34,7 @@ class Player(PhysicsObject):
             dx, dy = mouse_pos[0] - self.rect.centerx, mouse_pos[1] - self.rect.centery
             angle_to_mouse = math.degrees(math.atan2(dy, dx))
 
-            force = min(math.dist(self.rect.center, mouse_pos), 3) * (10**strenght)
+            force = min(math.dist(self.rect.center, mouse_pos), 3) / window.delta_time * strenght
             self.apply_force(force, angle_to_mouse, window.delta_time)
 
         max_speed = self.speed
@@ -71,16 +71,19 @@ class Player(PhysicsObject):
         if window.keybind("jump"):
             self.jump(window, 5) # how long is jump force applied --> variable jump height
 
-        if window.mouse_buttons[0] == 1:
-            mouse_pull(4.5) # constant activation balances out w/ gravity --> usable as rope
+        if window.mouse_buttons[0] == 1: # left click: pull player to mouse
+            mouse_pull(300) # constant activation balances out w/ gravity --> usable as rope
 
-        if window.mouse_buttons[1] == 1:
+        if window.mouse_buttons[1] == 1: # middle click: spawn particle
             mouse_pos = window.camera.map_coord(window.mouse_pos[:2], world=True)
             spawn_particle(mouse_pos)
 
-        if window.mouse_buttons[2] == 1:
+        if window.mouse_buttons[2] == 1: # right click: place/break block
             mouse_pos = window.camera.map_coord(window.mouse_pos[:2], world=True)
-            world[math.floor(mouse_pos[0]), math.floor(mouse_pos[1])] = not world[math.floor(mouse_pos[0]), math.floor(mouse_pos[1])]
+            if world[math.floor(mouse_pos[0]), math.floor(mouse_pos[1])] > 0:
+                world[math.floor(mouse_pos[0]), math.floor(mouse_pos[1])] = 0
+            else:
+                world[math.floor(mouse_pos[0]), math.floor(mouse_pos[1])] = world.blocks["dirt"]
 
     def update(self, world, window):
         self.move(world, window)
