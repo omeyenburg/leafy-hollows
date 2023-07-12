@@ -62,5 +62,5 @@ else:
         coll,
         name=name + '.exe',
         icon='./icon/icon/ico',
-        bundle_identifier=None,
+        bundle_identifier=com.test,
     )
