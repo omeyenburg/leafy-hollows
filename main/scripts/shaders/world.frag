@@ -11,7 +11,7 @@ uniform int resolution;
 
 int BLOCKSIZEDEST = 16 * resolution;
 int BLOCKSIZESOURCE = 16;
-vec2 BLOCKCOUNT = textureSize(texWorld, 0) / BLOCKSIZESOURCE;
+vec2 BLOCKCOUNT = textureSize(texBlocks, 0) / BLOCKSIZESOURCE;
 
 void main() {
     vec2 dest = vec2(gl_FragCoord.x / BLOCKSIZEDEST + offset.x, gl_FragCoord.y / BLOCKSIZEDEST + offset.y);

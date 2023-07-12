@@ -101,13 +101,19 @@ class Button(Widget):
     def update(self, window: graphics.Window):
         pos = window.camera.map_coord(window.mouse_pos[:2], from_pixel=1, from_centered=1)
         if window.mouse_buttons[0] and self.rect.collidepoint(pos):
-            self.clicked = max(2, int(self.duration / window.delta_time))
+            if self.duration > 0:
+                self.clicked = max(2, int(self.duration / window.delta_time))
+            else:
+                self.clicked = self.duration
 
         if self.clicked:
             self.clicked -= 1
             self.draw_clicked(window)
-            if self.clicked == 0 and not self.callback is None:
+            if window.mouse_buttons[0] == 0 and self.clicked > 0:
+                self.clicked = 0
+            if self.clicked in (0, -2) and not self.callback is None:
                 self.callback()
+            
         else:
             self.draw_idle(window)
 
@@ -209,7 +215,7 @@ class ScrollBox(Widget):
     def update(self, window: graphics.Window):
         adjust_offset = min(self.offset, self.children[0].rect.bottom - self.rect.bottom + self.spacing)
         adjust_offset = max(adjust_offset, self.children[-1].rect.y - self.rect.y - self.spacing)
-        self.offset += window.mouse_wheel[3] / window.height * 6
+        self.offset += window.mouse_wheel[3] / window.height * 10
         if adjust_offset != self.offset:
             self.offset = (adjust_offset + self.offset * 3) / 4
 
@@ -271,6 +277,7 @@ class Menu:
             value = window.options["maxFps"] / 1000
         slider_fps = Slider(settings_video_page, (.65, 0.2), row=1, column=0, value=value)
         label_fps = Label(settings_video_page, (.65, 0.2), row=1, column=0)
+
         def slider_fps_update():
             fps = round(slider_fps.value * 100) * 10
             if fps:
@@ -286,16 +293,19 @@ class Menu:
                     window.options["enableVsync"] = True
                     window.resize()
             label_fps.text = "Max FPS: " + show_fps
+
         slider_fps_update()
         slider_fps.callback = slider_fps_update
 
         value = window.options["particles"] / 10
         slider_particles = Slider(settings_video_page, (.65, 0.2), row=1, column=1, value=value)
         label_particles = Label(settings_video_page, (.65, 0.2), row=1, column=1)
+
         def slider_particles_update():
             particles = int(slider_particles.value * 10)
             label_particles.text = "Particle Density: " + str(particles)
             window.options["particles"] = particles
+
         slider_particles.callback = slider_particles_update
         slider_particles_update()
 
@@ -317,13 +327,16 @@ class Menu:
         settings_control_page = Page(columns=1, spacing=0.1)
         Label(settings_control_page, (1, .3), row=0, column=0, text="Control Settings", fontsize=2)
 
-        scrollbox = ScrollBox(settings_control_page, (1.4, 1.2), row=1, column=0, columns=2)
+        scrollbox = ScrollBox(settings_control_page, (1.4, 1.1), row=1, column=0, columns=2)
         keys = list(filter(lambda x: x.startswith("key."), window.options))
         buttons = {}
         selected = None
 
         def select_key(key):
             nonlocal selected
+            for i in buttons:
+                if i != key:
+                    buttons[i].clicked = 0
             selected = key
 
         def update_key():
@@ -331,6 +344,7 @@ class Menu:
             if not selected is None:
                 keys = window.get_pressed_keys() + window.get_pressed_mods()
                 if keys:
+                    buttons[selected].clicked = 0
                     buttons[selected].text = keys[0]
                     window.options[buttons[selected].key_identifer] = keys[0].lower()
                     window.keys: dict = dict.fromkeys([value for key, value in window.options.items() if key.startswith("key.")], 0)
@@ -338,7 +352,7 @@ class Menu:
 
         for i, key in enumerate(keys):
             Label(scrollbox, (0.6, .2), row=i, column=0, text=key.split(".")[1].title())
-            buttons[key] = Button(scrollbox, (0.6, .2), row=i, column=1, callback=lambda key=key: select_key(key), text=window.options[key].title())
+            buttons[key] = Button(scrollbox, (0.6, .2), row=i, column=1, callback=lambda key=key: select_key(key), text=window.options[key].title(), duration=-1)
             buttons[key].key_identifer = key
         scrollbox.callback = update_key
 

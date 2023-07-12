@@ -577,12 +577,15 @@ class Window:
         """
         self.add_vbo_instance((*position, radius, radius), self.camera.map_color(color), 2)
 
-    def draw_text(self, position, text, color, size=1, centered=False, spacing=1.25):
+    def draw_text(self, position, text, color, size=1, centered=False, spacing=1.25, fixed_size=1):
         """
         Draw text on the window.
+        fixed_size: 0 = stretch, 1 = relational size on both axis, 2 = fixed size
         """
         offset = 0
-
+        x_factor_fixed = 1 / self.width * self.screen_size[0]
+        y_factor_fixed = 1 / self.height * self.screen_size[1]
+        y_factor_relational = 1 / self.height * self.screen_size[1] * self.width / self.screen_size[0]
         if len(color) == 3:
             color = (*color, 255)
 
@@ -595,7 +598,10 @@ class Window:
                         letter = letter.lower()
                 if not letter in self.font_rects:
                     letter = "?"
-                offset -= self.font_rects[letter][1] * spacing * size
+                if fixed_size < 2:
+                    offset -= self.font_rects[letter][1] * spacing * size
+                else:
+                    offset -= self.font_rects[letter][1] * spacing * size * x_factor_fixed
 
             for letter in text:
                 if not letter in self.font_rects and letter.isalpha():
@@ -606,9 +612,18 @@ class Window:
                 if not letter in self.font_rects:
                     letter = "?"
                 rect = self.font_rects[letter]
-                offset += rect[1] * spacing * size
-                dest_rect = [position[0] + offset + rect[1], position[1], rect[1] * size, rect[2] * 2 * size]
-                offset += rect[1] * spacing * size
+                if fixed_size == 0:
+                    offset += rect[1] * spacing * size
+                    dest_rect = [position[0] + offset + rect[1], position[1], rect[1] * size, rect[2] * 2 * size]
+                    offset += rect[1] * spacing * size
+                elif fixed_size == 1:
+                    offset += rect[1] * spacing * size
+                    dest_rect = [position[0] + offset + rect[1], position[1], rect[1] * size, rect[2] * 2 * size * y_factor_relational]
+                    offset += rect[1] * spacing * size
+                else:
+                    offset += rect[1] * spacing * size * x_factor_fixed
+                    dest_rect = [position[0] + offset + rect[1], position[1], rect[1] * size * x_factor_fixed, rect[2] * 2 * size * y_factor_fixed]
+                    offset += rect[1] * spacing * size * x_factor_fixed
                 
                 if not self.stencil_rect is None:
                     org = dest_rect[:]
@@ -643,9 +658,18 @@ class Window:
                     letter = "?"
                 rect = self.font_rects[letter]
                 source_and_color = (color[0] + rect[0], color[1], color[2] + rect[1] - 0.00001, color[3])
-                offset += rect[1] * spacing * size
-                dest_rect = [position[0] + offset + rect[1], position[1] - rect[2] * 2, rect[1] * size, rect[2] * 2 * size]
-                offset += rect[1] * spacing * size
+                if fixed_size == 0:
+                    offset += rect[1] * spacing * size
+                    dest_rect = [position[0] + offset + rect[1], position[1] - rect[2] * 2, rect[1] * size, rect[2] * 2 * size]
+                    offset += rect[1] * spacing * size
+                elif fixed_size == 0:
+                    offset += rect[1] * spacing * size
+                    dest_rect = [position[0] + offset + rect[1], position[1] - rect[2] * 2, rect[1] * size, rect[2] * 2 * size * y_factor_relational]
+                    offset += rect[1] * spacing * size
+                else:
+                    offset += rect[1] * spacing * size * x_factor_fixed
+                    dest_rect = [position[0] + offset + rect[1], position[1] - rect[2] * 2, rect[1] * size * x_factor_fixed, rect[2] * 2 * size * y_factor_fixed]
+                    offset += rect[1] * spacing * size * x_factor_fixed
                 if not self.stencil_rect is None:
                     org = dest_rect[:]
 
