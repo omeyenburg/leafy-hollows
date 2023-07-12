@@ -23,7 +23,17 @@ operating_system = system()
 class Window:
     def __init__(self, caption):
         # Load options
-        self.options = self.load_options()
+        self.options_default: dict = {
+            "enableVsync": False,
+            "maxFps": 1000,
+            "particles": 1,
+            "key.left": "a",
+            "key.right": "d",
+            "key.jump": "space",
+            "key.sprint": "left shift",
+            "key.return": "escape",
+        }
+        self.options: dict = self.load_options()
 
         # Callbacks
         self.callback_quit = None
@@ -386,23 +396,13 @@ class Window:
         """
         Loads the options from the options.txt file.
         """
-        options_string = """
-        enableVsync: False
-        maxFps: 1000
-        particles: 1
-        key.left: "a"
-        key.right: "d"
-        key.jump: "space"
-        key.sprint: "left shift"
-        key.return: "escape"
-        """
-        options = {line.split(":")[0].strip(): eval(line.split(":")[1].strip()) for line in options_string.split("\n") if line.split(":")[0].strip()}
+        options = self.options_default.copy()
 
         try:
             with open(util.File.path("data/user/options.txt"), "r") as file:
                 options_string = file.read()
         except:
-            ...
+            options_string = ""
 
         for line in options_string.split("\n"):
             keyword = line.split(":")[0].strip()
@@ -423,7 +423,8 @@ class Window:
                 (isinstance(options[keyword], float) and not isinstance(value, (float, int, bool))) or
                 (isinstance(options[keyword], str) and not isinstance(value, str))):
                 raise ValueError("Invalid value type (\"" + str(value) + "\") for " + keyword)
-            options[keyword] = value            
+            options[keyword] = value
+                  
         return options
 
     def save_options(self):

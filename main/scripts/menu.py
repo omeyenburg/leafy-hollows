@@ -14,8 +14,9 @@ import scripts.util as util
 class Page:
     opened = None
     
-    def __init__(self, columns: int=1, spacing: int=0, callback=None):
+    def __init__(self, parent=None, columns: int=1, spacing: int=0, callback=None):
         self.children = []
+        self.parent = parent
         self.columns = columns
         self.spacing = spacing
         self.callback = callback
@@ -50,6 +51,8 @@ class Page:
             child.update(window)
         if not self.callback is None:
             self.callback()
+        if window.keybind("return") == 1 and not self.parent is None:
+            self.parent.open()
 
     def draw(self, window: graphics.Window):
         pass
@@ -87,7 +90,7 @@ class Label(Widget):
         self.text = text
 
     def update(self, window: graphics.Window):
-        window.draw_text(self.rect.center, self.text, (255, 255, 255, 255), self.fontsize, centered=True)
+        window.draw_text(self.rect.center, self.text, (250, 250, 250, 200), self.fontsize, centered=True)
 
 
 class Button(Widget):
@@ -118,12 +121,12 @@ class Button(Widget):
             self.draw_idle(window)
 
     def draw_idle(self, window: graphics.Window):
-        window.draw_rect(self.rect[:2], self.rect[2:], (255, 0, 0, 255))
-        window.draw_text(self.rect.center, self.text, (0, 0, 0, 255), self.fontsize, centered=True)
+        window.draw_rect(self.rect[:2], self.rect[2:], (250, 0, 0, 200))
+        window.draw_text(self.rect.center, self.text, (50, 0, 0, 250), self.fontsize, centered=True)
 
     def draw_clicked(self, window: graphics.Window):
-        window.draw_rect(self.rect[:2], self.rect[2:], (255, 0, 0, 200))
-        window.draw_text(self.rect.center, self.text, (0, 0, 0, 255), self.fontsize, centered=True)
+        window.draw_rect(self.rect[:2], self.rect[2:], (200, 0, 0, 250))
+        window.draw_text(self.rect.center, self.text, (0, 0, 0, 250), self.fontsize, centered=True)
 
 
 class Space(Widget):
@@ -166,8 +169,8 @@ class Slider(Widget):
         self.draw(window)
 
     def draw(self, window: graphics.Window):
-        window.draw_rect(self.rect[:2], self.rect[2:], (50, 0, 0, 200))
-        window.draw_rect(self.slider_rect[:2], self.slider_rect[2:], (100, 0, 0, 200))
+        window.draw_rect(self.rect[:2], self.rect[2:], (60, 0, 0, 200))
+        window.draw_rect(self.slider_rect[:2], self.slider_rect[2:], (250, 0, 0, 200))
         #window.draw_rect((self.rect[0], self.rect.centery - self.rect[3] / 8), (self.rect[2], self.rect[3] / 4), (50, 0, 0, 200))
         #window.draw_rect(self.slider_rect[:2], self.slider_rect[2:], (100, 0, 0, 200))
         #window.draw_circle(self.slider_rect.center, self.slider_rect.h_half, (200, 0, 0, 255))
@@ -258,7 +261,7 @@ class Menu:
         main_page.open()
 
         # Settings page
-        settings_page = Page(columns=2, spacing=0.1)
+        settings_page = Page(parent=main_page, columns=2, spacing=0.1)
         Label(settings_page, (1, .3), row=0, column=0, columnspan=2, text="Options", fontsize=2)
         button_settings_video_open = Button(settings_page, (.65, .2), row=1, column=0, text="Video Settings")
         button_settings_audio_open = Button(settings_page, (.65, .2), row=1, column=1, text="Audio Settings")
@@ -268,7 +271,7 @@ class Menu:
         button_settings.callback = settings_page.open
 
         # Video settings page
-        settings_video_page = Page(columns=2, spacing=0.1)
+        settings_video_page = Page(parent=settings_page, columns=2, spacing=0.1)
         Label(settings_video_page, (1, .3), row=0, column=0, columnspan=2, text="Video Settings", fontsize=2)
 
         if window.options["enableVsync"]:
@@ -309,25 +312,25 @@ class Menu:
         slider_particles.callback = slider_particles_update
         slider_particles_update()
 
-        button_settings_back = Button(settings_video_page, (0.65, .2), row=2, column=0, callback=window.toggle_fullscreen, text="Fullscreen")
-        button_settings_back = Button(settings_video_page, (0.65, .2), row=2, column=1, callback=window.toggle_wire_frame, text="Wireframe")
+        Button(settings_video_page, (0.65, .2), row=2, column=0, callback=window.toggle_fullscreen, text="Fullscreen")
+        #Button(settings_video_page, (0.65, .2), row=2, column=1, callback=window.toggle_wire_frame, text="Wireframe")
 
         button_settings_back = Button(settings_video_page, (1.4, .2), row=3, column=0, columnspan=2, callback=settings_page.open, text="Back")
         settings_video_page.layout()
         button_settings_video_open.callback = settings_video_page.open
 
         # Audio settings page
-        settings_audio_page = Page(columns=1, spacing=0.1)
+        settings_audio_page = Page(parent=settings_page, columns=1, spacing=0.1)
         Label(settings_audio_page, (1, .3), row=0, column=0, text="Audio Settings", fontsize=2)
         Button(settings_audio_page, (1.4, .2), row=1, column=0, callback=settings_page.open, text="Back")
         settings_audio_page.layout()
         button_settings_audio_open.callback = settings_audio_page.open
 
         # Controls settings page
-        settings_control_page = Page(columns=1, spacing=0.1)
-        Label(settings_control_page, (1, .3), row=0, column=0, text="Control Settings", fontsize=2)
+        settings_control_page = Page(parent=settings_page, columns=2, spacing=0.1)
+        Label(settings_control_page, (1, .3), row=0, column=0, columnspan=2, text="Control Settings", fontsize=2)
 
-        scrollbox = ScrollBox(settings_control_page, (1.4, 1.1), row=1, column=0, columns=2)
+        scrollbox = ScrollBox(settings_control_page, (1.4, 1.1), row=1, column=0, columnspan=2, columns=2)
         keys = list(filter(lambda x: x.startswith("key."), window.options))
         buttons = {}
         selected = None
@@ -338,6 +341,7 @@ class Menu:
                 if i != key:
                     buttons[i].clicked = 0
             selected = key
+            scrollbox.parent = None
 
         def update_key():
             nonlocal selected
@@ -349,6 +353,14 @@ class Menu:
                     window.options[buttons[selected].key_identifer] = keys[0].lower()
                     window.keys: dict = dict.fromkeys([value for key, value in window.options.items() if key.startswith("key.")], 0)
                     selected = None
+                    scrollbox.parent = settings_page
+
+        def reset_keys():
+            for option, value in window.options_default.items():
+                if not option.startswith("key."):
+                    continue
+                window.options[option] = value
+                buttons[option].text = value.title()
 
         for i, key in enumerate(keys):
             Label(scrollbox, (0.6, .2), row=i, column=0, text=key.split(".")[1].title())
@@ -356,7 +368,8 @@ class Menu:
             buttons[key].key_identifer = key
         scrollbox.callback = update_key
 
-        Button(settings_control_page, (1.4, .2), row=2, column=0, callback=settings_page.open, text="Back")
+        Button(settings_control_page, (0.65, .2), row=2, column=0, callback=settings_page.open, text="Back")
+        Button(settings_control_page, (0.65, .2), row=2, column=1, callback=reset_keys, text="Reset")
         settings_control_page.layout()
         button_settings_control_open.callback = settings_control_page.open
 
