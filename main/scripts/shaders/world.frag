@@ -1,4 +1,4 @@
-#version 330 core
+bin#version 330 core
 
 in vec2 vertTexcoord;
 
@@ -23,8 +23,9 @@ void main() {
         return;
     }
     //ivec2 source_offset = 16 * ivec2(mod(block - 1, BLOCKCOUNT.x), (block - 1) / BLOCKCOUNT.x);
-
     ivec2 source_offset = ivec2(mod(block - 1, BLOCKCOUNT.x), (block - 1) / BLOCKCOUNT.x) * BLOCKSIZESOURCE;
+    
+remove offset
 
     ivec2 source = ivec2(mod(gl_FragCoord.x / resolution + offset.x * BLOCKSIZESOURCE, BLOCKSIZESOURCE) + source_offset.x,
                          mod(gl_FragCoord.y / resolution + offset.y * BLOCKSIZESOURCE, BLOCKSIZESOURCE) + source_offset.y);
