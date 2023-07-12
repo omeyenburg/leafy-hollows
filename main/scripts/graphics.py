@@ -496,12 +496,16 @@ class Window:
         """
         Update the world texture.
         """
-        start = (int(self.camera.pos[0]) - math.floor(self.width / 2 / self.camera.pixels_per_meter) - 2,
+        start = (int(self.camera.pos[0]) - math.floor(self.width / 2 / self.camera.pixels_per_meter) - 2,  # ideal start to render
                  int(self.camera.pos[1]) - math.floor(self.height / 2 / self.camera.pixels_per_meter) - 2)
-        chunk_start = (math.floor(start[0] / world.CHUNK_SIZE),
-                       math.floor(start[1] / world.CHUNK_SIZE))
-        offset = (self.camera.pos[0] % 1 + (start[0] - chunk_start[0] * world.CHUNK_SIZE) % self.camera.pixels_per_meter - self.width / (self.camera.pixels_per_meter / 2) % 1 - int(self.camera.pos[0] < 0) + 2,
-                  self.camera.pos[1] % 1 + (start[1] - chunk_start[1] * world.CHUNK_SIZE) % self.camera.pixels_per_meter - self.height / (self.camera.pixels_per_meter / 2) % 1 - int(self.camera.pos[1] < 0) + 1 + 1 / self.camera.resolution)
+
+        chunk_start = (start[0] // world.CHUNK_SIZE * world.CHUNK_SIZE, # round down to chunk corner
+                       start[1] // world.CHUNK_SIZE * world.CHUNK_SIZE)
+
+        offset = (self.camera.pos[0] % 1 + (start[0] - chunk_start[0]) % world.CHUNK_SIZE # final offset of world in blocks
+                    - (self.width / 2) % self.camera.pixels_per_meter / self.camera.pixels_per_meter + 2 - int(self.camera.pos[0] < 0),
+                  self.camera.pos[1] % 1 + (start[1] - chunk_start[1]) % world.CHUNK_SIZE
+                    - (self.height / 2) % self.camera.pixels_per_meter / self.camera.pixels_per_meter + 2 - int(self.camera.pos[1] < 0))
         self.world_shader.setvar("offset", *offset) 
 
         # View size
@@ -947,7 +951,7 @@ class Shader:
 
 class Camera:
     def __init__(self, window):
-        self.resolution: int = 2 # currently only working with 1 & 2
+        self.resolution: int = 2
         self.pixels_per_meter: int = self.resolution * 16
         self.threshold = 0.1
 
