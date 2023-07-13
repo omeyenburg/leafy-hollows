@@ -12,12 +12,10 @@ import scripts.util as util
 from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
 
+operating_system = system()
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 from pygame.locals import *
 import pygame
-
-
-operating_system = system()
 
 
 class Window:
@@ -28,6 +26,7 @@ class Window:
             "maxFps": 1000,
             "particles": 1,
             "map buffers": True,
+            "antialiasing": 16,
             "key.left": "a",
             "key.right": "d",
             "key.jump": "space",
@@ -47,8 +46,9 @@ class Window:
         pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MINOR_VERSION, 3)
         pygame.display.gl_set_attribute(pygame.GL_CONTEXT_PROFILE_MASK,
                                         pygame.GL_CONTEXT_PROFILE_CORE)
-        #pygame.display.gl_set_attribute(pygame.GL_MULTISAMPLEBUFFERS, 1)
-        #pygame.display.gl_set_attribute(pygame.GL_MULTISAMPLESAMPLES, 4)
+        #if self.options["antialiasing"]
+        pygame.display.gl_set_attribute(pygame.GL_MULTISAMPLEBUFFERS, 0)
+        pygame.display.gl_set_attribute(pygame.GL_MULTISAMPLESAMPLES, 0)
 
         # MacOS support
         if operating_system == "Darwin":
@@ -61,7 +61,9 @@ class Window:
         self.mouse_pos: [int] = (0, 0, 0, 0)      # x, y, relx, rely
         self.mouse_wheel: [int] = [0, 0, 0, 0]    # x, y, relx, rely
         self.fps: int = 0
-        self.delta_time: float = 1
+        self.delta_time: float = 1.0
+        self.time: float = 0.0
+        self.animation_speed = 0.3
 
         # Key functions
         if operating_system == "Darwin":
@@ -91,7 +93,7 @@ class Window:
         self.wireframe = False
         self.resize_supress = False
         self.stencil_rect = None
-        
+
         # Window
         flags = DOUBLEBUF | RESIZABLE | OPENGL
         self.window = pygame.display.set_mode((self.width, self.height), flags=flags, vsync=self.options["enableVsync"])
@@ -107,12 +109,18 @@ class Window:
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
+        #pygame.display.gl_set_attribute(pygame.GL_MULTISAMPLEBUFFERS, 1)
+        #pygame.display.gl_set_attribute(pygame.GL_MULTISAMPLESAMPLES, 0)
+        #glDisable(GL_MULTISAMPLE)
+
+        #self.window = pygame.display.set_mode((self.width, self.height), flags=flags, vsync=self.options["enableVsync"])
+
         # Create vertex array object
         self.instance_vao = glGenVertexArrays(1)
         glBindVertexArray(self.instance_vao)
 
         # Create vertex buffer objects
-        self.vertices_vbo, self.ebo, self.dest_vbo, self.source_or_color_vbo, self.shape_vbo = glGenBuffers(5)
+        self.vertices_vbo, self.ebo, self.dest_vbo, self.source_or_color_vbo, self.shape_transform_vbo = glGenBuffers(5)
 
         # Instanced shader inputs
         self.vbo_instances_length = 0
@@ -124,7 +132,7 @@ class Window:
 
         self.dest_vbo_array = numpy.zeros(0, dtype=numpy.float32)
         self.source_or_color_vbo_array = numpy.zeros(0, dtype=numpy.float32)
-        self.shape_vbo_array = numpy.zeros(0, dtype=numpy.float32)
+        self.shape_transform_vbo_array = numpy.zeros(0, dtype=numpy.float32)
         #self.dest_vbo_array_size = 0
         #self.source_or_color_vbo_array_size = 0
         #self.shape_vbo_array_size = 0
@@ -168,9 +176,9 @@ class Window:
         glVertexAttribDivisor(3, 1)
 
         glEnableVertexAttribArray(4)
-        glBindBuffer(GL_ARRAY_BUFFER, self.shape_vbo)
-        glBufferData(GL_ARRAY_BUFFER, 0, self.shape_vbo_array, GL_DYNAMIC_DRAW)
-        glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, 0, ctypes.c_void_p(0))
+        glBindBuffer(GL_ARRAY_BUFFER, self.shape_transform_vbo)
+        glBufferData(GL_ARRAY_BUFFER, 0, self.shape_transform_vbo_array, GL_DYNAMIC_DRAW)
+        glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 0, ctypes.c_void_p(0))
         glVertexAttribDivisor(4, 1)
 
         # Create vertex array object
@@ -189,13 +197,13 @@ class Window:
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, len(indices) * 4, (GLuint * len(indices))(*indices), GL_STATIC_DRAW)
 
         # Atlas texture (contains images)
-        self.atlas_rects, image = TextureAtlas.loadAtlas()
-        self.texAtlas = self.texture(image, blur=True)
+        self.atlas_rects, self.atlas_images, image = TextureAtlas.loadImages()
+        self.texAtlas = self.texture(image, blur=False)
 
         # Font texture (contains letter images)
         #self.font_rects, image = Font.fromPNG(util.File.path("data/fonts/font.png"))
         self.font_rects, image = Font.fromSYS(None, size=30, bold=True, antialias=True, lower=True)
-        self.texFont = self.texture(image)
+        self.texFont = self.texture(image, blur = False)
 
         # Block texture (contains block images)
         self.block_indices, image = TextureAtlas.loadBlocks()
@@ -216,62 +224,13 @@ class Window:
         # World shader
         vertPath: str = util.File.path("scripts/shaders/world.vert")
         fragPath: str = util.File.path("scripts/shaders/world.frag")
-        self.world_shader = Shader(vertPath, fragPath, replace={"block." + key: value for key, value in self.block_indices.items()}, texBlocks="int", texWorld="int", offset="vec2", resolution="int")
+        self.world_shader = Shader(vertPath, fragPath, replace={"block." + key: value for key, value in self.block_indices.items()},
+                                   texBlocks="int", texWorld="int", offset="vec2", resolution="int", time="float")
         self.world_shader.setvar("texBlocks", 0)
         self.world_shader.setvar("texWorld", 1)
         self.world_shader.setvar("resolution", self.camera.resolution)
 
-    def add_vbo_instance(self, dest, source_or_color, shape):
-        """
-        Queue a object to be drawn on the screen and resize buffers as necessary.
-        """
-        if self.vbo_instances_length == self.vbo_instances_index: # Resize all instanced vbos
-            if not self.vbo_instances_length:
-                self.vbo_instances_length = 1
-            else:
-                self.vbo_instances_length *= 2
-
-            new_dest_vbo_data = numpy.zeros(self.vbo_instances_length * 4, dtype=numpy.float32)
-            new_source_or_color_vbo_data = numpy.zeros(self.vbo_instances_length * 4, dtype=numpy.float32)
-            new_shape_vbo_data = numpy.zeros(self.vbo_instances_length, dtype=numpy.float32)
-
-            new_dest_vbo_data[:len(self.dest_vbo_array)] = self.dest_vbo_array
-            self.dest_vbo_array = new_dest_vbo_data
-            new_source_or_color_vbo_data[:len(self.source_or_color_vbo_array)] = self.source_or_color_vbo_array
-            self.source_or_color_vbo_array = new_source_or_color_vbo_data
-            new_shape_vbo_data[:len(self.shape_vbo_array)] = self.shape_vbo_array
-            self.shape_vbo_array = new_shape_vbo_data
-
-            glBindBuffer(GL_ARRAY_BUFFER, self.dest_vbo)
-            glBufferData(GL_ARRAY_BUFFER, self.dest_vbo_array.nbytes, self.dest_vbo_array, GL_DYNAMIC_DRAW)
- 
-            glBindBuffer(GL_ARRAY_BUFFER, self.source_or_color_vbo)
-            glBufferData(GL_ARRAY_BUFFER, self.source_or_color_vbo_array.nbytes, self.source_or_color_vbo_array, GL_DYNAMIC_DRAW)
-
-            glBindBuffer(GL_ARRAY_BUFFER, self.shape_vbo)
-            glBufferData(GL_ARRAY_BUFFER, self.shape_vbo_array.nbytes, self.shape_vbo_array, GL_DYNAMIC_DRAW)
-            
-        self.dest_vbo_array[4 * self.vbo_instances_index:4 * self.vbo_instances_index + 4] = dest
-        self.source_or_color_vbo_array[4 * self.vbo_instances_index:4 * self.vbo_instances_index + 4] = source_or_color
-        self.shape_vbo_array[self.vbo_instances_index:self.vbo_instances_index + 1] = shape
-
-        """
-        glBindBuffer(GL_ARRAY_BUFFER, self.dest_vbo)
-        dest = numpy.array(dest, dtype=numpy.float32)
-        glBufferSubData(GL_ARRAY_BUFFER, dest.nbytes * self.vbo_instances_index, dest.nbytes, dest)#  * (self.vbo_instances_index + 1)
-
-        source_or_color = numpy.array(source_or_color, dtype=numpy.float32)
-        glBindBuffer(GL_ARRAY_BUFFER, self.source_or_color_vbo)
-        glBufferSubData(GL_ARRAY_BUFFER, source_or_color.nbytes * self.vbo_instances_index, source_or_color.nbytes, source_or_color)
-
-        shape = numpy.array((shape,), dtype=numpy.float32)
-        glBindBuffer(GL_ARRAY_BUFFER, self.shape_vbo)
-        glBufferSubData(GL_ARRAY_BUFFER, shape.nbytes * self.vbo_instances_index, shape.nbytes, shape)
-        """
-        
-        self.vbo_instances_index += 1
-
-    def add_vbo_instance(self, dest, source_or_color, shape):
+    def add_vbo_instance(self, dest, source_or_color, shape_transform):
         """
         Queue a object to be drawn on the screen and resize buffers as necessary.
         """
@@ -305,21 +264,22 @@ class Window:
             else:
                 self.source_or_color_vbo_array = new_source_or_color_vbo_array
 
-            new_shape_vbo_array = numpy.zeros(self.vbo_instances_length, dtype=numpy.float32)
-            new_shape_vbo_array[:len(self.shape_vbo_array)] = self.shape_vbo_array
-            glBindBuffer(GL_ARRAY_BUFFER, self.shape_vbo)
+            new_shape_transform_vbo_array = numpy.zeros(self.vbo_instances_length * 4, dtype=numpy.float32)
+            new_shape_transform_vbo_array[:len(self.shape_transform_vbo_array)] = self.shape_transform_vbo_array
+            glBindBuffer(GL_ARRAY_BUFFER, self.shape_transform_vbo)
             if self.options["map buffers"]:
                 glUnmapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)
-            glBufferData(GL_ARRAY_BUFFER, new_shape_vbo_array.nbytes, new_shape_vbo_array, GL_DYNAMIC_DRAW)
+            glBufferData(GL_ARRAY_BUFFER, new_shape_transform_vbo_array.nbytes, new_shape_transform_vbo_array, GL_DYNAMIC_DRAW)
             if self.options["map buffers"]:
                 address = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)
-                self.shape_vbo_array = (GLfloat * len(new_shape_vbo_array)).from_address(address)
+                self.shape_transform_vbo_array = (GLfloat * len(new_shape_transform_vbo_array)).from_address(address)
             else:
-                self.shape_vbo_array = new_shape_vbo_array
+                self.shape_transform_vbo_array = new_shape_transform_vbo_array
 
         self.dest_vbo_array[4 * self.vbo_instances_index:4 * self.vbo_instances_index + 4] = dest
         self.source_or_color_vbo_array[4 * self.vbo_instances_index:4 * self.vbo_instances_index + 4] = source_or_color
-        self.shape_vbo_array[self.vbo_instances_index:self.vbo_instances_index + 1] = [shape]
+        self.shape_transform_vbo_array[4 * self.vbo_instances_index:4 * self.vbo_instances_index + 4] = numpy.array(shape_transform, dtype=numpy.float32)
+        #print(self.shape_transform_vbo_array[4 * self.vbo_instances_index:4 * self.vbo_instances_index + 4])
         
         self.vbo_instances_index += 1
 
@@ -391,6 +351,9 @@ class Window:
         self.clock.tick(self.options["maxFps"])
         self.fps = self.clock.get_fps()
         self.delta_time = (1 / self.fps) if self.fps > 0 else self.delta_time
+        self.time += self.delta_time
+
+        
         
         # Reset
         glClear(GL_COLOR_BUFFER_BIT)
@@ -400,6 +363,7 @@ class Window:
 
         # Use world shader
         self.world_shader.activate()
+        self.world_shader.setvar("time", self.time / self.animation_speed)
 
         # Send variables to shader
         self.update_world(world_data)
@@ -432,31 +396,13 @@ class Window:
         glBindTexture(GL_TEXTURE_2D, self.texFont)
 
         # Send instance data to shader
-        """
-        glBindBuffer(GL_ARRAY_BUFFER, self.dest_vbo)
-        glBufferSubData(GL_ARRAY_BUFFER, 0, self.dest_vbo_array.nbytes, self.dest_vbo_array)
-
-        map_data = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)
-        map_array = (GLfloat * len(self.dest_vbo_array)).from_address(map_data)
-        print(map_array[1])# = value
-        #print(self.dest_vbo_array[1])
-
-        glBindBuffer(GL_ARRAY_BUFFER, self.source_or_color_vbo)
-        glBufferSubData(GL_ARRAY_BUFFER, 0, self.source_or_color_vbo_array.nbytes, self.source_or_color_vbo_array)
-        glBindBuffer(GL_ARRAY_BUFFER, self.shape_vbo)
-        glBufferSubData(GL_ARRAY_BUFFER, 0, self.shape_vbo_array.nbytes, self.shape_vbo_array)
-
-
-        glBindBuffer(GL_ARRAY_BUFFER, self.dest_vbo)
-        glUnmapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)
-        """
         if not self.options["map buffers"]:
             glBindBuffer(GL_ARRAY_BUFFER, self.dest_vbo)
             glBufferSubData(GL_ARRAY_BUFFER, 0, self.dest_vbo_array.nbytes, self.dest_vbo_array)
             glBindBuffer(GL_ARRAY_BUFFER, self.source_or_color_vbo)
             glBufferSubData(GL_ARRAY_BUFFER, 0, self.source_or_color_vbo_array.nbytes, self.source_or_color_vbo_array)
-            glBindBuffer(GL_ARRAY_BUFFER, self.shape_vbo)
-            glBufferSubData(GL_ARRAY_BUFFER, 0, self.shape_vbo_array.nbytes, self.shape_vbo_array)
+            glBindBuffer(GL_ARRAY_BUFFER, self.shape_transform_vbo)
+            glBufferSubData(GL_ARRAY_BUFFER, 0, self.shape_transform_vbo_array.nbytes, self.shape_transform_vbo_array)
         elif self.render_buffers_mapped:
             glBindBuffer(GL_ARRAY_BUFFER, self.dest_vbo)
             dest_vbo_size = len(self.dest_vbo_array)
@@ -466,12 +412,12 @@ class Window:
             source_or_color_vbo_size = len(self.source_or_color_vbo_array)
             glUnmapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)
 
-            glBindBuffer(GL_ARRAY_BUFFER, self.shape_vbo)
-            shape_vbo_size = len(self.shape_vbo_array)
+            glBindBuffer(GL_ARRAY_BUFFER, self.shape_transform_vbo)
+            shape_transform_vbo_size = len(self.shape_transform_vbo_array)
             glUnmapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)
             self.render_buffers_mapped = True
         else:
-            dest_vbo_size = source_or_color_vbo_size = shape_vbo_size = 0
+            dest_vbo_size = source_or_color_vbo_size = shape_transform_vbo_size = 0
             self.render_buffers_mapped = True
 
         # Draw
@@ -491,14 +437,14 @@ class Window:
             if source_or_color_vbo_size:
                 self.source_or_color_vbo_array = (GLfloat * source_or_color_vbo_size).from_address(address)
             else:
-                self.dest_vbo_array = numpy.zeros(0, dtype=numpy.float32)
+                self.source_or_color_vbo_array = numpy.zeros(0, dtype=numpy.float32)
 
-            glBindBuffer(GL_ARRAY_BUFFER, self.shape_vbo)
+            glBindBuffer(GL_ARRAY_BUFFER, self.shape_transform_vbo)
             address = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)
-            if shape_vbo_size:
-                self.shape_vbo_array = (GLfloat * shape_vbo_size).from_address(address)
+            if shape_transform_vbo_size:
+                self.shape_transform_vbo_array = (GLfloat * shape_transform_vbo_size).from_address(address)
             else:
-                self.dest_vbo_array = numpy.zeros(0, dtype=numpy.float32)
+                self.shape_transform_vbo_array = numpy.zeros(0, dtype=numpy.float32)
 
         self.vbo_instances_index = 0
         self.camera.update() # Better at the start, but currently at the end for sync of world and instanced rendering
@@ -538,14 +484,14 @@ class Window:
             glUnmapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)
             glBindBuffer(GL_ARRAY_BUFFER, self.source_or_color_vbo)
             glUnmapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)
-            glBindBuffer(GL_ARRAY_BUFFER, self.shape_vbo)
+            glBindBuffer(GL_ARRAY_BUFFER, self.shape_transform_vbo)
             glUnmapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)
     
         self.options["map buffers"] = not self.options["map buffers"]
         self.render_buffers_mapped = False
         self.dest_vbo_array = numpy.array([], dtype=numpy.float32)
         self.source_or_color_vbo_array = numpy.array([], dtype=numpy.float32)
-        self.shape_vbo_array = numpy.array([], dtype=numpy.float32)
+        self.shape_transform_vbo_array = numpy.array([], dtype=numpy.float32)
         self.vbo_instances_length = 0
         self.vbo_instances_index = 0
         
@@ -616,7 +562,7 @@ class Window:
         self.callback(self.callback_quit)
 
         # OpenGL cleanup
-        glDeleteBuffers(5, (self.vertices_vbo, self.ebo, self.dest_vbo, self.source_or_color_vbo, self.shape_vbo))
+        glDeleteBuffers(5, (self.vertices_vbo, self.ebo, self.dest_vbo, self.source_or_color_vbo, self.shape_transform_vbo))
         glDeleteVertexArrays(2, (self.instance_vao, self.world_vao))
         glDeleteTextures(4, (self.texAtlas, self.texFont, self.texBlocks, self.texWorld))
         self.instance_shader.delete()
@@ -689,10 +635,14 @@ class Window:
             glBindTexture(GL_TEXTURE_2D, self.texWorld)
             glTexImage2D(GL_TEXTURE_2D, 0, GL_R32I, *self.world_size, 0, GL_RED_INTEGER, GL_INT, data)
     
-    def draw_image(self, image, position, size):
+    def draw_image(self, image, position, size, angle=0, flip=(0, 0)):
         """
         Draw an image on the window.
         """
+        animation_frames, rect_index = self.atlas_images[image]
+        frame = int((self.time / self.animation_speed) % animation_frames)
+        rect = self.atlas_rects[rect_index + frame]
+
         dest_rect = (position[0] + size[0] / 2, position[1] + size[1] / 2, size[0] / 2, size[1] / 2)
         if not self.stencil_rect is None:
             org = dest_rect[:]
@@ -707,9 +657,9 @@ class Window:
 
             if width > 0 and height > 0:
                 dest_rect = [left + width, top + height, width, height]
-                self.add_vbo_instance(dest_rect, self.atlas_rects[image], 0)
+                self.add_vbo_instance(dest_rect, rect, (0, *flip, angle / 180 * math.pi))
         else:
-            self.add_vbo_instance(dest_rect, self.atlas_rects[image], 0)
+            self.add_vbo_instance(dest_rect, rect, (0, *flip, angle / 180 * math.pi))
 
     def draw_rect(self, position, size, color):
         """
@@ -729,15 +679,15 @@ class Window:
 
             if width > 0 and height > 0:
                 dest_rect = [left + width, top + height, width, height]
-                self.add_vbo_instance(dest_rect, self.camera.map_color(color), 1)
+                self.add_vbo_instance(dest_rect, self.camera.map_color(color), (1, 0, 0, 0))
         else:
-            self.add_vbo_instance(dest_rect, self.camera.map_color(color), 1)
+            self.add_vbo_instance(dest_rect, self.camera.map_color(color), (1, 0, 0, 0))
 
     def draw_circle(self, position, radius, color):
         """
         Draw a circle on the window.
         """
-        self.add_vbo_instance((*position, radius, radius), self.camera.map_color(color), 2)
+        self.add_vbo_instance((*position, radius, radius), self.camera.map_color(color), (2, 0, 0, 0))
 
     def draw_text(self, position, text, color, size=1, centered=False, spacing=1.25, fixed_size=1):
         """
@@ -804,11 +754,11 @@ class Window:
                                             color[1] + (round(1 - dest_rect[3] / org[3], 6) if dest_rect[1] > org[1] else 0),
                                             color[2] + rect[1] * (width / org[2]) - 0.00001,
                                             color[3] + ((height / org[3]) if (height / org[3]) < 1 else 0))
-                        self.add_vbo_instance(dest_rect, source_and_color, 3)
+                        self.add_vbo_instance(dest_rect, source_and_color, (3, 0, 0, 0))
                         
                 else:
                     source_and_color = (color[0] + rect[0], color[1], color[2] + rect[1] - 0.00001, color[3])
-                    self.add_vbo_instance(dest_rect, source_and_color, 3)
+                    self.add_vbo_instance(dest_rect, source_and_color, (3, 0, 0, 0))
         else:
             for letter in text:
                 if not letter in self.font_rects and letter.isalpha():
@@ -846,9 +796,9 @@ class Window:
                     if width > 0 and height > 0:
                         dest_rect = [left + width, top + height, width, height]
                         source_and_color = (color[0] + rect[0] + rect[1] * (1 - dest_rect[0] / org[0]), color[1] + (1 - dest_rect[1] / org[1]), color[2] + rect[1] * (width / org[2]) - 0.00001, color[3] + ((height / org[3]) if (height / org[3]) < 1 else 0))
-                        self.add_vbo_instance(dest_rect, source_and_color, 3)
+                        self.add_vbo_instance(dest_rect, source_and_color, (3, 0, 0, 0))
                 else:
-                    self.add_vbo_instance(dest_rect, source_and_color, 3)
+                    self.add_vbo_instance(dest_rect, source_and_color, (3, 0, 0, 0))
 
         return offset
 
@@ -933,17 +883,77 @@ class TextureAtlas:
         paths = glob.glob(util.File.path("data/blocks/*.png"))
         width = math.ceil(math.sqrt(len(paths)))
         height = math.ceil(len(paths) / width)
-        image = pygame.Surface((width * 16, height * 16))
+        image = pygame.Surface((width * 16, height * 16 + 1))
         block_indices = {}
+        animation_frames = {}
 
         for i, path in enumerate(paths):
             y, x = divmod(i, width)
-            block = os.path.basename(path).split(".")[0]
-            block_indices[block] = i + 1
+            file_name = os.path.basename(path).split(".")
+            if len(file_name) == 2:
+                block = file_name[0]
+                frame = 1
+            else:
+                block = file_name[0]
+                frame = int(file_name[1])
+            if not block in animation_frames:
+                block_indices[block] = i + 1
             block_surface = pygame.image.load(path)
             image.blit(block_surface, (x * 16, (height - y - 1) * 16))
+            animation_frames[block] = max(animation_frames.get(block, 1), frame)
+            
+        x = 0
+        for block in animation_frames:
+            image.set_at((x, height * 16), (animation_frames[block], 0, 0))
+            x += animation_frames[block]
 
+        pygame.image.save(image, util.File.path("data/blocks.png"))
         return block_indices, image
+
+    def loadImages():
+        """
+        Load image texture atlas from files in a folder.
+        """
+        with open(util.File.path("data/images/images.properties"), "r") as file:
+            images_data = file.readlines()
+
+        image_rects = [] # list of rects
+        images = {} # "image": [rect_index, animation_frames]
+        paths = {}
+
+        width = 0
+        height = 0
+
+        for image_data in images_data:
+            name, data = image_data.replace(" ", "").split(":")
+            file_name = name.split(".")
+            if len(file_name) == 1:
+                image = file_name[0]
+                frame = 1
+            else:
+                image = file_name[0]
+                frame = int(file_name[1])
+            rect = tuple([float(x) for x in data.replace("(", "").replace(")", "").split(",")])
+            if frame == 1 or not image in images:
+                images[image] = [1, len(image_rects)]
+            else:
+                images[image][0] = max(images[image][0], frame)
+
+            width = max(width, rect[0] + rect[2])
+            height = max(height, rect[1] + rect[3])
+
+            paths[name + ".png"] = len(image_rects)
+            image_rects.append(rect)
+
+        image = pygame.Surface((width, height))
+
+        for image_path, i in paths.items():
+            image.blit(pygame.image.load(util.File.path("data/images/" + image_path)), (image_rects[i][0], image_rects[i][1]))
+            image_rects[i] = (image_rects[i][0] / width, 1 - image_rects[i][1] / height - image_rects[i][3] / height, image_rects[i][2] / width, image_rects[i][3] / height)
+
+        pygame.image.save(image, util.File.path("data/images.png"))
+
+        return image_rects, images, image
 
 
 class Font:
