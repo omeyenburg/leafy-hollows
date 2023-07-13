@@ -27,6 +27,7 @@ class Window:
             "particles": 1,
             "map buffers": True,
             "antialiasing": 16,
+            "resolution": 2,
             "key.left": "a",
             "key.right": "d",
             "key.jump": "space",
@@ -46,13 +47,18 @@ class Window:
         pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MINOR_VERSION, 3)
         pygame.display.gl_set_attribute(pygame.GL_CONTEXT_PROFILE_MASK,
                                         pygame.GL_CONTEXT_PROFILE_CORE)
-        #if self.options["antialiasing"]
-        pygame.display.gl_set_attribute(pygame.GL_MULTISAMPLEBUFFERS, 0)
-        pygame.display.gl_set_attribute(pygame.GL_MULTISAMPLESAMPLES, 0)
 
         # MacOS support
         if operating_system == "Darwin":
             pygame.display.gl_set_attribute(pygame.GL_CONTEXT_FORWARD_COMPATIBLE_FLAG, True)
+
+        # antialiasing
+        if self.options["antialiasing"]:
+            pygame.display.gl_set_attribute(pygame.GL_MULTISAMPLEBUFFERS, 1)
+            pygame.display.gl_set_attribute(pygame.GL_MULTISAMPLESAMPLES, self.options["antialiasing"])
+        else:
+            pygame.display.gl_set_attribute(pygame.GL_MULTISAMPLEBUFFERS, 0)
+            pygame.display.gl_set_attribute(pygame.GL_MULTISAMPLESAMPLES, 0)
 
         # Events
         self.keys: dict = dict.fromkeys([value for key, value in self.options.items() if key.startswith("key.")], 0) # 0 = Not pressed | 1 = Got pressed | 2 = Is pressed
@@ -65,7 +71,7 @@ class Window:
         self.time: float = 0.0
         self.animation_speed = 0.3
 
-        # Key functions
+        # Key press states
         if operating_system == "Darwin":
             self.mod_names = {
                 pygame.__dict__[identifier]: identifier[4:].replace("_R", "Right ").replace("_L", "Left ").replace("_", "").replace("META", "Cmd").title()
@@ -79,7 +85,6 @@ class Window:
                 if identifier.startswith("KMOD_") and not identifier[5:] in ("NONE", "CTRL", "SHIFT", "ALT", "GUI", "META")
             }
         self.key_names = [pygame.__dict__[identifier] for identifier in pygame.__dict__.keys() if identifier.startswith("K_")]
-
         self.get_keys_all = pygame.key.get_pressed
         self.get_keys_all = pygame.key.get_mods
         self.get_key_name = pygame.key.name
@@ -105,15 +110,12 @@ class Window:
         # OpenGL setup
         glViewport(0, 0, self.width, self.height)
         glClearColor(0.0, 0.0, 0.0, 1.0)
-        #glEnable(GL_MULTISAMPLE)
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-
-        #pygame.display.gl_set_attribute(pygame.GL_MULTISAMPLEBUFFERS, 1)
-        #pygame.display.gl_set_attribute(pygame.GL_MULTISAMPLESAMPLES, 0)
-        #glDisable(GL_MULTISAMPLE)
-
-        #self.window = pygame.display.set_mode((self.width, self.height), flags=flags, vsync=self.options["enableVsync"])
+        if self.options["antialiasing"]:
+            glEnable(GL_MULTISAMPLE)
+        else:
+            glDisable(GL_MULTISAMPLE)
 
         # Create vertex array object
         self.instance_vao = glGenVertexArrays(1)
@@ -125,17 +127,10 @@ class Window:
         # Instanced shader inputs
         self.vbo_instances_length = 0
         self.vbo_instances_index = 0
-        #self.dest_vbo_array = numpy.zeros(0, dtype=numpy.float32)
-        #self.dest_
-        #self.source_or_color_vbo_array = numpy.zeros(0, dtype=numpy.float32)
-        #self.shape_vbo_array = numpy.zeros(0, dtype=numpy.float32)
-
+  
         self.dest_vbo_array = numpy.zeros(0, dtype=numpy.float32)
         self.source_or_color_vbo_array = numpy.zeros(0, dtype=numpy.float32)
         self.shape_transform_vbo_array = numpy.zeros(0, dtype=numpy.float32)
-        #self.dest_vbo_array_size = 0
-        #self.source_or_color_vbo_array_size = 0
-        #self.shape_vbo_array_size = 0
         self.render_buffers_mapped = False
 
         # Vertices & texcoords
@@ -203,12 +198,12 @@ class Window:
         # Font texture (contains letter images)
         #self.font_rects, image = Font.fromPNG(util.File.path("data/fonts/font.png"))
         self.font_rects, image = Font.fromSYS(None, size=30, bold=True, antialias=True, lower=True)
-        self.texFont = self.texture(image, blur = False)
+        self.texFont = self.texture(image, blur=False)
 
         # Block texture (contains block images)
         self.block_indices, image = TextureAtlas.loadBlocks()
         pygame.image.save(image, util.File.path("image.png"))
-        self.texBlocks = self.texture(image, blur=True)
+        self.texBlocks = self.texture(image, blur=False)
 
         # World texture (contains map data)
         self.world_size = (0, 0)
@@ -469,7 +464,7 @@ class Window:
         """
         Toggle between drawing only outlines and filled shapes.
         """
-        self.wireframe = ~self.wireframe
+        self.wireframe = not self.wireframe
         if self.wireframe:
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
         else:
@@ -494,6 +489,27 @@ class Window:
         self.shape_transform_vbo_array = numpy.array([], dtype=numpy.float32)
         self.vbo_instances_length = 0
         self.vbo_instances_index = 0
+
+    def set_antialiasing(self, level):
+        """
+        Toggle antialiasing.
+        """
+        self.options["antialiasing"] = level
+        if self.options["antialiasing"]:
+            pygame.display.gl_set_attribute(pygame.GL_MULTISAMPLEBUFFERS, 1)
+            pygame.display.gl_set_attribute(pygame.GL_MULTISAMPLESAMPLES, self.options["antialiasing"])
+            glEnable(GL_MULTISAMPLE)
+        else:
+            pygame.display.gl_set_attribute(pygame.GL_MULTISAMPLEBUFFERS, 0)
+            pygame.display.gl_set_attribute(pygame.GL_MULTISAMPLESAMPLES, 0)
+            glDisable(GL_MULTISAMPLE)
+        self.resize()
+
+    def set_resolution(self, resolution):
+        self.options["resolution"] = resolution
+        self.camera.resultion = resolution
+        self.camera.pixels_per_meter = resolution * 16
+        self.world_shader.setvar("resolution", resolution)
         
     def load_options(self):
         """
@@ -1121,8 +1137,8 @@ class Shader:
 
 class Camera:
     def __init__(self, window):
-        self.resolution: int = 2
-        self.pixels_per_meter: int = self.resolution * 16
+        self.resolution: int = window.options["resolution"]
+        self.pixels_per_meter: int = window.options["resolution"] * 16
         self.threshold = 0.1
 
         self.pos: [float] = [0, 0]
