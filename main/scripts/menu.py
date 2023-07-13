@@ -335,19 +335,7 @@ class Menu:
                               settings_video_scrollbox.rect[3] - settings_video_scrollbox.spacing),
                               description)
 
-        if window.options["enableVsync"]:
-            value = 0
-        else:
-            value = window.options["maxFps"] / 1000
-        slider_fps = Slider(settings_video_scrollbox, (.6, 0.18), row=1, column=0, value=value)
-        label_fps = Label(settings_video_scrollbox, (.6, 0.18), row=1, column=0)
-        label_fps.hover_callback = lambda: settings_video_hover(1,
-            ("Max Fps\n", 1, (250, 250, 250, 200)),
-            ("Performance impact:\n", 0.8, (250, 250, 250, 200)),
-            ("high\n\n", 0.8, (250, 0, 0, 200)),
-            ("Limit the Fps at a cap.\nVsync: Fps limit is\nsynchronized with your\nscreen's refresh rate.", 0.8, (250, 250, 250, 200))
-        )
-
+        ### Fps slider
         def slider_fps_update():
             fps = round(slider_fps.value * 100) * 10
             if fps:
@@ -364,27 +352,39 @@ class Menu:
                     window.resize()
             label_fps.text = "Max FPS: " + show_fps
 
-        slider_fps_update()
+        if window.options["enableVsync"]:
+            value = 0
+        else:
+            value = window.options["maxFps"] / 1000
+        slider_fps = Slider(settings_video_scrollbox, (.6, 0.18), row=1, column=0, value=value)
         slider_fps.callback = slider_fps_update
-
-        value = window.options["particles"] / 10
-        slider_particles = Slider(settings_video_scrollbox, (.6, 0.18), row=1, column=1, value=value)
-        label_particles = Label(settings_video_scrollbox, (.6, 0.18), row=1, column=1)
-        label_particles.hover_callback = lambda: settings_video_hover(0,
-            ("Particle Density\n", 1, (250, 250, 250, 200)),
+        label_fps = Label(settings_video_scrollbox, (.6, 0.18), row=1, column=0)
+        slider_fps_update()
+        label_fps.hover_callback = lambda: settings_video_hover(1,
+            ("Max Fps\n", 1, (250, 250, 250, 200)),
             ("Performance impact:\n", 0.8, (250, 250, 250, 200)),
             ("high\n\n", 0.8, (250, 0, 0, 200)),
-            ("Limit the amount of\nparticles, which can be\nspawned at once.", 0.8, (250, 250, 250, 200))
+            ("Limit the Fps at a cap.\nVsync: Fps limit is\nsynchronized with your\nscreen's refresh rate.", 0.8, (250, 250, 250, 200))
         )
 
-        def slider_particles_update():
-            particles = int(slider_particles.value * 10)
-            label_particles.text = "Particle Density: " + str(particles)
-            window.options["particles"] = particles
+        ### Resolution slider
+        def slider_resolution_update():
+            resolution = int(slider_resolution.value * 3) + 1
+            label_resolution.text = "Resolution: " + str(resolution)
+            window.set_resolution(resolution)
 
-        slider_particles.callback = slider_particles_update
-        slider_particles_update()
+        value = (window.options["resolution"] - 1) / 3
+        slider_resolution = Slider(settings_video_scrollbox, (.6, 0.18), row=1, column=1, value=value)
+        slider_resolution.callback = slider_resolution_update
+        label_resolution = Label(settings_video_scrollbox, (.6, 0.18), row=1, column=1, text="Resolution: " + str(window.options["resolution"]))
+        label_resolution.hover_callback = lambda: settings_video_hover(0,
+            ("Resolution\n", 1, (250, 250, 250, 200)),
+            ("Performance impact:\n", 0.8, (250, 250, 250, 200)),
+            ("medium\n\n", 0.8, (250, 150, 0, 200)),
+            ("Set the resolution\nof in-game objects.", 0.8, (250, 250, 250, 200))
+        )
 
+        ### Fullscreen button
         def button_fullscreen_update():
             window.toggle_fullscreen()
             button_fullscreen.text = "Fullscreen: " + str(window.fullscreen)
@@ -396,20 +396,60 @@ class Menu:
             ("none", 0.8, (250, 250, 0, 200))
         )
 
+        ### Particle slider
+        def slider_particles_update():
+            particles = int(slider_particles.value * 10)
+            label_particles.text = "Particle Density: " + str(particles)
+            window.options["particles"] = particles
+
+        value = window.options["particles"] / 10
+        slider_particles = Slider(settings_video_scrollbox, (.6, 0.18), row=2, column=1, value=value)
+        slider_particles.callback = slider_particles_update
+        label_particles = Label(settings_video_scrollbox, (.6, 0.18), row=2, column=1)
+        slider_particles_update()
+        label_particles.hover_callback = lambda: settings_video_hover(0,
+            ("Particle Density\n", 1, (250, 250, 250, 200)),
+            ("Performance impact:\n", 0.8, (250, 250, 250, 200)),
+            ("high\n\n", 0.8, (250, 0, 0, 200)),
+            ("Limit the amount of\nparticles, which can be\nspawned at once.", 0.8, (250, 250, 250, 200))
+        )
+
+        ### Antialiasing slider
+        def slider_antialiasing_update():
+            antialiasing = (0, 1, 2, 4, 8, 16)[round(slider_antialiasing.value * 5)]
+            if antialiasing == 0:
+                label_antialiasing.text = "Antialiasing: Off"
+            else:
+                label_antialiasing.text = "Antialiasing: " + str(antialiasing)
+            window.set_antialiasing(antialiasing)
+
+        if window.options["antialiasing"]:
+            value = [i / 5 for i in range(1, 6)][round(math.log2(window.options["antialiasing"]))]
+        else:
+            value = 0
+        slider_antialiasing = Slider(settings_video_scrollbox, (.6, 0.18), row=3, column=0, value=value)
+        slider_antialiasing.callback = slider_antialiasing_update
+        label_antialiasing = Label(settings_video_scrollbox, (.6, 0.18), row=3, column=0)
+        slider_antialiasing_update()
+        label_antialiasing.hover_callback = lambda: settings_video_hover(1,
+            ("Antialiasing\n", 1, (250, 250, 250, 200)),
+            ("Performance impact:\n", 0.8, (250, 250, 250, 200)),
+            ("low\n\n", 0.8, (250, 250, 0, 200)),
+            ("Set the level of antialiasing.\nAntialiasing creates\nsmoother edges of\nshapes.", 0.8, (250, 250, 250, 200))
+        )
+
+        ### Map buffers button
         def button_map_buffers_update():
             window.toggle_map_buffers()
             button_map_buffers.text = "Map Buffers: " + str(window.options["map buffers"])
 
-        button_map_buffers = Button(settings_video_scrollbox, (0.6, .18), row=2, column=1, callback=button_map_buffers_update, text="Map Buffers: " + str(window.options["map buffers"]))
+        button_map_buffers = Button(settings_video_scrollbox, (0.6, .18), row=3, column=1, callback=button_map_buffers_update, text="Map Buffers: " + str(window.options["map buffers"]))
         button_map_buffers.hover_callback = lambda: settings_video_hover(0,
             ("Map Buffers\n", 1, (250, 250, 250, 200)),
             ("Performane impact:\n", 0.8, (250, 250, 250, 200)),
             ("slight improvement\n\n", 0.8, (0, 250, 0, 200)),
             ("When enabled, rendering\ndata is directly copied\ninto buffers.", 0.8, (250, 250, 250, 200))
         )
-
-
-        #Button(settings_video_scrollbox, (0.65, .2), row=2, column=1, callback=window.toggle_wire_frame, text="Wireframe")
 
         button_settings_back = Button(settings_video_page, (1.4, .2), row=2, column=0, callback=settings_page.open, text="Back")
         settings_video_page.layout()
