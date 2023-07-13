@@ -42,7 +42,7 @@ while True:
 
 
         # Move camera
-        pos = (game.player.rect.centerx - game.player.vel[0] / 50, game.player.rect.centery - game.player.vel[0] / 50)
+        pos = (game.player.rect.centerx - game.player.vel[0] / 100, game.player.rect.centery - game.player.vel[0] / 100)
         window.camera.move(pos)
 
         # Update window + shader

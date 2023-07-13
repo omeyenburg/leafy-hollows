@@ -8,6 +8,7 @@ uniform sampler2D texBlocks;
 uniform isampler2D texWorld;
 uniform vec2 offset;
 uniform int resolution;
+uniform float time;
 
 int BLOCKSIZEDEST = 16 * resolution;
 int BLOCKSIZESOURCE = 16;
@@ -22,9 +23,13 @@ void main() {
         fragColor = vec4(sin(vertTexcoord.x) / 2 + 0.5, cos(vertTexcoord.y) / 2 + 0.5, cos(vertTexcoord.x), 0.5);
         return;
     }
-    ivec2 source_offset = ivec2(mod(block - 1, BLOCKCOUNT.x), (block - 1) / BLOCKCOUNT.x) * BLOCKSIZESOURCE;
+
+    int animation_frames = int(texelFetch(texBlocks, ivec2(block - 1, 0), 0).x * 255);
+    int image_id = block + int(mod(time, animation_frames)) - 1;
+
+    ivec2 source_offset = ivec2(mod(image_id, BLOCKCOUNT.x), image_id / BLOCKCOUNT.x) * BLOCKSIZESOURCE;
     ivec2 source = ivec2(mod(gl_FragCoord.x / resolution + offset.x * BLOCKSIZESOURCE, BLOCKSIZESOURCE) + source_offset.x,
-                         mod(gl_FragCoord.y / resolution + offset.y * BLOCKSIZESOURCE, BLOCKSIZESOURCE) + source_offset.y);
+                         mod(gl_FragCoord.y / resolution + offset.y * BLOCKSIZESOURCE, BLOCKSIZESOURCE) + source_offset.y + 1);
 
     fragColor = texelFetch(texBlocks, source, 0);
     if (signed_block < 0) {

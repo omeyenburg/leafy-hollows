@@ -57,6 +57,10 @@ class Page:
         if window.keybind("return") == 1 and not self.parent is None:
             self.parent.open()
 
+        for _ in range(1):
+            rect = window.camera.map_coord((300, 100, 100, 100))
+            window.draw_image("player_run", rect[:2], rect[2:], angle=20, flip=(1, 0))
+
     def draw(self, window: graphics.Window):
         pass
 
@@ -299,6 +303,25 @@ class Menu:
         button_settings_back = Button(settings_page, (1.4, .2), row=3, column=0, columnspan=2, callback=main_page.open, text="Back")
         settings_page.layout()
         button_settings.callback = settings_page.open
+
+        """
+        Settings
+            Video
+                brightness
+                animations
+                show fps
+                show debug menu
+                opengl version
+                relational font size
+            Audio
+                Volume
+                (music)
+                ambient
+            Gameplay
+                world generation threads
+                pregenerate distance
+                simulation distance
+        """
 
         # Video settings page
         settings_video_page = Page(parent=settings_page, spacing=0.1)
