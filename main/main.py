@@ -33,6 +33,9 @@ while True:
         # Update & draw all game objects
         game.update()
 
+        # Post processing
+        window.add_vbo_instance((0, 0, 1, 1), (0, 0, 0, 0), (5, 0, 0, 0))
+
         # Write fps & player position
         window.draw_text((-0.98, 0.95), "FPS: " + str(round(window.fps, 3)), (250, 250, 250, 200))
         window.draw_text((-0.98, 0.8), "Player: " + str((round(game.player.rect.centerx, 1), round(game.player.rect.centery, 1))), (250, 250, 250, 200))
