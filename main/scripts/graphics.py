@@ -98,14 +98,15 @@ class Window:
         self.wireframe = False
         self.resize_supress = False
         self.stencil_rect = None
+        self.refresh = False
 
         # Window
         flags = DOUBLEBUF | RESIZABLE | OPENGL
         self.window = pygame.display.set_mode((self.width, self.height), flags=flags, vsync=self.options["enableVsync"])
-        pygame.display.set_caption(caption)
-        pygame.key.set_repeat(1000, 10)
         self.clock = pygame.time.Clock()
         self.camera: Camera = Camera(self)
+        pygame.display.set_caption(caption)
+        pygame.key.set_repeat(1000, 10)
         
         # OpenGL setup
         glViewport(0, 0, self.width, self.height)
@@ -176,6 +177,7 @@ class Window:
         glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 0, ctypes.c_void_p(0))
         glVertexAttribDivisor(4, 1)
 
+        """
         # Create vertex array object
         self.world_vao = glGenVertexArrays(1)
         glBindVertexArray(self.world_vao)
@@ -190,6 +192,7 @@ class Window:
         # Create element buffer object (EBO) for indices
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.ebo)
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, len(indices) * 4, (GLuint * len(indices))(*indices), GL_STATIC_DRAW)
+        """
 
         # Atlas texture (contains images)
         self.atlas_rects, self.atlas_images, image = TextureAtlas.loadImages()
@@ -212,11 +215,17 @@ class Window:
         # Instance shader
         vertPath: str = util.File.path("scripts/shaders/instance.vert")
         fragPath: str = util.File.path("scripts/shaders/instance.frag")
-        self.instance_shader = Shader(vertPath, fragPath, texAtlas="int", texFont="int")
+        self.instance_shader = Shader(
+            vertPath, fragPath, replace={"block." + key: value for key, value in self.block_indices.items()},
+            texAtlas="int", texFont="int", texBlocks="int", texWorld="int", offset="vec2", resolution="int", time="float")
         self.instance_shader.setvar("texAtlas", 0)
         self.instance_shader.setvar("texFont", 1)
+        self.instance_shader.setvar("texBlocks", 2)
+        self.instance_shader.setvar("texWorld", 3)
+        self.instance_shader.setvar("resolution", self.camera.resolution)
         
         # World shader
+        """
         vertPath: str = util.File.path("scripts/shaders/world.vert")
         fragPath: str = util.File.path("scripts/shaders/world.frag")
         self.world_shader = Shader(vertPath, fragPath, replace={"block." + key: value for key, value in self.block_indices.items()},
@@ -224,6 +233,7 @@ class Window:
         self.world_shader.setvar("texBlocks", 0)
         self.world_shader.setvar("texWorld", 1)
         self.world_shader.setvar("resolution", self.camera.resolution)
+        """
 
     def add_vbo_instance(self, dest, source_or_color, shape_transform):
         """
@@ -340,7 +350,6 @@ class Window:
         """
         Update the window and inputs.
         """
-
         # Update pygame
         self.events()
         self.clock.tick(self.options["maxFps"])
@@ -348,11 +357,10 @@ class Window:
         self.delta_time = (1 / self.fps) if self.fps > 0 else self.delta_time
         self.time += self.delta_time
 
-        
-        
         # Reset
         glClear(GL_COLOR_BUFFER_BIT)
 
+        """
         # Use VAO
         glBindVertexArray(self.world_vao)
 
@@ -373,6 +381,10 @@ class Window:
 
         # Draw
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, None)
+        """
+
+        # Post processing
+        #self.add_vbo_instance((0, 0, 1, 1), (0, 0, 0, 0), (5, 0, 0, 0))
 
         # Use VAO
         glBindVertexArray(self.instance_vao)
@@ -381,14 +393,21 @@ class Window:
         self.instance_shader.activate()
 
         # Send variables to shader
+        self.update_world(world_data)
         self.instance_shader.update()
 
-        # Bind texture
+        # Bind textures
         glActiveTexture(GL_TEXTURE0)
         glBindTexture(GL_TEXTURE_2D, self.texAtlas)
 
         glActiveTexture(GL_TEXTURE1)
         glBindTexture(GL_TEXTURE_2D, self.texFont)
+
+        glActiveTexture(GL_TEXTURE2)
+        glBindTexture(GL_TEXTURE_2D, self.texBlocks)
+
+        glActiveTexture(GL_TEXTURE3)
+        glBindTexture(GL_TEXTURE_2D, self.texWorld)
 
         # Send instance data to shader
         if not self.options["map buffers"]:
@@ -417,8 +436,12 @@ class Window:
 
         # Draw
         glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, None, self.vbo_instances_index)
-        pygame.display.flip()
+        if self.refresh:
+            pygame.display.flip()
+        else:
+            self.refresh = True
 
+        # Reset buffers
         if self.options["map buffers"]:
             glBindBuffer(GL_ARRAY_BUFFER, self.dest_vbo)
             address = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)
@@ -441,16 +464,23 @@ class Window:
             else:
                 self.shape_transform_vbo_array = numpy.zeros(0, dtype=numpy.float32)
 
+        # Reset instance index
         self.vbo_instances_index = 0
+
+        # Move camera
         self.camera.update() # Better at the start, but currently at the end for sync of world and instanced rendering
+
+        # Draw background and world
+        self.instance_shader.setvar("time", self.time / self.animation_speed)
+        self.add_vbo_instance((0, 0, 1, 1), (0, 0, 0, 0), (4, 0, 0, 0))
 
     def toggle_fullscreen(self):
         """
         Toggle between fullscreen and normal mode.
         """
         self.fullscreen = not self.fullscreen
-
         self.resize_supress = True
+        self.refresh = False
 
         if self.fullscreen:
             self.pre_fullscreen = self.size
@@ -489,6 +519,7 @@ class Window:
         self.shape_transform_vbo_array = numpy.array([], dtype=numpy.float32)
         self.vbo_instances_length = 0
         self.vbo_instances_index = 0
+        self.refresh = False
 
     def set_antialiasing(self, level):
         """
@@ -509,7 +540,8 @@ class Window:
         self.options["resolution"] = resolution
         self.camera.resultion = resolution
         self.camera.pixels_per_meter = resolution * 16
-        self.world_shader.setvar("resolution", resolution)
+        #self.world_shader.setvar("resolution", resolution)
+        self.instance_shader.setvar("resolution", resolution)
         
     def load_options(self):
         """
@@ -579,10 +611,10 @@ class Window:
 
         # OpenGL cleanup
         glDeleteBuffers(5, (self.vertices_vbo, self.ebo, self.dest_vbo, self.source_or_color_vbo, self.shape_transform_vbo))
-        glDeleteVertexArrays(2, (self.instance_vao, self.world_vao))
+        glDeleteVertexArrays(1, (self.instance_vao,))
         glDeleteTextures(4, (self.texAtlas, self.texFont, self.texBlocks, self.texWorld))
         self.instance_shader.delete()
-        self.world_shader.delete()
+        #self.world_shader.delete()
 
         # Save options
         self.save_options()
@@ -626,7 +658,7 @@ class Window:
                     - (self.width / 2) % self.camera.pixels_per_meter / self.camera.pixels_per_meter + 2 - int(self.camera.pos[0] < 0),
                   self.camera.pos[1] % 1 + (start[1] - chunk_start[1]) % world.CHUNK_SIZE
                     - (self.height / 2) % self.camera.pixels_per_meter / self.camera.pixels_per_meter + 2 - int(self.camera.pos[1] < 0))
-        self.world_shader.setvar("offset", *offset) 
+        self.instance_shader.setvar("offset", *offset) 
 
         # View size
         size = data.shape
@@ -1069,10 +1101,13 @@ class Shader:
         with open(vertex, "r") as file:
             content = file.read()
             for search, replacement in replace.items():
-                content.replace(str(search), str(replacement))
+                content = content.replace(str(search), str(replacement))
             vertex_shader = compileShader(content, GL_VERTEX_SHADER)
         with open(fragment, "r") as file:
-            fragment_shader = compileShader(file.read(), GL_FRAGMENT_SHADER)
+            content = file.read()
+            for search, replacement in replace.items():
+                content = content.replace(str(search), str(replacement))
+            fragment_shader = compileShader(content, GL_FRAGMENT_SHADER)
         glAttachShader(self.program, vertex_shader)
         glAttachShader(self.program, fragment_shader)
         glLinkProgram(self.program)

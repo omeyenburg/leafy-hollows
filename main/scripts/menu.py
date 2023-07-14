@@ -285,7 +285,7 @@ class Menu:
         def toggle_in_game():
             self.in_game = not self.in_game
 
-        # Main page
+        ###---###  Main page  ###---###
         main_page = Page(columns=2, spacing=0.1)
         Label(main_page, (1, .3), row=0, column=0, columnspan=2, text="Hello, World!", fontsize=2)
         button_play = Button(main_page, (1.4, .2), row=1, column=0, columnspan=2, callback=toggle_in_game, text="Play")
@@ -294,12 +294,13 @@ class Menu:
         main_page.layout()
         main_page.open()
 
-        # Settings page
+        ###---###  Settings page  ###---###
         settings_page = Page(parent=main_page, columns=2, spacing=0.1)
         Label(settings_page, (1, .3), row=0, column=0, columnspan=2, text="Options", fontsize=2)
         button_settings_video_open = Button(settings_page, (.65, .2), row=1, column=0, text="Video Settings")
         button_settings_audio_open = Button(settings_page, (.65, .2), row=1, column=1, text="Audio Settings")
         button_settings_control_open = Button(settings_page, (.65, .2), row=2, column=0, text="Control Settings")
+        button_settings_world_open = Button(settings_page, (.65, .2), row=2, column=1, text="World Settings")
         button_settings_back = Button(settings_page, (1.4, .2), row=3, column=0, columnspan=2, callback=main_page.open, text="Back")
         settings_page.layout()
         button_settings.callback = settings_page.open
@@ -323,7 +324,7 @@ class Menu:
                 simulation distance
         """
 
-        # Video settings page
+        ###---###  Video settings page  ###---###
         settings_video_page = Page(parent=settings_page, spacing=0.1)
         Label(settings_video_page, (1, .3), row=0, column=0, text="Video Settings", fontsize=2)
         settings_video_scrollbox = ScrollBox(settings_video_page, (1.4, 1.1), row=1, column=0, columns=2)
@@ -335,7 +336,7 @@ class Menu:
                               settings_video_scrollbox.rect[3] - settings_video_scrollbox.spacing),
                               description)
 
-        ### Fps slider
+        # Fps slider
         def slider_fps_update():
             fps = round(slider_fps.value * 100) * 10
             if fps:
@@ -367,7 +368,7 @@ class Menu:
             ("Limit the Fps at a cap.\nVsync: Fps limit is\nsynchronized with your\nscreen's refresh rate.", 0.8, (250, 250, 250, 200))
         )
 
-        ### Resolution slider
+        # Resolution slider
         def slider_resolution_update():
             resolution = int(slider_resolution.value * 3) + 1
             label_resolution.text = "Resolution: " + str(resolution)
@@ -384,7 +385,7 @@ class Menu:
             ("Set the resolution\nof in-game objects.", 0.8, (250, 250, 250, 200))
         )
 
-        ### Fullscreen button
+        # Fullscreen button
         def button_fullscreen_update():
             window.toggle_fullscreen()
             button_fullscreen.text = "Fullscreen: " + str(window.fullscreen)
@@ -396,7 +397,7 @@ class Menu:
             ("none", 0.8, (250, 250, 0, 200))
         )
 
-        ### Particle slider
+        # Particle slider
         def slider_particles_update():
             particles = int(slider_particles.value * 10)
             label_particles.text = "Particle Density: " + str(particles)
@@ -414,7 +415,7 @@ class Menu:
             ("Limit the amount of\nparticles, which can be\nspawned at once.", 0.8, (250, 250, 250, 200))
         )
 
-        ### Antialiasing slider
+        # Antialiasing slider
         def slider_antialiasing_update():
             antialiasing = (0, 1, 2, 4, 8, 16)[round(slider_antialiasing.value * 5)]
             if antialiasing == 0:
@@ -438,7 +439,7 @@ class Menu:
             ("Set the level of antialiasing.\nAntialiasing creates\nsmoother edges of\nshapes.", 0.8, (250, 250, 250, 200))
         )
 
-        ### Map buffers button
+        # Map buffers button
         def button_map_buffers_update():
             window.toggle_map_buffers()
             button_map_buffers.text = "Map Buffers: " + str(window.options["map buffers"])
@@ -455,14 +456,20 @@ class Menu:
         settings_video_page.layout()
         button_settings_video_open.callback = settings_video_page.open
 
-        # Audio settings page
+        ###---###  Audio settings page  ###---###
         settings_audio_page = Page(parent=settings_page, columns=1, spacing=0.1)
         Label(settings_audio_page, (1, .3), row=0, column=0, text="Audio Settings", fontsize=2)
         Button(settings_audio_page, (1.4, .2), row=1, column=0, callback=settings_page.open, text="Back")
         settings_audio_page.layout()
         button_settings_audio_open.callback = settings_audio_page.open
 
-        # Controls settings page
+        settings_world_page = Page(parent=settings_page, columns=1, spacing=0.1)
+        Label(settings_world_page, (1, .3), row=0, column=0, text="World Settings", fontsize=2)
+        Button(settings_world_page, (1.4, .2), row=1, column=0, callback=settings_page.open, text="Back")
+        settings_world_page.layout()
+        button_settings_world_open.callback = settings_world_page.open
+
+        ###---###  Controls settings page  ###---###
         settings_control_page = Page(parent=settings_page, columns=2, spacing=0.1)
         Label(settings_control_page, (1, .3), row=0, column=0, columnspan=2, text="Control Settings", fontsize=2)
 
