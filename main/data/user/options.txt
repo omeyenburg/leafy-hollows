@@ -2,11 +2,11 @@ enableVsync: True
 maxFps: 1000
 particles: 1
 map buffers: True
-antialiasing: 0
+antialiasing: 16
 resolution: 2
 post processing: False
-show fps: True
-show debug: True
+show fps: False
+show debug: False
 key.left: "a"
 key.right: "d"
 key.jump: "space"
