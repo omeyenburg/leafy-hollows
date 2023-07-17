@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import platform
+import glob
 import sys
 import os
 
@@ -8,28 +9,31 @@ import os
 realistic = True # only for testing purposes
 
 
-class File:
+class file:
     @staticmethod
-    def read(path: str):
-        with open(path, "r") as f:
-            lines = f.read()
+    def find(folder: str, name: str, sub_folder=False):
+        if sub_folder:
+            return glob.glob(os.path.abspath(os.path.join(__file__, "..", "..", *folder.split("/"), "**", name)), recursive=True)
+        return glob.glob(os.path.abspath(os.path.join(__file__, "..", "..", *folder.split("/"), name)))
+
+    @staticmethod
+    def path(path: str):
+        return os.path.abspath(os.path.join(__file__, "..", "..", *path.split("/")))
+
+    @staticmethod
+    def read(path: str, default=None, split=False):
+        try:
+            with open(file.path(path), "r") as f:
+                if split:
+                    lines = f.readlines()
+                else:
+                    lines = f.read()
+        except (ValueError if default is None else FileNotFoundError):
+            lines = default
         return lines
     
     @staticmethod
     def write(path: str, content: str):
-        with open(path, "w") as f:
+        with open(file.path(path), "w") as f:
             lines = f.write(content)
         return lines
-
-    @staticmethod
-    def path(relative_path: str):
-        return os.path.abspath(os.path.join(__file__, "../..", relative_path))
-
-    @staticmethod
-    def path2(relative_path: str):
-        try:
-            base_path = sys._MEIPASS # Pyinstaller program
-        except Exception:
-            base_path = os.path.abspath(".") # Python program
-
-        return os.path.join(base_path, relative_path)

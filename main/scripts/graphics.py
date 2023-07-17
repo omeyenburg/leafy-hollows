@@ -2,7 +2,6 @@
 from platform import system
 import numpy
 import math
-import glob
 import sys
 import os
 
@@ -186,7 +185,7 @@ class Window:
         self.texAtlas = self.texture(image)
 
         # Font texture (contains letter images)
-        #self.font_rects, image = Font.fromPNG(util.File.path("data/fonts/font.png"))
+        #self.font_rects, image = Font.fromPNG(util.file.path("data/fonts/font.png"))
         self.font_rects, image = Font.fromSYS(None, size=30, bold=True, antialias=True, lower=True)
         self.texFont = self.texture(image)
 
@@ -199,11 +198,11 @@ class Window:
         self.texWorld = None
         
         # Instance shader
-        vertPath: str = util.File.path("scripts/shaders/instance.vert")
-        fragPath: str = util.File.path("scripts/shaders/instance.frag")
         self.instance_shader = Shader(
-            vertPath, fragPath, replace={"block." + key: value for key, value in self.block_indices.items()},
-            texAtlas="int", texFont="int", texBlocks="int", texWorld="int", offset="vec2", resolution="int", time="float")
+            "scripts/shaders/vertex.glsl", "scripts/shaders/fragment.glsl",
+            replace={"block." + key: value for key, value in self.block_indices.items()},
+            texAtlas="int", texFont="int", texBlocks="int", texWorld="int", offset="vec2", resolution="int", time="float"
+        )
         self.instance_shader.setvar("texAtlas", 0)
         self.instance_shader.setvar("texFont", 1)
         self.instance_shader.setvar("texBlocks", 2)
@@ -496,12 +495,7 @@ class Window:
         Loads the options from the options.txt file.
         """
         options = self.options_default.copy()
-
-        try:
-            with open(util.File.path("data/user/options.txt"), "r") as file:
-                options_string = file.read()
-        except:
-            options_string = ""
+        options_string = util.file.read("data/user/options.txt", "")
 
         for line in options_string.split("\n"):
             keyword = line.split(":")[0].strip()
@@ -537,8 +531,7 @@ class Window:
             else:
                 options_string += str(key) + ": " + str(value) + "\n"
 
-        with open(util.File.path("data/user/options.txt"), "w") as file:
-            file.write(options_string)
+        util.file.write("data/user/options.txt", options_string)
 
     def keybind(self, key):
         """
@@ -809,7 +802,7 @@ class TextureAtlas:
         """
         Load block texture atlas from files in a folder.
         """
-        paths = glob.glob(util.File.path("data/blocks/**/*.png"), recursive=True)
+        paths = util.file.find("data/blocks", "*.png", True)        
         width = math.ceil(math.sqrt(len(paths)))
         height = math.ceil(len(paths) / width)
         image = pygame.Surface((width * 16, height * 16 + 1), SRCALPHA)
@@ -836,19 +829,14 @@ class TextureAtlas:
             image.set_at((x, height * 16), (animation_frames[block], 0, 0))
             x += animation_frames[block]
 
-        pygame.image.save(image, util.File.path("data/blocks.png"))
+        pygame.image.save(image, util.file.path("data/blocks.png"))
         return block_indices, image
 
     def loadImages():
         """
         Load image texture atlas from files in a folder.
         """
-        try:        
-            with open(util.File.path("data/images/images.properties"), "r") as file:
-                images_data = file.readlines()
-        except:
-            raise ValueError("Could not find file data/images/images.properties")
-
+        images_data = util.file.read("data/images/images.properties", split=True)
         image_rects = [] # list of rects
         images = {} # "image": [rect_index, animation_frames]
         paths = {}
@@ -874,7 +862,7 @@ class TextureAtlas:
             width = max(width, rect[0] + rect[2])
             height = max(height, rect[1] + rect[3])
             
-            image_path = glob.glob(util.File.path("data/images/**/" + name + ".png"), recursive=True)
+            image_path = util.file.find("data/images", name + ".png", True)
             if not len(image_path):
                 raise ValueError("Could not find file " + name + ".png in data/images")
 
@@ -884,10 +872,10 @@ class TextureAtlas:
         image = pygame.Surface((width, height), SRCALPHA)
 
         for image_path, i in paths.items():
-            image.blit(pygame.image.load(util.File.path(image_path)), (image_rects[i][0], image_rects[i][1]))
+            image.blit(pygame.image.load(image_path), (image_rects[i][0], image_rects[i][1]))
             image_rects[i] = (image_rects[i][0] / width, 1 - image_rects[i][1] / height - image_rects[i][3] / height, image_rects[i][2] / width, image_rects[i][3] / height)
 
-        pygame.image.save(image, util.File.path("data/images.png"))
+        pygame.image.save(image, util.file.path("data/images.png"))
 
         return image_rects, images, image
 
@@ -984,20 +972,21 @@ class Shader:
     def __init__(self, vertex, fragment, replace={}, **variables):
         self.program = glCreateProgram()
         
-        with open(vertex, "r") as file:
-            content = file.read()
-            for search, replacement in replace.items():
-                content = content.replace(str(search), str(replacement))
-            vertex_shader = compileShader(content, GL_VERTEX_SHADER)
-        with open(fragment, "r") as file:
-            content = file.read()
-            for search, replacement in replace.items():
-                content = content.replace(str(search), str(replacement))
-            fragment_shader = compileShader(content, GL_FRAGMENT_SHADER)
+        content = util.file.read(vertex)
+        for search, replacement in replace.items():
+            content = content.replace(str(search), str(replacement))
+        vertex_shader = compileShader(content, GL_VERTEX_SHADER)
         glAttachShader(self.program, vertex_shader)
+
+        content = util.file.read(fragment)
+        for search, replacement in replace.items():
+            content = content.replace(str(search), str(replacement))
+        fragment_shader = compileShader(content, GL_FRAGMENT_SHADER)
         glAttachShader(self.program, fragment_shader)
+
         glLinkProgram(self.program)
         glValidateProgram(self.program)
+
         glDeleteShader(vertex_shader)
         glDeleteShader(fragment_shader)
 
