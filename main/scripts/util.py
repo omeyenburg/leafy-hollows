@@ -24,3 +24,12 @@ class File:
     @staticmethod
     def path(relative_path: str):
         return os.path.abspath(os.path.join(__file__, "../..", relative_path))
+
+    @staticmethod
+    def path2(relative_path: str):
+        try:
+            base_path = sys._MEIPASS # Pyinstaller program
+        except Exception:
+            base_path = os.path.abspath(".") # Python program
+
+        return os.path.join(base_path, relative_path)

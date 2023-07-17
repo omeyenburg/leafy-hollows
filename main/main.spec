@@ -26,7 +26,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name=name,
+    name="main",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -37,6 +37,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    icon=['icon/icon.icns'],
 )
 
 coll = COLLECT(
@@ -47,7 +48,7 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='Hello World',
+    name='main',
 )
 
 if platform.system() == "Darwin":
@@ -55,12 +56,12 @@ if platform.system() == "Darwin":
         coll,
         name=name + '.app',
         icon='./icon/icon.icns',
-        bundle_identifier=None,
+        bundle_identifier="com.hello_world.hello_world",
     )
 else:
     app = BUNDLE(
         coll,
         name=name + '.exe',
         icon='./icon/icon/ico',
-        bundle_identifier=com.test,
+        bundle_identifier=None,
     )

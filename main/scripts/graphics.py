@@ -22,12 +22,15 @@ class Window:
     def __init__(self, caption):
         # Load options
         self.options_default: dict = {
-            "enableVsync": False,
+            "enableVsync": True,
             "maxFps": 1000,
             "particles": 1,
             "map buffers": True,
             "antialiasing": 16,
             "resolution": 2,
+            "post processing": True,
+            "show fps": False,
+            "show debug": False,
             "key.left": "a",
             "key.right": "d",
             "key.jump": "space",
@@ -62,7 +65,7 @@ class Window:
 
         # Events
         self.keys: dict = dict.fromkeys([value for key, value in self.options.items() if key.startswith("key.")], 0) # 0 = Not pressed | 1 = Got pressed | 2 = Is pressed
-        self.unicode: str = ""                  # Backspace = "\x08"
+        self.unicode: str = ""                    # Backspace = "\x08"
         self.mouse_buttons: [int] = [0, 0, 0]     # Left, Middle, Right | 0 = Not pressed | 1 = Got pressed | 2 = Is pressed
         self.mouse_pos: [int] = (0, 0, 0, 0)      # x, y, relx, rely
         self.mouse_wheel: [int] = [0, 0, 0, 0]    # x, y, relx, rely
@@ -105,6 +108,7 @@ class Window:
         self.window = pygame.display.set_mode((self.width, self.height), flags=flags, vsync=self.options["enableVsync"])
         self.clock = pygame.time.Clock()
         self.camera: Camera = Camera(self)
+        self.world_view = numpy.zeros((0, 0))
         pygame.display.set_caption(caption)
         pygame.key.set_repeat(1000, 10)
         
@@ -177,36 +181,18 @@ class Window:
         glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 0, ctypes.c_void_p(0))
         glVertexAttribDivisor(4, 1)
 
-        """
-        # Create vertex array object
-        self.world_vao = glGenVertexArrays(1)
-        glBindVertexArray(self.world_vao)
-
-        # Vertices & texcoords
-        glBindBuffer(GL_ARRAY_BUFFER, self.vertices_vbo)
-        glEnableVertexAttribArray(0)
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * vertices.itemsize, ctypes.c_void_p(0))
-        glEnableVertexAttribArray(1)
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * vertices.itemsize, ctypes.c_void_p(2 * vertices.itemsize))
-
-        # Create element buffer object (EBO) for indices
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.ebo)
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, len(indices) * 4, (GLuint * len(indices))(*indices), GL_STATIC_DRAW)
-        """
-
         # Atlas texture (contains images)
         self.atlas_rects, self.atlas_images, image = TextureAtlas.loadImages()
-        self.texAtlas = self.texture(image, blur=False)
+        self.texAtlas = self.texture(image)
 
         # Font texture (contains letter images)
         #self.font_rects, image = Font.fromPNG(util.File.path("data/fonts/font.png"))
         self.font_rects, image = Font.fromSYS(None, size=30, bold=True, antialias=True, lower=True)
-        self.texFont = self.texture(image, blur=False)
+        self.texFont = self.texture(image)
 
         # Block texture (contains block images)
         self.block_indices, image = TextureAtlas.loadBlocks()
-        pygame.image.save(image, util.File.path("image.png"))
-        self.texBlocks = self.texture(image, blur=False)
+        self.texBlocks = self.texture(image)
 
         # World texture (contains map data)
         self.world_size = (0, 0)
@@ -223,17 +209,6 @@ class Window:
         self.instance_shader.setvar("texBlocks", 2)
         self.instance_shader.setvar("texWorld", 3)
         self.instance_shader.setvar("resolution", self.camera.resolution)
-        
-        # World shader
-        """
-        vertPath: str = util.File.path("scripts/shaders/world.vert")
-        fragPath: str = util.File.path("scripts/shaders/world.frag")
-        self.world_shader = Shader(vertPath, fragPath, replace={"block." + key: value for key, value in self.block_indices.items()},
-                                   texBlocks="int", texWorld="int", offset="vec2", resolution="int", time="float")
-        self.world_shader.setvar("texBlocks", 0)
-        self.world_shader.setvar("texWorld", 1)
-        self.world_shader.setvar("resolution", self.camera.resolution)
-        """
 
     def add_vbo_instance(self, dest, source_or_color, shape_transform):
         """
@@ -346,7 +321,7 @@ class Window:
             elif event.type == MOUSEWHEEL:
                 self.mouse_wheel = [self.mouse_wheel[0] + event.x, self.mouse_wheel[1] + event.y, event.x, event.y]
 
-    def update(self, world_data=numpy.zeros((0, 0))):
+    def update(self):
         """
         Update the window and inputs.
         """
@@ -360,32 +335,6 @@ class Window:
         # Reset
         glClear(GL_COLOR_BUFFER_BIT)
 
-        """
-        # Use VAO
-        glBindVertexArray(self.world_vao)
-
-        # Use world shader
-        self.world_shader.activate()
-        self.world_shader.setvar("time", self.time / self.animation_speed)
-
-        # Send variables to shader
-        self.update_world(world_data)
-        self.world_shader.update()
-
-        # Bind texture
-        glActiveTexture(GL_TEXTURE0)
-        glBindTexture(GL_TEXTURE_2D, self.texBlocks)
-
-        glActiveTexture(GL_TEXTURE1)
-        glBindTexture(GL_TEXTURE_2D, self.texWorld)
-
-        # Draw
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, None)
-        """
-
-        # Post processing
-        #self.add_vbo_instance((0, 0, 1, 1), (0, 0, 0, 0), (5, 0, 0, 0))
-
         # Use VAO
         glBindVertexArray(self.instance_vao)
 
@@ -393,7 +342,7 @@ class Window:
         self.instance_shader.activate()
 
         # Send variables to shader
-        self.update_world(world_data)
+        self.update_world()
         self.instance_shader.update()
 
         # Bind textures
@@ -540,7 +489,6 @@ class Window:
         self.options["resolution"] = resolution
         self.camera.resultion = resolution
         self.camera.pixels_per_meter = resolution * 16
-        #self.world_shader.setvar("resolution", resolution)
         self.instance_shader.setvar("resolution", resolution)
         
     def load_options(self):
@@ -614,7 +562,6 @@ class Window:
         glDeleteVertexArrays(1, (self.instance_vao,))
         glDeleteTextures(4, (self.texAtlas, self.texFont, self.texBlocks, self.texWorld))
         self.instance_shader.delete()
-        #self.world_shader.delete()
 
         # Save options
         self.save_options()
@@ -644,7 +591,7 @@ class Window:
         glBindTexture(GL_TEXTURE_2D, 0)
         return texture
 
-    def update_world(self, data, blur=0):
+    def update_world(self, blur=0):
         """
         Update the world texture.
         """
@@ -661,8 +608,9 @@ class Window:
         self.instance_shader.setvar("offset", *offset) 
 
         # View size
-        size = data.shape
-        data = numpy.transpose(data) # flip axis
+        size = self.world_view.shape
+        data = numpy.transpose(self.world_view) # flip axis
+        self.world_view = numpy.zeros((0, 0))
         if self.world_size != size:
             if not self.texWorld is None:
                 glDeleteTextures(1, (self.texWorld,))
@@ -735,7 +683,7 @@ class Window:
         """
         Draw a circle on the window.
         """
-        self.add_vbo_instance((*position, radius, radius), self.camera.map_color(color), (2, 0, 0, 0))
+        self.add_vbo_instance((*position, radius / self.width * self.screen_size[1], radius / self.height * self.screen_size[1]), self.camera.map_color(color), (2, 0, 0, 0))
 
     def draw_text(self, position, text, color, size=1, centered=False, spacing=1.25, fixed_size=1):
         """
@@ -771,19 +719,20 @@ class Window:
                         letter = letter.lower()
                 if not letter in self.font_rects:
                     letter = "?"
+
                 rect = self.font_rects[letter]
                 if fixed_size == 0:
-                    #offset += rect[1] * spacing * size
+                    offset += rect[1] * spacing * size * 0.5
                     dest_rect = [position[0] + offset + rect[1], position[1], rect[1] * size, rect[2] * 2 * size]
-                    offset += rect[1] * spacing * size * 2
+                    offset += rect[1] * spacing * size * 1.5
                 elif fixed_size == 1:
-                    #offset += rect[1] * spacing * size
+                    offset += rect[1] * spacing * size * 0.5
                     dest_rect = [position[0] + offset + rect[1], position[1], rect[1] * size, rect[2] * 2 * size * y_factor_relational]
-                    offset += rect[1] * spacing * size * 2
+                    offset += rect[1] * spacing * size * 1.5
                 else:
-                    #offset += rect[1] * spacing * size * x_factor_fixed
+                    offset += rect[1] * spacing * size * x_factor_fixed * 0.5
                     dest_rect = [position[0] + offset + rect[1], position[1], rect[1] * size * x_factor_fixed, rect[2] * 2 * size * y_factor_fixed]
-                    offset += rect[1] * spacing * size * x_factor_fixed * 2
+                    offset += rect[1] * spacing * size * x_factor_fixed * 1.5
                 
                 if not self.stencil_rect is None:
                     org = dest_rect[:]
@@ -816,20 +765,22 @@ class Window:
                         letter = letter.lower()
                 if not letter in self.font_rects:
                     letter = "?"
+
                 rect = self.font_rects[letter]
                 source_and_color = (color[0] + rect[0], color[1], color[2] + rect[1] - 0.00001, color[3])
                 if fixed_size == 0:
-                    #offset += rect[1] * spacing * size
+                    offset += rect[1] * spacing * size * 0.5
                     dest_rect = [position[0] + offset + rect[1], position[1] - rect[2] * 2, rect[1] * size, rect[2] * 2 * size]
-                    offset += rect[1] * spacing * size * 2
+                    offset += rect[1] * spacing * size * 1.5
                 elif fixed_size == 1:
-                    #offset += rect[1] * spacing * size * 2
+                    offset += rect[1] * spacing * size * 0.5
                     dest_rect = [position[0] + offset + rect[1], position[1] - rect[2] * 2, rect[1] * size, rect[2] * 2 * size * y_factor_relational]
-                    offset += rect[1] * spacing * size * 2
+                    offset += rect[1] * spacing * size * 1.5
                 else:
-                    #offset += rect[1] * spacing * size * x_factor_fixed
+                    offset += rect[1] * spacing * size * x_factor_fixed * 0.5
                     dest_rect = [position[0] + offset + rect[1], position[1] - rect[2] * 2, rect[1] * size * x_factor_fixed, rect[2] * 2 * size * y_factor_fixed]
-                    offset += rect[1] * spacing * size * x_factor_fixed * 2
+                    offset += rect[1] * spacing * size * x_factor_fixed * 1.5
+
                 if not self.stencil_rect is None:
                     org = dest_rect[:]
 
@@ -850,88 +801,18 @@ class Window:
 
         return offset
 
+    def draw_post_processing(self):
+        self.add_vbo_instance((0, 0, 1, 1), (0, 0, 0, 0), (5, 0, 0, 0))
+
 class TextureAtlas:
-    def __init__(self, **images):
-        self.max_atlas_size = glGetIntegerv(GL_MAX_TEXTURE_SIZE)
-
-        # Sort images with decreasing size
-        self.sorted_images = sorted(images.keys(), key=lambda index: sum(images[index].get_size()), reverse=True)
-
-        # Gather image size
-        self.image_rects = [[0, 0, *images[index].get_size()] for index in self.sorted_images]
-        if self.image_rects:
-            self.atlas_size = list(self.image_rects[0][2:])
-        else:
-            self.atlas_size = [0, 0]
-
-        # Create image coords on the texture atlas
-        self.space = numpy.ones(self.atlas_size[::-1], dtype=numpy.int8)
-        for index, key in enumerate(self.sorted_images):
-            image = images[key]
-            self.image_rects[index][:2] = self.find_empty_position(*self.image_rects[index][2:])
-            for dx, dy in numpy.ndindex(*self.image_rects[index][2:]):
-                x = dx + self.image_rects[index][0]
-                y = dy + self.image_rects[index][1]
-                self.space[y, x] = 0
-
-        self.texture_atlas = pygame.Surface(self.atlas_size, flags=pygame.SRCALPHA)
-        for index, key in enumerate(self.sorted_images):
-            image = images[key]
-            coord = self.image_rects[index][:2]
-            self.texture_atlas.blit(image, coord)
-            self.image_rects[index] = (self.image_rects[index][0] / self.atlas_size[0],
-                                       self.image_rects[index][1] / self.atlas_size[1],
-                                       self.image_rects[index][2] / self.atlas_size[0],
-                                       self.image_rects[index][3] / self.atlas_size[1])
-
-        self.data = pygame.image.tostring(self.texture_atlas, "RGBA", 1)
-
-    def find_empty_position(self, width, height):
-        while True:
-            # Find empty space
-            for x in range(self.atlas_size[0] - width + 1):
-                for y in range(self.atlas_size[1] - height + 1):
-                    if numpy.all(self.space[y:y+height, x:x+width] == 1):
-                        return (x, y)
-
-            # Resize space
-            if self.atlas_size[0] > 2048 or self.atlas_size[1] > 2048:
-                print("Warning: Atlas has a size of (2048, 2048) or higher")
-            if self.atlas_size[1] > self.atlas_size[0]:
-                self.space = numpy.concatenate((self.space, numpy.ones((self.space.shape[0], 1), dtype=numpy.int8)), axis=1)
-                self.atlas_size[0] += 1
-            else:
-                self.space = numpy.concatenate((self.space, numpy.ones((1, self.space.shape[1]), dtype=numpy.int8)), axis=0)
-                self.atlas_size[1] += 1
-
-        raise Exception("Ran out of space to create texture atlas with maximum size of %d" % self.max_atlas_size)
-
-    def loadAtlas():
-        """
-        Load texture atlas data from files in a folder.
-        """
-        with open(util.File.path("data/atlas/data.txt"), "r") as f:
-            data_str = f.readlines()
-        image = pygame.image.load(util.File.path("data/atlas/atlas.png"))
-        rects = {}
-        for line in data_str:
-            if line:
-                line = line.replace(" ", "")
-                var, rect_str = line.split(":")
-                rect = tuple([float(val) if val.replace(".", "").isdecimal()
-                              and not val.replace("/", "", 1).replace(".", "").isdecimal()
-                              else eval(val) for val in rect_str.split(",")]) # eval() for "1/3", otherwise float("23.2")
-                rects[var] = rect
-        return rects, image
-
     def loadBlocks():
         """
         Load block texture atlas from files in a folder.
         """
-        paths = glob.glob(util.File.path("data/blocks/*.png"))
+        paths = glob.glob(util.File.path("data/blocks/**/*.png"), recursive=True)
         width = math.ceil(math.sqrt(len(paths)))
         height = math.ceil(len(paths) / width)
-        image = pygame.Surface((width * 16, height * 16 + 1))
+        image = pygame.Surface((width * 16, height * 16 + 1), SRCALPHA)
         block_indices = {}
         animation_frames = {}
 
@@ -962,8 +843,11 @@ class TextureAtlas:
         """
         Load image texture atlas from files in a folder.
         """
-        with open(util.File.path("data/images/images.properties"), "r") as file:
-            images_data = file.readlines()
+        try:        
+            with open(util.File.path("data/images/images.properties"), "r") as file:
+                images_data = file.readlines()
+        except:
+            raise ValueError("Could not find file data/images/images.properties")
 
         image_rects = [] # list of rects
         images = {} # "image": [rect_index, animation_frames]
@@ -989,14 +873,18 @@ class TextureAtlas:
 
             width = max(width, rect[0] + rect[2])
             height = max(height, rect[1] + rect[3])
+            
+            image_path = glob.glob(util.File.path("data/images/**/" + name + ".png"), recursive=True)
+            if not len(image_path):
+                raise ValueError("Could not find file " + name + ".png in data/images")
 
-            paths[name + ".png"] = len(image_rects)
+            paths[str(image_path[0])] = len(image_rects)
             image_rects.append(rect)
 
-        image = pygame.Surface((width, height))
+        image = pygame.Surface((width, height), SRCALPHA)
 
         for image_path, i in paths.items():
-            image.blit(pygame.image.load(util.File.path("data/images/" + image_path)), (image_rects[i][0], image_rects[i][1]))
+            image.blit(pygame.image.load(util.File.path(image_path)), (image_rects[i][0], image_rects[i][1]))
             image_rects[i] = (image_rects[i][0] / width, 1 - image_rects[i][1] / height - image_rects[i][3] / height, image_rects[i][2] / width, image_rects[i][3] / height)
 
         pygame.image.save(image, util.File.path("data/images.png"))
@@ -1081,13 +969,11 @@ class Font:
 
             font_width += letter_width
             images.append(image)
-            #print(letter, i)
 
         image = pygame.Surface((font_width, font_height))
         for letter in letters:
             image.blit(images[ord(letter) - 32], (letters[letter][0], 0))
             letters[letter] = (letters[letter][0] / font_width, letters[letter][1] / font_width, font_height / font_width)
-            #print(letters[letter][0] / font_width)
 
         return (letters, image)
 
