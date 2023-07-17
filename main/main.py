@@ -23,7 +23,7 @@ os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 #lib.c_print()
 
 # Create window
-window: graphics.Window = graphics.Window("Test")
+window: graphics.Window = graphics.Window("Hello World")
 game: Game = Game(window)
 menu: Menu = Menu(window)
 
@@ -34,23 +34,27 @@ while True:
         game.update()
 
         # Post processing
-        window.add_vbo_instance((0, 0, 1, 1), (0, 0, 0, 0), (5, 0, 0, 0))
+        if window.options["post processing"]:
+            window.draw_post_processing()
 
-        # Write fps & player position
-        window.draw_text((-0.98, 0.95), "FPS: " + str(round(window.fps, 3)), (250, 250, 250, 200))
-        window.draw_text((-0.98, 0.8), "Player: " + str((round(game.player.rect.centerx, 1), round(game.player.rect.centery, 1))), (250, 250, 250, 200))
-        pos = window.camera.map_coord(window.mouse_pos[:2], from_pixel=1, world=1)
-        window.draw_text((-0.98, 0.65), "Mouse: " + str((math.floor(pos[0]), math.floor(pos[1]))), (250, 250, 250, 200))
-        window.draw_text((-0.98, 0.5), "Seed: " + str(game.world.seed), (250, 250, 250, 200))
-
-
+        # Write fps & debug info
+        if window.options["show fps"]:
+            window.draw_text((-0.98, 0.95), "FPS: " + str(round(window.fps, 3)), (250, 250, 250, 200))
+            y_offset = 0.15
+        else:
+            y_offset = 0
+        if window.options["show debug"]:
+            pos = window.camera.map_coord(window.mouse_pos[:2], from_pixel=1, world=1)
+            window.draw_text((-0.98, 0.95 - y_offset), "Player: " + str((round(game.player.rect.centerx, 1), round(game.player.rect.centery, 1))), (250, 250, 250, 200))
+            window.draw_text((-0.98, 0.8 - y_offset), "Mouse: " + str((math.floor(pos[0]), math.floor(pos[1]))), (250, 250, 250, 200))
+            window.draw_text((-0.98, 0.65 - y_offset), "Seed: " + str(game.world.seed), (250, 250, 250, 200))
+            
         # Move camera
         pos = (game.player.rect.centerx - game.player.vel[0] / 100, game.player.rect.centery - game.player.vel[0] / 100)
         window.camera.move(pos)
 
         # Update window + shader
-        data = game.world.view(*window.camera.visible_blocks())
-        window.update(data)
+        window.update()
 
         # Open menu
         if window.keybind("return") == 1:
@@ -60,7 +64,8 @@ while True:
         menu.update()
 
         # Write fps
-        window.draw_text((-0.98, 0.95), str(round(window.fps, 3)), (250, 250, 250, 200))
+        if window.options["show fps"]:
+            window.draw_text((-0.98, 0.95), str(round(window.fps, 3)), (250, 250, 250, 200))
 
         # Update window + shader
         window.update()

@@ -9,7 +9,7 @@ class Entity(physics.PhysicsObject): # Used for ropes etc.
     ...
 
 
-class LivingEntity(physics.PhysicsObject):
+class LivingEntity(physics.CollisionPhysicsObject):
     def __init__(self, *args, health: int=0, **kwargs):
         super().__init__(*args, *kwargs)
         self.health: int = health
@@ -18,7 +18,7 @@ class LivingEntity(physics.PhysicsObject):
         self.health -= amount
 
 
-class ChainedEntity(physics.PhysicsObject):
+class ChainedEntity(physics.CollisionPhysicsObject):
     def __init__(self, *args, parent=None, length: int=0, start: [float, float]=None,
                  end: [float, float]=None, element_radius: int=1, collision: bool=False, **kwargs):
         super().__init__(10, start, (element_radius, element_radius), *args, force_func=self.apply_force, **kwargs)
@@ -39,28 +39,55 @@ class ChainedEntity(physics.PhysicsObject):
             self.fixed_point: [float] = end
 
     def apply_force(self, force: float, angle: float, delta_time: float): # angle in degrees; 0 is right, counterclockwise
+        if self.fixed_point:
+            return
         r_angle = math.angle(math.radians(angle))
 
+        self.vel[0] += math.cos(r_angle) * force / self.mass * delta_time
+        self.vel[1] += math.sin(r_angle) * force / self.mass * delta_time
+
+        """
         if not self.child is None:
             min_angle = math.angle(math.atan2(self.child.rect.x - self.rect.x, self.child.rect.y - self.rect.y) - 0.1)
             max_angle = math.angle(min_angle + math.pi / 2 + 0.2)
             if not min_angle < r_angle < max_angle:
                 if abs(max_angle - r_angle) < abs(min_angle - r_angle):
-                    r_angle = max_angle
+                    #r_angle = max_angle
+                    r_angle += force / self.radius
                 else:
-                    r_angle = min_angle
+                    #r_angle = min_angle
+                    r_angle -= force / self.radius
+                #self.child.rect.centerx = self.rect.centerx + math.cos(r_angle) * self.radius
+                #self.child.rect.centery = self.rect.centery + math.sin(r_angle) * self.radius
+                #self.child.vel = [0, 0]
+                self.rect.centerx = self.child.rect.centerx + math.cos(0) * self.child.radius * 0.9
+                self.rect.centery = self.child.rect.centery + math.sin(0) * self.child.radius * 0.9
+                self.vel = [0, 0]
+        """
         
         if not self.parent is None:
             min_angle = math.angle(math.atan2(self.parent.rect.x - self.rect.x, self.parent.rect.y - self.rect.y) - 0.1)
             max_angle = math.angle(min_angle + math.pi / 2 + 0.2)
             if not min_angle < r_angle < max_angle:
                 if abs(max_angle - r_angle) < abs(min_angle - r_angle):
-                    r_angle = max_angle
+                    #r_angle = max_angle
+                    #r_angle += force / self.radius
+                    r_angle += 0.1
+                    #if abs(max_angle - r_angle) > abs(min_angle - r_angle):
+                    #    r_angle -= 0.05
                 else:
-                    r_angle = min_angle
+                    #r_angle = min_angle
+                    #r_angle -= force / self.radius
+                    #print(force / self.radius)
+                    r_angle -= 0.1
+                    #if abs(max_angle - r_angle) < abs(min_angle - r_angle):
+                    #    r_angle += 0.05
+                self.rect.centerx = self.parent.rect.centerx + math.cos(r_angle) * self.parent.radius
+                self.rect.centery = self.parent.rect.centery + math.sin(r_angle) * self.parent.radius
+                #self.vel = [0, 0]
+        #"""
 
-        self.vel[0] += math.cos(r_angle) * force / self.mass * delta_time
-        self.vel[1] += math.sin(r_angle) * force / self.mass * delta_time
+        
 
     def update(self, world, window):
         super().update(world, window.delta_time)
@@ -145,20 +172,15 @@ class ChainedEntity(physics.PhysicsObject):
             self.vel[0] *= 0.9
             self.vel[1] *= 0.9
         
-        
-            
-
     def draw(self, world, window):
         rect = window.camera.map_coord(self.rect, from_world=True)
         window.draw_rect(rect[:2], rect[2:], (0, 0, 255, 255))
 
 
-
-
 class Particle(physics.PhysicsObject): # Does not collide
-    def __init__(self, *args, gravity=9.81, **kwargs):
-        super().__init__(*args, *kwargs)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
 
-class CollidingParticle(physics.PhysicsObject):
+class CollisionParticle(physics.CollisionPhysicsObject):
     ...

@@ -3,7 +3,7 @@ from scripts.util import realistic
 from scripts.physics import *
 
 
-class Player(PhysicsObject):
+class Player(CollisionPhysicsObject):
     def __init__(self, spawn_pos: [float], speed: float, sprint_speed: float, acceleration_time: float, jump_force: int):
         super().__init__(50, spawn_pos, (0.9, 1.8))
 
