@@ -621,7 +621,7 @@ class Window:
             glBindTexture(GL_TEXTURE_2D, self.texWorld)
             glTexImage2D(GL_TEXTURE_2D, 0, GL_R32I, *self.world_size, 0, GL_RED_INTEGER, GL_INT, data)
     
-    def draw_image(self, image, position, size, angle=0, flip=(0, 0)):
+    def draw_image(self, image: str, position: [float], size: [float], angle: float=0.0, flip: [int]=(0, 0)):
         """
         Draw an image on the window.
         """
@@ -647,7 +647,7 @@ class Window:
         else:
             self.add_vbo_instance(dest_rect, rect, (0, *flip, angle / 180 * math.pi))
 
-    def draw_rect(self, position, size, color):
+    def draw_rect(self, position: [float], size: [float], color: [int]):
         """
         Draw a rectangle on the window.
         """
@@ -669,13 +669,24 @@ class Window:
         else:
             self.add_vbo_instance(dest_rect, self.camera.map_color(color), (1, 0, 0, 0))
 
-    def draw_circle(self, position, radius, color):
+    def draw_circle(self, position: [float], radius: int, color: [int]):
         """
         Draw a circle on the window.
         """
         self.add_vbo_instance((*position, radius / self.width * self.screen_size[1], radius / self.height * self.screen_size[1]), self.camera.map_color(color), (2, 0, 0, 0))
 
-    def draw_text(self, position, text, color, size=1, centered=False, spacing=1.25, fixed_size=1):
+    def draw_line(self, start: [float], end: [float], width: int, color: [int]):
+        """
+        Draw a line on the window.
+        """
+        center = ((start[0] + end[0]) / 2,  (start[1] + end[1]) / 2)
+        angle = math.atan2(start[1] - end[1], start[0] - end[0])
+        sinAngle = abs(math.sin(angle))
+        size = (math.sqrt(((start[0] - end[0]) / 2) ** 2 + ((start[1] - end[1]) / 2) ** 2),
+                width / self.width * sinAngle + width / self.height * (1 - sinAngle))
+        self.add_vbo_instance((*center, *size), self.camera.map_color(color), (1, 0, 0, angle))
+
+    def draw_text(self, position: [float], text: str, color: [int], size: int=1, centered: bool=False, spacing: float=1.25, fixed_size: int=1):
         """
         Draw text on the window.
         fixed_size: 0 = stretch, 1 = relational size on both axis, 2 = fixed size

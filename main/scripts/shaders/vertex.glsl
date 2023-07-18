@@ -24,7 +24,8 @@ void main() {
         float cosTheta = cos(angle);
         float sinTheta = sin(angle);
         mat2 rotationMatrix = mat2(cosTheta, -sinTheta, sinTheta, cosTheta);
-        gl_Position = vec4(rotationMatrix * position * dest_rect.zw + dest_rect.xy, 0.0, 1.0);
+        vec2 rotatedPosition = (position * dest_rect.zw) * rotationMatrix;
+        gl_Position = vec4(rotatedPosition + dest_rect.xy, 0.0, 1.0);
     } else {
         gl_Position = vec4(position * dest_rect.zw + dest_rect.xy, 0.0, 1.0);
     }
