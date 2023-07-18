@@ -3,7 +3,7 @@ maxFps: 1000
 particles: 1
 map buffers: False
 antialiasing: 16
-resolution: 2
+resolution: 4
 post processing: False
 show fps: True
 show debug: False
