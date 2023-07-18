@@ -1,17 +1,13 @@
 # -*- coding: utf-8 -*-
-from platform import system
+from OpenGL.GL.shaders import compileProgram, compileShader
+from OpenGL.GL import *
+import scripts.world as world
+import scripts.util as util
 import numpy
 import math
 import sys
 import os
 
-import scripts.world as world
-import scripts.util as util
-
-from OpenGL.GL import *
-from OpenGL.GL.shaders import compileProgram, compileShader
-
-operating_system = system()
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 from pygame.locals import *
 import pygame
@@ -30,6 +26,7 @@ class Window:
             "post processing": True,
             "show fps": False,
             "show debug": False,
+            "language": "deutsch",
             "key.left": "a",
             "key.right": "d",
             "key.jump": "space",
@@ -51,7 +48,7 @@ class Window:
                                         pygame.GL_CONTEXT_PROFILE_CORE)
 
         # MacOS support
-        if operating_system == "Darwin":
+        if util.system == "Darwin":
             pygame.display.gl_set_attribute(pygame.GL_CONTEXT_FORWARD_COMPATIBLE_FLAG, True)
 
         # antialiasing
@@ -71,10 +68,10 @@ class Window:
         self.fps: int = 0
         self.delta_time: float = 1.0
         self.time: float = 0.0
-        self.animation_speed = 0.3
+        self.animation_speed: float = 0.3
 
         # Key press states
-        if operating_system == "Darwin":
+        if util.system == "Darwin":
             self.mod_names = {
                 pygame.__dict__[identifier]: identifier[4:].replace("_R", "Right ").replace("_L", "Left ").replace("_", "").replace("META", "Cmd").title()
                 for index, identifier in enumerate(pygame.__dict__.keys())
@@ -469,7 +466,7 @@ class Window:
         self.vbo_instances_index = 0
         self.refresh = False
 
-    def set_antialiasing(self, level):
+    def set_antialiasing(self, level: int):
         """
         Toggle antialiasing.
         """
@@ -796,6 +793,7 @@ class Window:
 
     def draw_post_processing(self):
         self.add_vbo_instance((0, 0, 1, 1), (0, 0, 0, 0), (5, 0, 0, 0))
+
 
 class TextureAtlas:
     def loadBlocks():

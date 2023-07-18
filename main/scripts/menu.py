@@ -1,15 +1,11 @@
 # -*- coding: utf-8 -*-
-from platform import system
-import math
-import sys
-import os
-
-os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
-import pygame
-
+from scripts.language import Translator
 import scripts.geometry as geometry
 import scripts.graphics as graphics
 import scripts.util as util
+import math
+import sys
+import os
 
 
 class Page:
@@ -66,7 +62,7 @@ class Page:
 
 
 class Widget:
-    def __init__(self, parent, size: [float], row: int=0, column: int=0, columnspan: int=1, fontsize: float=1.0, hover_callback=None):
+    def __init__(self, parent, size: [float], row: int=0, column: int=0, columnspan: int=1, fontsize: float=1.0, hover_callback=None, translator=None):
         self.parent = parent
         self.children = []
         self.rect = geometry.Rect(0, 0, *size)
@@ -76,6 +72,7 @@ class Widget:
         self.columnspan = columnspan
         self.fontsize = fontsize
         self.hover_callback = hover_callback
+        self.translator = translator
 
         if not 0 <= self.column < parent.columns:
             raise ValueError("Invalid Column " + str(self.column) + " for parent with " + str(parent.columns) + " column(s).")
@@ -95,7 +92,7 @@ class Label(Widget):
         self.text = text
 
     def update(self, window: graphics.Window):
-        window.draw_text(self.rect.center, self.text, (250, 250, 250, 200), self.fontsize, centered=True)
+        window.draw_text(self.rect.center, self.translator.translate(self.text), (250, 250, 250, 200), self.fontsize, centered=True)
 
 
 class Button(Widget):
@@ -127,11 +124,11 @@ class Button(Widget):
 
     def draw_idle(self, window: graphics.Window):
         window.draw_rect(self.rect[:2], self.rect[2:], (250, 0, 0, 200))
-        window.draw_text(self.rect.center, self.text, (50, 0, 0, 250), self.fontsize, centered=True)
+        window.draw_text(self.rect.center, self.translator.translate(self.text), (50, 0, 0, 250), self.fontsize, centered=True)
 
     def draw_clicked(self, window: graphics.Window):
         window.draw_rect(self.rect[:2], self.rect[2:], (200, 0, 0, 200))
-        window.draw_text(self.rect.center, self.text, (0, 0, 0, 250), self.fontsize, centered=True)
+        window.draw_text(self.rect.center, self.translator.translate(self.text), (0, 0, 0, 250), self.fontsize, centered=True)
 
 
 class Space(Widget):
@@ -256,7 +253,7 @@ class ScrollBox(Widget):
         window.draw_rect(self.rect[:2], self.rect[2:], (60, 60, 60, 200))
 
 
-def HoverBox(window: graphics.Window, rect: list, text: list):
+def HoverBox(window: graphics.Window, rect: list, text: list, translator=None):
     """
     Draw a box with multi colored text.
     text: [("text", (r, g, b, a))]
@@ -267,6 +264,7 @@ def HoverBox(window: graphics.Window, rect: list, text: list):
     y = 0
     for text, fontsize, color in text:
         for i, text_snippet in enumerate(text.split("\n")):
+            text_snippet = translator.translate(text_snippet)
             pos = (rect[0] + start[0] + x,
                    rect[1] + start[1] + y)
             x += window.draw_text(pos, text_snippet, color, size=fontsize)
@@ -278,28 +276,28 @@ def HoverBox(window: graphics.Window, rect: list, text: list):
 class Menu:
     def __init__(self, window: graphics.Window):
         self.window = window
-
         self.in_game = False
         def toggle_in_game():
             self.in_game = not self.in_game
+        translator = Translator(window.options["language"])
 
         ###---###  Main page  ###---###
         main_page = Page(columns=2, spacing=0.1)
-        Label(main_page, (1, .3), row=0, column=0, columnspan=2, text="Hello, World!", fontsize=2)
-        button_play = Button(main_page, (1.4, .2), row=1, column=0, columnspan=2, callback=toggle_in_game, text="Play")
-        button_settings = Button(main_page, (.65, .2), row=2, column=0, text="Settings")
-        Button(main_page, (.65, .2), row=2, column=1, callback=window.quit, text="Quit")
+        Label(main_page, (1, .3), row=0, column=0, columnspan=2, text="Hello, World!", fontsize=2, translator=translator)
+        button_play = Button(main_page, (1.4, .2), row=1, column=0, columnspan=2, callback=toggle_in_game, text="Play", translator=translator)
+        button_settings = Button(main_page, (.65, .2), row=2, column=0, text="Settings", translator=translator)
+        Button(main_page, (.65, .2), row=2, column=1, callback=window.quit, text="Quit", translator=translator)
         main_page.layout()
         main_page.open()
 
         ###---###  Settings page  ###---###
         settings_page = Page(parent=main_page, columns=2, spacing=0.1)
-        Label(settings_page, (1, .3), row=0, column=0, columnspan=2, text="Options", fontsize=2)
-        button_settings_video_open = Button(settings_page, (.65, .2), row=1, column=0, text="Video Settings")
-        button_settings_audio_open = Button(settings_page, (.65, .2), row=1, column=1, text="Audio Settings")
-        button_settings_control_open = Button(settings_page, (.65, .2), row=2, column=0, text="Control Settings")
-        button_settings_world_open = Button(settings_page, (.65, .2), row=2, column=1, text="World Settings")
-        button_settings_back = Button(settings_page, (1.4, .2), row=3, column=0, columnspan=2, callback=main_page.open, text="Back")
+        Label(settings_page, (1, .3), row=0, column=0, columnspan=2, text="Settings", fontsize=2, translator=translator)
+        button_settings_video_open = Button(settings_page, (.65, .2), row=1, column=0, text="Video Settings", translator=translator)
+        button_settings_audio_open = Button(settings_page, (.65, .2), row=1, column=1, text="Audio Settings", translator=translator)
+        button_settings_control_open = Button(settings_page, (.65, .2), row=2, column=0, text="Control Settings", translator=translator)
+        button_settings_world_open = Button(settings_page, (.65, .2), row=2, column=1, text="World Settings", translator=translator)
+        button_settings_back = Button(settings_page, (1.4, .2), row=3, column=0, columnspan=2, callback=main_page.open, text="Back", translator=translator)
         settings_page.layout()
         button_settings.callback = settings_page.open
 
@@ -324,8 +322,8 @@ class Menu:
 
         ###---###  Video settings page  ###---###
         settings_video_page = Page(parent=settings_page, spacing=0.1)
-        Label(settings_video_page, (1, .1), row=0, column=0, text="Video Settings", fontsize=2)
-        Label(settings_video_page, (1, .1), row=1, column=0, text="Scroll to see more options and hover over options to see descriptions", fontsize=1)
+        Label(settings_video_page, (1, .1), row=0, column=0, text="Video Settings", fontsize=2, translator=translator)
+        Label(settings_video_page, (1, .1), row=1, column=0, text="Scroll to see more options and hover over options to see descriptions", fontsize=1, translator=translator)
         settings_video_scrollbox = ScrollBox(settings_video_page, (1.4, 1), row=2, column=0, columns=2)
 
         def settings_video_hover(side, *description):
@@ -333,7 +331,7 @@ class Menu:
                               settings_video_scrollbox.rect[1] + settings_video_scrollbox.spacing / 2,
                               settings_video_scrollbox.rect[2] / 2 - settings_video_scrollbox.spacing / 2,
                               settings_video_scrollbox.rect[3] - settings_video_scrollbox.spacing),
-                              description)
+                     description, translator=translator)
 
         # Fps slider
         def slider_fps_update():
@@ -358,7 +356,7 @@ class Menu:
             value = window.options["maxFps"] / 1000
         slider_fps = Slider(settings_video_scrollbox, (.6, 0.18), row=1, column=0, value=value)
         slider_fps.callback = slider_fps_update
-        label_fps = Label(settings_video_scrollbox, (.6, 0.18), row=1, column=0)
+        label_fps = Label(settings_video_scrollbox, (.6, 0.18), row=1, column=0, translator=translator)
         slider_fps_update()
         label_fps.hover_callback = lambda: settings_video_hover(1,
             ("Max Fps\n", 1, (250, 250, 250, 200)),
@@ -376,7 +374,7 @@ class Menu:
         value = (window.options["resolution"] - 1) / 3
         slider_resolution = Slider(settings_video_scrollbox, (.6, 0.18), row=1, column=1, value=value)
         slider_resolution.callback = slider_resolution_update
-        label_resolution = Label(settings_video_scrollbox, (.6, 0.18), row=1, column=1, text="Resolution: " + str(window.options["resolution"]))
+        label_resolution = Label(settings_video_scrollbox, (.6, 0.18), row=1, column=1, text="Resolution: " + str(window.options["resolution"]), translator=translator)
         label_resolution.hover_callback = lambda: settings_video_hover(0,
             ("Resolution\n", 1, (250, 250, 250, 200)),
             ("Performance impact: ", 0.8, (250, 250, 250, 200)),
@@ -386,15 +384,15 @@ class Menu:
 
         # Fullscreen button
         def button_fullscreen_update():
-            if system() == "Darwin":
+            if util.system == "Darwin":
                 return
             window.toggle_fullscreen()
             button_fullscreen.text = "Fullscreen: " + str(window.fullscreen)
 
-        if system() == "Darwin":
-            button_fullscreen = Button(settings_video_scrollbox, (0.6, .18), row=2, column=0, callback=button_fullscreen_update, text="Fullscreen: Disabled")
+        if util.system == "Darwin":
+            button_fullscreen = Button(settings_video_scrollbox, (0.6, .18), row=2, column=0, callback=button_fullscreen_update, text="Fullscreen: Disabled", translator=translator)
         else:
-            button_fullscreen = Button(settings_video_scrollbox, (0.6, .18), row=2, column=0, callback=button_fullscreen_update, text="Fullscreen: False")
+            button_fullscreen = Button(settings_video_scrollbox, (0.6, .18), row=2, column=0, callback=button_fullscreen_update, text="Fullscreen: False", translator=translator)
         button_fullscreen.hover_callback = lambda: settings_video_hover(1,
             ("Fullscreen\n", 1, (250, 250, 250, 200)),
             ("Performance impact: ", 0.8, (250, 250, 250, 200)),
@@ -410,7 +408,7 @@ class Menu:
         value = window.options["particles"] / 10
         slider_particles = Slider(settings_video_scrollbox, (.6, 0.18), row=2, column=1, value=value)
         slider_particles.callback = slider_particles_update
-        label_particles = Label(settings_video_scrollbox, (.6, 0.18), row=2, column=1)
+        label_particles = Label(settings_video_scrollbox, (.6, 0.18), row=2, column=1, translator=translator)
         slider_particles_update()
         label_particles.hover_callback = lambda: settings_video_hover(0,
             ("Particle Density\n", 1, (250, 250, 250, 200)),
@@ -424,22 +422,22 @@ class Menu:
             window.options["show fps"] = not window.options["show fps"]
             button_show_fps.text = "Show Fps: " + str(window.options["show fps"])
 
-        button_show_fps = Button(settings_video_scrollbox, (0.6, .18), row=3, column=0, callback=button_show_fps_update, text="Show Fps: " + str(window.options["show fps"]))
+        button_show_fps = Button(settings_video_scrollbox, (0.6, .18), row=3, column=0, callback=button_show_fps_update, text="Show Fps: " + str(window.options["show fps"]), translator=translator)
         button_show_fps.hover_callback = lambda: settings_video_hover(1,
             ("Show Fps\n", 1, (250, 250, 250, 200)),
-            ("Performane impact: ", 0.8, (250, 250, 250, 200)),
+            ("Performance impact: ", 0.8, (250, 250, 250, 200)),
             ("low\n\n", 0.8, (250, 250, 0, 200))
         )
 
         # Show debug button
         def button_show_debug_update():
             window.options["show debug"] = not window.options["show debug"]
-            button_debug_fps.text = "Show debug: " + str(window.options["show debug"])
+            button_show_debug.text = "Show debug: " + str(window.options["show debug"])
 
-        button_debug_fps = Button(settings_video_scrollbox, (0.6, .18), row=3, column=1, callback=button_show_debug_update, text="Show debug: " + str(window.options["show debug"]))
-        button_debug_fps.hover_callback = lambda: settings_video_hover(0,
+        button_show_debug = Button(settings_video_scrollbox, (0.6, .18), row=3, column=1, callback=button_show_debug_update, text="Show debug: " + str(window.options["show debug"]), translator=translator)
+        button_show_debug.hover_callback = lambda: settings_video_hover(0,
             ("Show debug info\n", 1, (250, 250, 250, 200)),
-            ("Performane impact: ", 0.8, (250, 250, 250, 200)),
+            ("Performance impact: ", 0.8, (250, 250, 250, 200)),
             ("low\n\n", 0.8, (250, 250, 0, 200))
         )
 
@@ -448,10 +446,10 @@ class Menu:
             window.options["post processing"] = not window.options["post processing"]
             button_post_processing.text = "Post process: " + str(window.options["post processing"])
 
-        button_post_processing = Button(settings_video_scrollbox, (0.6, .18), row=4, column=0, callback=button_post_processing_update, text="Post process: " + str(window.options["post processing"]))
+        button_post_processing = Button(settings_video_scrollbox, (0.6, .18), row=4, column=0, callback=button_post_processing_update, text="Post process: " + str(window.options["post processing"]), translator=translator)
         button_post_processing.hover_callback = lambda: settings_video_hover(1,
             ("Post processing\n", 1, (250, 250, 250, 200)),
-            ("Performane impact: ", 0.8, (250, 250, 250, 200)),
+            ("Performance impact: ", 0.8, (250, 250, 250, 200)),
             ("medium\n\n", 0.8, (250, 150, 0, 200)),
             ("When enabled, post\nprocessing is performed\nafter the actual rendering\nfor additional visual effects.", 0.8, (250, 250, 250, 200))
         )
@@ -460,12 +458,12 @@ class Menu:
         # Show debug button
         def button_show_debug_update():
             window.options["show debug"] = not window.options["show debug"]
-            button_debug_fps.text = "Show debug: " + str(window.options["show debug"])
+            button_show_debug.text = "Show debug: " + str(window.options["show debug"])
 
-        button_debug_fps = Button(settings_video_scrollbox, (0.6, .18), row=3, column=1, callback=button_show_debug_update, text="Show debug: " + str(window.options["show debug"]))
-        button_debug_fps.hover_callback = lambda: settings_video_hover(0,
+        button_show_debug = Button(settings_video_scrollbox, (0.6, .18), row=3, column=1, callback=button_show_debug_update, text="Show debug: " + str(window.options["show debug"]))
+        button_show_debug.hover_callback = lambda: settings_video_hover(0,
             ("Show debug info\n", 1, (250, 250, 250, 200)),
-            ("Performane impact: ", 0.8, (250, 250, 250, 200)),
+            ("Performance impact: ", 0.8, (250, 250, 250, 200)),
             ("low\n\n", 0.8, (250, 250, 0, 200))
         )
         """
@@ -485,7 +483,7 @@ class Menu:
             value = 0
         slider_antialiasing = Slider(settings_video_scrollbox, (.6, 0.18), row=5, column=0, value=value)
         slider_antialiasing.callback = slider_antialiasing_update
-        label_antialiasing = Label(settings_video_scrollbox, (.6, 0.18), row=5, column=0)
+        label_antialiasing = Label(settings_video_scrollbox, (.6, 0.18), row=5, column=0, translator=translator)
         slider_antialiasing_update()
         label_antialiasing.hover_callback = lambda: settings_video_hover(1,
             ("Antialiasing\n", 1, (250, 250, 250, 200)),
@@ -493,41 +491,42 @@ class Menu:
             ("low\n\n", 0.8, (250, 250, 0, 200)),
             ("Set the level of antialiasing.\nAntialiasing creates\nsmoother edges of\nshapes.", 0.8, (250, 250, 250, 200))
         )
-
+        """
         # Map buffers button
         def button_map_buffers_update():
             window.toggle_map_buffers()
             button_map_buffers.text = "Map Buffers: " + str(window.options["map buffers"])
 
-        button_map_buffers = Button(settings_video_scrollbox, (0.6, .18), row=5, column=1, callback=button_map_buffers_update, text="Map Buffers: " + str(window.options["map buffers"]))
+        button_map_buffers = Button(settings_video_scrollbox, (0.6, .18), row=5, column=1, callback=button_map_buffers_update, text="Map Buffers: " + str(window.options["map buffers"]), translator=translator)
         button_map_buffers.hover_callback = lambda: settings_video_hover(0,
             ("Map Buffers\n", 1, (250, 250, 250, 200)),
-            ("Performane impact: ", 0.8, (250, 250, 250, 200)),
+            ("Performance impact: ", 0.8, (250, 250, 250, 200)),
             ("none\n\n", 0.8, (0, 250, 0, 200)),
             ("When enabled, rendering\ndata is directly copied\ninto buffers.", 0.8, (250, 250, 250, 200))
         )
+        """
 
-        button_settings_back = Button(settings_video_page, (1.4, .2), row=3, column=0, callback=settings_page.open, text="Back")
+        button_settings_back = Button(settings_video_page, (1.4, .2), row=3, column=0, callback=settings_page.open, text="Back", translator=translator)
         settings_video_page.layout()
         button_settings_video_open.callback = settings_video_page.open
 
         ###---###  Audio settings page  ###---###
         settings_audio_page = Page(parent=settings_page, columns=1, spacing=0.1)
-        Label(settings_audio_page, (1, .3), row=0, column=0, text="Audio Settings", fontsize=2)
-        Button(settings_audio_page, (1.4, .2), row=1, column=0, callback=settings_page.open, text="Back")
+        Label(settings_audio_page, (1, .3), row=0, column=0, text="Audio Settings", fontsize=2, translator=translator)
+        Button(settings_audio_page, (1.4, .2), row=1, column=0, callback=settings_page.open, text="Back", translator=translator)
         settings_audio_page.layout()
         button_settings_audio_open.callback = settings_audio_page.open
 
         settings_world_page = Page(parent=settings_page, columns=1, spacing=0.1)
-        Label(settings_world_page, (1, .3), row=0, column=0, text="World Settings", fontsize=2)
-        Button(settings_world_page, (1.4, .2), row=1, column=0, callback=settings_page.open, text="Back")
+        Label(settings_world_page, (1, .3), row=0, column=0, text="World Settings", fontsize=2, translator=translator)
+        Button(settings_world_page, (1.4, .2), row=1, column=0, callback=settings_page.open, text="Back", translator=translator)
         settings_world_page.layout()
         button_settings_world_open.callback = settings_world_page.open
 
         ###---###  Controls settings page  ###---###
         settings_control_page = Page(parent=settings_page, columns=2, spacing=0.1)
-        Label(settings_control_page, (1, .2), row=0, column=0, columnspan=2, text="Control Settings", fontsize=2)
-        Label(settings_control_page, (1, .1), row=1, column=0, columnspan=2, text="Click a button and press a key to bind a new key to an action", fontsize=1)
+        Label(settings_control_page, (1, .2), row=0, column=0, columnspan=2, text="Control Settings", fontsize=2, translator=translator)
+        Label(settings_control_page, (1, .1), row=1, column=0, columnspan=2, text="Click a button and press a key to bind a new key to an action", fontsize=1, translator=translator)
 
         scrollbox = ScrollBox(settings_control_page, (1.4, 1), row=2, column=0, columnspan=2, columns=2)
         keys = list(filter(lambda x: x.startswith("key."), window.options))
@@ -559,16 +558,17 @@ class Menu:
                 if not option.startswith("key."):
                     continue
                 window.options[option] = value
+                window.keys: dict = dict.fromkeys([value for key, value in window.options.items() if key.startswith("key.")], 0)
                 buttons[option].text = value.title()
 
         for i, key in enumerate(keys):
-            Label(scrollbox, (0.6, .18), row=i, column=0, text=key.split(".")[1].title())
-            buttons[key] = Button(scrollbox, (0.6, .18), row=i, column=1, callback=lambda key=key: select_key(key), text=window.options[key].title(), duration=-1)
+            Label(scrollbox, (0.6, .18), row=i, column=0, text=key.split(".")[1].title(), translator=translator)
+            buttons[key] = Button(scrollbox, (0.6, .18), row=i, column=1, callback=lambda key=key: select_key(key), text=window.options[key].title(), duration=-1, translator=translator)
             buttons[key].key_identifer = key
         scrollbox.callback = update_key
 
-        Button(settings_control_page, (0.65, .2), row=3, column=0, callback=settings_page.open, text="Back")
-        Button(settings_control_page, (0.65, .2), row=3, column=1, callback=reset_keys, text="Reset")
+        Button(settings_control_page, (0.65, .2), row=3, column=0, callback=settings_page.open, text="Back", translator=translator)
+        Button(settings_control_page, (0.65, .2), row=3, column=1, callback=reset_keys, text="Reset", translator=translator)
         settings_control_page.layout()
         button_settings_control_open.callback = settings_control_page.open
 

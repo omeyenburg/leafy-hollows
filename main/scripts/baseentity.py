@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 from scripts.geometry import angle
 import scripts.physics as physics
-import math
-math.angle = angle
+import math; math.angle = angle
 
 
 class Entity(physics.PhysicsObject): # Used for ropes etc.
