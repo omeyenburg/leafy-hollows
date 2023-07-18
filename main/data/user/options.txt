@@ -1,12 +1,13 @@
 enableVsync: True
 maxFps: 1000
 particles: 1
-map buffers: True
+map buffers: False
 antialiasing: 16
 resolution: 2
 post processing: False
-show fps: False
+show fps: True
 show debug: False
+language: "deutsch"
 key.left: "a"
 key.right: "d"
 key.jump: "space"
