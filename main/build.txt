@@ -1,2 +1,8 @@
+# Windows & MacOS
 pip install pyinstaller
 pyinstaller main.spec
+
+# Android (only possible on MacOS & Linux)
+https://buildozer.readthedocs.io
+https://www.youtube.com/watch?v=L6XOqakZOeA
+requirements: python3, pygame, jnius, sdl2, sdl2_image, sdl2_mixer, sdl2_ttf, png, jpeg

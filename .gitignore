@@ -3,3 +3,4 @@ main/scripts/__pycache__
 main/main.pyc
 .vscode
 .DS_Store
+experimental/android_test/.buildozer

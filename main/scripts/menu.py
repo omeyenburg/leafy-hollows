@@ -454,19 +454,22 @@ class Menu:
             ("When enabled, post\nprocessing is performed\nafter the actual rendering\nfor additional visual effects.", 0.8, (250, 250, 250, 200))
         )
 
-        """
-        # Show debug button
-        def button_show_debug_update():
-            window.options["show debug"] = not window.options["show debug"]
-            button_show_debug.text = "Show debug: " + str(window.options["show debug"])
+        # Language button
+        def button_language_update():
+            if window.options["language"] == "english":
+                window.options["language"] = "deutsch"
+            else:
+                window.options["language"] = "english"
+            translator.language = window.options["language"]
+            button_language.text = "Language: " + window.options["language"].title()
 
-        button_show_debug = Button(settings_video_scrollbox, (0.6, .18), row=3, column=1, callback=button_show_debug_update, text="Show debug: " + str(window.options["show debug"]))
-        button_show_debug.hover_callback = lambda: settings_video_hover(0,
-            ("Show debug info\n", 1, (250, 250, 250, 200)),
+        button_language = Button(settings_video_scrollbox, (0.6, .18), row=4, column=1, callback=button_language_update, text="Language: " + window.options["language"].title(), translator=translator)
+        button_language.hover_callback = lambda: settings_video_hover(0,
+            ("Language\n", 1, (250, 250, 250, 200)),
             ("Performance impact: ", 0.8, (250, 250, 250, 200)),
-            ("low\n\n", 0.8, (250, 250, 0, 200))
+            ("none\n\n", 0.8, (0, 250, 0, 200)),
+            ("Select either English\nor German as the\nused language.", 0.8, (250, 250, 250, 200))
         )
-        """
 
         # Antialiasing slider
         def slider_antialiasing_update():

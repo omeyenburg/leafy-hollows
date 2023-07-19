@@ -1,0 +1,28 @@
+<MyRoot>
+    orientation: "vertical"
+    TextInput:
+        id: calc_field
+        readonly: True
+        disabled: True
+        font_size: 64
+    GridLayout:
+        rows: 1
+        columns: 4
+        padding: 100
+        spacing: 100
+        Button: 
+            text: "1"
+            font_size: 26
+            on_press: root.calc_symbol("1")
+        Button: 
+            text: "2"
+            font_size: 26
+            on_press: root.calc_symbol("2")
+        Button: 
+            text: "3"
+            font_size: 26
+            on_press: root.calc_symbol("3")
+        Button: 
+            text: "4"
+            font_size: 26
+            on_press: root.calc_symbol("4")
