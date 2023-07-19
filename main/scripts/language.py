@@ -1,13 +1,4 @@
 # -*- coding: utf-8 -*-
-from deep_translator import GoogleTranslator
-
-
-class OnlineTranslator(GoogleTranslator):
-    def __init__(self, language):
-        super().__init__(source='english', target=language)
-
-    def translate(self, text):
-        return super().translate(text=text)
 
 
 translate_german = {
@@ -55,11 +46,25 @@ translate_german = {
     "processing is performed": "das Bild mit visuellen",
     "after the actual rendering": "Effekten nachbearbeitet.",
     "for additional visual effects.": "",
+    "Select either English": "Wähle entweder Englisch",
+    "or German as the": "oder Deutsch, als",
+    "used language.": "die verwendete Sprache.",
     "Set the level of antialiasing.": "Lege den Grad der",
     "Antialiasing creates": "Antialiasing fest.",
     "smoother edges of": "Antialiasing erzeugt glattere",
     "shapes.": "Kanten von Formen.",
 }
+
+
+"""
+from deep_translator import GoogleTranslator
+class OnlineTranslator(GoogleTranslator):
+    def __init__(self, language):
+        super().__init__(source='english', target=language)
+
+    def translate(self, text):
+        return super().translate(text=text)
+"""
 
 
 class Translator:

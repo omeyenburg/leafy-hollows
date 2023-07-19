@@ -11,6 +11,10 @@ class Player(CollisionPhysicsObject):
         self.sprint_speed: float = sprint_speed
         self.acceleration_time: float = acceleration_time
         self.jump_force: int = jump_force
+        self.state: str = "idle"
+        # state is used for movement & animations
+        # states: idle, walk, sprint, crawl
+        self.direction: int = 0 # 0 = right; 1 = left
 
     def draw(self, window):
         rect = window.camera.map_coord((self.rect.x, self.rect.y, self.rect.w, self.rect.h), from_world=True)
