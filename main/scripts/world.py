@@ -32,6 +32,7 @@ class Chunk:
             self.array[dx, dy] = self.generate_block(x, y, seed, blocks)
 
     def generate_block(self, x: int, y: int, seed: float, blocks: dict):
+        return blocks["dirt"]
         world_gen = 1
 
         if world_gen == 1:
@@ -104,6 +105,8 @@ class World:
         self.wind: float = 0.0 # wind direction
         self.loaded_chunks: tuple = (0, 0, 0, 0)
         self.transparent_blocks = [blocks["grass_idle"]]
+
+        self.generate()
 
     def __getitem__(self, coord: [int]):
         return self.get_block(coord[0], coord[1])
@@ -200,4 +203,20 @@ class World:
 
         self.view = chunk_view
 
+    def generate(self):
+        points = []
+        position = [0, 0]
+        angle = 0
+        length = 1000
+        for i in range(length):
+            position = [position[0] + math.cos(angle), position[1] + math.sin(angle)]
+            points.append(position)
+            angle += pnoise1(i * 10.215 + 0.0142, octaves=3)
 
+        for point in points:
+            radius = int((pnoise1(sum(point) / 2 + 100, octaves=3) + 2) * 3)
+            for dx in range(-radius, radius + 1):
+                for dy in range(-radius, radius + 1):
+                    if dx ** 2 + dy ** 2 <= radius ** 2:
+                        coord = (int(point[0] + dx), int(point[1] + dy))
+                        self[coord] = 0

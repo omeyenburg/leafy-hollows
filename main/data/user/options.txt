@@ -1,10 +1,10 @@
-enableVsync: True
+enableVsync: False
 maxFps: 1000
 particles: 1
 map buffers: False
 antialiasing: 16
 resolution: 2
-post processing: False
+post processing: True
 show fps: True
 show debug: False
 language: "english"
