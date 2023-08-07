@@ -105,6 +105,22 @@ class Rect:
     def collidepoint(self, point):
         return self.x < point[0] < self.right and self.y < point[1] < self.bottom
 
+    def intersection(self, other):
+        return not (self.right <= other.left
+                    or self.left >= other.right
+                    or self.bottom <= other.top
+                    or self.top >= other.bottom)
+
+    @staticmethod
+    def multi_intersection(rectangles):
+        for rect1 in rectangles:
+            others = rectangles[:]
+            others.remove(rect1)
+            for rect2 in others:
+                if Rect.intersection(Rect(*rect1), Rect(*rect2)):
+                    return True
+        return False
+
 
 def angle(a):
     return a % (2 * math.pi)

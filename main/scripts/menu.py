@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from scripts.language import Translator
+from scripts.window import Window
 import scripts.geometry as geometry
-import scripts.graphics as graphics
 import scripts.util as util
 import math
 import sys
@@ -42,7 +42,7 @@ class Page:
             child.rect.centery = -child.rect.centery
             child.layout()
 
-    def update(self, window: graphics.Window):
+    def update(self, window: Window):
         self.draw(window)
         mouse_pos = window.camera.map_coord(window.mouse_pos[:2], from_pixel=1, from_centered=1)
         for child in self.children:
@@ -54,7 +54,7 @@ class Page:
         if window.keybind("return") == 1 and not self.parent is None:
             self.parent.open()
 
-    def draw(self, window: graphics.Window):
+    def draw(self, window: Window):
         pass
 
     def open(self):
@@ -77,7 +77,7 @@ class Widget:
         if not 0 <= self.column < parent.columns:
             raise ValueError("Invalid Column " + str(self.column) + " for parent with " + str(parent.columns) + " column(s).")
 
-    def update(self, window: graphics.Window):
+    def update(self, window: Window):
         self.draw()
         for child in self.children:
             child.update(window)
@@ -91,7 +91,7 @@ class Label(Widget):
         super().__init__(*args, **kwargs)
         self.text = text
 
-    def update(self, window: graphics.Window):
+    def update(self, window: Window):
         window.draw_text(self.rect.center, self.translator.translate(self.text), (250, 250, 250, 200), self.fontsize, centered=True)
 
 
@@ -103,7 +103,7 @@ class Button(Widget):
         self.clicked = 0
         self.duration = duration # When button pressed: self.clicked > 0 for [duration] seconds
 
-    def update(self, window: graphics.Window):
+    def update(self, window: Window):
         mouse_pos = window.camera.map_coord(window.mouse_pos[:2], from_pixel=1, from_centered=1)
         if window.mouse_buttons[0] and self.rect.collidepoint(mouse_pos):
             if self.duration > 0:
@@ -122,11 +122,11 @@ class Button(Widget):
         else:
             self.draw_idle(window)
 
-    def draw_idle(self, window: graphics.Window):
+    def draw_idle(self, window: Window):
         window.draw_rect(self.rect[:2], self.rect[2:], (250, 0, 0, 200))
         window.draw_text(self.rect.center, self.translator.translate(self.text), (50, 0, 0, 250), self.fontsize, centered=True)
 
-    def draw_clicked(self, window: graphics.Window):
+    def draw_clicked(self, window: Window):
         window.draw_rect(self.rect[:2], self.rect[2:], (200, 0, 0, 200))
         window.draw_text(self.rect.center, self.translator.translate(self.text), (0, 0, 0, 250), self.fontsize, centered=True)
 
@@ -135,7 +135,7 @@ class Space(Widget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def update(self, window: graphics.Window):
+    def update(self, window: Window):
         ...
 
 
@@ -147,7 +147,7 @@ class Slider(Widget):
         self.selected = False
         self.slider_rect = self.rect.copy()
 
-    def update(self, window: graphics.Window):
+    def update(self, window: Window):
         self.slider_rect.h = self.rect.h
         self.slider_rect.w = self.rect.h / 6
         self.slider_rect.x = self.rect.x + (self.rect.w - self.slider_rect.w) * self.value
@@ -170,7 +170,7 @@ class Slider(Widget):
 
         self.draw(window)
 
-    def draw(self, window: graphics.Window):
+    def draw(self, window: Window):
         window.draw_rect(self.rect[:2], self.rect[2:], (60, 0, 0, 200))
         window.draw_rect(self.slider_rect[:2], self.slider_rect[2:], (250, 0, 0, 200))
         #window.draw_rect((self.rect[0], self.rect.centery - self.rect[3] / 8), (self.rect[2], self.rect[3] / 4), (50, 0, 0, 200))
@@ -218,7 +218,7 @@ class ScrollBox(Widget):
         self.callback = callback
         self.slider_y = 0
 
-    def update(self, window: graphics.Window):
+    def update(self, window: Window):
         adjust_offset = max(self.offset, self.children[-1].rect.y - self.rect.y - self.spacing)
         adjust_offset = min(adjust_offset, self.children[0].rect.bottom - self.rect.bottom + self.spacing)
         self.offset += window.mouse_wheel[3] / window.height * 10
@@ -249,11 +249,11 @@ class ScrollBox(Widget):
         self.offset = self.children[0].rect.bottom - self.rect.bottom + self.spacing
         self.start_offset = self.offset
 
-    def draw(self, window: graphics.Window):
+    def draw(self, window: Window):
         window.draw_rect(self.rect[:2], self.rect[2:], (60, 60, 60, 200))
 
 
-def HoverBox(window: graphics.Window, rect: list, text: list, translator=None):
+def HoverBox(window: Window, rect: list, text: list, translator=None):
     """
     Draw a box with multi colored text.
     text: [("text", (r, g, b, a))]
@@ -274,7 +274,7 @@ def HoverBox(window: graphics.Window, rect: list, text: list, translator=None):
 
 
 class Menu:
-    def __init__(self, window: graphics.Window):
+    def __init__(self, window: Window):
         self.window = window
         self.in_game = False
         def toggle_in_game():

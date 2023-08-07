@@ -1,8 +1,14 @@
 # -*- coding: utf-8 -*-
-from OpenGL.GL.shaders import compileProgram, compileShader
+from scripts.camera import Camera
+from scripts.shader import Shader
+from scripts.font import Font
 from OpenGL.GL import *
+from scripts.image import (
+    load_blocks, load_sprites, get_sprite_rect
+)
 import scripts.world as world
 import scripts.util as util
+import scripts.file as file
 import numpy
 import math
 import sys
@@ -178,16 +184,16 @@ class Window:
         glVertexAttribDivisor(4, 1)
 
         # Atlas texture (contains images)
-        self.atlas_rects, self.atlas_images, image = TextureAtlas.loadImages()
+        image = load_sprites()
         self.texAtlas = self.texture(image)
 
         # Font texture (contains letter images)
-        #self.font_rects, image = Font.fromPNG(util.file.path("data/fonts/font.png"))
+        #self.font_rects, image = Font.fromPNG(file.abspath("data/fonts/font.png"))
         self.font_rects, image = Font.fromSYS(None, size=30, bold=True, antialias=True, lower=True)
         self.texFont = self.texture(image)
 
         # Block texture (contains block images)
-        self.block_indices, image = TextureAtlas.loadBlocks()
+        self.block_indices, image = load_blocks()
         self.texBlocks = self.texture(image)
 
         # World texture (contains map data)
@@ -492,7 +498,7 @@ class Window:
         Loads the options from the options.txt file.
         """
         options = self.options_default.copy()
-        options_string = util.file.read("data/user/options.txt", "")
+        options_string = file.read("data/user/options.txt", "")
 
         for line in options_string.split("\n"):
             keyword = line.split(":")[0].strip()
@@ -528,7 +534,7 @@ class Window:
             else:
                 options_string += str(key) + ": " + str(value) + "\n"
 
-        util.file.write("data/user/options.txt", options_string)
+        file.write("data/user/options.txt", options_string)
 
     def keybind(self, key):
         """
@@ -625,9 +631,7 @@ class Window:
         """
         Draw an image on the window.
         """
-        animation_frames, rect_index = self.atlas_images[image]
-        frame = int((self.time / self.animation_speed) % animation_frames)
-        rect = self.atlas_rects[rect_index + frame]
+        rect = get_sprite_rect(image, self.time * 1000)
 
         dest_rect = (position[0] + size[0] / 2, position[1] + size[1] / 2, size[0] / 2, size[1] / 2)
         if not self.stencil_rect is None:
@@ -811,7 +815,7 @@ class TextureAtlas:
         """
         Load block texture atlas from files in a folder.
         """
-        paths = util.file.find("data/blocks", "*.png", True)        
+        paths = file.find("data/blocks", "*.png", True)        
         width = math.ceil(math.sqrt(len(paths)))
         height = math.ceil(len(paths) / width)
         image = pygame.Surface((width * 16, height * 16 + 1), SRCALPHA)
@@ -838,14 +842,14 @@ class TextureAtlas:
             image.set_at((x, height * 16), (animation_frames[block], 0, 0))
             x += animation_frames[block]
 
-        pygame.image.save(image, util.file.path("data/blocks.png"))
+        pygame.image.save(image, file.abspath("data/blocks.png"))
         return block_indices, image
 
     def loadImages():
         """
         Load image texture atlas from files in a folder.
         """
-        images_data = util.file.read("data/images/images.properties", split=True)
+        images_data = file.read("data/images/images.properties", split=True)
         image_rects = [] # list of rects
         images = {} # "image": [rect_index, animation_frames]
         paths = {}
@@ -871,7 +875,7 @@ class TextureAtlas:
             width = max(width, rect[0] + rect[2])
             height = max(height, rect[1] + rect[3])
             
-            image_path = util.file.find("data/images", name + ".png", True)
+            image_path = file.find("data/images", name + ".png", True)
             if not len(image_path):
                 raise ValueError("Could not find file " + name + ".png in data/images")
 
@@ -884,268 +888,6 @@ class TextureAtlas:
             image.blit(pygame.image.load(image_path), (image_rects[i][0], image_rects[i][1]))
             image_rects[i] = (image_rects[i][0] / width, 1 - image_rects[i][1] / height - image_rects[i][3] / height, image_rects[i][2] / width, image_rects[i][3] / height)
 
-        pygame.image.save(image, util.file.path("data/images.png"))
+        pygame.image.save(image, file.abspath("data/images.png"))
 
         return image_rects, images, image
-
-
-class Font:
-    def fromPNG(path):
-        """
-        Load a monospaced font from a PNG file with all letters from chr(32) to chr(96).
-        """
-        image = pygame.image.load(path).convert()
-
-        letter_width = image.get_width() // 64
-        letter_height = image.get_height()
-        letters = {chr(i + 32): (1 / 64 * i, 1 / 64, letter_height / image.get_width()) for i in range(64)}
-
-        return (letters, image)
-
-    def fromTTF(path, size=1, antialias=False, lower=True):
-        """
-        Load a font from a TrueTypeFont file.
-        """
-        font = pygame.font.Font(path, size)
-        images = []
-        letters = {}
-        if lower: # upper letters :96 | lower letters :123
-            limit = 123
-        else:
-            limit = 96
-
-        font_height = font.render("".join([chr(i) for i in range(32, limit)]), antialias, (0, 0, 0)).get_height()
-        font_width = 0
-
-        space = font.render("A", antialias, (0, 0, 0))
-
-        for i in range(32, limit):
-            letter = chr(i)
-            if letter != " ":
-                image = font.render(letter, antialias, (255, 255, 255))
-            else:
-                image = space
-            letter_width = image.get_width()
-            letters[chr(i)] = (font_width, letter_width, font_height)
-
-            font_width += letter_width
-            images.append(image)
-
-        image = pygame.Surface((font_width, font_height))
-
-        for letter in letters:
-            image.blit(images[ord(letter) - 32], (0, letters[letter][0]))
-            letters[letter] = (letters[letter][0] / font_width, letters[letter][1] / font_width, font_height / font_width)
-
-        return (letters, image)
-
-    def fromSYS(name, size=1, bold=False, antialias=False, lower=True):
-        """
-        Load a font from the system.
-        """
-        font = pygame.font.SysFont(name, size, bold=bold)
-        images = []
-        letters = {}
-        if lower: # upper letters 32:96 | upper & lower letters 32:123
-            limit = 123
-        else:
-            limit = 96
-
-        font_height = font.render("".join([chr(i) for i in range(32, limit)]), antialias, (0, 0, 0)).get_height()
-        font_width = 0
-
-        space = font.render("A", antialias, (0, 0, 0))
-        for i in range(32, limit):
-            letter = chr(i)
-            if letter != " ":
-                image = font.render(letter, antialias, (255, 255, 255))
-            else:
-                image = space
-            letter_width = image.get_width()
-            letters[chr(i)] = (font_width, letter_width, font_height)
-
-            font_width += letter_width
-            images.append(image)
-
-        image = pygame.Surface((font_width, font_height))
-        for letter in letters:
-            image.blit(images[ord(letter) - 32], (letters[letter][0], 0))
-            letters[letter] = (letters[letter][0] / font_width, letters[letter][1] / font_width, font_height / font_width)
-
-        return (letters, image)
-
-
-class Shader:
-    active = None
-
-    def __init__(self, vertex, fragment, replace={}, **variables):
-        self.program = glCreateProgram()
-        
-        content = util.file.read(vertex)
-        for search, replacement in replace.items():
-            content = content.replace(str(search), str(replacement))
-        vertex_shader = compileShader(content, GL_VERTEX_SHADER)
-        glAttachShader(self.program, vertex_shader)
-
-        content = util.file.read(fragment)
-        for search, replacement in replace.items():
-            content = content.replace(str(search), str(replacement))
-        fragment_shader = compileShader(content, GL_FRAGMENT_SHADER)
-        glAttachShader(self.program, fragment_shader)
-
-        glLinkProgram(self.program)
-        glValidateProgram(self.program)
-
-        glDeleteShader(vertex_shader)
-        glDeleteShader(fragment_shader)
-
-        # Dict containing all variables which should be send to the fragment shader {variable1: (uniformLoc, glUniformFunc, value)}
-        self.variables = {variable: Shader.get_uniform_loc(self.program, variable, variables[variable]) for variable in variables}
-
-    def setvar(self, variable, *value):
-        """
-        Set the value of a variable, which is send to the shader by update
-        """
-        self.variables[variable][2] = value
-
-    def activate(self):
-        """
-        Activate the shader.
-        """
-        glUseProgram(self.program)
-        Shader.active = self
-
-    def delete(self):
-        """
-        Delete the shader.
-        """
-        glDeleteProgram(self.program)
-
-    def get_uniform_loc(program, variable, data_type): # Get location and convert glsl data type to valid function
-        loc = glGetUniformLocation(program, variable)
-        func = data_type_map = {'int': glUniform1i,
-                                'uint': glUniform1ui,
-                                'float': glUniform1f,
-                                'vec2': glUniform2f,
-                                'vec3': glUniform3f,
-                                'vec4': glUniform4f,
-                                'bvec2': glUniform2i,
-                                'bvec3': glUniform3i,
-                                'bvec4': glUniform4i,
-                                'ivec2': glUniform2i,
-                                'ivec3': glUniform3i,
-                                'ivec4': glUniform4i,
-                                'uvec2': glUniform2ui,
-                                'uvec3': glUniform3ui,
-                                'uvec4': glUniform4ui,
-                                'mat2': glUniformMatrix2fv,
-                                'mat3': glUniformMatrix3fv,
-                                'mat4': glUniformMatrix4fv}[data_type]
-        return [loc, func, None]
-
-    def update(self):
-        """
-        Update all variables.
-        """
-        for index, (loc, func, value) in self.variables.items():
-            if value is None:
-                continue
-            func(loc, *value)
-            self.variables[index][2] = None
-
-
-class Camera:
-    def __init__(self, window):
-        self.resolution: int = window.options["resolution"]
-        self.pixels_per_meter: int = window.options["resolution"] * 16
-        self.threshold = 0.1
-
-        self.pos: [float] = [0, 0]
-        self.vel: [float] = [0, 0]
-        self.dest: [float] = [0, 0]
-        self.window: Window = window
-
-    def set(self, pos):
-        """
-        Set the camera position.
-        Use move() for slow movement.
-        """
-        self.pos = pos
-        self.vel = [0, 0]
-        self.dest = pos
-
-    def move(self, pos: [float]):
-        """
-        Move the camera slowly to a position.
-        Use set() for instant movement.
-        """
-        self.dest = pos
-
-    def update(self):
-        """
-        Update the camera.
-        """
-        xvel = round((self.dest[0] - self.pos[0]) / 10, 3)
-        yvel = round((self.dest[1] - self.pos[1]) / 10, 3)
-
-        xvel = math.copysign(max(abs(xvel) - self.threshold, 0), xvel)
-        yvel = math.copysign(max(abs(yvel) - self.threshold, 0), yvel)
-
-        self.vel[0] = xvel
-        self.vel[1] = yvel
-        self.pos[0] += self.vel[0]
-        self.pos[1] += self.vel[1]
-
-    def map_coord(self, coord: [float], from_pixel: bool=True, from_centered: bool=True, from_world: bool=False, pixel: bool=False, centered: bool=True, world: bool=False):
-        """
-        Convert a coordinate to a different format.
-        Current format specified by from_pixel, from_centered, from_world.
-        Output format specified by pixel, centered, world.
-        """
-        if from_world:
-            from_pixel = True
-        if world:
-            pixel = True
-        coord = list(coord)
-
-        if from_world and not world:
-            for i in range(len(coord)):
-                if i < 2:
-                    coord[i] = (coord[i] - self.pos[i]) * self.pixels_per_meter
-                else:
-                    coord[i] = coord[i] * self.pixels_per_meter
-        elif (not from_world) and world:
-            for i in range(len(coord)):
-                coord[i] = coord[i] / self.pixels_per_meter + self.pos[i % 2]
-
-        if from_pixel and not pixel:
-            for i in range(len(coord)):
-                coord[i] /= (self.window.width, self.window.height)[i%2] / 2
-        elif (not from_pixel) and pixel:
-            for i in range(len(coord)):
-                coord[i] /= (self.window.width, self.window.height)[i%2] / 2
-
-        if (not from_centered) and centered:
-            for i in range(2):
-                coord[i] -= 1
-        elif from_centered and not centered:
-            for i in range(2):
-                coord[i] += 1
-
-        return coord
-
-    def map_color(self, color):
-        if not float in color:
-            color = [i / 255 for i in color]
-        if len(color) == 3:
-            color = (*color, 1)
-        return color
-
-    def visible_blocks(self):
-        center = (int(self.pos[0]),
-                  int(self.pos[1]))
-        start = (center[0] - math.floor(self.window.width / 2 / self.pixels_per_meter) - 2,
-                 center[1] - math.floor(self.window.height / 2 / self.pixels_per_meter) - 2)
-        end = (center[0] + math.ceil(self.window.width / 2 / self.pixels_per_meter) + 2,
-               center[1] + math.ceil(self.window.height / 2 / self.pixels_per_meter) + 2)
-        return start, end

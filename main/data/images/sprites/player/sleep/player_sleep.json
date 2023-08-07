@@ -1,0 +1,14 @@
+{
+  "name": "player_sleep",
+  "time": 300,
+  "frames": [
+    "player_sleep0",
+    "player_sleep0",
+    "player_sleep0",
+    "player_sleep0",
+    "player_sleep0",
+    "player_sleep1",
+    "player_sleep2",
+    "player_sleep3"
+  ]
+}

@@ -2,7 +2,6 @@
 from scripts.util import realistic
 from noise import *
 import scripts.worldnoise as noise
-from threading import Thread
 import random
 import numpy
 import math
@@ -203,15 +202,15 @@ class World:
 
         self.view = chunk_view
 
-    def generate(self):
+    def generate(self): # work in progress
         points = []
         position = [0, 0]
         angle = 0
-        length = 1000
+        length = 10000
         for i in range(length):
             position = [position[0] + math.cos(angle), position[1] + math.sin(angle)]
             points.append(position)
-            angle += pnoise1(i * 10.215 + 0.0142, octaves=3)
+            angle += snoise2(i * 20.215 + 0.0142, 1, octaves=3) / 2 # use simplex; perlin repeats
 
         for point in points:
             radius = int((pnoise1(sum(point) / 2 + 100, octaves=3) + 2) * 3)
