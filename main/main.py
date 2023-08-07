@@ -5,8 +5,8 @@
 # https://github.com/pyinstaller/pyinstaller/wiki/Recipe-OSX-Code-Signing
 # https://support.apple.com/en-us/HT204397
 
-import scripts.graphics as graphics
 import scripts.util as util
+from scripts.window import Window
 from scripts.game import Game
 from scripts.menu import Menu
 
@@ -23,7 +23,7 @@ os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 #lib.c_print()
 
 # Create window
-window: graphics.Window = graphics.Window("Hello World")
+window: Window = Window("Hello World")
 game: Game = Game(window)
 menu: Menu = Menu(window)
 

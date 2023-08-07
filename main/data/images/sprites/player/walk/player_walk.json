@@ -1,0 +1,9 @@
+{
+  "name": "player_walk",
+  "time": 200,
+  "frames": [
+    "player_walk0",
+    "player_walk1",
+    "player_walk2"
+  ]
+}

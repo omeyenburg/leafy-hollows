@@ -1,0 +1,13 @@
+{
+  "name": "player_climb",
+  "time": 200,
+  "frames": [
+    "player_climb_pole1",
+    "player_climb_pole2",
+    "player_climb_pole3",
+    "player_climb_pole4",
+    "player_climb_pole3",
+    "player_climb_pole2"
+  ]
+}
+

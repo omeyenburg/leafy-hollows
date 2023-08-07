@@ -1,0 +1,8 @@
+{
+  "name": "player_climb",
+  "time": 500,
+  "frames": [
+    "player_climb0",
+    "player_climb1"
+  ]
+}

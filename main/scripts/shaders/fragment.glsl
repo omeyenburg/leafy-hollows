@@ -18,6 +18,9 @@ int BLOCKSIZEDEST;
 int BLOCKSIZESOURCE;
 vec2 BLOCKCOUNT;
 
+const float border_theshold = 0.0001;
+const vec4 transparency = vec4(0.0, 0.0, 0.0, 0.0);
+
 int block = 0;
 int xblock;
 int yblock;
@@ -30,14 +33,18 @@ int animation_frames;
 int image_id;
 ivec2 source_offset;
 ivec2 source;
-vec4 block_color = vec4(0, 0, 0, 0);
-vec4 depth_block_color = vec4(0, 0, 0, 0);
+vec4 block_color = transparency;
+vec4 depth_block_color = transparency;
 
 
 void main() {
     switch (int(floor(vertShape))) {
         case 0: // Image
-            fragColor = texture(texAtlas, vertTexcoord * vertSourceOrColor.zw + vertSourceOrColor.xy);
+            if (vertTexcoord.x < border_theshold || vertTexcoord.y < border_theshold || vertTexcoord.x > 1.0 - border_theshold || vertTexcoord.y > 1.0 - border_theshold) {
+                fragColor = transparency;
+            } else {
+                fragColor = texture(texAtlas, vertTexcoord * vertSourceOrColor.zw + vertSourceOrColor.xy);
+            }
             break;
         case 1: // Rectangle
             fragColor = vertSourceOrColor;
@@ -46,7 +53,7 @@ void main() {
             if (length(vertTexcoord - 0.5) <= 0.5) {
                 fragColor = vertSourceOrColor;
             } else { // Transparency
-                fragColor = vec4(0.0, 0.0, 0.0, 0.0);
+                fragColor = transparency;
             }
             break;
         case 3: // Text
@@ -60,7 +67,7 @@ void main() {
             if (texture(texFont, vec2(vertTexcoord.x * text_source.z + text_source.x, vertTexcoord.y * text_source.w + text_source.y)) == vec4(1.0, 1.0, 1.0, 1.0)) {
                 fragColor = text_color;
             } else { // Transparency
-                fragColor = vec4(0.0, 0.0, 0.0, 0.0);
+                fragColor = transparency;
             }
             break;
         case 4: // World
@@ -212,7 +219,7 @@ void main() {
             vec2 p0 = BLOCKCOUNT / 2;
             vec2 p1 = vertTexcoord * BLOCKSIZEDEST;
 
-            fragColor = vec4(0, 0, 0, 0);
+            fragColor = transparency;
 
             /*
             for (int x = 0; x < BLOCKCOUNT.x; x++) {

@@ -1,0 +1,12 @@
+{
+  "name": "player_fall",
+  "time": 400,
+  "frames": [
+    "player_fall0",
+    "player_fall1",
+    "player_fall2",
+    "player_fall3",
+    "player_fall2",
+    "player_fall1"
+  ]
+}

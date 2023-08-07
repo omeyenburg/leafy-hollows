@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from scripts.util import realistic
+from scripts.window import Window
 from scripts.physics import *
 
 
@@ -11,27 +12,30 @@ class Player(CollisionPhysicsObject):
         self.sprint_speed: float = sprint_speed
         self.acceleration_time: float = acceleration_time
         self.jump_force: int = jump_force
-        self.state: str = "idle"
-        # state is used for movement & animations
-        # states: idle, walk, sprint, crawl
+        self.state: str = "idle" # state is used for movement & animations
         self.direction: int = 0 # 0 = right; 1 = left
+        self.hit_ground = 0
 
-    def draw(self, window):
-        rect = window.camera.map_coord((self.rect.x, self.rect.y, self.rect.w, self.rect.h), from_world=True)
-        window.draw_rect(rect[:2], rect[2:], (255, 0, 0))
+    def draw(self, window: Window):
+        rect = window.camera.map_coord((self.rect.x - self.rect.w/2, self.rect.y, self.rect.h, self.rect.h), from_world=True)
+        #window.draw_rect(rect[:2], rect[2:], (255, 0, 0))
+        window.draw_image("player_" + self.state, rect[:2], rect[2:], flip=(self.direction, 0))
     
     def jump(self, window, duration: float):
         force = self.jump_force * duration / window.delta_time
         if self.onGround: # Normal jump
             self.apply_force(force, 90, window.delta_time)
+            self.state = "jump"
         elif self.onWallLeft and window.keybind("left") and window.keybind("jump") == 1: # Wall jump left
             self.apply_force(force * 2.5, 120, window.delta_time)
             self.onWallLeft = 0
+            self.state = "jump"
         elif self.onWallRight and window.keybind("right") and window.keybind("jump") == 1: # Wall jump right
             self.apply_force(force * 2.5, 60, window.delta_time)
             self.onWallRight = 0
+            self.state = "jump"
         
-    def move(self, world, window):
+    def move(self, world, window: Window):
         def mouse_pull(strenght):
             mouse_pos = window.camera.map_coord(window.mouse_pos[:2], world=True)
         
@@ -52,18 +56,36 @@ class Player(CollisionPhysicsObject):
             else:
                 d_speed /= 10
         
+        if self.onGround:
+            if self.hit_ground > 0:
+                self.hit_ground -= window.delta_time
+                self.state = "hit_ground"
+            else:
+                self.state = "idle"
+        elif (self.onWallLeft and self.direction == 0 and world[int(self.rect.x + 1), int(self.rect.y + 1)]
+              or self.onWallRight and self.direction == 1 and world[int(self.rect.x - 1), int(self.rect.y + 1)]):
+            self.state = "climb"
+        elif self.vel[1] < 0:
+            self.state = "fall"
+            self.hit_ground = 0.2
         if window.keybind("right"): # d has priority over a
             if self.vel[0] < max_speed:
                 if self.vel[0] + d_speed > max_speed: # guaranteeing exact max speed
                     self.vel[0] = max_speed
                 else:
                     self.vel[0] += d_speed
+            self.direction = 0
+            if self.onGround and abs(self.vel[0]) > 1:
+                self.state = "walk"
         elif window.keybind("left"):
             if self.vel[0] > -max_speed:
                 if self.vel[0] - d_speed < -max_speed:
                     self.vel[0] = -max_speed
                 else:
                     self.vel[0] -= d_speed
+            self.direction = 1
+            if self.onGround and abs(self.vel[0]) > 1:
+                self.state = "walk"
         else:   
             if abs(self.vel[0]) <= d_speed:
                 self.vel[0] = 0
@@ -89,7 +111,7 @@ class Player(CollisionPhysicsObject):
             else:
                 world[math.floor(mouse_pos[0]), math.floor(mouse_pos[1])] = world.blocks["dirt"]
 
-    def update(self, world, window):
+    def update(self, world, window: Window):
         self.move(world, window)
         super().update(world, window.delta_time)
         self.draw(window)
@@ -101,7 +123,7 @@ class Player(CollisionPhysicsObject):
 def spawn_particle(pos: list[float, float]):
     particle_list.append(PhysicsObject(10, pos, [0.5, 0.5]))
 
-def tmp_draw_rect(window, pos, size, color):
+def tmp_draw_rect(window: Window, pos: [float, float], size: [float, float], color: [int, int, int]):
     rect = window.camera.map_coord((pos[0], pos[1], size[0], size[1]), from_world=True)
     window.draw_rect(rect[:2], rect[2:], color)
 
