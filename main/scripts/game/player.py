@@ -29,17 +29,14 @@ class Player(CollisionPhysicsObject):
         force = self.jump_force * duration / window.delta_time
         if self.onGround: # Normal jump
             self.apply_force(force, 90, window.delta_time)
-            self.state = "jump"
         elif self.vel[1] > 1.5: # Max wall jump velocity
             return
         elif self.onWallLeft and window.keybind("left") and window.keybind("jump") == 1: # Wall jump left
             self.apply_force(force * 2.5, 120, window.delta_time)
             self.onWallLeft = 0
-            self.state = "jump"
         elif self.onWallRight and window.keybind("right") and window.keybind("jump") == 1: # Wall jump right
             self.apply_force(force * 2.5, 60, window.delta_time)
             self.onWallRight = 0
-            self.state = "jump"
         
     def move(self, world, window: Window):
         def mouse_pull(strenght):
@@ -62,12 +59,8 @@ class Player(CollisionPhysicsObject):
             else:
                 d_speed /= 10
 
+        # animation states
         wall_block = (round(self.rect.x + 0.8), round(self.rect.y + 1))
-
-        # highlight block
-        #rect = window.camera.map_coord((*wall_block, 1, 1), from_world=True)
-        #window.draw_rect(rect[:2], rect[2:], (0, 0, 255, 100))
-        
         if self.vel[1] < 0:
             self.state = "fall"
             self.hit_ground = 0.2
@@ -81,7 +74,14 @@ class Player(CollisionPhysicsObject):
               or self.onWallRight and self.direction == 1 and world[wall_block[0] - 2, wall_block[1]]):
             self.state = "climb"
         elif self.vel[1] > 0:
-            self.state = "jump"
+            if abs(self.vel[0]) > 1.5 or self.state == "jump":
+                self.state = "jump"
+            else:
+                self.state = "high_jump"
+        if self.vel[0] > 1:
+            self.direction = 0
+        elif self.vel[0] < -1:
+            self.direction = 1
 
         if window.keybind("right"): # d has priority over a
             if self.vel[0] < max_speed:
@@ -89,7 +89,6 @@ class Player(CollisionPhysicsObject):
                     self.vel[0] = max_speed
                 else:
                     self.vel[0] += d_speed
-            self.direction = 0
             if self.onGround and abs(self.vel[0]) > 1:
                 self.state = "walk"
         elif window.keybind("left"):
@@ -98,7 +97,6 @@ class Player(CollisionPhysicsObject):
                     self.vel[0] = -max_speed
                 else:
                     self.vel[0] -= d_speed
-            self.direction = 1
             if self.onGround and abs(self.vel[0]) > 1:
                 self.state = "walk"
         else:   

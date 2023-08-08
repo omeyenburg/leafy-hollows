@@ -186,8 +186,7 @@ class Window:
         self.texAtlas = self.texture(image)
 
         # Font texture (contains letter images)
-        #self.font_rects, image = Font.fromPNG(file.abspath("data/fonts/font.png"))
-        self.font_rects, image = Font.fromSYS(None, size=30, bold=True, antialias=True, lower=True)
+        self.font, image = Font(None, size=30, bold=True, antialias=True)
         self.texFont = self.texture(image)
 
         # Block texture (contains block images)
@@ -707,28 +706,13 @@ class Window:
 
         if centered:
             for letter in text:
-                if not letter in self.font_rects and letter.isalpha():
-                    if letter.upper() in self.font_rects:
-                        letter = letter.upper()
-                    else:
-                        letter = letter.lower()
-                if not letter in self.font_rects:
-                    letter = "?"
                 if fixed_size < 2:
-                    x_offset -= self.font_rects[letter][1] * spacing * size
+                    x_offset -= self.font.get_rect(letter)[1] * spacing * size
                 else:
-                    x_offset -= self.font_rects[letter][1] * spacing * size * x_factor_fixed
+                    x_offset -= self.font.get_rect(letter)[1] * spacing * size * x_factor_fixed
 
             for letter in text:
-                if not letter in self.font_rects and letter.isalpha():
-                    if letter.upper() in self.font_rects:
-                        letter = letter.upper()
-                    else:
-                        letter = letter.lower()
-                if not letter in self.font_rects:
-                    letter = "?"
-
-                rect = self.font_rects[letter]
+                rect = self.font.get_rect(letter)
                 if fixed_size == 0:
                     x_offset += rect[1] * spacing * size * 0.5
                     dest_rect = [position[0] + x_offset + rect[1], position[1] + y_offset * rect[2] * 3 * size, rect[1] * size, rect[2] * 2 * size]
@@ -772,15 +756,8 @@ class Window:
                     x_offset = 0
                     y_offset += 1
                     continue
-                if not letter in self.font_rects and letter.isalpha():
-                    if letter.upper() in self.font_rects:
-                        letter = letter.upper()
-                    else:
-                        letter = letter.lower()
-                if not letter in self.font_rects:
-                    letter = "?"
 
-                rect = self.font_rects[letter]
+                rect = self.font.get_rect(letter)
                 source_and_color = (color[0] + rect[0], color[1], color[2] + rect[1] - 0.00001, color[3])
                 if (not wrap is None) and x_offset + rect[1] * spacing * size * 0.5 + rect[1] * size > wrap:
                     x_offset = 0
@@ -826,3 +803,9 @@ class Window:
 
     def draw_post_processing(self):
         self.add_vbo_instance((0, 0, 1, 1), (0, 0, 0, 0), (5, 0, 0, 0))
+
+    def draw_block_highlight(self, x, y, color):
+        if len(color) == 3:
+            color = (*color, 100)
+        rect = self.camera.map_coord((x, y, 1, 1), from_world=True)
+        self.draw_rect(rect[:2], rect[2:], color)

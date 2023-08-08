@@ -101,7 +101,7 @@ def load_sprites():
             try:
                 indices.append(images[frame])
             except KeyError:
-                raise Exception(f"Could not find any data of '{frame}'.\nRun 'python data/images/layout/setup.py'\nor\n'python3 data/images/layout/setup.py'")
+                raise Exception(f"Could not find any data of '{frame}'.\nRun\n'python data/images/layout/setup.py'\nor\n'python3 data/images/layout/setup.py'")
         sprites[data["name"]] = (tuple(indices), data["time"])
 
 
