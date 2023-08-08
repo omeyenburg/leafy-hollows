@@ -17,8 +17,12 @@ class Player(CollisionPhysicsObject):
         self.hit_ground = 0
 
     def draw(self, window: Window):
-        rect = window.camera.map_coord((self.rect.x - self.rect.w/2, self.rect.y, self.rect.h, self.rect.h), from_world=True)
+        # hitbox
+        #rect = window.camera.map_coord((self.rect.x, self.rect.y, self.rect.w, self.rect.h), from_world=True)
         #window.draw_rect(rect[:2], rect[2:], (255, 0, 0))
+
+        # player
+        rect = window.camera.map_coord((self.rect.x - 1 + self.rect.w / 2, self.rect.y, 2, 2), from_world=True)
         window.draw_image("player_" + self.state, rect[:2], rect[2:], flip=(self.direction, 0))
     
     def jump(self, window, duration: float):
@@ -26,6 +30,8 @@ class Player(CollisionPhysicsObject):
         if self.onGround: # Normal jump
             self.apply_force(force, 90, window.delta_time)
             self.state = "jump"
+        elif self.vel[1] > 1.5: # Max wall jump velocity
+            return
         elif self.onWallLeft and window.keybind("left") and window.keybind("jump") == 1: # Wall jump left
             self.apply_force(force * 2.5, 120, window.delta_time)
             self.onWallLeft = 0
@@ -55,19 +61,28 @@ class Player(CollisionPhysicsObject):
                 d_speed = 0
             else:
                 d_speed /= 10
+
+        wall_block = (round(self.rect.x + 0.8), round(self.rect.y + 1))
+
+        # highlight block
+        #rect = window.camera.map_coord((*wall_block, 1, 1), from_world=True)
+        #window.draw_rect(rect[:2], rect[2:], (0, 0, 255, 100))
         
-        if self.onGround:
+        if self.vel[1] < 0:
+            self.state = "fall"
+            self.hit_ground = 0.2
+        elif self.onGround:
             if self.hit_ground > 0:
                 self.hit_ground -= window.delta_time
                 self.state = "hit_ground"
             else:
                 self.state = "idle"
-        elif (self.onWallLeft and self.direction == 0 and world[int(self.rect.x + 1), int(self.rect.y + 1)]
-              or self.onWallRight and self.direction == 1 and world[int(self.rect.x - 1), int(self.rect.y + 1)]):
+        elif (self.onWallLeft and self.direction == 0 and world[wall_block]
+              or self.onWallRight and self.direction == 1 and world[wall_block[0] - 2, wall_block[1]]):
             self.state = "climb"
-        elif self.vel[1] < 0:
-            self.state = "fall"
-            self.hit_ground = 0.2
+        elif self.vel[1] > 0:
+            self.state = "jump"
+
         if window.keybind("right"): # d has priority over a
             if self.vel[0] < max_speed:
                 if self.vel[0] + d_speed > max_speed: # guaranteeing exact max speed

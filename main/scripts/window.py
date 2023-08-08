@@ -690,12 +690,14 @@ class Window:
                 width / self.width * sinAngle + width / self.height * (1 - sinAngle))
         self.add_vbo_instance((*center, *size), self.camera.map_color(color), (1, 0, 0, angle))
 
-    def draw_text(self, position: [float], text: str, color: [int], size: int=1, centered: bool=False, spacing: float=1.25, fixed_size: int=1):
+    def draw_text(self, position: [float], text: str, color: [int], size: int=1, centered: bool=False, spacing: float=1.25, fixed_size: int=1, wrap: float=None):
         """
         Draw text on the window.
         fixed_size: 0 = stretch, 1 = relational size on both axis, 2 = fixed size
+        Centered text cannot be wrapped.
         """
-        offset = 0
+        x_offset = 0
+        y_offset = 0
         x_factor_fixed = 1 / self.width * self.screen_size[0]
         y_factor_fixed = 1 / self.height * self.screen_size[1]
         y_factor_relational = 1 / self.height * self.screen_size[1] * self.width / self.screen_size[0]
@@ -712,9 +714,9 @@ class Window:
                 if not letter in self.font_rects:
                     letter = "?"
                 if fixed_size < 2:
-                    offset -= self.font_rects[letter][1] * spacing * size
+                    x_offset -= self.font_rects[letter][1] * spacing * size
                 else:
-                    offset -= self.font_rects[letter][1] * spacing * size * x_factor_fixed
+                    x_offset -= self.font_rects[letter][1] * spacing * size * x_factor_fixed
 
             for letter in text:
                 if not letter in self.font_rects and letter.isalpha():
@@ -727,17 +729,17 @@ class Window:
 
                 rect = self.font_rects[letter]
                 if fixed_size == 0:
-                    offset += rect[1] * spacing * size * 0.5
-                    dest_rect = [position[0] + offset + rect[1], position[1], rect[1] * size, rect[2] * 2 * size]
-                    offset += rect[1] * spacing * size * 1.5
+                    x_offset += rect[1] * spacing * size * 0.5
+                    dest_rect = [position[0] + x_offset + rect[1], position[1] + y_offset * rect[2] * 3 * size, rect[1] * size, rect[2] * 2 * size]
+                    x_offset += rect[1] * spacing * size * 1.5
                 elif fixed_size == 1:
-                    offset += rect[1] * spacing * size * 0.5
-                    dest_rect = [position[0] + offset + rect[1], position[1], rect[1] * size, rect[2] * 2 * size * y_factor_relational]
-                    offset += rect[1] * spacing * size * 1.5
+                    x_offset += rect[1] * spacing * size * 0.5
+                    dest_rect = [position[0] + x_offset + rect[1], position[1] + y_offset * rect[2] * 3 * size * y_factor_relational, rect[1] * size, rect[2] * 2 * size * y_factor_relational]
+                    x_offset += rect[1] * spacing * size * 1.5
                 else:
-                    offset += rect[1] * spacing * size * x_factor_fixed * 0.5
-                    dest_rect = [position[0] + offset + rect[1], position[1], rect[1] * size * x_factor_fixed, rect[2] * 2 * size * y_factor_fixed]
-                    offset += rect[1] * spacing * size * x_factor_fixed * 1.5
+                    x_offset += rect[1] * spacing * size * x_factor_fixed * 0.5
+                    dest_rect = [position[0] + x_offset + rect[1], position[1] + y_offset * rect[2] * 3 * size * y_factor_fixed, rect[1] * size * x_factor_fixed, rect[2] * 2 * size * y_factor_fixed]
+                    x_offset += rect[1] * spacing * size * x_factor_fixed * 1.5
                 
                 if not self.stencil_rect is None:
                     org = dest_rect[:]
@@ -762,7 +764,13 @@ class Window:
                     source_and_color = (color[0] + rect[0], color[1], color[2] + rect[1] - 0.00001, color[3])
                     self.add_vbo_instance(dest_rect, source_and_color, (3, 0, 0, 0))
         else:
+            line_height = 6
+
             for letter in text:
+                if letter == "\n":
+                    x_offset = 0
+                    y_offset += 1
+                    continue
                 if not letter in self.font_rects and letter.isalpha():
                     if letter.upper() in self.font_rects:
                         letter = letter.upper()
@@ -773,18 +781,21 @@ class Window:
 
                 rect = self.font_rects[letter]
                 source_and_color = (color[0] + rect[0], color[1], color[2] + rect[1] - 0.00001, color[3])
+                if (not wrap is None) and x_offset + rect[1] * spacing * size * 0.5 + rect[1] * size > wrap:
+                    x_offset = 0
+                    y_offset += 1
                 if fixed_size == 0:
-                    offset += rect[1] * spacing * size * 0.5
-                    dest_rect = [position[0] + offset + rect[1], position[1] - rect[2] * 2, rect[1] * size, rect[2] * 2 * size]
-                    offset += rect[1] * spacing * size * 1.5
+                    x_offset += rect[1] * spacing * size * 0.5
+                    dest_rect = [position[0] + x_offset + rect[1], position[1] - rect[2] * 2 - y_offset * rect[2] * line_height * size, rect[1] * size, rect[2] * 2 * size]
+                    x_offset += rect[1] * spacing * size * 1.5
                 elif fixed_size == 1:
-                    offset += rect[1] * spacing * size * 0.5
-                    dest_rect = [position[0] + offset + rect[1], position[1] - rect[2] * 2, rect[1] * size, rect[2] * 2 * size * y_factor_relational]
-                    offset += rect[1] * spacing * size * 1.5
+                    x_offset += rect[1] * spacing * size * 0.5
+                    dest_rect = [position[0] + x_offset + rect[1], position[1] - rect[2] * 2 - y_offset * rect[2] * line_height * size * y_factor_relational, rect[1] * size, rect[2] * 2 * size * y_factor_relational]
+                    x_offset += rect[1] * spacing * size * 1.5
                 else:
-                    offset += rect[1] * spacing * size * x_factor_fixed * 0.5
-                    dest_rect = [position[0] + offset + rect[1], position[1] - rect[2] * 2, rect[1] * size * x_factor_fixed, rect[2] * 2 * size * y_factor_fixed]
-                    offset += rect[1] * spacing * size * x_factor_fixed * 1.5
+                    x_offset += rect[1] * spacing * size * x_factor_fixed * 0.5
+                    dest_rect = [position[0] + x_offset + rect[1], position[1] - rect[2] * 2 - y_offset * rect[2] * line_height * size * y_factor_fixed, rect[1] * size * x_factor_fixed, rect[2] * 2 * size * y_factor_fixed]
+                    x_offset += rect[1] * spacing * size * x_factor_fixed * 1.5
 
                 if not self.stencil_rect is None:
                     org = dest_rect[:]
@@ -803,91 +814,14 @@ class Window:
                         self.add_vbo_instance(dest_rect, source_and_color, (3, 0, 0, 0))
                 else:
                     self.add_vbo_instance(dest_rect, source_and_color, (3, 0, 0, 0))
-
-        return offset
+        
+            y_offset += 1
+            if fixed_size == 0:
+                return x_offset, rect[2] * 2 - y_offset * rect[2] * line_height * size
+            elif fixed_size == 1:
+                return x_offset, rect[2] * 2 - y_offset * rect[2] * line_height * size * y_factor_relational
+            elif fixed_size == 2:
+                return x_offset, rect[2] * 2 - y_offset * rect[2] * line_height * size * y_factor_fixed
 
     def draw_post_processing(self):
         self.add_vbo_instance((0, 0, 1, 1), (0, 0, 0, 0), (5, 0, 0, 0))
-
-
-class TextureAtlas:
-    def loadBlocks():
-        """
-        Load block texture atlas from files in a folder.
-        """
-        paths = file.find("data/blocks", "*.png", True)        
-        width = math.ceil(math.sqrt(len(paths)))
-        height = math.ceil(len(paths) / width)
-        image = pygame.Surface((width * 16, height * 16 + 1), SRCALPHA)
-        block_indices = {}
-        animation_frames = {}
-
-        for i, path in enumerate(paths):
-            y, x = divmod(i, width)
-            file_name = os.path.basename(path).split(".")
-            if len(file_name) == 2:
-                block = file_name[0]
-                frame = 1
-            else:
-                block = file_name[0]
-                frame = int(file_name[1])
-            if not block in animation_frames:
-                block_indices[block] = i + 1
-            block_surface = pygame.image.load(path)
-            image.blit(block_surface, (x * 16, (height - y - 1) * 16))
-            animation_frames[block] = max(animation_frames.get(block, 1), frame)
-            
-        x = 0
-        for block in animation_frames:
-            image.set_at((x, height * 16), (animation_frames[block], 0, 0))
-            x += animation_frames[block]
-
-        pygame.image.save(image, file.abspath("data/blocks.png"))
-        return block_indices, image
-
-    def loadImages():
-        """
-        Load image texture atlas from files in a folder.
-        """
-        images_data = file.read("data/images/images.properties", split=True)
-        image_rects = [] # list of rects
-        images = {} # "image": [rect_index, animation_frames]
-        paths = {}
-
-        width = 0
-        height = 0
-
-        for image_data in images_data:
-            name, data = image_data.replace(" ", "").split(":")
-            file_name = name.split(".")
-            if len(file_name) == 1:
-                image = file_name[0]
-                frame = 1
-            else:
-                image = file_name[0]
-                frame = int(file_name[1])
-            rect = tuple([float(x) for x in data.replace("(", "").replace(")", "").split(",")])
-            if frame == 1 or not image in images:
-                images[image] = [1, len(image_rects)]
-            else:
-                images[image][0] = max(images[image][0], frame)
-
-            width = max(width, rect[0] + rect[2])
-            height = max(height, rect[1] + rect[3])
-            
-            image_path = file.find("data/images", name + ".png", True)
-            if not len(image_path):
-                raise ValueError("Could not find file " + name + ".png in data/images")
-
-            paths[str(image_path[0])] = len(image_rects)
-            image_rects.append(rect)
-
-        image = pygame.Surface((width, height), SRCALPHA)
-
-        for image_path, i in paths.items():
-            image.blit(pygame.image.load(image_path), (image_rects[i][0], image_rects[i][1]))
-            image_rects[i] = (image_rects[i][0] / width, 1 - image_rects[i][1] / height - image_rects[i][3] / height, image_rects[i][2] / width, image_rects[i][3] / height)
-
-        pygame.image.save(image, file.abspath("data/images.png"))
-
-        return image_rects, images, image
