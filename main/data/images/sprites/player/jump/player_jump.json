@@ -1,7 +1,8 @@
 {
   "name": "player_jump",
-  "time": 0,
+  "time": 200,
   "frames": [
-    "player_jump"
+    "player_jump0",
+    "player_jump1"
   ]
 }
