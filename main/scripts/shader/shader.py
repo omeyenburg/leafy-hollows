@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from OpenGL.GL.shaders import compileProgram, compileShader
 from OpenGL.GL import *
-import scripts.file as file
+import scripts.utility.file as file
 
 
 class Shader:

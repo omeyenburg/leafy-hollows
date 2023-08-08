@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-from scripts.util import realistic
+from scripts.utility.util import realistic
 from noise import *
-import scripts.worldnoise as noise
+import scripts.game.worldnoise as noise
 import random
 import numpy
 import math

@@ -1,21 +1,19 @@
 # -*- coding: utf-8 -*-
-from scripts.camera import Camera
-from scripts.shader import Shader
-from scripts.font import Font
 from OpenGL.GL import *
-from scripts.image import (
-    load_blocks, load_sprites, get_sprite_rect
-)
-import scripts.world as world
-import scripts.util as util
-import scripts.file as file
 import numpy
 import math
 import sys
 import os
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
+from scripts.graphics.image import load_blocks, load_sprites, get_sprite_rect
+from scripts.graphics.camera import Camera
+from scripts.graphics.font import Font
+from scripts.shader.shader import Shader
 from pygame.locals import *
+import scripts.game.world as world
+import scripts.utility.util as util
+import scripts.utility.file as file
 import pygame
 
 
@@ -202,7 +200,7 @@ class Window:
         
         # Instance shader
         self.instance_shader = Shader(
-            "scripts/shaders/vertex.glsl", "scripts/shaders/fragment.glsl",
+            "scripts/shader/vertex.glsl", "scripts/shader/fragment.glsl",
             replace={"block." + key: value for key, value in self.block_indices.items()},
             texAtlas="int", texFont="int", texBlocks="int", texWorld="int", offset="vec2", resolution="int", time="float"
         )
@@ -261,7 +259,6 @@ class Window:
         self.dest_vbo_array[4 * self.vbo_instances_index:4 * self.vbo_instances_index + 4] = dest
         self.source_or_color_vbo_array[4 * self.vbo_instances_index:4 * self.vbo_instances_index + 4] = source_or_color
         self.shape_transform_vbo_array[4 * self.vbo_instances_index:4 * self.vbo_instances_index + 4] = numpy.array(shape_transform, dtype=numpy.float32)
-        #print(self.shape_transform_vbo_array[4 * self.vbo_instances_index:4 * self.vbo_instances_index + 4])
         
         self.vbo_instances_index += 1
 
@@ -306,10 +303,14 @@ class Window:
                 if event.unicode != "":
                     self.unicode = event.unicode
                 key = pygame.key.name(event.key)
+                if util.system == "Darwin":
+                    key = key.replace("meta", "cmd")
                 if key in self.keys:
                     self.keys[key] = 1
             elif event.type == KEYUP:
                 key = pygame.key.name(event.key)
+                if util.system == "Darwin":
+                    key = key.replace("meta", "cmd")
                 if key in self.keys:
                     self.keys[key] = 0
             elif event.type == MOUSEMOTION:

@@ -9,7 +9,7 @@ import os
 cwd = os.path.dirname(__file__)
 main_folder = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 sys.path.insert(0, main_folder)
-import scripts.geometry as geometry
+import scripts.utility.geometry as geometry
 sys.path.insert(0, main_folder)
 
 

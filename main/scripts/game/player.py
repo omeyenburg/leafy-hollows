@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-from scripts.util import realistic
-from scripts.window import Window
-from scripts.physics import *
+from scripts.utility.util import realistic
+from scripts.graphics.window import Window
+from scripts.game.physics import *
 
 
 class Player(CollisionPhysicsObject):
