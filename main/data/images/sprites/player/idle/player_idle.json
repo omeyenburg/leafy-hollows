@@ -1,6 +1,6 @@
 {
   "name": "player_idle",
-  "time": 100,
+  "time": 150,
   "frames": [
     "player_idle0",
     "player_idle0",

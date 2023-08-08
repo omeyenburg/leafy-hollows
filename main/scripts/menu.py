@@ -262,15 +262,19 @@ def HoverBox(window: Window, rect: list, text: list, translator=None):
     start = (0.02, rect[3] - 0.04)
     x = 0
     y = 0
-    for text, fontsize, color in text:
-        for i, text_snippet in enumerate(text.split("\n")):
-            text_snippet = translator.translate(text_snippet)
-            pos = (rect[0] + start[0] + x,
-                   rect[1] + start[1] + y)
-            x += window.draw_text(pos, text_snippet, color, size=fontsize)
-            if i != len(text.split("\n")) - 1:
-                y -= 0.1 * fontsize
-                x = 0
+    wrap = True
+    for text_snippet, fontsize, color in text:
+        text_snippet = translator.translate(text_snippet)
+        pos = (rect[0] + start[0] + x,
+                rect[1] + start[1] + y)
+        x_offset, y_offset = window.draw_text(pos, text_snippet, color, size=fontsize, wrap=rect[2] - 0.04)
+        wrap = text_snippet[-1] == "\n"
+        if wrap:
+            y += y_offset
+            x = 0
+        else:
+            x += x_offset
+        
 
 
 class Menu:
@@ -361,8 +365,8 @@ class Menu:
         label_fps.hover_callback = lambda: settings_video_hover(1,
             ("Max Fps\n", 1, (250, 250, 250, 200)),
             ("Performance impact: ", 0.8, (250, 250, 250, 200)),
-            ("high\n\n", 0.8, (250, 0, 0, 200)),
-            ("Limit the Fps at a cap.\nVsync: Fps limit is\nsynchronized with your\nscreen's refresh rate.", 0.8, (250, 250, 250, 200))
+            ("high\n", 0.8, (250, 0, 0, 200)),
+            ("Limit the Fps at a cap.\nVsync: Fps limit is synchronized with your screen's refresh rate.", 0.8, (250, 250, 250, 200))
         )
 
         # Resolution slider
@@ -378,8 +382,8 @@ class Menu:
         label_resolution.hover_callback = lambda: settings_video_hover(0,
             ("Resolution\n", 1, (250, 250, 250, 200)),
             ("Performance impact: ", 0.8, (250, 250, 250, 200)),
-            ("medium\n\n", 0.8, (250, 150, 0, 200)),
-            ("Set the resolution\nof in-game objects.", 0.8, (250, 250, 250, 200))
+            ("medium\n", 0.8, (250, 150, 0, 200)),
+            ("Set the resolution of in-game objects.", 0.8, (250, 250, 250, 200))
         )
 
         # Fullscreen button
@@ -413,8 +417,8 @@ class Menu:
         label_particles.hover_callback = lambda: settings_video_hover(0,
             ("Particle Density\n", 1, (250, 250, 250, 200)),
             ("Performance impact: ", 0.8, (250, 250, 250, 200)),
-            ("high\n\n", 0.8, (250, 0, 0, 200)),
-            ("Limit the amount of\nparticles, which can be\nspawned at once.", 0.8, (250, 250, 250, 200))
+            ("high\n", 0.8, (250, 0, 0, 200)),
+            ("Limit the amount of particles, which can be spawned at once.", 0.8, (250, 250, 250, 200))
         )
 
         # Show fps button
@@ -426,7 +430,7 @@ class Menu:
         button_show_fps.hover_callback = lambda: settings_video_hover(1,
             ("Show Fps\n", 1, (250, 250, 250, 200)),
             ("Performance impact: ", 0.8, (250, 250, 250, 200)),
-            ("low\n\n", 0.8, (250, 250, 0, 200))
+            ("low", 0.8, (250, 250, 0, 200))
         )
 
         # Show debug button
@@ -438,7 +442,7 @@ class Menu:
         button_show_debug.hover_callback = lambda: settings_video_hover(0,
             ("Show debug info\n", 1, (250, 250, 250, 200)),
             ("Performance impact: ", 0.8, (250, 250, 250, 200)),
-            ("low\n\n", 0.8, (250, 250, 0, 200))
+            ("low", 0.8, (250, 250, 0, 200))
         )
 
         # Post processing button
@@ -450,8 +454,8 @@ class Menu:
         button_post_processing.hover_callback = lambda: settings_video_hover(1,
             ("Post processing\n", 1, (250, 250, 250, 200)),
             ("Performance impact: ", 0.8, (250, 250, 250, 200)),
-            ("medium\n\n", 0.8, (250, 150, 0, 200)),
-            ("When enabled, post\nprocessing is performed\nafter the actual rendering\nfor additional visual effects.", 0.8, (250, 250, 250, 200))
+            ("medium\n", 0.8, (250, 150, 0, 200)),
+            ("When enabled, post processing is performed after the actual rendering for additional visual effects.", 0.8, (250, 250, 250, 200))
         )
 
         # Language button
@@ -467,8 +471,8 @@ class Menu:
         button_language.hover_callback = lambda: settings_video_hover(0,
             ("Language\n", 1, (250, 250, 250, 200)),
             ("Performance impact: ", 0.8, (250, 250, 250, 200)),
-            ("none\n\n", 0.8, (0, 250, 0, 200)),
-            ("Select either English\nor German as the\nused language.", 0.8, (250, 250, 250, 200))
+            ("none\n", 0.8, (0, 250, 0, 200)),
+            ("Select either English or German as the language.", 0.8, (250, 250, 250, 200))
         )
 
         # Antialiasing slider
@@ -491,8 +495,8 @@ class Menu:
         label_antialiasing.hover_callback = lambda: settings_video_hover(1,
             ("Antialiasing\n", 1, (250, 250, 250, 200)),
             ("Performance impact: ", 0.8, (250, 250, 250, 200)),
-            ("low\n\n", 0.8, (250, 250, 0, 200)),
-            ("Set the level of antialiasing.\nAntialiasing creates\nsmoother edges of\nshapes.", 0.8, (250, 250, 250, 200))
+            ("low\n", 0.8, (250, 250, 0, 200)),
+            ("Set the level of antialiasing.\nAntialiasing creates smoother edges of shapes.", 0.8, (250, 250, 250, 200))
         )
         """
         # Map buffers button
