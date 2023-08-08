@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from scripts.util import realistic
-import scripts.geometry as geometry
+from scripts.utility.util import realistic
+import scripts.utility.geometry as geometry
 import math
 
 

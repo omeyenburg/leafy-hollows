@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from scripts.geometry import angle
-import scripts.physics as physics
+from scripts.utility.geometry import angle
+import scripts.game.physics as physics
 import math; math.angle = angle
 
 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from pygame.locals import *
-import scripts.file as file
+import scripts.utility.file as file
 import pygame
 import math
 import os
@@ -96,7 +96,14 @@ def load_sprites():
     for path in sprite_paths:
         sprite = file.basename(path)
         data = file.read_json(file.relpath(path))
-        sprites[data["name"]] = (tuple([images[frame] for frame in data["frames"]]), data["time"])
+        indices = []
+        for frame in data["frames"]:
+            try:
+                indices.append(images[frame])
+            except KeyError:
+                raise Exception(f"Could not find any data of '{frame}'.\nRun 'python data/images/layout/setup.py'\nor\n'python3 data/images/layout/setup.py'")
+        sprites[data["name"]] = (tuple(indices), data["time"])
+
 
     pygame.image.save(image, file.abspath("data/sprites (testing only).png"))
     return image

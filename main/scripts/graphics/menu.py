@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-from scripts.language import Translator
-from scripts.window import Window
-import scripts.geometry as geometry
-import scripts.util as util
+from scripts.utility.language import Translator
+from scripts.graphics.window import Window
+import scripts.utility.geometry as geometry
+import scripts.utility.util as util
 import math
 import sys
 import os
@@ -551,7 +551,7 @@ class Menu:
         def update_key():
             nonlocal selected
             if not selected is None:
-                keys = window.get_pressed_keys() + window.get_pressed_mods()
+                keys = window.get_pressed_mods() + window.get_pressed_keys()
                 if keys:
                     buttons[selected].clicked = 0
                     buttons[selected].text = keys[0]

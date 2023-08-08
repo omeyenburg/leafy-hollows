@@ -4,7 +4,7 @@ particles: 10
 map buffers: False
 antialiasing: 16
 resolution: 4
-post processing: True
+post processing: False
 show fps: True
 show debug: True
 language: "deutsch"

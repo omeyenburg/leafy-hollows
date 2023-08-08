@@ -15,15 +15,15 @@ def find(folder: str, name: str, sub_folder=False):
     'folder' should be a relative path. In 'name', "*" can be used as a placeholder for any of symbols.
     """
     if sub_folder:
-        return glob.glob(os.path.abspath(os.path.join(__file__, "..", "..", *folder.split("/"), "**", name)), recursive=True)
-    return glob.glob(os.path.abspath(os.path.join(__file__, "..", "..", *folder.split("/"), name)))
+        return glob.glob(os.path.abspath(os.path.join(__file__, "..", "..", "..", *folder.split("/"), "**", name)), recursive=True)
+    return glob.glob(os.path.abspath(os.path.join(__file__, "..", "..", "..", *folder.split("/"), name)))
 
 
 def abspath(path: str):
     """
     Converts a relative file path to a absolute file path at runtime.
     """
-    return os.path.abspath(os.path.join(__file__, "..", "..", *path.split("/")))
+    return os.path.abspath(os.path.join(__file__, "..", "..", "..", *path.split("/")))
 
 
 def relpath(path: str):

@@ -5,10 +5,10 @@
 # https://github.com/pyinstaller/pyinstaller/wiki/Recipe-OSX-Code-Signing
 # https://support.apple.com/en-us/HT204397
 
-import scripts.util as util
-from scripts.window import Window
-from scripts.game import Game
-from scripts.menu import Menu
+import scripts.utility.util as util
+from scripts.graphics.window import Window
+from scripts.graphics.menu import Menu
+from scripts.game.game import Game
 
 import numpy
 import math

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from scripts.baseentity import *
+from scripts.game.baseentity import *
 
 
 class Rope(ChainedEntity):

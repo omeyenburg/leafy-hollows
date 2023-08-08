@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-from scripts.util import realistic
-import scripts.world as world
-import scripts.geometry as geometry
-import scripts.physics as physics
-import scripts.player as player
-import scripts.entity as entity
+from scripts.utility.util import realistic
+import scripts.utility.geometry as geometry
+import scripts.game.physics as physics
+import scripts.game.player as player
+import scripts.game.entity as entity
+import scripts.game.world as world
 
 class Game:
     def __init__(self, window):
