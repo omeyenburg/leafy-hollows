@@ -280,30 +280,44 @@ def HoverBox(window: Window, rect: list, text: list, translator=None):
 class Menu:
     def __init__(self, window: Window):
         self.window = window
-        self.in_game = False
-        def toggle_in_game():
-            self.in_game = not self.in_game
+        self.game_state = "menu"
         translator = Translator(window.options["language"])
 
         ###---###  Main page  ###---###
-        main_page = Page(columns=2, spacing=0.1)
-        Label(main_page, (1, .3), row=0, column=0, columnspan=2, text="Hello, World!", fontsize=2, translator=translator)
-        button_play = Button(main_page, (1.4, .2), row=1, column=0, columnspan=2, callback=toggle_in_game, text="Play", translator=translator)
-        button_settings = Button(main_page, (.65, .2), row=2, column=0, text="Settings", translator=translator)
-        Button(main_page, (.65, .2), row=2, column=1, callback=window.quit, text="Quit", translator=translator)
-        main_page.layout()
-        main_page.open()
+        self.main_page = Page(columns=2, spacing=0.1)
+        Label(self.main_page, (1, .3), row=0, column=0, columnspan=2, text="Hello, World!", fontsize=2, translator=translator)
+        button_main_play = Button(self.main_page, (1.4, .2), row=1, column=0, columnspan=2, text="Play", translator=translator)
+        button_main_settings = Button(self.main_page, (.65, .2), row=2, column=0, text="Settings", translator=translator)
+        Button(self.main_page, (.65, .2), row=2, column=1, callback=window.quit, text="Quit", translator=translator)
+        self.main_page.layout()
+        self.main_page.open()
+
+        ###---###  Generate world page  ###---###
+        def open_generate_world():
+            generate_world_page.open()
+            self.game_state = "generate"
+        
+        def update_generate_world():
+            frame = int(window.time * 2 % 3) + 1
+            label_generate_world.rect.x += (frame - len(label_generate_world.text)) * 0.015
+            label_generate_world.text = "." * frame
+            
+        generate_world_page = Page(columns=2, callback=update_generate_world)
+        Label(generate_world_page, (0.9, .3), column=0, text="Generating World", fontsize=2, translator=translator)
+        label_generate_world = Label(generate_world_page, (0.05, .3), column=1, text="...", fontsize=2, translator=translator)
+        generate_world_page.layout()
+        button_main_play.callback = open_generate_world
 
         ###---###  Settings page  ###---###
-        settings_page = Page(parent=main_page, columns=2, spacing=0.1)
+        settings_page = Page(parent=self.main_page, columns=2, spacing=0.1)
         Label(settings_page, (1, .3), row=0, column=0, columnspan=2, text="Settings", fontsize=2, translator=translator)
         button_settings_video_open = Button(settings_page, (.65, .2), row=1, column=0, text="Video Settings", translator=translator)
         button_settings_audio_open = Button(settings_page, (.65, .2), row=1, column=1, text="Audio Settings", translator=translator)
         button_settings_control_open = Button(settings_page, (.65, .2), row=2, column=0, text="Control Settings", translator=translator)
         button_settings_world_open = Button(settings_page, (.65, .2), row=2, column=1, text="World Settings", translator=translator)
-        button_settings_back = Button(settings_page, (1.4, .2), row=3, column=0, columnspan=2, callback=main_page.open, text="Back", translator=translator)
+        button_settings_back = Button(settings_page, (1.4, .2), row=3, column=0, columnspan=2, callback=self.main_page.open, text="Back", translator=translator)
         settings_page.layout()
-        button_settings.callback = settings_page.open
+        button_main_settings.callback = settings_page.open
 
         """
         Settings

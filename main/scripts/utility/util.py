@@ -7,5 +7,5 @@ import os
 
 
 # Global variables
-realistic = True # only for testing purposes
+realistic = False # only for testing purposes
 system = platform.system()
