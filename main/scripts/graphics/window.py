@@ -631,7 +631,7 @@ class Window:
         """
         Draw an image on the window.
         """
-        rect = get_sprite_rect(image, self.time * 1000)
+        rect = get_sprite_rect(image, self.time)
 
         dest_rect = (position[0] + size[0] / 2, position[1] + size[1] / 2, size[0] / 2, size[1] / 2)
         if not self.stencil_rect is None:

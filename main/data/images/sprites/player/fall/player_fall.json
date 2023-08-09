@@ -1,6 +1,6 @@
 {
   "name": "player_fall",
-  "time": 400,
+  "speed": 0.4,
   "frames": [
     "player_fall0",
     "player_fall1",

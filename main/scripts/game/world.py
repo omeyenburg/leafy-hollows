@@ -31,7 +31,12 @@ class Chunk:
             self.array[dx, dy] = self.generate_block(x, y, seed, blocks)
 
     def generate_block(self, x: int, y: int, seed: float, blocks: dict):
-        return blocks["dirt"]
+        z = noise.terrain(x, y, seed)
+        if z < 0.5:
+            return blocks["dirt"]
+        return blocks["stone"]
+
+        # unused...
         world_gen = 1
 
         if world_gen == 1:
@@ -103,7 +108,7 @@ class World:
         self.particles: list = []
         self.wind: float = 0.0 # wind direction
         self.loaded_chunks: tuple = (0, 0, 0, 0)
-        self.transparent_blocks = [blocks["grass_idle"]]
+        #self.transparent_blocks = [blocks["grass_idle"]]
 
         self.generate()
 
@@ -136,7 +141,7 @@ class World:
 
     def get_collision_block(self, x: int, y: int):
         block = self[x, y]
-        return block % 1000 > 0 and not block % 1000 in self.transparent_blocks
+        return block > 0
 
     def update(self, window):
         loaded_blocks = window.camera.visible_blocks()

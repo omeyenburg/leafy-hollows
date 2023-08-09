@@ -1,6 +1,6 @@
 {
   "name": "player_climb",
-  "time": 200,
+  "speed": 0.2,
   "frames": [
     "player_climb_pole1",
     "player_climb_pole2",

@@ -1,6 +1,6 @@
 {
   "name": "player_walk",
-  "time": 200,
+  "speed": 0.2,
   "frames": [
     "player_walk0",
     "player_walk1",

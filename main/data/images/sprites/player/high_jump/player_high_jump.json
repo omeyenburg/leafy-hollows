@@ -1,6 +1,6 @@
 {
   "name": "player_high_jump",
-  "time": 400,
+  "speed": 0.4,
   "frames": [
     "player_high_jump0",
     "player_high_jump1",

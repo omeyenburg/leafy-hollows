@@ -1,6 +1,6 @@
 {
   "name": "player_hit_ground",
-  "time": 0,
+  "speed": 0,
   "frames": [
     "player_hit_ground"
   ]
