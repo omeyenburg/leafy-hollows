@@ -24,12 +24,33 @@ os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 
 # Create window
 window: Window = Window("Hello World")
-game: Game = Game(window)
 menu: Menu = Menu(window)
+game: Game = None
 
 
 while True:
-    if menu.in_game:
+    if menu.game_state == "generate":
+        menu.game_state = "game"
+
+        # Start world thread
+        world_thread = Game.generate_world(window)
+        world = None
+
+        # Wait for world thread
+        while world is None:
+            menu.update()
+            window.update()
+            world = Game.get_world(world_thread)
+
+            # Open menu
+            if window.keybind("return") == 1:
+                menu.main_page.open()
+                menu.game_state = "menu"
+
+        # Create game
+        game = Game(window, world)
+
+    elif menu.game_state == "game":
         # Update & draw all game objects
         game.update()
 
@@ -58,7 +79,9 @@ while True:
 
         # Open menu
         if window.keybind("return") == 1:
-            menu.in_game = False
+            menu.main_page.open()
+            menu.game_state = "menu"
+
     else:
         # Update and draw the menu
         menu.update()
