@@ -1,6 +1,6 @@
 {
   "name": "player_eat",
-  "time": 50,
+  "speed": 0.05,
   "frames": [
     "player_eat0",
     "player_eat1"

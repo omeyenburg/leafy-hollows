@@ -1,6 +1,6 @@
 {
   "name": "player_crawl",
-  "time": 0,
+  "speed": 0,
   "frames": [
     "player_crawl"
   ]

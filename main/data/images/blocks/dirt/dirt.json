@@ -1,7 +1,8 @@
 {
   "name": "dirt",
-  "time": 0,
+  "hardness": 1,
+  "speed": 0,
   "frames": [
-    "dirt.png"
+    "dirt"
   ]
 }

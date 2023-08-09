@@ -60,21 +60,25 @@ class Player(CollisionPhysicsObject):
                 d_speed /= 10
 
         # animation states
-        wall_block = (round(self.rect.x + 0.8), round(self.rect.y + 1))
-        if self.vel[1] < 0:
+        wall_block_right = (round(self.rect.x + 0.8), round(self.rect.y + 1))
+        wall_block_left = (round(self.rect.x - 0.8), round(self.rect.y + 1))
+
+        if self.vel[1] < -4:
             self.state = "fall"
             self.hit_ground = 0.2
+        elif self.vel[1] < 0:
+            self.state = "fall_slow"
         elif self.onGround:
             if self.hit_ground > 0:
                 self.hit_ground -= window.delta_time
                 self.state = "hit_ground"
             else:
                 self.state = "idle"
-        elif (self.onWallLeft and self.direction == 0 and world[wall_block]
-              or self.onWallRight and self.direction == 1 and world[wall_block[0] - 2, wall_block[1]]):
+        elif (self.onWallLeft and self.direction == 0 and world[wall_block_right]
+              or self.onWallRight and self.direction == 1 and world[wall_block_left]):
             self.state = "climb"
         elif self.vel[1] > 0:
-            if abs(self.vel[0]) > 1.5 or self.state == "jump":
+            if (abs(self.vel[0]) > 2 or self.state == "jump") and not (world[wall_block_right] and world[wall_block_left]):
                 self.state = "jump"
             else:
                 self.state = "high_jump"

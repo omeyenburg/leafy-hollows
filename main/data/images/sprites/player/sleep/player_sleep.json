@@ -1,6 +1,6 @@
 {
   "name": "player_sleep",
-  "time": 300,
+  "speed": 0.3,
   "frames": [
     "player_sleep0",
     "player_sleep0",

@@ -1,7 +1,8 @@
 {
   "name": "stone",
-  "time": 0,
+  "hardness": 3,
+  "speed": 0,
   "frames": [
-    "stone.png"
+    "stone0"
   ]
 }
