@@ -97,7 +97,7 @@ void main() {
                              gl_FragCoord.y / BLOCKSIZEDEST + offset.y);
             
             // Block type (block < 0 --> alpha *= 0.6)
-            int block = texelFetch(texWorld, ivec2(dest), 0).r;
+            int block = int(texelFetch(texWorld, ivec2(dest), 0).r);
 
             // Pixel within block
             ivec2 source_pixel = ivec2(
@@ -120,8 +120,8 @@ void main() {
                 quarter.y = -1;
             }
 
-            int adjacent_x = texelFetch(texWorld, ivec2(dest.x + quarter.x, dest.y), 0).r;
-            int adjacent_y = texelFetch(texWorld, ivec2(dest.x, dest.y + quarter.y), 0).r;
+            int adjacent_x = int(texelFetch(texWorld, ivec2(dest.x + quarter.x, dest.y), 0).r);
+            int adjacent_y = int(texelFetch(texWorld, ivec2(dest.x, dest.y + quarter.y), 0).r);
 
             if (block <= adjacent_x && block <= adjacent_y) {
                 source_pixel = ivec2(8, 8);
