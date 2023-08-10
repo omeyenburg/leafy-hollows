@@ -5,11 +5,12 @@ from scripts.game.physics import *
 
 
 class Player(CollisionPhysicsObject):
-    def __init__(self, spawn_pos: [float], speed: float, sprint_speed: float, acceleration_time: float, jump_force: int):
+    def __init__(self, spawn_pos: [float], speed: float, sprint_speed: float, crouch_speed: float, acceleration_time: float, jump_force: int):
         super().__init__(50, spawn_pos, (0.9, 1.8))
 
         self.speed: float = speed
         self.sprint_speed: float = sprint_speed
+        self.crouch_speed: float = crouch_speed
         self.acceleration_time: float = acceleration_time
         self.jump_force: int = jump_force
         self.state: str = "idle" # state is used for movement & animations
@@ -27,7 +28,13 @@ class Player(CollisionPhysicsObject):
     
     def jump(self, window, duration: float):
         force = self.jump_force * duration / window.delta_time
-        if self.onGround: # Normal jump
+        if self.direction == 1 and self.state == "crouch": # Crouch jump left
+            self.apply_force(force * 2.3, 160, window.delta_time)
+            self.state = "crouch_jump"
+        elif self.direction == 0 and self.state == "crouch": # Crouch jump right
+            self.apply_force(force * 2.3, 20, window.delta_time)
+            self.state = "crouch_jump"
+        elif self.onGround: # Normal jump
             self.apply_force(force, 90, window.delta_time)
         elif self.vel[1] > 1.5: # Max wall jump velocity
             return
@@ -48,69 +55,91 @@ class Player(CollisionPhysicsObject):
             force = min(math.dist(self.rect.center, mouse_pos), 3) / window.delta_time * strenght
             self.apply_force(force, angle_to_mouse, window.delta_time)
 
-        max_speed = self.speed
-        if window.keybind("sprint"): # Keeps sprinting once key pressed / stops faster as long as pressed
-            max_speed = self.sprint_speed
-
-        d_speed = (window.delta_time / self.acceleration_time) * max_speed
-        if not (self.onGround or self.onWallLeft or self.onWallRight):
-            if realistic:
-                d_speed = 0
-            else:
-                d_speed /= 10
-
         # animation states
         wall_block_right = (round(self.rect.x + 0.8), round(self.rect.y + 1))
         wall_block_left = (round(self.rect.x - 0.8), round(self.rect.y + 1))
 
-        if self.vel[1] < -4:
+        if self.vel[1] < -5:
             self.state = "fall"
-            self.hit_ground = 0.2
-        elif self.vel[1] < 0:
-            self.state = "fall_slow"
+            self.hit_ground = 0.3
+        elif window.keybind("crouch") and self.onGround:
+            self.state = "crouch"
         elif self.onGround:
             if self.hit_ground > 0:
                 self.hit_ground -= window.delta_time
                 self.state = "hit_ground"
             else:
                 self.state = "idle"
-        elif (self.onWallLeft and self.direction == 0 and world[wall_block_right]
-              or self.onWallRight and self.direction == 1 and world[wall_block_left]):
+        elif ((self.onWallLeft and self.direction == 0 and world[wall_block_right]
+              or self.onWallRight and self.direction == 1 and world[wall_block_left])
+              and not self.onGround and (window.keybind("right") or window.keybind("left"))):
             self.state = "climb"
-        elif self.vel[1] > 0:
+            if (not realistic) and self.vel[1] < 0: # friction
+                self.vel[1] = min(self.vel[1] + window.delta_time * 13, 0)
+            if world[wall_block_right] and not world[wall_block_right[0], round(self.rect.y + 1.3)] or world[wall_block_left] and not world[wall_block_left[0], round(self.rect.y + 1.3)]:
+                self.vel[1] = 0.2
+                if window.keybind("jump") == 1:
+                    self.vel[1] = 7
+                    self.state = "high_jump"
+                    if self.direction:
+                        self.vel[0] = -2
+                    else:
+                        self.vel[0] = 2
+        elif self.vel[1] > 0 and self.state != "crouch_jump":
             if (abs(self.vel[0]) > 2 or self.state == "jump") and not (world[wall_block_right] and world[wall_block_left]):
                 self.state = "jump"
             else:
                 self.state = "high_jump"
+        elif self.vel[1] < 0 and self.state != "crouch_jump":
+            self.state = "fall_slow"        
+
         if self.vel[0] > 1:
             self.direction = 0
         elif self.vel[0] < -1:
             self.direction = 1
 
+        max_speed = self.speed
+        if window.keybind("sprint"): # Keeps sprinting once key pressed / stops faster as long as pressed
+            max_speed = self.sprint_speed
+        if self.state == "crouch":
+            max_speed = self.crouch_speed
+        current_speed = (window.delta_time / self.acceleration_time) * max_speed
+        if not (self.onGround or self.onWallLeft or self.onWallRight):
+            if realistic:
+                current_speed = 0
+            else:
+                current_speed /= 10
+
         if window.keybind("right"): # d has priority over a
             if self.vel[0] < max_speed:
-                if self.vel[0] + d_speed > max_speed: # guaranteeing exact max speed
+                if self.vel[0] + current_speed > max_speed: # guaranteeing exact max speed
                     self.vel[0] = max_speed
                 else:
-                    self.vel[0] += d_speed
+                    self.vel[0] += current_speed
             if self.onGround and abs(self.vel[0]) > 1:
-                self.state = "walk"
+                if self.state == "crouch":
+                    self.state = "crawl"
+                else:
+                    self.state = "walk"
         elif window.keybind("left"):
             if self.vel[0] > -max_speed:
-                if self.vel[0] - d_speed < -max_speed:
+                if self.vel[0] - current_speed < -max_speed:
                     self.vel[0] = -max_speed
                 else:
-                    self.vel[0] -= d_speed
+                    self.vel[0] -= current_speed
             if self.onGround and abs(self.vel[0]) > 1:
-                self.state = "walk"
+                if self.state == "crouch":
+                    self.state = "crawl"
+                else:
+                    self.state = "walk"
         else:   
-            if abs(self.vel[0]) <= d_speed:
+            if abs(self.vel[0]) <= current_speed:
                 self.vel[0] = 0
             else:
                 if self.vel[0] > 0:
-                    self.vel[0] -= d_speed
+                    self.vel[0] -= current_speed
                 else:
-                    self.vel[0] += d_speed
+                    self.vel[0] += current_speed
         if window.keybind("jump"):
             self.jump(window, 5) # how long is jump force applied --> variable jump height
 

@@ -15,9 +15,9 @@ class Game:
         #self.world: world.World = world.World(window.block_indices)
         self.world = world
         if realistic:
-            self.player = player.Player(spawn_pos=[0, 0], speed=6, sprint_speed=10, acceleration_time=0.2, jump_force=17)
+            self.player = player.Player(spawn_pos=[0, 0], speed=6, sprint_speed=10, crouch_speed=2, acceleration_time=0.2, jump_force=17)
         else:
-            self.player = player.Player(spawn_pos=[0, 0], speed=6, sprint_speed=10, acceleration_time=0.1, jump_force=36)
+            self.player = player.Player(spawn_pos=[0, 0], speed=5, sprint_speed=8, crouch_speed=2, acceleration_time=.1, jump_force=21)
         self.world.entities.append(self.player)
         
         #self.rope = entity.Rope(10, (0, 0), (11, 0))

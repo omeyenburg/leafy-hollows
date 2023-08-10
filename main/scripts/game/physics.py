@@ -7,9 +7,8 @@ import math
 if realistic:
     GRAVITY_CONSTANT: float = 9.81
 else:
-    GRAVITY_CONSTANT: float = 38
+    GRAVITY_CONSTANT: float = 15
 FRICTION_X: float = 0.1
-FRICTION_Y: float = 0.04
 JUMP_THRESHOLD: int = 3 # time to jump after leaving the ground in ticks
 WALL_JUMP_THRESHOLD: float = 0.3 # time to jump after leaving a wall in seconds
 
@@ -55,29 +54,11 @@ class CollisionPhysicsObject:
                     if self.vel[0] < 0:
                         self.rect.left = x + 1
                         self.vel[0] = 0
-                        
-                        if not realistic:
-                            if self.vel[1] < 0:
-                                friction = delta_time / FRICTION_Y
-                                if friction + self.vel[1] > 0:
-                                    self.vel[1] = 0
-                                else:
-                                    self.vel[1] += friction
-                        
                         self.onWallRight = max(2, int(WALL_JUMP_THRESHOLD / delta_time))
 
                     if self.vel[0] > 0:
                         self.rect.right = x
-                        self.vel[0] = 0
-                        
-                        if not realistic:
-                            if self.vel[1] < 0:
-                                friction = delta_time / FRICTION_Y
-                                if friction + self.vel[1] > 0:
-                                    self.vel[1] = 0
-                                else:
-                                    self.vel[1] += friction
-                        
+                        self.vel[0] = 0                        
                         self.onWallLeft = max(2, int(WALL_JUMP_THRESHOLD / delta_time))
     
     def y_collide(self, world):

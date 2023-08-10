@@ -1,0 +1,14 @@
+{
+  "name": "player_crouch",
+  "speed": 0.5,
+  "frames": [
+    "player_crouch0",
+    "player_crouch1",
+    "player_crouch0",
+    "player_crouch1",
+    "player_crouch0",
+    "player_crouch1",
+    "player_crouch2",
+    "player_crouch1"
+  ]
+}
