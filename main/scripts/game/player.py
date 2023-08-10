@@ -6,8 +6,8 @@ from scripts.game.physics import *
 
 class Player(CollisionPhysicsObject):
     def __init__(self, spawn_pos: [float], speed: float, sprint_speed: float, crouch_speed: float, acceleration_time: float, jump_force: int):
-        super().__init__(50, spawn_pos, (0.9, 1.8))
-
+        self.rect_size = (0.9, 1.8)
+        self.rect_size_crouch = tuple(self.rect_size[::-1])
         self.speed: float = speed
         self.sprint_speed: float = sprint_speed
         self.crouch_speed: float = crouch_speed
@@ -16,6 +16,7 @@ class Player(CollisionPhysicsObject):
         self.state: str = "idle" # state is used for movement & animations
         self.direction: int = 0 # 0 = right; 1 = left
         self.hit_ground = 0
+        super().__init__(50, spawn_pos, self.rect_size)
 
     def draw(self, window: Window):
         # hitbox
@@ -98,6 +99,23 @@ class Player(CollisionPhysicsObject):
         elif self.vel[0] < -1:
             self.direction = 1
 
+        if self.state in ("crouch", "crouch_jump", "crawl"):
+            if self.rect.size != self.rect_size_crouch:
+                self.rect.x += (self.rect_size[0] - self.rect_size_crouch[0]) / 2
+                self.rect.size = self.rect_size_crouch
+            if self.get_collision(world):
+                self.rect.x += (self.rect_size_crouch[0] - self.rect_size[0]) / 2
+                self.rect.size = self.rect_size
+                self.state = {"crouch_jump": "fall", "crawl": "walk"}.get(self.state, "idle")
+        else:
+            if self.rect.size != self.rect_size:
+                self.rect.x += (self.rect_size_crouch[0] - self.rect_size[0]) / 2
+                self.rect.size = self.rect_size
+            if self.get_collision(world):
+                self.rect.x += (self.rect_size[0] - self.rect_size_crouch[0]) / 2
+                self.rect.size = self.rect_size_crouch
+                self.state = {"jump": "crouch_jump", "jump_high": "crouch_jump", "walk": "crawl", "sprint": "crawl"}.get(self.state, "crouch")
+
         max_speed = self.speed
         if window.keybind("sprint"): # Keeps sprinting once key pressed / stops faster as long as pressed
             max_speed = self.sprint_speed
@@ -107,18 +125,22 @@ class Player(CollisionPhysicsObject):
         if not (self.onGround or self.onWallLeft or self.onWallRight):
             if realistic:
                 current_speed = 0
+            elif not (window.keybind("right") and self.vel[0] < 0 or window.keybind("left") and self.vel[0] > 0):
+                current_speed /= 10 # Reduced control in air
             else:
-                current_speed /= 10
+                current_speed /= 3 # Stop movement while in air
 
         if window.keybind("right"): # d has priority over a
             if self.vel[0] < max_speed:
-                if self.vel[0] + current_speed > max_speed: # guaranteeing exact max speed
+                if self.vel[0] + current_speed > max_speed: # Guaranteeing exact max speed
                     self.vel[0] = max_speed
                 else:
                     self.vel[0] += current_speed
             if self.onGround and abs(self.vel[0]) > 1:
                 if self.state == "crouch":
                     self.state = "crawl"
+                elif window.keybind("sprint"):
+                    self.state = "sprint"
                 else:
                     self.state = "walk"
         elif window.keybind("left"):
@@ -130,6 +152,8 @@ class Player(CollisionPhysicsObject):
             if self.onGround and abs(self.vel[0]) > 1:
                 if self.state == "crouch":
                     self.state = "crawl"
+                elif window.keybind("sprint"):
+                    self.state = "sprint"
                 else:
                     self.state = "walk"
         else:   
@@ -140,7 +164,7 @@ class Player(CollisionPhysicsObject):
                     self.vel[0] -= current_speed
                 else:
                     self.vel[0] += current_speed
-        if window.keybind("jump"):
+        if window.keybind("jump") and not (self.state == "crouch" and world[round(self.rect.x), round(self.rect.y + 1)]):
             self.jump(window, 5) # how long is jump force applied --> variable jump height
 
         if window.mouse_buttons[0] == 1: # left click: pull player to mouse
