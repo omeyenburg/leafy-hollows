@@ -35,7 +35,8 @@ class Window:
             "key.right": "d",
             "key.jump": "space",
             "key.sprint": "left shift",
-            "key.return": "escape",
+            "key.crouch": "c",
+            "key.return": "escape"
         }
         self.options: dict = self.load_options()
 

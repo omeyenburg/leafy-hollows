@@ -7,9 +7,10 @@ resolution: 4
 post processing: False
 show fps: True
 show debug: True
-language: "deutsch"
+language: "english"
 key.left: "a"
 key.right: "d"
 key.jump: "space"
 key.sprint: "left shift"
+key.crouch: "c"
 key.return: "escape"
