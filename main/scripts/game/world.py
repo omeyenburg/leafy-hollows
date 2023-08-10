@@ -11,7 +11,8 @@ CHUNK_SIZE = 16
 
 
 class Chunk:
-    template: numpy.array = numpy.zeros((CHUNK_SIZE, CHUNK_SIZE), dtype=int) # Chunk template, which can be copied later
+    template: numpy.array = numpy.zeros((CHUNK_SIZE, CHUNK_SIZE, 4), dtype=int) # Chunk template, which can be copied later
+
 
     def __init__(self, x: int, y: int, seed: float, blocks: dict):
         self.x = x
@@ -20,15 +21,15 @@ class Chunk:
         self.generate(seed, blocks)
 
     def __getitem__(self, index):
-        return self.array[index]
+        return self.array[index][0]
 
     def __setitem__(self, index, value):
-        self.array[index] = value
+        self.array[index][0] = value
 
     def generate(self, seed: float, blocks: dict):
         for dx, dy in numpy.ndindex((CHUNK_SIZE, CHUNK_SIZE)):
             x, y = dx + self.x * CHUNK_SIZE, dy + self.y * CHUNK_SIZE
-            self.array[dx, dy] = self.generate_block(x, y, seed, blocks)
+            self.array[dx, dy][0] = self.generate_block(x, y, seed, blocks)
 
     def generate_block(self, x: int, y: int, seed: float, blocks: dict):
         z = noise.terrain(x, y, seed)
@@ -193,7 +194,7 @@ class World:
         if self.view_size == chunks_size:
             chunk_view = self.view
         else:
-            chunk_view = numpy.zeros((chunks_size[0] * CHUNK_SIZE, chunks_size[1] * CHUNK_SIZE))
+            chunk_view = numpy.zeros((chunks_size[0] * CHUNK_SIZE, chunks_size[1] * CHUNK_SIZE, 4))
             self.view = chunk_view
             self.view_size = chunks_size
 

@@ -109,7 +109,7 @@ class Window:
         self.window = pygame.display.set_mode((self.width, self.height), flags=flags, vsync=self.options["enableVsync"])
         self.clock = pygame.time.Clock()
         self.camera: Camera = Camera(self)
-        self.world_view = numpy.zeros((0, 0))
+        self.world_view = numpy.zeros((0, 0, 4))
         pygame.display.set_caption(caption)
         pygame.key.set_repeat(1000, 10)
         
@@ -605,9 +605,9 @@ class Window:
         self.instance_shader.setvar("offset", *offset) 
 
         # View size
-        size = self.world_view.shape
-        data = numpy.transpose(self.world_view) # flip axis
-        self.world_view = numpy.zeros((0, 0))
+        size = self.world_view.shape[:2]        
+        data = numpy.array(numpy.swapaxes(self.world_view, 0, 1), dtype=numpy.int32)
+        self.world_view = numpy.zeros((0, 0, 4))
         if self.world_size != size:
             if not self.texWorld is None:
                 glDeleteTextures(1, (self.texWorld,))
@@ -617,7 +617,7 @@ class Window:
         if self.texWorld is None: # Generate texture if necessary
             texture = glGenTextures(1)
             glBindTexture(GL_TEXTURE_2D, texture)
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_R32I, *self.world_size, 0, GL_RED_INTEGER, GL_INT, data)
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32I, *self.world_size, 0, GL_RGBA_INTEGER, GL_INT, data)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
@@ -626,7 +626,7 @@ class Window:
             self.texWorld = texture
         else: # Write world data into texture
             glBindTexture(GL_TEXTURE_2D, self.texWorld)
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_R32I, *self.world_size, 0, GL_RED_INTEGER, GL_INT, data)
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32I, *self.world_size, 0, GL_RGBA_INTEGER, GL_INT, data)
     
     def draw_image(self, image: str, position: [float], size: [float], angle: float=0.0, flip: [int]=(0, 0)):
         """

@@ -136,7 +136,7 @@ class Player(CollisionPhysicsObject):
                     self.vel[0] = max_speed
                 else:
                     self.vel[0] += current_speed
-            if self.onGround and abs(self.vel[0]) > 1:
+            if self.onGround and abs(self.vel[0]) > 1 and not (self.onWallLeft or self.onWallRight):
                 if self.state == "crouch":
                     self.state = "crawl"
                 elif window.keybind("sprint"):
@@ -149,7 +149,7 @@ class Player(CollisionPhysicsObject):
                     self.vel[0] = -max_speed
                 else:
                     self.vel[0] -= current_speed
-            if self.onGround and abs(self.vel[0]) > 1:
+            if self.onGround and abs(self.vel[0]) > 1 and not (self.onWallLeft or self.onWallRight):
                 if self.state == "crouch":
                     self.state = "crawl"
                 elif window.keybind("sprint"):
@@ -164,6 +164,7 @@ class Player(CollisionPhysicsObject):
                     self.vel[0] -= current_speed
                 else:
                     self.vel[0] += current_speed
+
         if window.keybind("jump") and not (self.state == "crouch" and world[round(self.rect.x), round(self.rect.y + 1)]):
             self.jump(window, 5) # how long is jump force applied --> variable jump height
 
