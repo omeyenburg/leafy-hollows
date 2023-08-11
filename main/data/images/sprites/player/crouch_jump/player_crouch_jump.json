@@ -1,8 +1,8 @@
 {
-  "name": "player_crouch_jump",
-  "speed": 0.2,
-  "frames": [
-    "player_crouch_jump0",
-    "player_crouch_jump1"
-  ]
+    "name": "player_crouch_jump",
+    "speed": 0.2,
+    "frames": [
+        "player_crouch_jump0",
+        "player_crouch_jump1"
+    ]
 }

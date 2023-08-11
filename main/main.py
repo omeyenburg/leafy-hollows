@@ -5,17 +5,16 @@
 # https://github.com/pyinstaller/pyinstaller/wiki/Recipe-OSX-Code-Signing
 # https://support.apple.com/en-us/HT204397
 
-import scripts.utility.util as util
+from scripts.utility.thread import threaded
 from scripts.graphics.window import Window
 from scripts.graphics.menu import Menu
+from scripts.game.world import World
 from scripts.game.game import Game
-
+import scripts.utility.util as util
 import numpy
 import math
 import time
 import os
-
-os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 
 # C test
 #from scripts.cfunctions.lib import lib
@@ -33,14 +32,14 @@ while True:
         menu.game_state = "game"
 
         # Start world thread
-        world_thread = Game.generate_world(window)
+        #world_thread = Game.generate_world(window)
         world = None
 
         # Wait for world thread
         while world is None:
             menu.update()
             window.update()
-            world = Game.get_world(world_thread)
+            world = threaded(World, window.block_data, wait=True)
 
             # Open menu
             if window.keybind("return") == 1:

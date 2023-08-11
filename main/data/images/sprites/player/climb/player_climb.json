@@ -1,8 +1,8 @@
 {
-  "name": "player_climb",
-  "speed": 0.5,
-  "frames": [
-    "player_climb0",
-    "player_climb1"
-  ]
+    "name": "player_climb",
+    "speed": 0.5,
+    "frames": [
+        "player_climb0",
+        "player_climb1"
+    ]
 }

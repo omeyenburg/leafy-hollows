@@ -7,6 +7,10 @@ import numpy
 import math
 
 
+WATER_PER_BLOCK = 1000 # How much water can be in one block.
+WATER_SPEED = 1000 # How much water a block can emit each second
+
+
 class World(dict):
     def __init__(self, block_data: dict):
         super().__init__() # {(x, y): (block, plant, background, water_level)}
@@ -19,15 +23,18 @@ class World(dict):
         self.block_index: dict = {index: name for name, (index, *_) in block_data.items()}
         self.block_index[0] = "air"
         self.block_name: dict = {name: index for name, (index, *_) in block_data.items()}
-        self.entities: list = set()
-        self.particles: list = set()
+        self.entities: set = set()
+        self.particles: set = set()
         self.wind: float = 0.0 # wind direction
         self.loaded_blocks: tuple = ((0, 0), (0, 0))
 
         self.generate()
 
-    def create_chunk(self, chunk_coord: [int]):
-        self.chunks[chunk_coord] = Chunk(*chunk_coord, self.seed, self.blocks)
+    def add_entity(self, entity):
+        self.entities.add(entity)
+    
+    def add_particle(self, particle):
+        self.particles.add(particle)
 
     def set_block(self, x: int, y: int, data: int, layer=0):
         if not (x, y) in self:
@@ -51,7 +58,7 @@ class World(dict):
 
     def update(self, window):
         self.loaded_blocks = window.camera.visible_blocks()
-        self.create_view()
+        self.create_view(window)
         window.world_view = self.view
 
         self.wind = math.sin(window.time) * 20 + math.cos(window.time * 5) * 10
@@ -61,8 +68,39 @@ class World(dict):
         for particle in self.particles:
             particle.update(self, window)
 
-    def update_block(self, x, y):
+    def update_block(self, window, x, y):
         water_level = self.get_water(x, y)
+        if not water_level:
+            return
+
+        directions = (
+            ((0, -1), (1, 0), (-1, 0), (0, 1)),
+            ((0, -1), (-1, 0), (1, 0), (0, 1))
+        )[random.randint(0, 1)]
+
+        for dx, dy in directions:
+            if dy == 1 and water_level <= WATER_PER_BLOCK:
+                return
+            if self.get_block(x + dx, y + dy):
+                continue
+
+            water_level_target = self.get_water(x + dx, y + dy)
+            absorbable_water = max(0, WATER_PER_BLOCK - water_level_target)
+            if not (water_level and absorbable_water):
+                return
+
+            emmitable_water = min(water_level, WATER_SPEED * window.delta_time)
+            if emmitable_water > absorbable_water and 0:
+                water_level_target = WATER_PER_BLOCK
+                water_level -= absorbable_water
+            else:
+                water_level_target += emmitable_water
+                water_level -= emmitable_water
+
+            self.set_water(x + dx, y + dy, round(water_level_target))
+            self.set_water(x, y, round(water_level))
+  
+        """
         if water_level and self.get_block(x, y - 1) == 0:
             water_level_below = self.get_water(x, y - 1)
             if water_level_below < 1000:
@@ -76,8 +114,9 @@ class World(dict):
                     
                 self.set_water(x, y, water_level)
                 self.set_water(x, y - 1, water_level_below)
+        """
 
-    def create_view(self):
+    def create_view(self, window):
         start, end = self.loaded_blocks
         view_size = (end[0] - start[0], end[1] - start[1])
 
@@ -88,7 +127,7 @@ class World(dict):
         for offset in ((0, 0), (0, 1), (1, 0), (1, 1)): # loop over offsets --> (3|1) & (3|2) & (3|3) not updated in order
             for x in range(offset[0], view_size[0] - 1, 2):
                 for y in range(offset[1], view_size[1] - 1, 2):
-                    self.update_block(start[0] + x, start[1] + y) # update block
+                    self.update_block(window, start[0] + x, start[1] + y) # update block
                     if not (start[0] + x, start[1] + y) in self:
                         self.generate_block(start[0] + x, start[1] + y)
                     self.view[x, y] = self[start[0] + x, start[1] + y]
@@ -116,7 +155,7 @@ class World(dict):
         if z < 0.5:
             self.set_block(x, y, self.block_name["dirt"])
         else:
-            self.set_block(x, y, self.block_name["dirt"])
+            self.set_block(x, y, self.block_name["stone"])
 
 
         """

@@ -1,7 +1,7 @@
 {
-  "name": "player_hit_ground",
-  "speed": 0,
-  "frames": [
-    "player_hit_ground"
-  ]
+    "name": "player_hit_ground",
+    "speed": 0,
+    "frames": [
+        "player_hit_ground"
+    ]
 }

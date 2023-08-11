@@ -1,8 +1,8 @@
 {
-  "name": "player_eat",
-  "speed": 0.05,
-  "frames": [
-    "player_eat0",
-    "player_eat1"
-  ]
+    "name": "player_eat",
+    "speed": 0.05,
+    "frames": [
+        "player_eat0",
+        "player_eat1"
+    ]
 }

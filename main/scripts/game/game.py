@@ -5,19 +5,16 @@ import scripts.game.physics as physics
 import scripts.game.player as player
 import scripts.game.entity as entity
 import scripts.game.world as world
-from threading import Thread
-import time
-
 
 class Game:
-    def __init__(self, window, world):
+    def __init__(self, window, world: world.World):
         self.window: graphics.Window = window
         #self.world: world.World = world.World(window.block_indices)
         self.world = world
         if realistic:
-            self.player = player.Player(spawn_pos=[0, 0], speed=6, sprint_speed=10, crouch_speed=2, acceleration_time=0.2, jump_force=17)
+            self.player: player.Player = player.Player(spawn_pos=[0, 0], speed=6, sprint_speed=10, crouch_speed=2, acceleration_time=0.2, jump_force=17)
         else:
-            self.player = player.Player(spawn_pos=[0, 0], speed=5, sprint_speed=7, crouch_speed=3, acceleration_time=.1, jump_force=21)
+            self.player: player.Player = player.Player(spawn_pos=[0, 0], speed=5, sprint_speed=7, crouch_speed=3, acceleration_time=.1, jump_force=21)
         self.world.entities.add(self.player)
         
         #self.rope = entity.Rope(10, (0, 0), (11, 0))
@@ -25,18 +22,3 @@ class Game:
 
     def update(self):
         self.world.update(self.window)
-
-    def generate_world_thread(block_data, result):
-        instance = world.World(block_data)
-        time.sleep(2) # wait for normal fps
-        result[0] = instance
-
-    def generate_world(window):
-        result = [None]
-        thread = Thread(target=Game.generate_world_thread, daemon=True, args=(window.block_data, result))
-        thread.result = result
-        thread.start()
-        return thread
-
-    def get_world(thread: Thread):
-        return thread.result[0]

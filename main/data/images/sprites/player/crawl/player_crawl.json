@@ -1,8 +1,8 @@
 {
-  "name": "player_crawl",
-  "speed": 0.1,
-  "frames": [
-    "player_crawl0",
-    "player_crawl1"
-  ]
+    "name": "player_crawl",
+    "speed": 0.1,
+    "frames": [
+        "player_crawl0",
+        "player_crawl1"
+    ]
 }
