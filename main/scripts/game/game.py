@@ -18,7 +18,7 @@ class Game:
             self.player = player.Player(spawn_pos=[0, 0], speed=6, sprint_speed=10, crouch_speed=2, acceleration_time=0.2, jump_force=17)
         else:
             self.player = player.Player(spawn_pos=[0, 0], speed=5, sprint_speed=7, crouch_speed=3, acceleration_time=.1, jump_force=21)
-        self.world.entities.append(self.player)
+        self.world.entities.add(self.player)
         
         #self.rope = entity.Rope(10, (0, 0), (11, 0))
         #self.dust = entity.Dust((0, 0))
@@ -26,14 +26,14 @@ class Game:
     def update(self):
         self.world.update(self.window)
 
-    def generate_world_thread(block_indices, result):
-        instance = world.World(block_indices)
+    def generate_world_thread(block_data, result):
+        instance = world.World(block_data)
         time.sleep(2) # wait for normal fps
         result[0] = instance
 
     def generate_world(window):
         result = [None]
-        thread = Thread(target=Game.generate_world_thread, daemon=True, args=(window.block_indices, result))
+        thread = Thread(target=Game.generate_world_thread, daemon=True, args=(window.block_data, result))
         thread.result = result
         thread.start()
         return thread

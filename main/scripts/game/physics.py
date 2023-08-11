@@ -57,7 +57,7 @@ class CollisionPhysicsObject:
         """
         for x in range(math.floor(self.rect.left), math.ceil(self.rect.right)):
             for y in range(math.floor(self.rect.top), math.ceil(self.rect.bottom)):
-                if world.get_collision_block(x, y):
+                if world.get_block(x, y):
                     return True
         return False
 
@@ -73,7 +73,7 @@ class CollisionPhysicsObject:
         """
         for x in range(math.floor(round(self.rect.left, 5)), math.ceil(round(self.rect.right, 5))):
             for y in range(math.floor(round(self.rect.top, 5)), math.ceil(round(self.rect.bottom, 5))):
-                if world.get_collision_block(x, y):
+                if world.get_block(x, y):
                     if self.vel[0] < 0:
                         self.rect.left = x + 1
                         self.vel[0] = 0
@@ -90,7 +90,7 @@ class CollisionPhysicsObject:
         """
         for x in range(math.floor(round(self.rect.left, 5)), math.ceil(round(self.rect.right, 5))):
             for y in range(math.floor(round(self.rect.top, 5)), math.ceil(round(self.rect.bottom, 5))):
-                if world.get_collision_block(x, y):
+                if world.get_block(x, y):
                     if self.vel[1] > 0:
                         self.rect.bottom = y
                         self.vel[1] = 0

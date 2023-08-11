@@ -28,9 +28,10 @@ def load_blocks():
     """
     block_paths = file.find("data/images/blocks", "*.json", True)
     
+    block_data = {}
     block_indices = {}
     frames = []
-    block_data = []
+    animation = []
     blocks = []
 
     for path in block_paths:
@@ -39,7 +40,8 @@ def load_blocks():
     for data in sorted(blocks, key=lambda data: data["hardness"]):
         block = data["name"]
         frames.extend(data["frames"])
-        block_data.append((data["name"], len(data["frames"]), data["speed"]))
+        animation.append((data["name"], len(data["frames"]), data["speed"]))
+        block_data[data["name"]] = (data["hardness"], data["family"], data["layer"])
 
     width = math.ceil(math.sqrt(len(frames)))
     height = math.ceil(len(frames) / width)
@@ -52,13 +54,13 @@ def load_blocks():
         image.blit(block_surface, (x * 16, (height - y - 1) * 16))
 
     x = 0
-    for block, length, speed in block_data:
+    for block, length, speed in animation:
         image.set_at((x, height * 16), (length, speed * 255 / 2, 0)) # length: 0-255 | speed: 0.0-2.0
-        block_indices[block] = x + 1
+        block_data[block] = (x + 1, *block_data[block])
         x += length
 
     pygame.image.save(image, file.abspath("data/blocks (testing only).png"))
-    return block_indices, image
+    return block_data, image
 
 
 def load_sprites():

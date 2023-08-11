@@ -7,37 +7,119 @@ import numpy
 import math
 
 
-CHUNK_SIZE = 16
+class World(dict):
+    def __init__(self, block_data: dict):
+        super().__init__() # {(x, y): (block, plant, background, water_level)}
 
+        self.seed: float = noise.seed()
+        self.seed = 18125.25
+        self.view: numpy.array = None
+        self.view_size: tuple = (0, 0)
+        self.block_data: dict = {name: (index, hardness, family, {"foreground": 0, "plant": 1, "background": 2, "water": 3}[layer]) for name, (index, hardness, family, layer) in block_data.items()} # {"block_name": (id, hardness, group, layer)}
+        self.block_index: dict = {index: name for name, (index, *_) in block_data.items()}
+        self.block_index[0] = "air"
+        self.block_name: dict = {name: index for name, (index, *_) in block_data.items()}
+        self.entities: list = set()
+        self.particles: list = set()
+        self.wind: float = 0.0 # wind direction
+        self.loaded_blocks: tuple = ((0, 0), (0, 0))
 
-class Chunk:
-    template: numpy.array = numpy.zeros((CHUNK_SIZE, CHUNK_SIZE, 4), dtype=int) # Chunk template, which can be copied later
+        self.generate()
 
+    def create_chunk(self, chunk_coord: [int]):
+        self.chunks[chunk_coord] = Chunk(*chunk_coord, self.seed, self.blocks)
 
-    def __init__(self, x: int, y: int, seed: float, blocks: dict):
-        self.x = x
-        self.y = y
-        self.array = Chunk.template.copy()
-        self.generate(seed, blocks)
+    def set_block(self, x: int, y: int, data: int, layer=0):
+        if not (x, y) in self:
+            self[(x, y)] = [0, 0, 0, 0]
+        if data:
+            layer = self.block_data[self.block_index[data]][3]
+        self[(x, y)][layer] = data
+    
+    def get_block(self, x: int, y: int, layer: int=0):
+        if not (x, y) in self:
+            self.generate_block(x, y)
+        return self[(x, y)][layer]
 
-    def __getitem__(self, index):
-        return self.array[index][0]
+    def set_water(self, x, y, level):
+        if not (x, y) in self:
+            self.generate_block(x, y)
+        self[(x, y)][3] = level
 
-    def __setitem__(self, index, value):
-        self.array[index][0] = value
+    def get_water(self, x, y):
+        return self.get((x, y), (0, 0, 0, 0))[3]
 
-    def generate(self, seed: float, blocks: dict):
-        for dx, dy in numpy.ndindex((CHUNK_SIZE, CHUNK_SIZE)):
-            x, y = dx + self.x * CHUNK_SIZE, dy + self.y * CHUNK_SIZE
-            self.array[dx, dy][0] = self.generate_block(x, y, seed, blocks)
+    def update(self, window):
+        self.loaded_blocks = window.camera.visible_blocks()
+        self.create_view()
+        window.world_view = self.view
 
-    def generate_block(self, x: int, y: int, seed: float, blocks: dict):
-        z = noise.terrain(x, y, seed)
+        self.wind = math.sin(window.time) * 20 + math.cos(window.time * 5) * 10
+        
+        for entity in self.entities:
+            entity.update(self, window)
+        for particle in self.particles:
+            particle.update(self, window)
+
+    def update_block(self, x, y):
+        water_level = self.get_water(x, y)
+        if water_level and self.get_block(x, y - 1) == 0:
+            water_level_below = self.get_water(x, y - 1)
+            if water_level_below < 1000:
+                space_left = 1000 - water_level_below
+                if water_level > space_left:
+                    water_level = water_level - space_left
+                    water_level_below = 1000
+                else:
+                    water_level_below += water_level
+                    water_level = 0
+                    
+                self.set_water(x, y, water_level)
+                self.set_water(x, y - 1, water_level_below)
+
+    def create_view(self):
+        start, end = self.loaded_blocks
+        view_size = (end[0] - start[0], end[1] - start[1])
+
+        if self.view_size != view_size:
+            self.view = numpy.zeros((*view_size, 4))
+            self.view_size = view_size
+
+        for offset in ((0, 0), (0, 1), (1, 0), (1, 1)): # loop over offsets --> (3|1) & (3|2) & (3|3) not updated in order
+            for x in range(offset[0], view_size[0] - 1, 2):
+                for y in range(offset[1], view_size[1] - 1, 2):
+                    self.update_block(start[0] + x, start[1] + y) # update block
+                    if not (start[0] + x, start[1] + y) in self:
+                        self.generate_block(start[0] + x, start[1] + y)
+                    self.view[x, y] = self[start[0] + x, start[1] + y]
+
+    def generate(self): # work in progress
+        points = []
+        position = [0, 0]
+        angle = 0
+        length = 10000
+        for i in range(length):
+            position = [position[0] + math.cos(angle), position[1] + math.sin(angle)]
+            points.append(position)
+            angle += snoise2(i * 20.215 + 0.0142, 1, octaves=3) / 2 # use simplex; perlin repeats
+
+        for point in points:
+            radius = int((pnoise1(sum(point) / 2 + 100, octaves=3) + 2) * 3)
+            for dx in range(-radius, radius + 1):
+                for dy in range(-radius, radius + 1):
+                    if dx ** 2 + dy ** 2 <= radius ** 2:
+                        coord = (int(point[0] + dx), int(point[1] + dy))
+                        self.set_block(*coord, 0)
+
+    def generate_block(self, x, y):
+        z = noise.terrain(x, y, self.seed)
         if z < 0.5:
-            return blocks["dirt"]
-        return blocks["stone"]
+            self.set_block(x, y, self.block_name["dirt"])
+        else:
+            self.set_block(x, y, self.block_name["dirt"])
 
-        # unused...
+
+        """
         world_gen = 1
 
         if world_gen == 1:
@@ -95,133 +177,4 @@ class Chunk:
         # Generate drip stone: 1dnoise(x) -> change treshold
         # Generate spaced points: spaced_noise + check for free space
         # noise.snoise2(x, y, octaves=1, persistence=0.5, lacunarity=2.0, repeatx=None, repeaty=None, base=0.0)
-
-
-class World:
-    def __init__(self, blocks: dict):
-        self.seed: float = noise.seed()
-        self.seed = 18125.25
-        self.chunks: dict = {} # indexed with a tuple (x, y) -> numpy.array(shape=(32, 32))
-        self.view: numpy.array = None
-        self.view_size: tuple = (0, 0)
-        self.blocks: dict = blocks # {"block_name": id}
-        self.entities: list = [] # inefficent, but easy to handle
-        self.particles: list = []
-        self.wind: float = 0.0 # wind direction
-        self.loaded_chunks: tuple = (0, 0, 0, 0)
-        #self.transparent_blocks = [blocks["grass_idle"]]
-
-        self.generate()
-
-    def __getitem__(self, coord: [int]):
-        return self.get_block(coord[0], coord[1])
-
-    def __setitem__(self, coord: [int], data: int):
-        self.set_block(coord[0], coord[1], data)
-
-    def create_chunk(self, chunk_coord: [int]):
-        self.chunks[chunk_coord] = Chunk(*chunk_coord, self.seed, self.blocks)
-
-    def set_block(self, x: int, y: int, data: int):
-        chunk_x, mod_x = divmod(x, CHUNK_SIZE) # (x // CHUNK_SIZE, x % CHUNK_SIZE)
-        chunk_y, mod_y = divmod(y, CHUNK_SIZE) # (y // CHUNK_SIZE, y % CHUNK_SIZE)
-
-        if not (chunk_x, chunk_y) in self.chunks: # create chunk, if chunk is not generated
-            self.create_chunk((chunk_x, chunk_y))
-        self.chunks[(chunk_x, chunk_y)][mod_x, mod_y] = data
-    
-    def get_block(self, x: int, y: int, generate: bool=True, default: int=0):
-        chunk_x, mod_x = divmod(x, CHUNK_SIZE)
-        chunk_y, mod_y = divmod(y, CHUNK_SIZE)
-        if not (chunk_x, chunk_y) in self.chunks:
-            if generate:
-                self.create_chunk((chunk_x, chunk_y))
-            else:
-                return default
-        return self.chunks[(chunk_x, chunk_y)][mod_x , mod_y]
-
-    def get_collision_block(self, x: int, y: int):
-        block = self[x, y]
-        return block > 0
-
-    def update(self, window):
-        loaded_blocks = window.camera.visible_blocks()
-        self.create_view(*loaded_blocks)
-        window.world_view = self.view
-
-        self.wind = math.sin(window.time) * 20 + math.cos(window.time * 5) * 10
-        
         """
-        for dx, dy in numpy.ndindex(self.view.shape):
-            block = self.view[dx, dy]
-            if block == self.blocks["grass"]:
-                x, y = self.loaded_chunks[0] * 16 + dx, self.loaded_chunks[1] * 16 + dy
-                for i in range(5):
-                    rect = window.camera.map_coord((x + i / 16 * 3, y + 1.5, 3/16, 7/16), from_world=True)
-                    if noise.terrain(x * 10 + i * 200, y * 10 + 100, self.seed) < 0:
-                        window.draw_image("grass_left", rect[:2], rect[2:], angle=noise.wind(x + i * 10, y, self.wind))
-                    else:
-                        window.draw_image("grass_right", rect[:2], rect[2:], angle=noise.wind(x + i * 10, y, self.wind))
-        """
-        
-
-        for entity in self.entities:
-            entity.update(self, window)
-        for particle in self.particles:
-            particle.update(self, window)
-
-    def draw(self, window):
-        start, end = window.camera.visible_blocks()
-        for x in range(start[0], end[0]):
-            for y in range(start[1], end[1]):
-                if self[x, y] == 1:
-                    rect = window.camera.map_coord((x, y, 1, 1), from_world=True)
-                    #window.draw_image("dirt", rect[:2], rect[2:])
-                elif self[x, y] == 2:
-                    rect = window.camera.map_coord((x, y, 1, 1), from_world=True)
-                    window.draw_image("grass", rect[:2], rect[2:])
-                if not (x % CHUNK_SIZE and y % CHUNK_SIZE):
-                    rect = window.camera.map_coord((x, y, .4, .4), from_world=True)
-                    window.draw_rect(rect[:2], rect[2:], (255, 0, 0, 50))
-
-    def create_view(self, start, end):
-        chunks_size = (math.ceil((end[0] - start[0]) / CHUNK_SIZE) + 1, 
-                       math.ceil((end[1] - start[1]) / CHUNK_SIZE) + 1)
-        chunk_start = (math.floor(start[0] / CHUNK_SIZE),
-                       math.floor(start[1] / CHUNK_SIZE))
-        self.loaded_chunks = (*chunk_start, *chunks_size)
-
-        if self.view_size == chunks_size:
-            chunk_view = self.view
-        else:
-            chunk_view = numpy.zeros((chunks_size[0] * CHUNK_SIZE, chunks_size[1] * CHUNK_SIZE, 4))
-            self.view = chunk_view
-            self.view_size = chunks_size
-
-        for d_chunk_x in range(chunks_size[0]):
-            for d_chunk_y in range(chunks_size[1]):
-                chunk_x = d_chunk_x + chunk_start[0]
-                chunk_y = d_chunk_y + chunk_start[1]
-                if not (chunk_x, chunk_y) in self.chunks:
-                    self.create_chunk((chunk_x, chunk_y))
-                chunk_view[d_chunk_x * CHUNK_SIZE:(d_chunk_x + 1) * CHUNK_SIZE, d_chunk_y * CHUNK_SIZE:(d_chunk_y + 1) * CHUNK_SIZE] = self.chunks[(chunk_x, chunk_y)].array
-
-        self.view = chunk_view
-
-    def generate(self): # work in progress
-        points = []
-        position = [0, 0]
-        angle = 0
-        length = 10000
-        for i in range(length):
-            position = [position[0] + math.cos(angle), position[1] + math.sin(angle)]
-            points.append(position)
-            angle += snoise2(i * 20.215 + 0.0142, 1, octaves=3) / 2 # use simplex; perlin repeats
-
-        for point in points:
-            radius = int((pnoise1(sum(point) / 2 + 100, octaves=3) + 2) * 3)
-            for dx in range(-radius, radius + 1):
-                for dy in range(-radius, radius + 1):
-                    if dx ** 2 + dy ** 2 <= radius ** 2:
-                        coord = (int(point[0] + dx), int(point[1] + dy))
-                        self[coord] = 0

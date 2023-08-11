@@ -135,7 +135,6 @@ void main() {
             vec4 background = vec4(sin(vertTexcoord.x) / 2 + 0.5, cos(vertTexcoord.y) / 2 + 0.5, cos(vertTexcoord.x), 0.5);
             if (block == 0) {
                 fragColor = background;
-                return;
             }
 
             // Set pixel color
@@ -143,15 +142,22 @@ void main() {
 
             // Mix with background and block
             if (block_color.a < 1.0) {
-                if (abs(source_pixel_org.x - (quarter.x + 1) * BLOCKSIZESOURCE / 2) < abs(source_pixel_org.y - (quarter.y + 1) * BLOCKSIZESOURCE / 2)) {
-                    block_color = get_block_color(adjacent_x, ivec2(8, 8));
-                } else {
-                    block_color = get_block_color(adjacent_y, ivec2(8, 8));
+                if (block != 0) {
+                    if (abs(source_pixel_org.x - (quarter.x + 1) * BLOCKSIZESOURCE / 2) < abs(source_pixel_org.y - (quarter.y + 1) * BLOCKSIZESOURCE / 2)) {
+                        block_color = get_block_color(adjacent_x, ivec2(8, 8));
+                    } else {
+                        block_color = get_block_color(adjacent_y, ivec2(8, 8));
+                    }
                 }
                 fragColor = block_color * block_color.a + background * (1 - block_color.a);
             } else {
                 fragColor = block_color;
             }
+
+            float water_level = texelFetch(texWorld, ivec2(dest), 0).a / 1000.0;
+            fragColor = vec4(0.1, 0.05, 0.9, 1) * water_level + fragColor * (1 - water_level);
+            
+
             break;
 
         case 5: // post processing
