@@ -11,6 +11,7 @@ from scripts.graphics.camera import Camera
 from scripts.graphics.font import Font
 from scripts.shader.shader import Shader
 from pygame.locals import *
+import scripts.utility.options as options
 import scripts.game.world as world
 import scripts.utility.util as util
 import scripts.utility.file as file
@@ -20,25 +21,7 @@ import pygame
 class Window:
     def __init__(self, caption):
         # Load options
-        self.options_default: dict = {
-            "enableVsync": True,
-            "maxFps": 1000,
-            "particles": 1,
-            "map buffers": False, # remove
-            "antialiasing": 16,
-            "resolution": 2,
-            "post processing": True,
-            "show fps": False,
-            "show debug": False,
-            "language": "deutsch",
-            "key.left": "a",
-            "key.right": "d",
-            "key.jump": "space",
-            "key.sprint": "left shift",
-            "key.crouch": "c",
-            "key.return": "escape"
-        }
-        self.options: dict = self.load_options()
+        self.options: dict = options.load()
 
         # Callbacks
         self.callback_quit = None
@@ -494,49 +477,6 @@ class Window:
         self.camera.resultion = resolution
         self.camera.pixels_per_meter = resolution * 16
         self.instance_shader.setvar("resolution", resolution)
-        
-    def load_options(self):
-        """
-        Loads the options from the options.txt file.
-        """
-        options = self.options_default.copy()
-        options_string = file.read("data/user/options.txt", "")
-
-        for line in options_string.split("\n"):
-            keyword = line.split(":")[0].strip()
-            if not keyword in options or len(line.split(":")) != 2:
-                continue
-            value = line.split(":")[1].strip()
-            if value.isdecimal():
-                value = int(value)
-            elif value.replace(".", "", 1).isdecimal():
-                value = float(value)
-            elif (value in ("True", "False") or
-                  value.count("\"") == 2 and value[0] == value[-1] == "\"" or
-                  value.count("'") == 2 and value[0] == value[-1] == "'"):
-                value = eval(value)
-            else:
-                raise ValueError("Invalid value (\"" + str(value) + "\") for " + keyword)
-            if ((isinstance(options[keyword], (int, bool)) and not isinstance(value, (int, bool))) or
-                (isinstance(options[keyword], float) and not isinstance(value, (float, int, bool))) or
-                (isinstance(options[keyword], str) and not isinstance(value, str))):
-                raise ValueError("Invalid value type (\"" + str(value) + "\") for " + keyword)
-            options[keyword] = value
-                  
-        return options
-
-    def save_options(self):
-        """
-        Save the options in the options.txt file.
-        """
-        options_string = ""
-        for key, value in self.options.items():
-            if isinstance(value, str):
-                options_string += str(key) + ": \"" + str(value) + "\"\n"
-            else:
-                options_string += str(key) + ": " + str(value) + "\n"
-
-        file.write("data/user/options.txt", options_string)
 
     def keybind(self, key):
         """
@@ -562,7 +502,7 @@ class Window:
         self.instance_shader.delete()
 
         # Save options
-        self.save_options()
+        options.save(self.options)
 
         # Quit
         pygame.quit()

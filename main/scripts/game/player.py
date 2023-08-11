@@ -183,14 +183,27 @@ class Player(CollisionPhysicsObject):
             else:
                 world.set_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), world.block_name["dirt"])
         """
-        if window.mouse_buttons[2] == 1: # place water
+        if window.mouse_buttons[2]: # place water
             mouse_pos = window.camera.map_coord(window.mouse_pos[:2], world=True)
-            world.set_water(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), 200)
+            world.set_water(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), 400)
             #world.set_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), world.block_name["stone"])
 
     def update(self, world, window: Window):
         self.move(world, window)
+        #last_position = self.rect.topleft if window.keybind("crouch") and not (world.get_block(math.floor(self.rect.left), int(self.rect.bottom - 1)) or world.get_block(math.ceil(self.rect.right), int(self.rect.bottom - 1))) else None
+        #super().update(world, window.delta_time)
+        #if (not last_position is None) and (self.rect.y < last_position[1] or world.get_block(math.floor(self.rect.left), int(self.rect.bottom - 1)) or world.get_block(math.ceil(self.rect.right), int(self.rect.bottom - 1))):
+        #    self.rect.topleft = last_position
+        """
+        last_position = self.rect.topleft if self.state in ("crawl", "crouch") and (world.get_block(math.floor(self.rect.left), int(self.rect.top - 1)) and self.direction == 0 or world.get_block(math.ceil(self.rect.right) - 1, int(self.rect.top - 1)) and self.direction == 1) else None
         super().update(world, window.delta_time)
+        if (not last_position is None) and (world.get_block(math.floor(self.rect.left), int(self.rect.top - 1)) == 0 and self.direction == 0 or world.get_block(math.ceil(self.rect.right) - 1, int(self.rect.top - 1)) == 0 and self.direction == 1):
+            self.rect.topleft = last_position
+        """
+
+        window.draw_block_highlight(math.floor(self.rect.left), int(self.rect.top - 1), (0, 0, 255))
+        window.draw_block_highlight(math.ceil(self.rect.right), int(self.rect.top - 1), (0, 0, 255))
+
         self.draw(window)
         for particle in particle_list:
             particle.update(world, window.delta_time)

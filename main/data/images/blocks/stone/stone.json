@@ -1,10 +1,10 @@
 {
-  "name": "stone",
-  "family": "stone",
-  "layer": "foreground",
-  "hardness": 3,
-  "speed": 0,
-  "frames": [
-    "stone0"
-  ]
+    "name": "stone",
+    "family": "stone",
+    "layer": "foreground",
+    "hardness": 3,
+    "speed": 0,
+    "frames": [
+        "stone0"
+    ]
 }

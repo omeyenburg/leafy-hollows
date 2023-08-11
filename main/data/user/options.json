@@ -1,0 +1,18 @@
+{
+    "enableVsync": true,
+    "maxFps": 1000,
+    "particles": 10,
+    "map buffers": false,
+    "antialiasing": 16,
+    "resolution": 4,
+    "post processing": false,
+    "show fps": true,
+    "show debug": false,
+    "language": "english",
+    "key.left": "a",
+    "key.right": "d",
+    "key.jump": "space",
+    "key.sprint": "left shift",
+    "key.crouch": "c",
+    "key.return": "escape"
+}

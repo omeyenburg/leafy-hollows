@@ -1,8 +1,8 @@
 {
-  "name": "player_jump",
-  "speed": 0.2,
-  "frames": [
-    "player_jump0",
-    "player_jump1"
-  ]
+    "name": "player_jump",
+    "speed": 0.2,
+    "frames": [
+        "player_jump0",
+        "player_jump1"
+    ]
 }

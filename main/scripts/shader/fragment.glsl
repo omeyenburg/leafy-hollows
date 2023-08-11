@@ -155,7 +155,18 @@ void main() {
             }
 
             float water_level = texelFetch(texWorld, ivec2(dest), 0).a / 1000.0;
-            fragColor = vec4(0.1, 0.05, 0.9, 1) * water_level + fragColor * (1 - water_level);
+            float water_level_left = texelFetch(texWorld, ivec2(dest.x - 1, dest.y), 0).a / 1000.0;
+            float water_level_right = texelFetch(texWorld, ivec2(dest.x + 1, dest.y), 0).a / 1000.0;
+            if (water_level_left == 0.0 && water_level_right == 0.0 && water_level > 0.0) {
+                water_level = 1000.0;
+            } else if (source_pixel_org.x < 0.5 * BLOCKSIZESOURCE) {
+                water_level = water_level * source_pixel_org.x / (BLOCKSIZESOURCE / 2) + water_level_left * (1 - source_pixel_org.x / (BLOCKSIZESOURCE / 2));
+            } else {
+                water_level = water_level * (BLOCKSIZESOURCE - source_pixel_org.x) / (BLOCKSIZESOURCE / 2) + water_level_right * (1 - (BLOCKSIZESOURCE - source_pixel_org.x) / (BLOCKSIZESOURCE / 2));
+            }
+            if (source_pixel_org.y - 1 < water_level * BLOCKSIZESOURCE) {
+                fragColor = vec4(0.1, 0.05, 0.9, 1) * 0.4 + fragColor * 0.6;
+            }
             
 
             break;

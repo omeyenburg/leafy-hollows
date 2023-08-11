@@ -1,10 +1,10 @@
 {
-  "name": "player_fall_slow",
-  "speed": 0.4,
-  "frames": [
-    "player_fall_slow0",
-    "player_fall_slow1",
-    "player_fall_slow2",
-    "player_fall_slow1"
-  ]
+    "name": "player_fall_slow",
+    "speed": 0.4,
+    "frames": [
+        "player_fall_slow0",
+        "player_fall_slow1",
+        "player_fall_slow2",
+        "player_fall_slow1"
+    ]
 }
