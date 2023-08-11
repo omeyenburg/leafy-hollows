@@ -182,28 +182,29 @@ class Window:
         glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 0, ctypes.c_void_p(0))
         glVertexAttribDivisor(4, 1)
 
-        # Atlas texture (contains images)
+        # Sprite texture
         image = load_sprites()
         self.texAtlas = self.texture(image)
 
-        # Font texture (contains letter images)
+        # Font texture
         self.font, image = Font(None, size=30, bold=True, antialias=True)
         self.texFont = self.texture(image)
 
-        # Block texture (contains block images)
-        self.block_indices, image = load_blocks()
+        # Block texture
+        self.block_data, image = load_blocks()
         self.texBlocks = self.texture(image)
 
-        # World texture (contains map data)
+        # World texture (contains world block data)
         self.world_size = (0, 0)
         self.texWorld = None
         
         # Instance shader
         self.instance_shader = Shader(
             "scripts/shader/vertex.glsl", "scripts/shader/fragment.glsl",
-            replace={"block." + key: value for key, value in self.block_indices.items()},
+            replace={"block." + key: value for key, (value, *_) in self.block_data.items()},
             texAtlas="int", texFont="int", texBlocks="int", texWorld="int", offset="vec2", resolution="int", time="float"
         )
+
         self.instance_shader.setvar("texAtlas", 0)
         self.instance_shader.setvar("texFont", 1)
         self.instance_shader.setvar("texBlocks", 2)
@@ -592,15 +593,10 @@ class Window:
         """
         Update the world texture.
         """
-        start = (int(self.camera.pos[0]) - math.floor(self.width / 2 / self.camera.pixels_per_meter) - 2,  # ideal start to render
-                 int(self.camera.pos[1]) - math.floor(self.height / 2 / self.camera.pixels_per_meter) - 2)
-
-        chunk_start = (start[0] // world.CHUNK_SIZE * world.CHUNK_SIZE, # round down to chunk corner
-                       start[1] // world.CHUNK_SIZE * world.CHUNK_SIZE)
-
-        offset = (self.camera.pos[0] % 1 + (start[0] - chunk_start[0]) % world.CHUNK_SIZE # final offset of world in blocks
+        # Drawing offset of world in blocks
+        offset = (self.camera.pos[0] % 1
                     - (self.width / 2) % self.camera.pixels_per_meter / self.camera.pixels_per_meter + 2 - int(self.camera.pos[0] < 0),
-                  self.camera.pos[1] % 1 + (start[1] - chunk_start[1]) % world.CHUNK_SIZE
+                  self.camera.pos[1] % 1
                     - (self.height / 2) % self.camera.pixels_per_meter / self.camera.pixels_per_meter + 2 - int(self.camera.pos[1] < 0))
         self.instance_shader.setvar("offset", *offset) 
 

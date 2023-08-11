@@ -71,13 +71,13 @@ class Player(CollisionPhysicsObject):
                 self.state = "hit_ground"
             else:
                 self.state = "idle"
-        elif ((self.onWallLeft and self.direction == 0 and world[wall_block_right]
-              or self.onWallRight and self.direction == 1 and world[wall_block_left])
+        elif ((self.onWallLeft and self.direction == 0 and world.get_block(*wall_block_right)
+              or self.onWallRight and self.direction == 1 and world.get_block(*wall_block_left))
               and not self.onGround and (window.keybind("right") or window.keybind("left"))):
             self.state = "climb"
             if (not realistic) and self.vel[1] < 0: # friction
                 self.vel[1] = min(self.vel[1] + window.delta_time * 13, 0)
-            if world[wall_block_right] and not world[wall_block_right[0], round(self.rect.y + 1.3)] or world[wall_block_left] and not world[wall_block_left[0], round(self.rect.y + 1.3)]:
+            if world.get_block(*wall_block_right) and not world.get_block(wall_block_right[0], round(self.rect.y + 1.3)) or world.get_block(*wall_block_left) and not world.get_block(wall_block_left[0], round(self.rect.y + 1.3)):
                 self.vel[1] = 0.2
                 if window.keybind("jump") == 1:
                     self.vel[1] = 7
@@ -87,7 +87,7 @@ class Player(CollisionPhysicsObject):
                     else:
                         self.vel[0] = 2
         elif self.vel[1] > 0 and self.state != "crouch_jump":
-            if (abs(self.vel[0]) > 2 or self.state == "jump") and not (world[wall_block_right] and world[wall_block_left]):
+            if (abs(self.vel[0]) > 2 or self.state == "jump") and not (world.get_block(*wall_block_right) and world.get_block(*wall_block_left)):
                 self.state = "jump"
             else:
                 self.state = "high_jump"
@@ -165,7 +165,7 @@ class Player(CollisionPhysicsObject):
                 else:
                     self.vel[0] += current_speed
 
-        if window.keybind("jump") and not (self.state == "crouch" and world[round(self.rect.x), round(self.rect.y + 1)]):
+        if window.keybind("jump") and not (self.state == "crouch" and world.get_block(round(self.rect.x), round(self.rect.y + 1))):
             self.jump(window, 5) # how long is jump force applied --> variable jump height
 
         if window.mouse_buttons[0] == 1: # left click: pull player to mouse
@@ -175,12 +175,18 @@ class Player(CollisionPhysicsObject):
             mouse_pos = window.camera.map_coord(window.mouse_pos[:2], world=True)
             spawn_particle(mouse_pos)
 
+        """
         if window.mouse_buttons[2] == 1: # right click: place/break block
             mouse_pos = window.camera.map_coord(window.mouse_pos[:2], world=True)
-            if world[math.floor(mouse_pos[0]), math.floor(mouse_pos[1])] > 0:
-                world[math.floor(mouse_pos[0]), math.floor(mouse_pos[1])] = 0
+            if world.get_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1])) > 0:
+                world.set_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), 0)
             else:
-                world[math.floor(mouse_pos[0]), math.floor(mouse_pos[1])] = world.blocks["dirt"]
+                world.set_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), world.block_name["dirt"])
+        """
+        if window.mouse_buttons[2] == 1: # place water
+            mouse_pos = window.camera.map_coord(window.mouse_pos[:2], world=True)
+            world.set_water(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), 200)
+            #world.set_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), world.block_name["stone"])
 
     def update(self, world, window: Window):
         self.move(world, window)

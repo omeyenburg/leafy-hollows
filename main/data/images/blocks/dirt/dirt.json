@@ -1,5 +1,7 @@
 {
   "name": "dirt",
+  "family": "dirt",
+  "layer": "foreground",
   "hardness": 1,
   "speed": 0,
   "frames": [
