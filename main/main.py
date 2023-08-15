@@ -16,10 +16,6 @@ import math
 import time
 import os
 
-# C test
-#from scripts.cfunctions.lib import lib
-#print("Hello World from Python!")
-#lib.c_print()
 
 # Create window
 window: Window = Window("Hello World")
@@ -29,25 +25,26 @@ game: Game = None
 
 while True:
     if menu.game_state == "generate":
+        window.camera.reset()
         menu.game_state = "game"
 
-        # Start world thread
-        #world_thread = Game.generate_world(window)
-        world = None
+        # Create game
+        game = Game(window)
 
-        # Wait for world thread
-        while world is None:
+        # Wait for world generation thread
+        while True:
             menu.update()
             window.update()
-            world = threaded(World, window.block_data, wait=True)
+
+            done = threaded(game.world.generate, wait=True)
+            if done: break
 
             # Open menu
             if window.keybind("return") == 1:
                 menu.main_page.open()
                 menu.game_state = "menu"
 
-        # Create game
-        game = Game(window, world)
+        
 
     elif menu.game_state == "game":
         # Update & draw all game objects

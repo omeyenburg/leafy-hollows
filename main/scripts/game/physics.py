@@ -47,9 +47,14 @@ class CollisionPhysicsObject:
         self.rect.y = round(self.rect.y, 5)
         self.y_collide(world)
 
+        # Reset object position
         if self.get_collision(world):
             self.rect.topleft = last_position
             self.vel = [0, 0]
+
+        # Adjust water level
+        stength = (abs(self.vel[0]) + abs(self.vel[1])) * 5
+        
 
     def get_collision(self, world):
         """

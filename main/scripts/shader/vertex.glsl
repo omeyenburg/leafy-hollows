@@ -7,8 +7,8 @@ layout (location = 3) in vec4 source_or_color;
 layout (location = 4) in vec4 shape_transform;
 
 out vec2 vertTexcoord;
-out vec4 vertSourceOrColor;
-out float vertShape;
+flat out vec4 vertSourceOrColor;
+flat out float vertShape;
 
 void main() {
     vec2 flip = shape_transform.gb;
