@@ -13,6 +13,11 @@ class Camera:
         self.dest: [float] = [0, 0]
         self.window: Window = window
 
+    def reset(self):
+        self.pos: [float] = [0, 0]
+        self.vel: [float] = [0, 0]
+        self.dest: [float] = [0, 0]
+
     def set(self, pos):
         """
         Set the camera position.
@@ -90,10 +95,10 @@ class Camera:
         return color
 
     def visible_blocks(self):
-        center = (int(self.pos[0]),
-                  int(self.pos[1]))
-        start = (center[0] - math.floor(self.window.width / 2 / self.pixels_per_meter) - 2,
-                 center[1] - math.floor(self.window.height / 2 / self.pixels_per_meter) - 2)
-        end = (center[0] + math.ceil(self.window.width / 2 / self.pixels_per_meter) + 2,
-               center[1] + math.ceil(self.window.height / 2 / self.pixels_per_meter) + 2)
+        center = (math.floor(self.pos[0]),
+                  math.floor(self.pos[1]))
+        start = (center[0] - math.floor(self.window.width / 2 / self.pixels_per_meter) - 3,
+                 center[1] - math.floor(self.window.height / 2 / self.pixels_per_meter) - 3)
+        end = (center[0] + math.ceil(self.window.width / 2 / self.pixels_per_meter) + 3,
+               center[1] + math.ceil(self.window.height / 2 / self.pixels_per_meter) + 3)
         return start, end

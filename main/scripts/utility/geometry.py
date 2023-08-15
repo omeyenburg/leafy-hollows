@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import random
 import math
 
 
@@ -8,8 +9,8 @@ class Rect:
         self.y: float = y
         self.w: float = w
         self.h: float = h
-        self.w_half: float = w/2
-        self.h_half: float = h/2
+        self._w_half: float = w/2
+        self._h_half: float = h/2
 
     def __repr__(self):
         return f"Rect({self.x}, {self.y}, {self.w}, {self.h})"
@@ -37,27 +38,27 @@ class Rect:
 
     @property
     def center(self):
-        return (self.x + self.w_half, self.y + self.h_half)
+        return (self.x + self._w_half, self.y + self._h_half)
 
     @center.setter
     def center(self, value):
-        self.x, self.y = value[0] - self.w_half, value[1] - self.h_half
+        self.x, self.y = value[0] - self._w_half, value[1] - self._h_half
 
     @property
     def centerx(self):
-        return self.x + self.w_half
+        return self.x + self._w_half
 
     @centerx.setter
     def centerx(self, a):
-        self.x = a - self.w_half
+        self.x = a - self._w_half
 
     @property
     def centery(self):
-        return self.y + self.h_half
+        return self.y + self._h_half
 
     @centery.setter
     def centery(self, value):
-        self.y = value - self.h_half
+        self.y = value - self._h_half
 
     @property
     def left(self):
@@ -124,3 +125,10 @@ class Rect:
 
 def angle(a):
     return a % (2 * math.pi)
+
+
+def shuffled_range(n):
+    numbers = list(range(n))
+    random.shuffle(numbers)
+    for i in numbers:
+        yield i

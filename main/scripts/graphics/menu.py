@@ -12,7 +12,7 @@ class Page:
     opened = None
     
     def __init__(self, parent=None, columns: int=1, spacing: int=0, callback=None):
-        self.children = []
+        self.children = [] # List of all widgets
         self.parent = parent
         self.columns = columns
         self.spacing = spacing
@@ -64,8 +64,8 @@ class Page:
 class Widget:
     def __init__(self, parent, size: [float], row: int=0, column: int=0, columnspan: int=1, fontsize: float=1.0, hover_callback=None, translator=None):
         self.parent = parent
-        self.children = []
-        self.rect = geometry.Rect(0, 0, *size)
+        self.children = [] # List of all child widgets (not used)
+        self.rect = geometry.Rect(0, 0, *size) # Rect will be moved, when parent.layout is called
         self.parent.children.append(self)
         self.row = row
         self.column = column
@@ -131,14 +131,6 @@ class Button(Widget):
         window.draw_text(self.rect.center, self.translator.translate(self.text), (0, 0, 0, 250), self.fontsize, centered=True)
 
 
-class Space(Widget):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def update(self, window: Window):
-        ...
-
-
 class Slider(Widget):
     def __init__(self, *args, callback=None, value=0.0, **kwargs):
         super().__init__(*args, **kwargs)
@@ -173,10 +165,6 @@ class Slider(Widget):
     def draw(self, window: Window):
         window.draw_rect(self.rect[:2], self.rect[2:], (60, 0, 0, 200))
         window.draw_rect(self.slider_rect[:2], self.slider_rect[2:], (250, 0, 0, 200))
-        #window.draw_rect((self.rect[0], self.rect.centery - self.rect[3] / 8), (self.rect[2], self.rect[3] / 4), (50, 0, 0, 200))
-        #window.draw_rect(self.slider_rect[:2], self.slider_rect[2:], (100, 0, 0, 200))
-        #window.draw_circle(self.slider_rect.center, self.slider_rect.h_half, (200, 0, 0, 255))
-
 
 class Entry(Widget):
     def __init__(self, *args, text="", **kwargs):
@@ -274,7 +262,6 @@ def HoverBox(window: Window, rect: list, text: list, translator=None):
             x = 0
         else:
             x += x_offset
-        
 
 
 class Menu:
@@ -322,19 +309,19 @@ class Menu:
         """
         Settings
             Video
-                brightness
-                animations
+                (brightness)
+                (animations)
                 show fps
                 show debug menu
-                opengl version
+                (opengl version)
                 relational font size
             Audio
                 Volume
                 (music)
                 ambient
             Gameplay
-                world generation threads
-                pregenerate distance
+                (world generation threads)
+                (pregenerate distance)
                 simulation distance
         """
 

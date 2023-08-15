@@ -1,0 +1,10 @@
+{
+    "name": "grass",
+    "family": "dirt",
+    "layer": "foreground",
+    "hardness": 1,
+    "speed": 0,
+    "frames": [
+        "grass"
+    ]
+}

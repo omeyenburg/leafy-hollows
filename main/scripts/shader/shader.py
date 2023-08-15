@@ -8,47 +8,48 @@ class Shader:
     active = None
 
     def __init__(self, vertex, fragment, replace={}, **variables):
-        self.program = glCreateProgram()
+        self._program = glCreateProgram()
         
+        # Read & compile vertex shader
         content = file.read(vertex)
         for search, replacement in replace.items():
             content = content.replace(str(search), str(replacement))
         vertex_shader = compileShader(content, GL_VERTEX_SHADER)
-        glAttachShader(self.program, vertex_shader)
+        glAttachShader(self._program, vertex_shader)
 
+        # Read & compile fragment shader
         content = file.read(fragment)
         for search, replacement in replace.items():
             content = content.replace(str(search), str(replacement))
         fragment_shader = compileShader(content, GL_FRAGMENT_SHADER)
-        glAttachShader(self.program, fragment_shader)
+        glAttachShader(self._program, fragment_shader)
 
-        glLinkProgram(self.program)
-        glValidateProgram(self.program)
-
+        glLinkProgram(self._program)
+        glValidateProgram(self._program)
         glDeleteShader(vertex_shader)
         glDeleteShader(fragment_shader)
 
         # Dict containing all variables which should be send to the fragment shader {variable1: (uniformLoc, glUniformFunc, value)}
-        self.variables = {variable: Shader.get_uniform_loc(self.program, variable, variables[variable]) for variable in variables}
+        self._variables = {variable: Shader.get_uniform_loc(self._program, variable, variables[variable]) for variable in variables}
 
     def setvar(self, variable, *value):
         """
         Set the value of a variable, which is send to the shader by update
         """
-        self.variables[variable][2] = value
+        self._variables[variable][2] = value
 
     def activate(self):
         """
         Activate the shader.
         """
-        glUseProgram(self.program)
+        glUseProgram(self._program)
         Shader.active = self
 
     def delete(self):
         """
         Delete the shader.
         """
-        glDeleteProgram(self.program)
+        glDeleteProgram(self._program)
 
     def get_uniform_loc(program, variable, data_type): # Get location and convert glsl data type to valid function
         loc = glGetUniformLocation(program, variable)
@@ -76,8 +77,8 @@ class Shader:
         """
         Update all variables.
         """
-        for index, (loc, func, value) in self.variables.items():
+        for index, (loc, func, value) in self._variables.items():
             if value is None:
                 continue
             func(loc, *value)
-            self.variables[index][2] = None
+            self._variables[index][2] = None
