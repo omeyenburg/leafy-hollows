@@ -2,12 +2,12 @@
     "name": "player_climb",
     "speed": 0.2,
     "frames": [
-        "player_climb_pole1",
-        "player_climb_pole2",
-        "player_climb_pole3",
-        "player_climb_pole4",
-        "player_climb_pole3",
-        "player_climb_pole2"
+        "player_climb_pole1.png",
+        "player_climb_pole2.png",
+        "player_climb_pole3.png",
+        "player_climb_pole4.png",
+        "player_climb_pole3.png",
+        "player_climb_pole2.png"
     ]
 }
 

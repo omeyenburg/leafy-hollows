@@ -2,13 +2,13 @@
     "name": "player_sleep",
     "speed": 0.3,
     "frames": [
-        "player_sleep0",
-        "player_sleep0",
-        "player_sleep0",
-        "player_sleep0",
-        "player_sleep0",
-        "player_sleep1",
-        "player_sleep2",
-        "player_sleep3"
+        "player_sleep0.png",
+        "player_sleep0.png",
+        "player_sleep0.png",
+        "player_sleep0.png",
+        "player_sleep0.png",
+        "player_sleep1.png",
+        "player_sleep2.png",
+        "player_sleep3.png"
     ]
 }

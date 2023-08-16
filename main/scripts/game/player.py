@@ -2,6 +2,7 @@
 from scripts.utility.util import realistic
 from scripts.graphics.window import Window
 from scripts.game.physics import *
+import scripts.graphics.sound as sound
 
 
 class Player(CollisionPhysicsObject):
@@ -175,7 +176,7 @@ class Player(CollisionPhysicsObject):
             mouse_pos = window.camera.map_coord(window.mouse_pos[:2], world=True)
             spawn_particle(mouse_pos)
 
-        """
+        
         if window.mouse_buttons[2] == 1: # right click: place/break block
             mouse_pos = window.camera.map_coord(window.mouse_pos[:2], world=True)
             if world.get_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1])) > 0:
@@ -187,7 +188,7 @@ class Player(CollisionPhysicsObject):
             mouse_pos = window.camera.map_coord(window.mouse_pos[:2], world=True)
             water_level = world.get_water(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]))
             world.set_water(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), water_level + 1000)
-
+        """
 
     def update(self, world, window: Window):
         self.move(world, window)
@@ -210,6 +211,13 @@ class Player(CollisionPhysicsObject):
             particle.update(world, window.delta_time)
             tmp_draw_rect(window, particle.rect.topleft, [particle.rect.w, particle.rect.h], (0, 255, 255))
 
+        # Play sounds
+        if self.state == "walk":
+            sound.play(window, "walk", x=self.vel[0] / 10)
+        elif self.state == "sprint":
+            sound.play(window, "sprint", x=self.vel[0] / 10)
+        elif self.state == "hit_ground":
+            sound.play(window, "hit_ground")
 
 def spawn_particle(pos: list[float, float]):
     particle_list.append(PhysicsObject(10, pos, [0.5, 0.5]))

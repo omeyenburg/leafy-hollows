@@ -1,0 +1,13 @@
+{
+    "name": "sprint",
+    "speed": 0.3,
+    "volume": 0.2,
+    "sounds": [
+        "step0.wav",
+        "step1.wav",
+        "step2.wav",
+        "step3.wav",
+        "step4.wav",
+        "step5.wav"
+    ]
+}

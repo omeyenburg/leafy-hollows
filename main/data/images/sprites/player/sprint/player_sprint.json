@@ -2,11 +2,11 @@
     "name": "player_sprint",
     "speed": 0.08,
     "frames": [
-        "player_sprint0",
-        "player_sprint1",
-        "player_sprint2",
-        "player_sprint3",
-        "player_sprint4",
-        "player_sprint5"
+        "player_sprint0.png",
+        "player_sprint1.png",
+        "player_sprint2.png",
+        "player_sprint3.png",
+        "player_sprint4.png",
+        "player_sprint5.png"
     ]
 }

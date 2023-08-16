@@ -2,7 +2,7 @@
     "name": "player_crawl",
     "speed": 0.1,
     "frames": [
-        "player_crawl0",
-        "player_crawl1"
+        "player_crawl0.png",
+        "player_crawl1.png"
     ]
 }
