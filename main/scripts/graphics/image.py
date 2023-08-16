@@ -35,7 +35,7 @@ def load_blocks():
     blocks = []
 
     for path in block_paths:
-        blocks.append(file.read_json(file.relpath(path)))
+        blocks.append(file.read_json(path))
 
     for data in sorted(blocks, key=lambda data: data["hardness"]):
         block = data["name"]
@@ -49,7 +49,7 @@ def load_blocks():
 
     for i, frame in enumerate(frames):
         y, x = divmod(i, width)
-        path = file.find("data/images/blocks", frame + ".png", True)[0]
+        path = file.find("data/images/blocks", frame, True)[0]
         block_surface = pygame.image.load(path)
         image.blit(block_surface, (x * 16, (height - y - 1) * 16))
 
@@ -100,9 +100,10 @@ def load_sprites():
     sprite_paths = file.find("data/images/sprites", "*.json", True)
     for path in sprite_paths:
         sprite = file.basename(path)
-        data = file.read_json(file.relpath(path))
+        data = file.read_json(path)
         indices = []
         for frame in data["frames"]:
+            frame = frame.split(".")[0]
             try:
                 indices.append(images[frame])
             except KeyError:

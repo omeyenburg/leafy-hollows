@@ -12,6 +12,7 @@ from scripts.graphics.font import Font
 from scripts.shader.shader import Shader
 from pygame.locals import *
 import scripts.utility.options as options
+import scripts.graphics.sound as sound
 import scripts.game.world as world
 import scripts.utility.util as util
 import scripts.utility.file as file
@@ -29,8 +30,11 @@ class Window:
         # Callbacks
         self.callback_quit = None
 
-        # Init pygame
+        # Initialize pygame
         pygame.init()
+
+        # Load sounds
+        self.loaded_sounds, self.played_sounds = sound.load()
 
         # Set OpenGL version
         opengl_major = int(_OPENGL_VERSION.split(".")[0])

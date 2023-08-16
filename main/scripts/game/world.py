@@ -71,8 +71,6 @@ class World(dict):
             for y in geometry.shuffled_range(self.view_size[1] - 1):
                 for x in geometry.shuffled_range(self.view_size[0] - 1):
                     self.update_block(window, self.loaded_blocks[0][0] + x, self.loaded_blocks[0][1] + y)
-
-        #print(self.get_water_side(1, -6))
         
         for entity in self.entities:
             entity.update(self, window)
@@ -111,7 +109,7 @@ class World(dict):
         blocks = {(x, y): water_level}
         total_water = water_level
         for _x, _y in ((x - 1, y), (x + 1, y)):
-            if not self.get_block(_x, _y):
+            if not (self.get_block(_x, _y) or self.get_block(_x, _y - 1) and self.get_water(_x, _y - 1) > 1):
                 water_level_target = self.get_water(_x, _y)
                 total_water += water_level_target
                 blocks[(_x, _y)] = water_level_target

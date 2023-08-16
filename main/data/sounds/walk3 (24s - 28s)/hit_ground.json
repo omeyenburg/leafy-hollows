@@ -1,0 +1,13 @@
+{
+    "name": "hit_ground",
+    "speed": 1.0,
+    "volume": 1.0,
+    "sounds": [
+        "step0.wav",
+        "step1.wav",
+        "step2.wav",
+        "step3.wav",
+        "step4.wav",
+        "step5.wav"
+    ]
+}

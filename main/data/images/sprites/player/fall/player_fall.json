@@ -2,11 +2,11 @@
     "name": "player_fall",
     "speed": 0.4,
     "frames": [
-        "player_fall0",
-        "player_fall1",
-        "player_fall2",
-        "player_fall3",
-        "player_fall2",
-        "player_fall1"
+        "player_fall0.png",
+        "player_fall1.png",
+        "player_fall2.png",
+        "player_fall3.png",
+        "player_fall2.png",
+        "player_fall1.png"
     ]
 }

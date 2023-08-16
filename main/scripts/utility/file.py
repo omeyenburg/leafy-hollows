@@ -7,6 +7,7 @@ import os
 
 dirpath = os.path.dirname
 basename = os.path.basename
+isabs = os.path.isabs
 
 
 def find(folder: str, name: str, sub_folder=False):

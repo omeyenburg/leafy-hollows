@@ -2,6 +2,6 @@
     "name": "player_hit_ground",
     "speed": 0,
     "frames": [
-        "player_hit_ground"
+        "player_hit_ground.png"
     ]
 }
