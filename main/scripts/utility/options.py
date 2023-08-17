@@ -7,10 +7,8 @@ default: dict = {
     "enableVsync": True,
     "maxFps": 1000,
     "particles": 1,
-    "map buffers": False, # remove
     "antialiasing": 16,
     "resolution": 2,
-    "post processing": True,
     "show fps": False,
     "show debug": False,
     "language": "deutsch",

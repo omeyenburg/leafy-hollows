@@ -210,47 +210,26 @@ class Window:
         """
         Queue a object to be drawn on the screen and resize buffers as necessary.
         """
-        if (not self._render_buffers_mapped) and self.options["map buffers"]:
-            return
-
         if self._vbo_instances_length == self._vbo_instances_index: # Resize all instanced vbos
             self._vbo_instances_length = int(1 + self._vbo_instances_length * 1.5)
 
             new_dest_vbo_array = numpy.zeros(self._vbo_instances_length * 4, dtype=numpy.float32)
             new_dest_vbo_array[:len(self._dest_vbo_array)] = self._dest_vbo_array
             glBindBuffer(GL_ARRAY_BUFFER, self._dest_vbo)
-            if self.options["map buffers"]:
-                glUnmapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)
             glBufferData(GL_ARRAY_BUFFER, new_dest_vbo_array.nbytes, new_dest_vbo_array, GL_DYNAMIC_DRAW)
-            if self.options["map buffers"]:
-                address = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)
-                self._dest_vbo_array = (GLfloat * len(new_dest_vbo_array)).from_address(address)
-            else:
-                self._dest_vbo_array = new_dest_vbo_array
+            self._dest_vbo_array = new_dest_vbo_array
  
             new_source_or_color_vbo_array = numpy.zeros(self._vbo_instances_length * 4, dtype=numpy.float32)
             new_source_or_color_vbo_array[:len(self._source_or_color_vbo_array)] = self._source_or_color_vbo_array
             glBindBuffer(GL_ARRAY_BUFFER, self._source_or_color_vbo)
-            if self.options["map buffers"]:
-                glUnmapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)
             glBufferData(GL_ARRAY_BUFFER, new_source_or_color_vbo_array.nbytes, new_source_or_color_vbo_array, GL_DYNAMIC_DRAW)
-            if self.options["map buffers"]:
-                address = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)
-                self._source_or_color_vbo_array = (GLfloat * len(new_source_or_color_vbo_array)).from_address(address)
-            else:
-                self._source_or_color_vbo_array = new_source_or_color_vbo_array
+            self._source_or_color_vbo_array = new_source_or_color_vbo_array
 
             new_shape_transform_vbo_array = numpy.zeros(self._vbo_instances_length * 4, dtype=numpy.float32)
             new_shape_transform_vbo_array[:len(self._shape_transform_vbo_array)] = self._shape_transform_vbo_array
             glBindBuffer(GL_ARRAY_BUFFER, self._shape_transform_vbo)
-            if self.options["map buffers"]:
-                glUnmapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)
             glBufferData(GL_ARRAY_BUFFER, new_shape_transform_vbo_array.nbytes, new_shape_transform_vbo_array, GL_DYNAMIC_DRAW)
-            if self.options["map buffers"]:
-                address = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)
-                self._shape_transform_vbo_array = (GLfloat * len(new_shape_transform_vbo_array)).from_address(address)
-            else:
-                self._shape_transform_vbo_array = new_shape_transform_vbo_array
+            self._shape_transform_vbo_array = new_shape_transform_vbo_array
 
         # Write drawing data into buffers
         self._dest_vbo_array[4 * self._vbo_instances_index:4 * self._vbo_instances_index + 4] = dest
@@ -370,29 +349,12 @@ class Window:
         glBindTexture(GL_TEXTURE_2D, self._texWorld)
 
         # Send instance data to shader
-        if not self.options["map buffers"]:
-            glBindBuffer(GL_ARRAY_BUFFER, self._dest_vbo)
-            glBufferSubData(GL_ARRAY_BUFFER, 0, self._dest_vbo_array.nbytes, self._dest_vbo_array)
-            glBindBuffer(GL_ARRAY_BUFFER, self._source_or_color_vbo)
-            glBufferSubData(GL_ARRAY_BUFFER, 0, self._source_or_color_vbo_array.nbytes, self._source_or_color_vbo_array)
-            glBindBuffer(GL_ARRAY_BUFFER, self._shape_transform_vbo)
-            glBufferSubData(GL_ARRAY_BUFFER, 0, self._shape_transform_vbo_array.nbytes, self._shape_transform_vbo_array)
-        elif self._render_buffers_mapped:
-            glBindBuffer(GL_ARRAY_BUFFER, self._dest_vbo)
-            dest_vbo_size = len(self._dest_vbo_array)
-            glUnmapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)
-
-            glBindBuffer(GL_ARRAY_BUFFER, self._source_or_color_vbo)
-            source_or_color_vbo_size = len(self._source_or_color_vbo_array)
-            glUnmapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)
-
-            glBindBuffer(GL_ARRAY_BUFFER, self._shape_transform_vbo)
-            shape_transform_vbo_size = len(self._shape_transform_vbo_array)
-            glUnmapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)
-            self._render_buffers_mapped = True
-        else:
-            dest_vbo_size = source_or_color_vbo_size = shape_transform_vbo_size = 0
-            self._render_buffers_mapped = True
+        glBindBuffer(GL_ARRAY_BUFFER, self._dest_vbo)
+        glBufferSubData(GL_ARRAY_BUFFER, 0, self._dest_vbo_array.nbytes, self._dest_vbo_array)
+        glBindBuffer(GL_ARRAY_BUFFER, self._source_or_color_vbo)
+        glBufferSubData(GL_ARRAY_BUFFER, 0, self._source_or_color_vbo_array.nbytes, self._source_or_color_vbo_array)
+        glBindBuffer(GL_ARRAY_BUFFER, self._shape_transform_vbo)
+        glBufferSubData(GL_ARRAY_BUFFER, 0, self._shape_transform_vbo_array.nbytes, self._shape_transform_vbo_array)
 
         # Draw
         glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, None, self._vbo_instances_index)
@@ -400,29 +362,6 @@ class Window:
             pygame.display.flip()
         else:
             self._refresh = True
-
-        # Reset buffers
-        if self.options["map buffers"]:
-            glBindBuffer(GL_ARRAY_BUFFER, self._dest_vbo)
-            address = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)
-            if dest_vbo_size:
-                self._dest_vbo_array = (GLfloat * dest_vbo_size).from_address(address)
-            else:
-                self._dest_vbo_array = numpy.zeros(0, dtype=numpy.float32)
-
-            glBindBuffer(GL_ARRAY_BUFFER, self._source_or_color_vbo)
-            address = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)
-            if source_or_color_vbo_size:
-                self._source_or_color_vbo_array = (GLfloat * source_or_color_vbo_size).from_address(address)
-            else:
-                self._source_or_color_vbo_array = numpy.zeros(0, dtype=numpy.float32)
-
-            glBindBuffer(GL_ARRAY_BUFFER, self._shape_transform_vbo)
-            address = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)
-            if shape_transform_vbo_size:
-                self._shape_transform_vbo_array = (GLfloat * shape_transform_vbo_size).from_address(address)
-            else:
-                self._shape_transform_vbo_array = numpy.zeros(0, dtype=numpy.float32)
 
         # Reset instance index
         self._vbo_instances_index = 0
@@ -459,27 +398,6 @@ class Window:
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
         else:
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
-
-    def toggle_map_buffers(self):
-        """
-        Toggle mapping buffers for drawing.
-        """
-        if self.options["map buffers"]:
-            glBindBuffer(GL_ARRAY_BUFFER, self._dest_vbo)
-            glUnmapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)
-            glBindBuffer(GL_ARRAY_BUFFER, self._source_or_color_vbo)
-            glUnmapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)
-            glBindBuffer(GL_ARRAY_BUFFER, self._shape_transform_vbo)
-            glUnmapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)
-    
-        self.options["map buffers"] = not self.options["map buffers"]
-        self._render_buffers_mapped = False
-        self._dest_vbo_array = numpy.array([], dtype=numpy.float32)
-        self._source_or_color_vbo_array = numpy.array([], dtype=numpy.float32)
-        self._shape_transform_vbo_array = numpy.array([], dtype=numpy.float32)
-        self._vbo_instances_length = 0
-        self._vbo_instances_index = 0
-        self._refresh = False
 
     def set_antialiasing(self, level: int):
         """
