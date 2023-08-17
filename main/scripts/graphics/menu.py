@@ -446,17 +446,28 @@ class Menu:
             ("low", 0.8, (250, 250, 0, 200))
         )
 
-        # Post processing button
-        def button_post_processing_update():
-            window.options["post processing"] = not window.options["post processing"]
-            button_post_processing.text = "Post process: " + str(window.options["post processing"])
+        # Antialiasing slider
+        def slider_antialiasing_update():
+            antialiasing = (0, 1, 2, 4, 8, 16)[round(slider_antialiasing.value * 5)]
+            if antialiasing == 0:
+                label_antialiasing.text = "Antialiasing: Off"
+            else:
+                label_antialiasing.text = "Antialiasing: " + str(antialiasing)
+            window.set_antialiasing(antialiasing)
 
-        button_post_processing = Button(settings_video_scrollbox, (0.6, .18), row=4, column=0, callback=button_post_processing_update, text="Post process: " + str(window.options["post processing"]), translator=translator)
-        button_post_processing.hover_callback = lambda: settings_video_hover(1,
-            ("Post processing\n", 1, (250, 250, 250, 200)),
+        if window.options["antialiasing"]:
+            value = [i / 5 for i in range(1, 6)][round(math.log2(window.options["antialiasing"]))]
+        else:
+            value = 0
+        slider_antialiasing = Slider(settings_video_scrollbox, (.6, 0.18), row=4, column=0, value=value)
+        slider_antialiasing.callback = slider_antialiasing_update
+        label_antialiasing = Label(settings_video_scrollbox, (.6, 0.18), row=4, column=0, translator=translator)
+        slider_antialiasing_update()
+        label_antialiasing.hover_callback = lambda: settings_video_hover(1,
+            ("Antialiasing\n", 1, (250, 250, 250, 200)),
             ("Performance impact: ", 0.8, (250, 250, 250, 200)),
-            ("medium\n", 0.8, (250, 150, 0, 200)),
-            ("When enabled, post processing is performed after the actual rendering for additional visual effects.", 0.8, (250, 250, 250, 200))
+            ("low\n", 0.8, (250, 250, 0, 200)),
+            ("Set the level of antialiasing.\nAntialiasing creates smoother edges of shapes.", 0.8, (250, 250, 250, 200))
         )
 
         # Language button
@@ -475,44 +486,6 @@ class Menu:
             ("none\n", 0.8, (0, 250, 0, 200)),
             ("Select either English or German as the language.", 0.8, (250, 250, 250, 200))
         )
-
-        # Antialiasing slider
-        def slider_antialiasing_update():
-            antialiasing = (0, 1, 2, 4, 8, 16)[round(slider_antialiasing.value * 5)]
-            if antialiasing == 0:
-                label_antialiasing.text = "Antialiasing: Off"
-            else:
-                label_antialiasing.text = "Antialiasing: " + str(antialiasing)
-            window.set_antialiasing(antialiasing)
-
-        if window.options["antialiasing"]:
-            value = [i / 5 for i in range(1, 6)][round(math.log2(window.options["antialiasing"]))]
-        else:
-            value = 0
-        slider_antialiasing = Slider(settings_video_scrollbox, (.6, 0.18), row=5, column=0, value=value)
-        slider_antialiasing.callback = slider_antialiasing_update
-        label_antialiasing = Label(settings_video_scrollbox, (.6, 0.18), row=5, column=0, translator=translator)
-        slider_antialiasing_update()
-        label_antialiasing.hover_callback = lambda: settings_video_hover(1,
-            ("Antialiasing\n", 1, (250, 250, 250, 200)),
-            ("Performance impact: ", 0.8, (250, 250, 250, 200)),
-            ("low\n", 0.8, (250, 250, 0, 200)),
-            ("Set the level of antialiasing.\nAntialiasing creates smoother edges of shapes.", 0.8, (250, 250, 250, 200))
-        )
-        """
-        # Map buffers button
-        def button_map_buffers_update():
-            window.toggle_map_buffers()
-            button_map_buffers.text = "Map Buffers: " + str(window.options["map buffers"])
-
-        button_map_buffers = Button(settings_video_scrollbox, (0.6, .18), row=5, column=1, callback=button_map_buffers_update, text="Map Buffers: " + str(window.options["map buffers"]), translator=translator)
-        button_map_buffers.hover_callback = lambda: settings_video_hover(0,
-            ("Map Buffers\n", 1, (250, 250, 250, 200)),
-            ("Performance impact: ", 0.8, (250, 250, 250, 200)),
-            ("none\n\n", 0.8, (0, 250, 0, 200)),
-            ("When enabled, rendering\ndata is directly copied\ninto buffers.", 0.8, (250, 250, 250, 200))
-        )
-        """
 
         button_settings_back = Button(settings_video_page, (1.4, .2), row=3, column=0, callback=settings_page.open, text="Back", translator=translator)
         settings_video_page.layout()

@@ -16,6 +16,8 @@ import math
 import time
 import os
 
+#https://craftpix.net/freebies/free-swimming-characters-animation-pixel-art/
+
 
 # Create window
 window: Window = Window("Hello World")
@@ -50,9 +52,8 @@ while True:
         # Update & draw all game objects
         game.update()
 
-        # Post processing
-        if window.options["post processing"]:
-            window.draw_post_processing()
+        # Draw foreground blocks & post processing
+        window.draw_post_processing()
 
         # Write fps & debug info
         if window.options["show fps"]:
