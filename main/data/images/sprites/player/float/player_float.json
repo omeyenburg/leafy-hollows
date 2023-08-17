@@ -1,0 +1,18 @@
+{
+    "name": "player_float",
+    "speed": 0.4,
+    "frames": [
+        "player_float0.png",
+        "player_float1.png",
+        "player_float2.png",
+        "player_float1.png",
+        "player_float0.png",
+        "player_float1.png",
+        "player_float2.png",
+        "player_float1.png",
+        "player_float_left.png",
+        "player_float1.png",
+        "player_float2.png",
+        "player_float1.png"
+    ]
+}

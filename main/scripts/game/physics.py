@@ -8,6 +8,7 @@ if util.realistic:
     GRAVITY_CONSTANT: float = 9.81
 else:
     GRAVITY_CONSTANT: float = 15
+GRAVITY_CONSTANT_WATER: float = GRAVITY_CONSTANT
 FRICTION_X: float = 0.1
 JUMP_THRESHOLD: int = 3 # time to jump after leaving the ground in ticks
 WALL_JUMP_THRESHOLD: float = 0.3 # time to jump after leaving a wall in seconds
@@ -25,11 +26,15 @@ class CollisionPhysicsObject:
         self.onGround: int = 0
         self.onWallLeft: int = 0
         self.onWallRight: int = 0
+        self.inWater: bool = False
+        self.underWater: bool = False
 
     def apply_force(self, force: float, angle: float, delta_time: float): # angle in degrees; 0 is right, counterclockwise
         """
         Applies force to the object.
         """
+        if self.underWater:
+            force /= 3
         r_angle = math.radians(angle)
         self.vel[0] += math.cos(r_angle) * force / self.mass * delta_time
         self.vel[1] += math.sin(r_angle) * force / self.mass * delta_time
@@ -55,7 +60,6 @@ class CollisionPhysicsObject:
 
         # Adjust water level
         stength = (abs(self.vel[0]) + abs(self.vel[1])) * 5
-        
 
     def get_collision(self, world):
         """
@@ -71,7 +75,11 @@ class CollisionPhysicsObject:
         """
         Applies gravity to the object.
         """
-        self.apply_force(GRAVITY_CONSTANT * self.mass * delta_time, 270, 1)
+        if self.inWater:
+            gravity = GRAVITY_CONSTANT_WATER
+        else:
+            gravity = GRAVITY_CONSTANT
+        self.apply_force(gravity * self.mass * delta_time, 270, 1)
     
     def x_collide(self, world, delta_time):
         """
@@ -124,6 +132,12 @@ class CollisionPhysicsObject:
             self.onWallLeft -= 1
         if self.onWallRight:
             self.onWallRight -= 1
+
+        block_feet = (math.floor(self.rect.centerx), round(self.rect.top))
+        block_head = (math.floor(self.rect.centerx), round(self.rect.bottom))
+
+        self.inWater = world.get_water(*block_feet) > 0.2
+        self.underWater = self.inWater and world.get_water(*block_head) > 0.2
 
         self.apply_velocity(world, delta_time)
 
