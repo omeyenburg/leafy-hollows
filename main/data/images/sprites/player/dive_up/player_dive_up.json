@@ -1,0 +1,10 @@
+{
+    "name": "player_dive_up",
+    "speed": 0.4,
+    "frames": [
+        "player_dive_up0.png",
+        "player_dive_up1.png",
+        "player_dive_up2.png",
+        "player_dive_up1.png"
+    ]
+}

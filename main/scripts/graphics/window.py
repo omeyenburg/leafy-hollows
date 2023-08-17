@@ -692,7 +692,7 @@ class Window:
     def draw_post_processing(self):
         self._add_vbo_instance((0, 0, 1, 1), (0, 0, 0, 0), (5, 0, 0, 0))
 
-    def draw_block_highlight(self, x, y, color):
+    def draw_block_highlight(self, x, y, color=(255, 0, 0)):
         if len(color) == 3:
             color = (*color, 100)
         rect = self.camera.map_coord((x, y, 1, 1), from_world=True)

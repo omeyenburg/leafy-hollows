@@ -1,0 +1,15 @@
+{
+    "name": "swim",
+    "speed": 0.6,
+    "volume": 0.5,
+    "sounds": [
+        "swim0.wav",
+        "swim1.wav",
+        "swim2.wav",
+        "swim3.wav",
+        "swim4.wav",
+        "swim5.wav",
+        "swim6.wav",
+        "swim7.wav"
+    ]
+}

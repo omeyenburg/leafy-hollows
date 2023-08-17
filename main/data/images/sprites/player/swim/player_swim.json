@@ -1,0 +1,10 @@
+{
+    "name": "player_swim",
+    "speed": 0.2,
+    "frames": [
+        "player_swim0.png",
+        "player_swim1.png",
+        "player_swim2.png",
+        "player_swim1.png"
+    ]
+}

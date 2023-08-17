@@ -177,6 +177,7 @@ class World(dict):
                     if dx ** 2 + dy ** 2 <= radius ** 2:
                         coord = (int(point[0] + dx), int(point[1] + dy))
                         self.set_block(*coord, 0)
+                        self.set_water(*coord, 900)
 
     def generate_block(self, x, y):
         z = noise.terrain(x, y, self.seed)
