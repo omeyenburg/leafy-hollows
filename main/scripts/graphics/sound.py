@@ -74,7 +74,7 @@ def play(window, sound: str, x: float=0.0, identifier: str=None, channel_volume:
         volume = volume * channel_volume
         side = (0.5, 0.5)
 
-    files[index].set_volume(volume)
+    files[index].set_volume(volume * window.options["volume"])
     channel = pygame.mixer.find_channel()
     channel.play(files[index], fade_ms=100)
     channel.set_volume(*side)
