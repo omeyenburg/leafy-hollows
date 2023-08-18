@@ -164,9 +164,9 @@ class Player(CollisionPhysicsObject):
 
         # Play sounds
         if self.state == "walk":
-            sound.play(window, "walk", x=self.vel[0] / 10)
+            sound.play(window, "walk")
         elif self.state == "sprint":
-            sound.play(window, "sprint", x=self.vel[0] / 10)
+            sound.play(window, "sprint")
         elif self.state == "hit_ground":
             sound.play(window, "hit_ground")
 

@@ -25,20 +25,19 @@ class Translator:
         if self.language == "english":
             return text
         elif self.language == "deutsch":
-            wrap = text.endswith("\n")
-            if wrap:
+            spaces_left = len(text) - len(text.lstrip(" "))
+            spaces_right = len(text) - len(text.rstrip(" "))
+            text = text.strip(" ")
+
+            if text.endswith("\n"):
                 text = text[:-1]
+                wrap = "\n"
+            else:
+                wrap = ""
+
             if text in translate_german:
                 text = translate_german[text]
-                if wrap:
-                    text += "\n"
-                return text
-            text = list(text.split(": "))
-            for i, part in enumerate(text):
-                if part in translate_german:
-                    text[i] = translate_german[part]
-            text = ": ".join(text)
-            if wrap:
-                text += "\n"
-            return text
+
+            return " " * spaces_left + text + " " * spaces_right + wrap
+            
         raise Exception("Unknown language " + self.language)

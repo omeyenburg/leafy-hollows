@@ -100,7 +100,7 @@ class Window:
 
         # Window
         flags = DOUBLEBUF | RESIZABLE | OPENGL
-        self._window = pygame.display.set_mode((self.width, self.height), flags=flags, vsync=self.options["enableVsync"])
+        self._window = pygame.display.set_mode((self.width, self.height), flags=flags, vsync=self.options["enable vsync"])
         self._clock = pygame.time.Clock()
         self.camera: Camera = Camera(self)
         self.world_view: numpy.array = numpy.zeros((0, 0, 4))
@@ -182,7 +182,8 @@ class Window:
         self._texSprites = self._texture(image)
 
         # Font texture
-        self._font, image = Font(None, size=30, bold=True, antialias=True)
+        #self._font, image = Font(None, resolution=30, bold=True, antialias=True)
+        self._font, image = Font("RobotoMono-Bold.ttf", resolution=self.options["text resolution"], bold=True, antialias=False)
         self._texFont = self._texture(image)
 
         # Block texture
@@ -258,9 +259,9 @@ class Window:
         else:
             flags = DOUBLEBUF | RESIZABLE
 
-        # Called twice, because of VSYNC...
+        # Called twice, because of Vsync...
         self._window = pygame.display.set_mode((self.width, self.height), flags=flags | OPENGL)
-        self._window = pygame.display.set_mode((self.width, self.height), flags=flags | OPENGL, vsync=self.options["enableVsync"])
+        self._window = pygame.display.set_mode((self.width, self.height), flags=flags | OPENGL, vsync=self.options["enable vsync"])
         glViewport(0, 0, self.width, self.height)
 
     def _events(self):
@@ -317,7 +318,7 @@ class Window:
         """
         # Update pygame
         self._events()
-        self._clock.tick(self.options["maxFps"])
+        self._clock.tick(self.options["max fps"])
         self.fps = self._clock.get_fps()
         self.delta_time = (1 / self.fps) if self.fps > 0 else self.delta_time
         self.time += self.delta_time
@@ -590,27 +591,29 @@ class Window:
             color = (*color, 255)
 
         if centered:
+            char_size = self._font.get_rect("A")[2:]
+
             # Get start offset
-            for letter in text:
-                if fixed_size < 2:
-                    x_offset -= self._font.get_rect(letter)[1] * spacing * size
-                else:
-                    x_offset -= self._font.get_rect(letter)[1] * spacing * size * x_factor_fixed
+            if fixed_size == 2:
+                x_offset -= char_size[0] * spacing * size * (len(text) - 1) * x_factor_fixed
+            else:
+                x_offset -= char_size[0] * spacing * size * (len(text) - 1)
 
             for letter in text:
                 rect = self._font.get_rect(letter)
+
                 if fixed_size == 0:
-                    x_offset += rect[1] * spacing * size * 0.5
-                    dest_rect = [position[0] + x_offset + rect[1], position[1] + y_offset * rect[2] * 3 * size, rect[1] * size, rect[2] * 2 * size]
-                    x_offset += rect[1] * spacing * size * 1.5
+                    dest_rect = [position[0] + x_offset + rect[2], position[1] + y_offset * rect[3] * 3 * size, rect[2] * size, rect[3] * 2 * size]
+                    x_offset += rect[2] * spacing * size * 2
                 elif fixed_size == 1:
-                    x_offset += rect[1] * spacing * size * 0.5
-                    dest_rect = [position[0] + x_offset + rect[1], position[1] + y_offset * rect[2] * 3 * size * y_factor_relational, rect[1] * size, rect[2] * 2 * size * y_factor_relational]
-                    x_offset += rect[1] * spacing * size * 1.5
+                    dest_rect = [position[0] + x_offset, position[1] + y_offset * rect[3] * 3 * size * y_factor_relational, rect[2] * size, rect[3] * 2 * size * y_factor_relational]
+                    x_offset += char_size[0] * spacing * size * 2
                 else:
-                    x_offset += rect[1] * spacing * size * x_factor_fixed * 0.5
-                    dest_rect = [position[0] + x_offset + rect[1], position[1] + y_offset * rect[2] * 3 * size * y_factor_fixed, rect[1] * size * x_factor_fixed, rect[2] * 2 * size * y_factor_fixed]
-                    x_offset += rect[1] * spacing * size * x_factor_fixed * 1.5
+                    dest_rect = [position[0] + x_offset + rect[2], position[1] + y_offset * rect[3] * 3 * size * y_factor_fixed, rect[2] * size * x_factor_fixed, rect[3] * 2 * size * y_factor_fixed]
+                    x_offset += rect[2] * spacing * size * x_factor_fixed * 2
+
+                if letter == " ":
+                    continue
                 
                 if not self.stencil_rect is None:
                     org = dest_rect[:]
@@ -623,44 +626,71 @@ class Window:
                     width = (right - left) / 2
                     height = (bottom - top) / 2
 
-                    if width > 0 and height > 0:
-                        dest_rect = [left + width, top + height, width, height]
-                        source_and_color = (color[0] + rect[0] + rect[1] * ((1 - dest_rect[2] / org[2]) if dest_rect[0] > org[0] else 0),
-                                            color[1] + (round(1 - dest_rect[3] / org[3], 6) if dest_rect[1] > org[1] else 0),
-                                            color[2] + rect[1] * (width / org[2]) - 0.00001,
-                                            color[3] + ((height / org[3]) if (height / org[3]) < 1 else 0))
-                        self._add_vbo_instance(dest_rect, source_and_color, (3, 0, 0, 0))
-                        
+                    if width < 0 or height < 0:
+                        return
+                    dest_rect = [left + width, top + height, width, height]
+
+                    if org[2] - width > 0.0001 or org[3] - height > 0.0001:
+                        source_and_color = (
+                            color[0] + rect[0] + rect[2] * ((1 - dest_rect[2] / org[2]) if dest_rect[0] > org[0] else 0),
+                            color[1] + rect[1] + rect[3] * (round(1 - dest_rect[3] / org[3], 6) if dest_rect[1] > org[1] else 0),
+                            color[2] + rect[2] * (width / org[2]),
+                            color[3] + rect[3] * ((height / org[3]) if (height / org[3]) < 1 else 0)
+                        )
+
+                    else:
+                        source_and_color = (
+                            color[0] + rect[0],
+                            color[1] + rect[1],
+                            color[2] + rect[2],
+                            color[3] + rect[3]
+                        )
+    
                 else:
-                    source_and_color = (color[0] + rect[0], color[1], color[2] + rect[1] - 0.00001, color[3])
-                    self._add_vbo_instance(dest_rect, source_and_color, (3, 0, 0, 0))
+                    source_and_color = (
+                        color[0] + rect[0],
+                        color[1] + rect[1],
+                        color[2] + rect[2],
+                        color[3] + rect[3]
+                    )
+                    
+                self._add_vbo_instance(dest_rect, source_and_color, (3, 0, 0, 0))
 
         else: # Not centered; lines can wrap
-            line_height = 6
+            line_height = 5
+            text += " "
 
-            for letter in text:
+            for i, letter in enumerate(text):
+                # New line
                 if letter == "\n":
                     x_offset = 0
                     y_offset += 1
                     continue
+                elif letter == " " and (x_offset == 0 or i + 1 == len(text)):
+                    continue
 
+                # Get letter rect in texture
                 rect = self._font.get_rect(letter)
-                source_and_color = (color[0] + rect[0], color[1], color[2] + rect[1] - 0.00001, color[3])
-                if (not wrap is None) and x_offset + rect[1] * spacing * size * 0.5 + rect[1] * size > wrap:
+
+                # Find next space
+                next_space = text.find(" ", i) - i
+                if (not wrap is None) and next_space >= 0 and x_offset + rect[2] * spacing * size * 2 * next_space > wrap:
                     x_offset = 0
                     y_offset += 1
+
+                # Create destination rect
                 if fixed_size == 0:
-                    x_offset += rect[1] * spacing * size * 0.5
-                    dest_rect = [position[0] + x_offset + rect[1], position[1] - rect[2] * 2 - y_offset * rect[2] * line_height * size, rect[1] * size, rect[2] * 2 * size]
-                    x_offset += rect[1] * spacing * size * 1.5
+                    dest_rect = [position[0] + x_offset, position[1] - y_offset * rect[3] * line_height * size, rect[2] * size, rect[3] * 2 * size]
+                    x_offset += rect[2] * spacing * size * 2
                 elif fixed_size == 1:
-                    x_offset += rect[1] * spacing * size * 0.5
-                    dest_rect = [position[0] + x_offset + rect[1], position[1] - rect[2] * 2 - y_offset * rect[2] * line_height * size * y_factor_relational, rect[1] * size, rect[2] * 2 * size * y_factor_relational]
-                    x_offset += rect[1] * spacing * size * 1.5
+                    dest_rect = [position[0] + x_offset, position[1] - y_offset * rect[3] * line_height * size * y_factor_relational, rect[2] * size, rect[3] * 2 * size * y_factor_relational]
+                    x_offset += rect[2] * spacing * size * 2
                 else:
-                    x_offset += rect[1] * spacing * size * x_factor_fixed * 0.5
-                    dest_rect = [position[0] + x_offset + rect[1], position[1] - rect[2] * 2 - y_offset * rect[2] * line_height * size * y_factor_fixed, rect[1] * size * x_factor_fixed, rect[2] * 2 * size * y_factor_fixed]
-                    x_offset += rect[1] * spacing * size * x_factor_fixed * 1.5
+                    dest_rect = [position[0] + x_offset, position[1] - y_offset * rect[3] * line_height * size * y_factor_fixed, rect[2] * size * x_factor_fixed, rect[3] * 2 * size * y_factor_fixed]
+                    x_offset += rect[2] * spacing * size * x_factor_fixed * 2
+
+                if letter == " ":
+                    continue
 
                 if not self.stencil_rect is None:
                     org = dest_rect[:]
@@ -673,21 +703,45 @@ class Window:
                     width = (right - left) / 2
                     height = (bottom - top) / 2
 
-                    if width > 0 and height > 0:
-                        dest_rect = [left + width, top + height, width, height]
-                        source_and_color = (color[0] + rect[0] + rect[1] * (1 - dest_rect[0] / org[0]), color[1] + (1 - dest_rect[1] / org[1]), color[2] + rect[1] * (width / org[2]) - 0.00001, color[3] + ((height / org[3]) if (height / org[3]) < 1 else 0))
-                        self._add_vbo_instance(dest_rect, source_and_color, (3, 0, 0, 0))
+                    if width < 0 or height < 0:
+                        continue
+
+                    dest_rect = [left + width, top + height, width, height]
+
+                    if org[2] - width > 0.0001 or org[3] - height > 0.0001:
+                        source_and_color = (
+                            color[0] + rect[0] + rect[2] * ((1 - dest_rect[2] / org[2]) if dest_rect[0] > org[0] else 0),
+                            color[1] + rect[1] + rect[3] * (round(1 - dest_rect[3] / org[3], 6) if dest_rect[1] > org[1] else 0),
+                            color[2] + rect[2] * (width / org[2]),
+                            color[3] + rect[3] * ((height / org[3]) if (height / org[3]) < 1 else 0)
+                        )
+
+                    else:
+                        source_and_color = (
+                            color[0] + rect[0],
+                            color[1] + rect[1],
+                            color[2] + rect[2],
+                            color[3] + rect[3]
+                        )
+
                 else:
-                    self._add_vbo_instance(dest_rect, source_and_color, (3, 0, 0, 0))
+                    source_and_color = (
+                        color[0] + rect[0],
+                        color[1] + rect[1],
+                        color[2] + rect[2],
+                        color[3] + rect[3]
+                    )
+
+                self._add_vbo_instance(dest_rect, source_and_color, (3, 0, 0, 0))
         
             # Return width and height of text
             y_offset += 1
             if fixed_size == 0:
-                return x_offset, rect[2] * 2 - y_offset * rect[2] * line_height * size
+                return x_offset, rect[3] * 2 - y_offset * rect[3] * 2 * line_height * size
             elif fixed_size == 1:
-                return x_offset, rect[2] * 2 - y_offset * rect[2] * line_height * size * y_factor_relational
+                return x_offset, rect[3] * 2 - y_offset * rect[3] * 2 * line_height * size * y_factor_relational
             elif fixed_size == 2:
-                return x_offset, rect[2] * 2 - y_offset * rect[2] * line_height * size * y_factor_fixed
+                return x_offset, rect[3] * 2 - y_offset * rect[3] * 2 * line_height * size * y_factor_fixed
 
     def draw_post_processing(self):
         self._add_vbo_instance((0, 0, 1, 1), (0, 0, 0, 0), (5, 0, 0, 0))

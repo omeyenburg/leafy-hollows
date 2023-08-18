@@ -5,9 +5,9 @@
 # https://github.com/pyinstaller/pyinstaller/wiki/Recipe-OSX-Code-Signing
 # https://support.apple.com/en-us/HT204397
 
+from scripts.graphics.menu import Menu, TEXT_SIZE_DESCRIPTION
 from scripts.utility.thread import threaded
 from scripts.graphics.window import Window
-from scripts.graphics.menu import Menu
 from scripts.game.world import World
 from scripts.game.game import Game
 import scripts.utility.util as util
@@ -46,6 +46,11 @@ while True:
                 menu.main_page.open()
                 menu.game_state = "menu"
 
+            # Write fps
+            if window.options["show fps"]:
+                window.draw_text((-0.98, 0.95), str(round(window.fps, 3)), (250, 250, 250, 200), size=TEXT_SIZE_DESCRIPTION)
+
+
         
 
     elif menu.game_state == "game":
@@ -57,15 +62,15 @@ while True:
 
         # Write fps & debug info
         if window.options["show fps"]:
-            window.draw_text((-0.98, 0.95), "FPS: " + str(round(window.fps, 3)), (250, 250, 250, 200))
-            y_offset = 0.15
+            window.draw_text((-0.98, 0.95), "FPS: " + str(round(window.fps, 3)), (250, 250, 250, 200), size=TEXT_SIZE_DESCRIPTION)
+            y_offset = 0.1
         else:
             y_offset = 0
         if window.options["show debug"]:
             pos = window.camera.map_coord(window.mouse_pos[:2], from_pixel=1, world=1)
-            window.draw_text((-0.98, 0.95 - y_offset), "Player: " + str((round(game.player.rect.centerx, 1), round(game.player.rect.centery, 1))), (250, 250, 250, 200))
-            window.draw_text((-0.98, 0.8 - y_offset), "Mouse: " + str((math.floor(pos[0]), math.floor(pos[1]))), (250, 250, 250, 200))
-            window.draw_text((-0.98, 0.65 - y_offset), "Seed: " + str(game.world.seed), (250, 250, 250, 200))
+            window.draw_text((-0.98, 0.95 - y_offset), "Player Pos: " + str((round(game.player.rect.centerx, 1), round(game.player.rect.centery, 1))), (250, 250, 250, 200), size=TEXT_SIZE_DESCRIPTION)
+            window.draw_text((-0.98, 0.85 - y_offset), "Mouse Pos: " + str((math.floor(pos[0]), math.floor(pos[1]))), (250, 250, 250, 200), size=TEXT_SIZE_DESCRIPTION)
+            window.draw_text((-0.98, 0.75 - y_offset), "Seed: " + str(game.world.seed), (250, 250, 250, 200), size=TEXT_SIZE_DESCRIPTION)
             
         # Move camera
         pos = (game.player.rect.centerx - game.player.vel[0] / 100, game.player.rect.centery - game.player.vel[0] / 100)
@@ -85,7 +90,7 @@ while True:
 
         # Write fps
         if window.options["show fps"]:
-            window.draw_text((-0.98, 0.95), str(round(window.fps, 3)), (250, 250, 250, 200))
+            window.draw_text((-0.98, 0.95), str(round(window.fps, 3)), (250, 250, 250, 200), size=TEXT_SIZE_DESCRIPTION)
 
         # Update window + shader
         window.update()

@@ -25,17 +25,16 @@
     "Show debug": "Zeige Debug",
     "Post process": "Nachbearbeitung",
     "Particle Density": "Partikeldichte",
-    "Performance impact": "Leistungseinfluss",
+    "Performance impact:": "Leistungseinfluss:",
     "Language": "Sprache",
     "Jump": "Springen",
     "Sprint": "Sprinten",
-    "Return": "Zurueckgehen",
+    "Return": "Zurückgehen",
     "Scroll to see more options and hover over options to see descriptions": "Scrolle, um weitere Optionen zu sehen",
     "Click a button and press a key to bind a new key to an action": "Klicke einen Knopf und eine Taste, um sie an die Aktion zu binden",
     "Limit the Fps at a cap.\nVsync: Fps limit is synchronized with your screen's refresh rate.": "Begrenze die maximalen Fps.\nVsync: Das Limit ist synchronisiert mit deinem Bildschirm.",
     "Set the resolution of in-game objects.": "Setze die Auflösung von Objekten im Spiel fest.",
-    "Limit the amount of particles, which can be spawned at once.": "Begrenze die Menge an Partikeln, die gleichzeitig erstellt werden koennen.",
-    "When enabled, post processing is performed after the actual rendering for additional visual effects.": "Wenn aktiv, wird das Bild mit visuellen Effekten nachbearbeitet.",
+    "Limit the amount of particles, which can be spawned at once.": "Begrenze die Menge an Partikeln, die gleichzeitig erstellt werden können.",
     "Select either English or German as the language.": "Wähle entweder Englisch oder Deutsch, als die verwendete Sprache.",
-    "Set the level of antialiasing.\nAntialiasing creates smoother edges of shapes.": "Lege den Grad der Antialiasing fest.\nAntialiasing erzeugt glattere Kanten von Formen."
+    "Set the level of antialiasing.\nAntialiasing creates smoother edges of shapes.": "Lege den Grad der Antialiasing fest. Antialiasing erzeugt glattere Kanten von Formen."
 }

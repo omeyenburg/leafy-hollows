@@ -4,14 +4,16 @@ import os
 
 
 default: dict = {
-    "enableVsync": True,
-    "maxFps": 1000,
+    "enable vsync": True,
+    "max fps": 1000,
     "particles": 1,
     "antialiasing": 16,
     "resolution": 2,
     "show fps": False,
     "show debug": False,
     "language": "deutsch",
+    "text resolution": 40,
+    "volume": 1.0,
     "key.left": "a",
     "key.right": "d",
     "key.jump": "space",

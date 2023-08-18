@@ -2,10 +2,18 @@
 from scripts.utility.language import Translator
 from scripts.graphics.window import Window
 import scripts.utility.geometry as geometry
+import scripts.utility.options as options
 import scripts.utility.util as util
 import math
 import sys
 import os
+
+
+TEXT_SIZE_HEADING = 0.4
+TEXT_SIZE_BUTTON = 0.2
+TEXT_SIZE_OPTION = 0.14
+TEXT_SIZE_TEXT = 0.15
+TEXT_SIZE_DESCRIPTION = 0.14
 
 
 class Page:
@@ -247,7 +255,7 @@ def HoverBox(window: Window, rect: list, text: list, translator=None):
     text: [("text", (r, g, b, a))]
     """
     window.draw_rect(rect[:2], rect[2:], (60, 60, 60, 250))
-    start = (0.02, rect[3] - 0.04)
+    start = (0.025, rect[3] - 0.05)
     x = 0
     y = 0
     wrap = True
@@ -255,7 +263,7 @@ def HoverBox(window: Window, rect: list, text: list, translator=None):
         text_snippet = translator.translate(text_snippet)
         pos = (rect[0] + start[0] + x,
                 rect[1] + start[1] + y)
-        x_offset, y_offset = window.draw_text(pos, text_snippet, color, size=fontsize, wrap=rect[2] - 0.04)
+        x_offset, y_offset = window.draw_text(pos, text_snippet, color, size=fontsize, wrap=rect[2] - 0.05)
         wrap = text_snippet[-1] == "\n"
         if wrap:
             y += y_offset
@@ -270,14 +278,16 @@ class Menu:
         self.game_state = "menu"
         translator = Translator(window.options["language"])
 
+
         ###---###  Main page  ###---###
         self.main_page = Page(columns=2, spacing=0.1)
-        Label(self.main_page, (1, .3), row=0, column=0, columnspan=2, text="Hello, World!", fontsize=2, translator=translator)
-        button_main_play = Button(self.main_page, (1.4, .2), row=1, column=0, columnspan=2, text="Play", translator=translator)
-        button_main_settings = Button(self.main_page, (.65, .2), row=2, column=0, text="Settings", translator=translator)
-        Button(self.main_page, (.65, .2), row=2, column=1, callback=window.quit, text="Quit", translator=translator)
+        Label(self.main_page, (1, .3), row=0, column=0, columnspan=2, text="Hello World!", fontsize=TEXT_SIZE_HEADING, translator=translator)
+        button_main_play = Button(self.main_page, (1.4, .2), row=1, column=0, columnspan=2, text="Play", fontsize=TEXT_SIZE_BUTTON, translator=translator)
+        button_main_settings = Button(self.main_page, (.65, .2), row=2, column=0, text="Settings", fontsize=TEXT_SIZE_BUTTON, translator=translator)
+        Button(self.main_page, (.65, .2), row=2, column=1, callback=window.quit, text="Quit", fontsize=TEXT_SIZE_BUTTON, translator=translator)
         self.main_page.layout()
         self.main_page.open()
+
 
         ###---###  Generate world page  ###---###
         def open_generate_world():
@@ -285,24 +295,23 @@ class Menu:
             self.game_state = "generate"
         
         def update_generate_world():
-            frame = int(window.time * 2 % 3) + 1
-            label_generate_world.rect.x += (frame - len(label_generate_world.text)) * 0.015
-            label_generate_world.text = "." * frame
+            dots = int(window.time * 2 % 4)
+            label_generate_world.text = "Generating World" + "." * dots + " " * (3 - dots)
             
-        generate_world_page = Page(columns=2, callback=update_generate_world)
-        Label(generate_world_page, (0.9, .3), column=0, text="Generating World", fontsize=2, translator=translator)
-        label_generate_world = Label(generate_world_page, (0.05, .3), column=1, text="...", fontsize=2, translator=translator)
+        generate_world_page = Page(columns=1, callback=update_generate_world)
+        label_generate_world = Label(generate_world_page, (0.9, .3), text="Generating World", fontsize=TEXT_SIZE_HEADING, translator=translator)
         generate_world_page.layout()
         button_main_play.callback = open_generate_world
 
+
         ###---###  Settings page  ###---###
         settings_page = Page(parent=self.main_page, columns=2, spacing=0.1)
-        Label(settings_page, (1, .3), row=0, column=0, columnspan=2, text="Settings", fontsize=2, translator=translator)
-        button_settings_video_open = Button(settings_page, (.65, .2), row=1, column=0, text="Video Settings", translator=translator)
-        button_settings_audio_open = Button(settings_page, (.65, .2), row=1, column=1, text="Audio Settings", translator=translator)
-        button_settings_control_open = Button(settings_page, (.65, .2), row=2, column=0, text="Control Settings", translator=translator)
-        button_settings_world_open = Button(settings_page, (.65, .2), row=2, column=1, text="World Settings", translator=translator)
-        button_settings_back = Button(settings_page, (1.4, .2), row=3, column=0, columnspan=2, callback=self.main_page.open, text="Back", translator=translator)
+        Label(settings_page, (1, .3), row=0, column=0, columnspan=2, text="Settings", fontsize=TEXT_SIZE_HEADING, translator=translator)
+        button_settings_video_open = Button(settings_page, (.65, .2), row=1, column=0, text="Video Settings", fontsize=TEXT_SIZE_BUTTON, translator=translator)
+        button_settings_audio_open = Button(settings_page, (.65, .2), row=1, column=1, text="Audio Settings", fontsize=TEXT_SIZE_BUTTON, translator=translator)
+        button_settings_control_open = Button(settings_page, (.65, .2), row=2, column=0, text="Control Settings", fontsize=TEXT_SIZE_BUTTON, translator=translator)
+        button_settings_world_open = Button(settings_page, (.65, .2), row=2, column=1, text="World Settings", fontsize=TEXT_SIZE_BUTTON, translator=translator)
+        button_settings_back = Button(settings_page, (1.4, .2), row=3, column=0, columnspan=2, callback=self.main_page.open, text="Back", fontsize=TEXT_SIZE_BUTTON, translator=translator)
         settings_page.layout()
         button_main_settings.callback = settings_page.open
 
@@ -325,10 +334,11 @@ class Menu:
                 simulation distance
         """
 
+
         ###---###  Video settings page  ###---###
         settings_video_page = Page(parent=settings_page, spacing=0.1)
-        Label(settings_video_page, (1, .1), row=0, column=0, text="Video Settings", fontsize=2, translator=translator)
-        Label(settings_video_page, (1, .1), row=1, column=0, text="Scroll to see more options and hover over options to see descriptions", fontsize=1, translator=translator)
+        Label(settings_video_page, (1, .1), row=0, column=0, text="Video Settings", fontsize=TEXT_SIZE_HEADING, translator=translator)
+        Label(settings_video_page, (1, .1), row=1, column=0, text="Scroll to see more options and hover over options to see descriptions", fontsize=TEXT_SIZE_TEXT, translator=translator)
         settings_video_scrollbox = ScrollBox(settings_video_page, (1.4, 1), row=2, column=0, columns=2)
 
         def settings_video_hover(side, *description):
@@ -342,32 +352,32 @@ class Menu:
         def slider_fps_update():
             fps = round(slider_fps.value * 100) * 10
             if fps:
-                show_fps = str(fps)
-                window.options["maxFps"] = fps
-                if window.options["enableVsync"]:
-                    window.options["enableVsync"] = False
+                show_fps = f"{fps:5d}"
+                window.options["max fps"] = fps
+                if window.options["enable vsync"]:
+                    window.options["enable vsync"] = False
                     window.resize()
             else:
                 show_fps = "Vsync"
-                window.options["maxFps"] = 1000
-                if not window.options["enableVsync"]:
-                    window.options["enableVsync"] = True
+                window.options["max fps"] = 1000
+                if not window.options["enable vsync"]:
+                    window.options["enable vsync"] = True
                     window.resize()
-            label_fps.text = "Max FPS: " + show_fps
+            label_fps.text = "Max Fps: " + show_fps
 
-        if window.options["enableVsync"]:
+        if window.options["enable vsync"]:
             value = 0
         else:
-            value = window.options["maxFps"] / 1000
+            value = window.options["max fps"] / 1000
         slider_fps = Slider(settings_video_scrollbox, (.6, 0.18), row=1, column=0, value=value)
         slider_fps.callback = slider_fps_update
-        label_fps = Label(settings_video_scrollbox, (.6, 0.18), row=1, column=0, translator=translator)
+        label_fps = Label(settings_video_scrollbox, (.6, 0.18), row=1, column=0, fontsize=TEXT_SIZE_OPTION, translator=translator)
         slider_fps_update()
         label_fps.hover_callback = lambda: settings_video_hover(1,
-            ("Max Fps\n", 1, (250, 250, 250, 200)),
-            ("Performance impact: ", 0.8, (250, 250, 250, 200)),
-            ("high\n", 0.8, (250, 0, 0, 200)),
-            ("Limit the Fps at a cap.\nVsync: Fps limit is synchronized with your screen's refresh rate.", 0.8, (250, 250, 250, 200))
+            ("Max Fps\n", TEXT_SIZE_TEXT, (250, 250, 250, 200)),
+            ("Performance impact: ", TEXT_SIZE_DESCRIPTION, (250, 250, 250, 200)),
+            ("high\n", TEXT_SIZE_DESCRIPTION, (250, 0, 0, 200)),
+            ("Limit the Fps at a cap.\nVsync: Fps limit is synchronized with your screen's refresh rate.", TEXT_SIZE_DESCRIPTION, (250, 250, 250, 200))
         )
 
         # Resolution slider
@@ -379,12 +389,12 @@ class Menu:
         value = (window.options["resolution"] - 1) / 3
         slider_resolution = Slider(settings_video_scrollbox, (.6, 0.18), row=1, column=1, value=value)
         slider_resolution.callback = slider_resolution_update
-        label_resolution = Label(settings_video_scrollbox, (.6, 0.18), row=1, column=1, text="Resolution: " + str(window.options["resolution"]), translator=translator)
+        label_resolution = Label(settings_video_scrollbox, (.6, 0.18), row=1, column=1, text="Resolution: " + str(window.options["resolution"]), fontsize=TEXT_SIZE_OPTION, translator=translator)
         label_resolution.hover_callback = lambda: settings_video_hover(0,
-            ("Resolution\n", 1, (250, 250, 250, 200)),
-            ("Performance impact: ", 0.8, (250, 250, 250, 200)),
-            ("medium\n", 0.8, (250, 150, 0, 200)),
-            ("Set the resolution of in-game objects.", 0.8, (250, 250, 250, 200))
+            ("Resolution\n", TEXT_SIZE_TEXT, (250, 250, 250, 200)),
+            ("Performance impact: ", TEXT_SIZE_DESCRIPTION, (250, 250, 250, 200)),
+            ("medium\n", TEXT_SIZE_DESCRIPTION, (250, 150, 0, 200)),
+            ("Set the resolution of in-game objects.", TEXT_SIZE_DESCRIPTION, (250, 250, 250, 200))
         )
 
         # Fullscreen button
@@ -392,58 +402,58 @@ class Menu:
             if util.system == "Darwin":
                 return
             window.toggle_fullscreen()
-            button_fullscreen.text = "Fullscreen: " + str(window.fullscreen)
+            button_fullscreen.text = "Fullscreen: " + f"{str(window.fullscreen):5}"
 
         if util.system == "Darwin":
-            button_fullscreen = Button(settings_video_scrollbox, (0.6, .18), row=2, column=0, callback=button_fullscreen_update, text="Fullscreen: Disabled", translator=translator)
+            button_fullscreen = Button(settings_video_scrollbox, (0.6, .18), row=2, column=0, callback=button_fullscreen_update, text="Fullscreen: Disabled", fontsize=TEXT_SIZE_OPTION, translator=translator)
         else:
-            button_fullscreen = Button(settings_video_scrollbox, (0.6, .18), row=2, column=0, callback=button_fullscreen_update, text="Fullscreen: False", translator=translator)
+            button_fullscreen = Button(settings_video_scrollbox, (0.6, .18), row=2, column=0, callback=button_fullscreen_update, text="Fullscreen: False", fontsize=TEXT_SIZE_OPTION, translator=translator)
         button_fullscreen.hover_callback = lambda: settings_video_hover(1,
-            ("Fullscreen\n", 1, (250, 250, 250, 200)),
-            ("Performance impact: ", 0.8, (250, 250, 250, 200)),
-            ("none", 0.8, (0, 250, 0, 200))
+            ("Fullscreen\n", TEXT_SIZE_TEXT, (250, 250, 250, 200)),
+            ("Performance impact: ", TEXT_SIZE_DESCRIPTION, (250, 250, 250, 200)),
+            ("none", TEXT_SIZE_DESCRIPTION, (0, 250, 0, 200))
         )
 
         # Particle slider
         def slider_particles_update():
             particles = int(slider_particles.value * 10)
-            label_particles.text = "Particle Density: " + str(particles)
+            label_particles.text = "Particle Density: " + f"{particles:2d}"
             window.options["particles"] = particles
 
         value = window.options["particles"] / 10
         slider_particles = Slider(settings_video_scrollbox, (.6, 0.18), row=2, column=1, value=value)
         slider_particles.callback = slider_particles_update
-        label_particles = Label(settings_video_scrollbox, (.6, 0.18), row=2, column=1, translator=translator)
+        label_particles = Label(settings_video_scrollbox, (.6, 0.18), row=2, column=1, fontsize=TEXT_SIZE_OPTION, translator=translator)
         slider_particles_update()
         label_particles.hover_callback = lambda: settings_video_hover(0,
-            ("Particle Density\n", 1, (250, 250, 250, 200)),
-            ("Performance impact: ", 0.8, (250, 250, 250, 200)),
-            ("high\n", 0.8, (250, 0, 0, 200)),
-            ("Limit the amount of particles, which can be spawned at once.", 0.8, (250, 250, 250, 200))
+            ("Particle Density\n", TEXT_SIZE_TEXT, (250, 250, 250, 200)),
+            ("Performance impact: ", TEXT_SIZE_DESCRIPTION, (250, 250, 250, 200)),
+            ("high\n", TEXT_SIZE_DESCRIPTION, (250, 0, 0, 200)),
+            ("Limit the amount of particles, which can be spawned at once.", TEXT_SIZE_DESCRIPTION, (250, 250, 250, 200))
         )
 
         # Show fps button
         def button_show_fps_update():
             window.options["show fps"] = not window.options["show fps"]
-            button_show_fps.text = "Show Fps: " + str(window.options["show fps"])
+            button_show_fps.text = "Show Fps: " + f"{str(window.options['show fps']):5}"
 
-        button_show_fps = Button(settings_video_scrollbox, (0.6, .18), row=3, column=0, callback=button_show_fps_update, text="Show Fps: " + str(window.options["show fps"]), translator=translator)
+        button_show_fps = Button(settings_video_scrollbox, (0.6, .18), row=3, column=0, callback=button_show_fps_update, text="Show Fps: " + str(window.options["show fps"]), fontsize=TEXT_SIZE_OPTION, translator=translator)
         button_show_fps.hover_callback = lambda: settings_video_hover(1,
-            ("Show Fps\n", 1, (250, 250, 250, 200)),
-            ("Performance impact: ", 0.8, (250, 250, 250, 200)),
-            ("low", 0.8, (250, 250, 0, 200))
+            ("Show Fps\n", TEXT_SIZE_TEXT, (250, 250, 250, 200)),
+            ("Performance impact: ", TEXT_SIZE_DESCRIPTION, (250, 250, 250, 200)),
+            ("low", TEXT_SIZE_DESCRIPTION, (250, 250, 0, 200))
         )
 
         # Show debug button
         def button_show_debug_update():
             window.options["show debug"] = not window.options["show debug"]
-            button_show_debug.text = "Show debug: " + str(window.options["show debug"])
+            button_show_debug.text = "Show debug: " + f"{str(window.options['show debug']):5}"
 
-        button_show_debug = Button(settings_video_scrollbox, (0.6, .18), row=3, column=1, callback=button_show_debug_update, text="Show debug: " + str(window.options["show debug"]), translator=translator)
+        button_show_debug = Button(settings_video_scrollbox, (0.6, .18), row=3, column=1, callback=button_show_debug_update, text="Show debug: " + str(window.options["show debug"]), fontsize=TEXT_SIZE_OPTION, translator=translator)
         button_show_debug.hover_callback = lambda: settings_video_hover(0,
-            ("Show debug info\n", 1, (250, 250, 250, 200)),
-            ("Performance impact: ", 0.8, (250, 250, 250, 200)),
-            ("low", 0.8, (250, 250, 0, 200))
+            ("Show debug\n", TEXT_SIZE_TEXT, (250, 250, 250, 200)),
+            ("Performance impact: ", TEXT_SIZE_DESCRIPTION, (250, 250, 250, 200)),
+            ("low", TEXT_SIZE_DESCRIPTION, (250, 250, 0, 200))
         )
 
         # Antialiasing slider
@@ -452,7 +462,7 @@ class Menu:
             if antialiasing == 0:
                 label_antialiasing.text = "Antialiasing: Off"
             else:
-                label_antialiasing.text = "Antialiasing: " + str(antialiasing)
+                label_antialiasing.text = "Antialiasing: " + f"{antialiasing:3d}"
             window.set_antialiasing(antialiasing)
 
         if window.options["antialiasing"]:
@@ -461,13 +471,13 @@ class Menu:
             value = 0
         slider_antialiasing = Slider(settings_video_scrollbox, (.6, 0.18), row=4, column=0, value=value)
         slider_antialiasing.callback = slider_antialiasing_update
-        label_antialiasing = Label(settings_video_scrollbox, (.6, 0.18), row=4, column=0, translator=translator)
+        label_antialiasing = Label(settings_video_scrollbox, (.6, 0.18), row=4, column=0, fontsize=TEXT_SIZE_OPTION, translator=translator)
         slider_antialiasing_update()
         label_antialiasing.hover_callback = lambda: settings_video_hover(1,
-            ("Antialiasing\n", 1, (250, 250, 250, 200)),
-            ("Performance impact: ", 0.8, (250, 250, 250, 200)),
-            ("low\n", 0.8, (250, 250, 0, 200)),
-            ("Set the level of antialiasing.\nAntialiasing creates smoother edges of shapes.", 0.8, (250, 250, 250, 200))
+            ("Antialiasing\n", TEXT_SIZE_TEXT, (250, 250, 250, 200)),
+            ("Performance impact: ", TEXT_SIZE_DESCRIPTION, (250, 250, 250, 200)),
+            ("low\n", TEXT_SIZE_DESCRIPTION, (250, 250, 0, 200)),
+            ("Set the level of antialiasing.\nAntialiasing creates smoother edges of shapes.", TEXT_SIZE_DESCRIPTION, (250, 250, 250, 200))
         )
 
         # Language button
@@ -479,35 +489,52 @@ class Menu:
             translator.language = window.options["language"]
             button_language.text = "Language: " + window.options["language"].title()
 
-        button_language = Button(settings_video_scrollbox, (0.6, .18), row=4, column=1, callback=button_language_update, text="Language: " + window.options["language"].title(), translator=translator)
+        button_language = Button(settings_video_scrollbox, (0.6, .18), row=4, column=1, callback=button_language_update, text="Language: " + window.options["language"].title(), fontsize=TEXT_SIZE_OPTION, translator=translator)
         button_language.hover_callback = lambda: settings_video_hover(0,
-            ("Language\n", 1, (250, 250, 250, 200)),
-            ("Performance impact: ", 0.8, (250, 250, 250, 200)),
-            ("none\n", 0.8, (0, 250, 0, 200)),
-            ("Select either English or German as the language.", 0.8, (250, 250, 250, 200))
+            ("Language\n", TEXT_SIZE_TEXT, (250, 250, 250, 200)),
+            ("Performance impact: ", TEXT_SIZE_DESCRIPTION, (250, 250, 250, 200)),
+            ("none\n", TEXT_SIZE_DESCRIPTION, (0, 250, 0, 200)),
+            ("Select either English or German as the language.", TEXT_SIZE_DESCRIPTION, (250, 250, 250, 200))
         )
 
-        button_settings_back = Button(settings_video_page, (1.4, .2), row=3, column=0, callback=settings_page.open, text="Back", translator=translator)
+        button_settings_back = Button(settings_video_page, (1.4, .2), row=3, column=0, callback=settings_page.open, text="Back", fontsize=TEXT_SIZE_BUTTON, translator=translator)
         settings_video_page.layout()
         button_settings_video_open.callback = settings_video_page.open
 
+
         ###---###  Audio settings page  ###---###
         settings_audio_page = Page(parent=settings_page, columns=1, spacing=0.1)
-        Label(settings_audio_page, (1, .3), row=0, column=0, text="Audio Settings", fontsize=2, translator=translator)
-        Button(settings_audio_page, (1.4, .2), row=1, column=0, callback=settings_page.open, text="Back", translator=translator)
+        Label(settings_audio_page, (1, .3), row=0, column=0, text="Audio Settings", fontsize=TEXT_SIZE_HEADING, translator=translator)
+        
+        # Volume slider
+        def slider_volume_update():
+            volume = slider_volume.value
+            label_volume.text = "Volume: " + f"{int(volume * 100):3d}%"
+            window.options["volume"] = volume
+
+        value = window.options["volume"]
+        slider_volume = Slider(settings_audio_page, (1.4, 0.18), row=1, column=0, value=value)
+        slider_volume.callback = slider_volume_update
+        label_volume = Label(settings_audio_page, (1.4, 0.18), row=1, column=0, fontsize=TEXT_SIZE_OPTION, translator=translator)
+        slider_volume_update()
+
+        Button(settings_audio_page, (1.4, .2), row=2, column=0, callback=settings_page.open, text="Back", fontsize=TEXT_SIZE_BUTTON, translator=translator)
         settings_audio_page.layout()
         button_settings_audio_open.callback = settings_audio_page.open
 
+
+        ###---###  World settings page  ###---###
         settings_world_page = Page(parent=settings_page, columns=1, spacing=0.1)
-        Label(settings_world_page, (1, .3), row=0, column=0, text="World Settings", fontsize=2, translator=translator)
-        Button(settings_world_page, (1.4, .2), row=1, column=0, callback=settings_page.open, text="Back", translator=translator)
+        Label(settings_world_page, (1, .3), row=0, column=0, text="World Settings", fontsize=TEXT_SIZE_HEADING, translator=translator)
+        Button(settings_world_page, (1.4, .2), row=1, column=0, callback=settings_page.open, text="Back", fontsize=TEXT_SIZE_BUTTON, translator=translator)
         settings_world_page.layout()
         button_settings_world_open.callback = settings_world_page.open
 
+
         ###---###  Controls settings page  ###---###
         settings_control_page = Page(parent=settings_page, columns=2, spacing=0.1)
-        Label(settings_control_page, (1, .2), row=0, column=0, columnspan=2, text="Control Settings", fontsize=2, translator=translator)
-        Label(settings_control_page, (1, .1), row=1, column=0, columnspan=2, text="Click a button and press a key to bind a new key to an action", fontsize=1, translator=translator)
+        Label(settings_control_page, (1, .2), row=0, column=0, columnspan=2, text="Control Settings", fontsize=TEXT_SIZE_HEADING, translator=translator)
+        Label(settings_control_page, (1, .1), row=1, column=0, columnspan=2, text="Click a button and press a key to bind a new key to an action", fontsize=TEXT_SIZE_TEXT, translator=translator)
 
         scrollbox = ScrollBox(settings_control_page, (1.4, 1), row=2, column=0, columnspan=2, columns=2)
         keys = list(filter(lambda x: x.startswith("key."), window.options))
@@ -535,7 +562,7 @@ class Menu:
                     scrollbox.parent = settings_page
 
         def reset_keys():
-            for option, value in window.options_default.items():
+            for option, value in options.default.items():
                 if not option.startswith("key."):
                     continue
                 window.options[option] = value
@@ -543,13 +570,13 @@ class Menu:
                 buttons[option].text = value.title()
 
         for i, key in enumerate(keys):
-            Label(scrollbox, (0.6, .18), row=i, column=0, text=key.split(".")[1].title(), translator=translator)
-            buttons[key] = Button(scrollbox, (0.6, .18), row=i, column=1, callback=lambda key=key: select_key(key), text=window.options[key].title(), duration=-1, translator=translator)
+            Label(scrollbox, (0.6, .18), row=i, column=0, text=key.split(".")[1].title(), fontsize=TEXT_SIZE_TEXT, translator=translator)
+            buttons[key] = Button(scrollbox, (0.6, .18), row=i, column=1, callback=lambda key=key: select_key(key), text=window.options[key].title(), duration=-1, fontsize=TEXT_SIZE_BUTTON, translator=translator)
             buttons[key].key_identifer = key
         scrollbox.callback = update_key
 
-        Button(settings_control_page, (0.65, .2), row=3, column=0, callback=settings_page.open, text="Back", translator=translator)
-        Button(settings_control_page, (0.65, .2), row=3, column=1, callback=reset_keys, text="Reset", translator=translator)
+        Button(settings_control_page, (0.65, .2), row=3, column=0, callback=settings_page.open, text="Back", fontsize=TEXT_SIZE_BUTTON, translator=translator)
+        Button(settings_control_page, (0.65, .2), row=3, column=1, callback=reset_keys, text="Reset", fontsize=TEXT_SIZE_BUTTON, translator=translator)
         settings_control_page.layout()
         button_settings_control_open.callback = settings_control_page.open
 
