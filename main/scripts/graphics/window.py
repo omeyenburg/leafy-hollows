@@ -479,11 +479,13 @@ class Window:
         """
         Update the world texture.
         """
-        # Offset of world in blocks for rendering
+        # Offset of world as a fraction of blocks
         offset = (
-            self.camera.pos[0] % 1 - (self.width / 2) % self.camera.pixels_per_meter / self.camera.pixels_per_meter + 3,
-            self.camera.pos[1] % 1 - (self.height / 2) % self.camera.pixels_per_meter / self.camera.pixels_per_meter + 3
+            self.camera.pos[0] % 1 - (self.width / 2 / self.camera.pixels_per_meter) % 1 + 3,
+            self.camera.pos[1] % 1 - (self.height / 2 / self.camera.pixels_per_meter) % 1 + 3
         )
+
+        # Send variables to shader
         self._shader.setvar("offset", *offset)
         self._shader.setvar("camera", *self.camera.pos)
 
