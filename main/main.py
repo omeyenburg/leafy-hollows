@@ -6,6 +6,7 @@
 # https://support.apple.com/en-us/HT204397
 
 from scripts.graphics.menu import Menu, TEXT_SIZE_DESCRIPTION
+from scripts.game.world_generation import generate
 from scripts.utility.thread import threaded
 from scripts.graphics.window import Window
 from scripts.game.world import World
@@ -16,11 +17,9 @@ import math
 import time
 import os
 
-#https://craftpix.net/freebies/free-swimming-characters-animation-pixel-art/
-
 
 # Create window
-window: Window = Window("Hello World")
+window: Window = Window("Title")
 menu: Menu = Menu(window)
 game: Game = None
 
@@ -38,7 +37,7 @@ while True:
             menu.update()
             window.update()
 
-            done = threaded(game.world.generate, wait=True)
+            done = threaded(generate, game.world, wait=True)
             if done: break
 
             # Open menu
@@ -50,8 +49,6 @@ while True:
             if window.options["show fps"]:
                 window.draw_text((-0.98, 0.95), str(round(window.fps, 3)), (250, 250, 250, 200), size=TEXT_SIZE_DESCRIPTION)
 
-
-        
 
     elif menu.game_state == "game":
         # Update & draw all game objects
@@ -83,6 +80,7 @@ while True:
         if window.keybind("return") == 1:
             menu.main_page.open()
             menu.game_state = "menu"
+
 
     else:
         # Update and draw the menu

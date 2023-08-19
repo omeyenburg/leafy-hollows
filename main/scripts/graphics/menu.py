@@ -281,7 +281,7 @@ class Menu:
 
         ###---###  Main page  ###---###
         self.main_page = Page(columns=2, spacing=0.1)
-        Label(self.main_page, (1, .3), row=0, column=0, columnspan=2, text="Hello World!", fontsize=TEXT_SIZE_HEADING, translator=translator)
+        Label(self.main_page, (1, .3), row=0, column=0, columnspan=2, text="Title", fontsize=TEXT_SIZE_HEADING, translator=translator)
         button_main_play = Button(self.main_page, (1.4, .2), row=1, column=0, columnspan=2, text="Play", fontsize=TEXT_SIZE_BUTTON, translator=translator)
         button_main_settings = Button(self.main_page, (.65, .2), row=2, column=0, text="Settings", fontsize=TEXT_SIZE_BUTTON, translator=translator)
         Button(self.main_page, (.65, .2), row=2, column=1, callback=window.quit, text="Quit", fontsize=TEXT_SIZE_BUTTON, translator=translator)
@@ -299,7 +299,7 @@ class Menu:
             label_generate_world.text = "Generating World" + "." * dots + " " * (3 - dots)
             
         generate_world_page = Page(columns=1, callback=update_generate_world)
-        label_generate_world = Label(generate_world_page, (0.9, .3), text="Generating World", fontsize=TEXT_SIZE_HEADING, translator=translator)
+        label_generate_world = Label(generate_world_page, (0.9, .3), text="Generating World   ", fontsize=TEXT_SIZE_HEADING, translator=translator)
         generate_world_page.layout()
         button_main_play.callback = open_generate_world
 

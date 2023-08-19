@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
+from scripts.game.world_generation import generate_block
 from scripts.utility.util import realistic
-from noise import *
+#from noise import *
 import scripts.utility.geometry as geometry
 import scripts.game.worldnoise as noise
 import random
@@ -43,14 +44,17 @@ class World(dict):
             layer = self.block_data[self.block_index[data]][3]
         self[(x, y)][layer] = data
     
-    def get_block(self, x: int, y: int, layer: int=0):
+    def get_block(self, x: int, y: int, layer: int=0, generate=True):
         if not (x, y) in self:
-            self.generate_block(x, y)
+            if generate:
+                generate_block(self, x, y)
+            else:
+                return 0
         return self[(x, y)][layer]
 
     def set_water(self, x, y, level):
         if not (x, y) in self:
-            self.generate_block(x, y)
+            generate_block(self, x, y)
         self[(x, y)][3] = level
 
     def get_water(self, x, y):
@@ -155,12 +159,12 @@ class World(dict):
         for y in range(view_size[1] - 1):
             for x in range(view_size[0] - 1):
                 if not (start[0] + x, start[1] + y) in self:
-                    self.generate_block(start[0] + x, start[1] + y)
+                    generate_block(self, start[0] + x, start[1] + y)
                 self.view[x, y] = self[start[0] + x, start[1] + y]
         
         window.world_view = self.view
 
-    def generate(self): # work in progress
+    def generate_old(self): # work in progress
         points = []
         position = [0, 0]
         angle = 0
@@ -185,6 +189,7 @@ class World(dict):
             self.set_block(x, y, self.block_name["grass"])
         else:
             self.set_block(x, y, self.block_name["stone"])
+        #self.set_block(x, y, 0)
 
 
         """

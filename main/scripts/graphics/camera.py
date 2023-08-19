@@ -48,6 +48,21 @@ class Camera:
         self.vel[1] = yvel
         self.pos[0] += self.vel[0]
         self.pos[1] += self.vel[1]
+        
+        x_distance = self.pos[0] - self.dest[0]
+        y_distance = self.pos[1] - self.dest[1]
+        x_deviation = self.window.width / 4 / self.pixels_per_meter
+        y_deviation = self.window.height / 4 / self.pixels_per_meter
+
+        if x_distance > x_deviation:
+            self.pos[0] = self.dest[0] + x_deviation
+        elif x_distance < -x_deviation:
+            self.pos[0] = self.dest[0] - x_deviation
+
+        if y_distance > y_deviation:
+            self.pos[1] = self.dest[1] + y_deviation
+        elif y_distance < -y_deviation:
+            self.pos[1] = self.dest[1] - y_deviation
 
     def map_coord(self, coord: [float], from_pixel: bool=True, from_centered: bool=True, from_world: bool=False, pixel: bool=False, centered: bool=True, world: bool=False):
         """
