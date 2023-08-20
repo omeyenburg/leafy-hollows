@@ -7,9 +7,9 @@ import os
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 from scripts.graphics.image import load_blocks, load_sprites, get_sprite_rect
+from scripts.graphics.shader import Shader
 from scripts.graphics.camera import Camera
 from scripts.graphics.font import Font
-from scripts.shader.shader import Shader
 from pygame.locals import *
 import scripts.utility.options as options
 import scripts.graphics.sound as sound
@@ -68,6 +68,7 @@ class Window:
         self.fps: int = 0
         self.delta_time: float = 1.0
         self.time: float = 0.0
+        self.resolution: float = 1.0
 
         # Key press states
         if util.system == "Darwin":
@@ -182,8 +183,8 @@ class Window:
         self._texSprites = self._texture(image)
 
         # Font texture
-        #self._font, image = Font(None, resolution=30, bold=True, antialias=True)
-        self._font, image = Font("RobotoMono-Bold.ttf", resolution=self.options["text resolution"], bold=True, antialias=False)
+        self._font_options = ("RobotoMono-Bold.ttf", "bold")
+        self._font, image = Font(self._font_options[0], resolution=self.options["text resolution"], bold="bold" in self._font_options, antialias="antialias" in self._font_options)
         self._texFont = self._texture(image)
 
         # Block texture
@@ -198,7 +199,7 @@ class Window:
         self._shader = Shader(
             "scripts/shader/vertex.glsl", "scripts/shader/fragment.glsl",
             replace={"block." + key: value for key, (value, *_) in self.block_data.items()},
-            texSprites="int", texFont="int", texBlocks="int", texWorld="int", offset="vec2", camera="vec2", resolution="int", time="float"
+            texSprites="int", texFont="int", texBlocks="int", texWorld="int", offset="vec2", camera="vec2", resolution="float", time="float"
         )
 
         self._shader.setvar("texSprites", 0)
@@ -254,6 +255,9 @@ class Window:
         return [self._mod_names[mod] for mod in self._mod_names if mods & mod]
 
     def resize(self):
+        """
+        Update fullscreen, window size and vsync flag.
+        """
         if self._fullscreen:
             flags = FULLSCREEN
         else:
@@ -400,6 +404,15 @@ class Window:
         else:
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
 
+    def set_text_resolution(self, text_resolution):
+        """
+        Set text resolution.
+        """
+        self.options["text resolution"] = text_resolution
+        glDeleteTextures(1, (self._texFont,))
+        self._font, image = Font(self._font_options[0], resolution=text_resolution, bold="bold" in self._font_options, antialias="antialias" in self._font_options)
+        self._texFont = self._texture(image)
+
     def set_antialiasing(self, level: int):
         """
         Toggle antialiasing.
@@ -414,15 +427,6 @@ class Window:
             pygame.display.gl_set_attribute(pygame.GL_MULTISAMPLESAMPLES, 0)
             glDisable(GL_MULTISAMPLE)
         self.resize()
-
-    def set_resolution(self, resolution):
-        """
-        Scale objects in the world up.
-        """
-        self.options["resolution"] = resolution
-        self.camera.resultion = resolution
-        self.camera.pixels_per_meter = resolution * 16
-        self._shader.setvar("resolution", resolution)
 
     def keybind(self, key):
         """
@@ -488,7 +492,10 @@ class Window:
         # Send variables to shader
         self._shader.setvar("offset", *offset)
         self._shader.setvar("camera", *self.camera.pos)
-
+        if self.resolution != self.camera.resolution:
+            self.resolution = self.camera.resolution
+        self._shader.setvar("resolution", self.camera.resolution)
+        
         # View size
         size = self.world_view.shape[:2]        
         data = numpy.array(numpy.swapaxes(self.world_view, 0, 1), dtype=numpy.int32)

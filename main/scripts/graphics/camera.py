@@ -4,14 +4,31 @@ import math
 
 class Camera:
     def __init__(self, window):
-        self.resolution: int = window.options["resolution"]
-        self.pixels_per_meter: int = window.options["resolution"] * 16
+        self.resolution: float = 1.0
+        self.resolution_start: float = 1.0
+        self.resolution_goal: float = 1.0
+        self.resolution_speed: float = 0.0
+        self.resolution_index: float = 1.0
+        self.pixels_per_meter: float = 16.0
         self.threshold = 0.1
 
         self.pos: [float] = [0, 0]
         self.vel: [float] = [0, 0]
         self.dest: [float] = [0, 0]
         self.window: Window = window
+
+    def set_zoom(self, resolution: float):
+        self.resolution = self.resolution_goal = resolution
+        self.pixels_per_meter = 16 * self.resolution
+        self.resolution_index = 1
+
+    def zoom(self, resolution: float, speed: float):
+        if speed == 0:
+            self.set_zoom(resolution)
+        else:
+            self.resolution_goal = resolution
+            self.resolution_speed = 1 / speed
+            self.resolution_index = 0
 
     def reset(self):
         self.pos: [float] = [0, 0]
@@ -38,6 +55,7 @@ class Camera:
         """
         Update the camera.
         """
+        # Move slowly to goal
         xvel = round((self.dest[0] - self.pos[0]) / 10, 3)
         yvel = round((self.dest[1] - self.pos[1]) / 10, 3)
 
@@ -49,6 +67,7 @@ class Camera:
         self.pos[0] += self.vel[0]
         self.pos[1] += self.vel[1]
         
+        # Maximum goal offset
         x_distance = self.pos[0] - self.dest[0]
         y_distance = self.pos[1] - self.dest[1]
         x_deviation = self.window.width / 4 / self.pixels_per_meter
@@ -63,6 +82,13 @@ class Camera:
             self.pos[1] = self.dest[1] + y_deviation
         elif y_distance < -y_deviation:
             self.pos[1] = self.dest[1] - y_deviation
+
+        # Update zoom
+        if self.resolution_index < 1:
+            self.resolution_index = self.resolution_index + self.resolution_speed
+            factor = 1000 ** -((self.resolution_index - 1) ** 2) # f(x) = 1000^[-(x-1)^2]
+            self.resolution = self.resolution_start * (1 - factor) + self.resolution_goal * factor
+            self.pixels_per_meter = 16 * self.resolution
 
     def map_coord(self, coord: [float], from_pixel: bool=True, from_centered: bool=True, from_world: bool=False, pixel: bool=False, centered: bool=True, world: bool=False):
         """

@@ -380,21 +380,20 @@ class Menu:
             ("Limit the Fps at a cap.\nVsync: Fps limit is synchronized with your screen's refresh rate.", TEXT_SIZE_DESCRIPTION, (250, 250, 250, 200))
         )
 
-        # Resolution slider
-        def slider_resolution_update():
-            resolution = int(slider_resolution.value * 3) + 1
-            label_resolution.text = "Resolution: " + str(resolution)
-            window.set_resolution(resolution)
+        # Text resolution slider
+        def slider_text_resolution_update():
+            text_resolution = int(slider_text_resolution.value * 70) + 10
+            label_text_resolution.text = "Text Resolution: " + str(text_resolution)
+            window.set_text_resolution(text_resolution)
 
-        value = (window.options["resolution"] - 1) / 3
-        slider_resolution = Slider(settings_video_scrollbox, (.6, 0.18), row=1, column=1, value=value)
-        slider_resolution.callback = slider_resolution_update
-        label_resolution = Label(settings_video_scrollbox, (.6, 0.18), row=1, column=1, text="Resolution: " + str(window.options["resolution"]), fontsize=TEXT_SIZE_OPTION, translator=translator)
-        label_resolution.hover_callback = lambda: settings_video_hover(0,
-            ("Resolution\n", TEXT_SIZE_TEXT, (250, 250, 250, 200)),
+        value = (window.options["text resolution"] - 10) / 70
+        slider_text_resolution = Slider(settings_video_scrollbox, (.6, 0.18), row=1, column=1, value=value)
+        slider_text_resolution.callback = slider_text_resolution_update
+        label_text_resolution = Label(settings_video_scrollbox, (.6, 0.18), row=1, column=1, text="Text Resolution: " + str(window.options["text resolution"]), fontsize=TEXT_SIZE_OPTION, translator=translator)
+        label_text_resolution.hover_callback = lambda: settings_video_hover(0,
+            ("Text Resolution\n", TEXT_SIZE_TEXT, (250, 250, 250, 200)),
             ("Performance impact: ", TEXT_SIZE_DESCRIPTION, (250, 250, 250, 200)),
-            ("medium\n", TEXT_SIZE_DESCRIPTION, (250, 150, 0, 200)),
-            ("Set the resolution of in-game objects.", TEXT_SIZE_DESCRIPTION, (250, 250, 250, 200))
+            ("medium\n", TEXT_SIZE_DESCRIPTION, (250, 150, 0, 200))
         )
 
         # Fullscreen button
@@ -460,9 +459,9 @@ class Menu:
         def slider_antialiasing_update():
             antialiasing = (0, 1, 2, 4, 8, 16)[round(slider_antialiasing.value * 5)]
             if antialiasing == 0:
-                label_antialiasing.text = "Antialiasing: Off"
+                label_antialiasing.text = "Antialiasing: False"
             else:
-                label_antialiasing.text = "Antialiasing: " + f"{antialiasing:3d}"
+                label_antialiasing.text = "Antialiasing: " + f"{antialiasing:5d}"
             window.set_antialiasing(antialiasing)
 
         if window.options["antialiasing"]:

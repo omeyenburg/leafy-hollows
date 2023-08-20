@@ -15,12 +15,11 @@ uniform sampler2D texBlocks;
 uniform isampler2D texWorld;
 uniform vec2 offset;
 uniform vec2 camera;
-uniform int resolution;
+uniform float resolution;
 uniform float time;
 
 // Constants
 vec2 BLOCK_COUNT;
-int BLOCK_SIZE_DEST;
 const int BLOCK_SIZE_SOURCE = 16;
 const float BORDER_THRESHOLD = 0.0001;
 const vec4 TRANSPARENCY = vec4(0, 0, 0, 0);
@@ -28,6 +27,7 @@ const vec4 WATER_COLOR = vec4(0.2, 0.6, 0.9, 0.4);
 const float WAVE_AMPLITUDE = 0.05;
 const float WAVE_FREQUENCY = 0.3;
 const float WATER_PER_BLOCK = 1000.0;
+float BLOCK_SIZE_DEST = BLOCK_SIZE_SOURCE * resolution;
 
 // Predefined values
 int block_type = 0;
@@ -137,7 +137,6 @@ vec4 get_color_background() {
 }
 
 void draw_background() {
-    BLOCK_SIZE_DEST = BLOCK_SIZE_SOURCE * resolution;
     BLOCK_COUNT = textureSize(texBlocks, 0) / BLOCK_SIZE_SOURCE;
 
     // block in world
@@ -195,7 +194,6 @@ ivec4 get_next_closest_block(ivec2 source_pixel) {
 }
 
 vec4 get_color_foreground() {
-    BLOCK_SIZE_DEST = BLOCK_SIZE_SOURCE * resolution;
     BLOCK_COUNT = textureSize(texBlocks, 0) / BLOCK_SIZE_SOURCE;
 
     // block in world
