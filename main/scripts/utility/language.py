@@ -22,8 +22,12 @@ class Translator:
         self.language = language.lower()
 
     def translate(self, text):
+        if ": " in text:
+            return ": ".join([self.translate(text) for text in text.split(": ")])
+
         if self.language == "english":
             return text
+
         elif self.language == "deutsch":
             spaces_left = len(text) - len(text.lstrip(" "))
             spaces_right = len(text) - len(text.rstrip(" "))
@@ -39,5 +43,5 @@ class Translator:
                 text = translate_german[text]
 
             return " " * spaces_left + text + " " * spaces_right + wrap
-            
+
         raise Exception("Unknown language " + self.language)

@@ -27,7 +27,6 @@ game: Game = None
 while True:
     if menu.game_state == "generate":
         window.camera.reset()
-        menu.game_state = "game"
 
         # Create game
         game = Game(window)
@@ -49,6 +48,44 @@ while True:
             if window.options["show fps"]:
                 window.draw_text((-0.98, 0.95), str(round(window.fps, 3)), (250, 250, 250, 200), size=TEXT_SIZE_DESCRIPTION)
 
+        menu.game_state = "intro"
+
+    elif menu.game_state == "intro":
+        # Update & draw all game objects
+        game.update()
+
+        # Draw foreground blocks & post processing
+        window.draw_post_processing()
+
+        # Write fps & debug info
+        if window.options["show fps"]:
+            window.draw_text((-0.98, 0.95), "FPS: " + str(round(window.fps, 3)), (250, 250, 250, 200), size=TEXT_SIZE_DESCRIPTION)
+            y_offset = 0.1
+        else:
+            y_offset = 0
+        if window.options["show debug"]:
+            pos = window.camera.map_coord(window.mouse_pos[:2], from_pixel=1, world=1)
+            window.draw_text((-0.98, 0.95 - y_offset), "Player Pos: " + str((round(game.player.rect.centerx, 1), round(game.player.rect.centery, 1))), (250, 250, 250, 200), size=TEXT_SIZE_DESCRIPTION)
+            window.draw_text((-0.98, 0.85 - y_offset), "Mouse Pos: " + str((math.floor(pos[0]), math.floor(pos[1]))), (250, 250, 250, 200), size=TEXT_SIZE_DESCRIPTION)
+            window.draw_text((-0.98, 0.75 - y_offset), "Seed: " + str(game.world.seed), (250, 250, 250, 200), size=TEXT_SIZE_DESCRIPTION)
+            
+        # Move camera
+        pos = (game.player.rect.centerx - game.player.vel[0] / 100, game.player.rect.centery - game.player.vel[0] / 100)
+        window.camera.move(pos)
+
+        # Update window + shader
+        window.update()
+
+        # Open menu
+        if window.keybind("return") == 1:
+            menu.main_page.open()
+            menu.game_state = "menu"
+
+        # End intro
+        if game.player.onGround:
+            window.camera.zoom(2.0, 100.0)
+            menu.game_state = "game"
+            game.player.can_move = True
 
     elif menu.game_state == "game":
         # Update & draw all game objects

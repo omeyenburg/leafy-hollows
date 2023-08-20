@@ -33,10 +33,14 @@ def generate(world):
     print("flattened edges")
 
 
-    # Replace placeholder (dirt) with correct blocks
+    # Replace dirt with terrain blocks
     for coord in world:
         if world[coord][0] == world.block_name["dirt"]:
             generate_block(world, *coord)
+
+
+    # Generate foliage
+    ...
 
 
 def generate_points_segment(position: [float], length, start_angle: float, deviation: float):
