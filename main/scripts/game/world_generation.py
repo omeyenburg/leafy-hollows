@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from scripts.utility.util import INTRO_LENGTH
 from noise import *
 import math
 
@@ -94,9 +95,9 @@ class Shape:
         
         points = set()
         start_angle = angle = -math.pi/2
-        length = 500
+        length = INTRO_LENGTH
         deviation = 3
-        repeat = 20
+        repeat = 16
         lowest = 0
 
         for i in range(length):
@@ -107,7 +108,7 @@ class Shape:
         print("generated points")
 
         for (x, y) in points:
-            radius = int((pnoise1((x + y) / 2 + 100, octaves=3) + 2) * 2 + 7 * -y / length)
+            radius = int((pnoise1((x + y) / 2 + 100, octaves=3) + 2) * 2) #  + 7 * -y / length
             border_width = 5
             for dx in range(-radius - border_width, radius + border_width + 1):
                 for dy in range(-radius - border_width, radius + border_width + 1):

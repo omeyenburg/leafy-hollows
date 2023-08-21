@@ -8,6 +8,7 @@ import os
 
 
 # Global variables
+INTRO_LENGTH = 1500
 realistic = False # only for testing purposes
 system = platform.system()
 

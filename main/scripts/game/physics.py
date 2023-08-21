@@ -10,8 +10,9 @@ else:
     GRAVITY_CONSTANT: float = 15
 GRAVITY_CONSTANT_WATER: float = GRAVITY_CONSTANT
 FRICTION_X: float = 0.1
-JUMP_THRESHOLD: int = 3 # time to jump after leaving the ground in ticks
-WALL_JUMP_THRESHOLD: float = 0.3 # time to jump after leaving a wall in seconds
+JUMP_THRESHOLD: int = 3 # Time to jump after leaving the ground in ticks
+WALL_JUMP_THRESHOLD: float = 0.3 # Time to jump after leaving a wall in seconds
+MAX_DISTANCE: float = 1.0 # Maximum distance in blocks an object can travel per tick
 
 
 class CollisionPhysicsObject:
@@ -45,11 +46,11 @@ class CollisionPhysicsObject:
         """
         last_position = self.rect.topleft
 
-        self.rect.x += self.vel[0] * delta_time
+        self.rect.x += min(MAX_DISTANCE, max(-MAX_DISTANCE, self.vel[0] * delta_time))
         self.rect.x = round(self.rect.x, 5) # bugs occur at higher precision
         self.x_collide(world, delta_time)
     
-        self.rect.y += self.vel[1] * delta_time
+        self.rect.y += min(MAX_DISTANCE, max(-MAX_DISTANCE, self.vel[1] * delta_time))
         self.rect.y = round(self.rect.y, 5)
         self.y_collide(world)
 
@@ -120,7 +121,8 @@ class CollisionPhysicsObject:
         Moves the object.
         """
         self.gravity(delta_time)
-        self.apply_force(delta_time * abs(world.wind) / (self.mass), 90 + 90 * min(1, max(-1, -world.wind)), self.mass)
+        if not (hasattr(self, "can_move") and not self.can_move):
+            self.apply_force(delta_time * abs(world.wind) / (self.mass), 90 + 90 * min(1, max(-1, -world.wind)), self.mass)
         if self.onGround:
             self.onGround -= 1
             friction = math.copysign(delta_time / FRICTION_X, self.vel[0])
