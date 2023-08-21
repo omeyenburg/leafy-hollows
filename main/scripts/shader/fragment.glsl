@@ -93,7 +93,10 @@ ivec2 get_source_pixel() {
 }
 
 ivec2 get_source_pixel_wrapped(int block_type, ivec2 source_pixel_wrapped) {
-    if (block_type <= adjacent_x && block_type <= adjacent_y) {
+    int block_family = int(texelFetch(texBlocks, ivec2(block_type - 1, 0), 0).b * 255);
+    int block_family_adjacent_x = int(texelFetch(texBlocks, ivec2(adjacent_x - 1, 0), 0).b * 255);
+    int block_family_adjacent_y = int(texelFetch(texBlocks, ivec2(adjacent_y - 1, 0), 0).b * 255);
+    if (block_family <= block_family_adjacent_x && block_family <= block_family_adjacent_y) {
         source_pixel_wrapped = ivec2(8, 8);
     } else if (block_type <= adjacent_x) {
         if (source_pixel_wrapped.x < BLOCK_SIZE_SOURCE / 2) {

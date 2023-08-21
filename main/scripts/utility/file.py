@@ -20,13 +20,6 @@ def find(folder: str, name: str, sub_folder=False):
     if sub_folder:
         return glob.glob(os.path.abspath("/" + os.path.join(*folder.split("/"), "**", name)), recursive=True)
     return glob.glob(os.path.abspath("/" + os.path.join(*folder.split("/"), name)))
-    '''
-    #print(os.path.abspath(os.path.join(__file__, "..", "..", "..", *folder.split("/"), "**", name)))
-    #print(os.path.join(*os.path.join(__file__, "..", "..", "..", *folder.split("/")).split("/"), "**", name))
-    if sub_folder:
-        return glob.glob(os.path.abspath(os.path.join(__file__, "..", "..", "..", *folder.split("/"), "**", name)), recursive=True)
-    return glob.glob(os.path.abspath(os.path.join(__file__, "..", "..", "..", *folder.split("/"), name)))
-    '''
 
 
 def abspath(path: str):

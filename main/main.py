@@ -8,10 +8,10 @@
 from scripts.game.world_generation import generate
 from scripts.utility.thread import threaded
 from scripts.graphics.window import Window
+from scripts.graphics.menu import Menu
 from scripts.game.world import World
-from scripts.graphics.menu import *
 from scripts.game.game import Game
-import scripts.utility.util as util
+from scripts.utility.const import *
 import numpy
 import math
 import time
@@ -78,7 +78,7 @@ while True:
         # Draw intro text
         intro_texts = menu.get_intro_texts()
 
-        intro_text_position = (-game.player.rect.centery / util.INTRO_LENGTH - 0.01) * 1.12
+        intro_text_position = (-game.player.rect.centery / INTRO_LENGTH - 0.01) * 1.12
         if 0 < intro_text_position < 1:
             skip_text = menu.translator.translate("Press [%s] to skip intro.") % window.options['key.jump'].title()
             window.draw_text((-0.95, -0.9), skip_text, (255, 255, 255), 0.14)
@@ -95,9 +95,9 @@ while True:
         window.update()
 
         # Skip intro
-        if window.keybind("jump") == 1:
+        if window.keybind("jump") == 1 and 0 < intro_text_position < 1:
             original = game.player.rect.y
-            game.player.rect.y = min(game.player.rect.y, -util.INTRO_LENGTH + 32 - game.player.rect.y % 16)
+            game.player.rect.y = min(game.player.rect.y, -INTRO_LENGTH + INTRO_REPEAT + game.player.rect.y % INTRO_REPEAT)
             window.camera.pos[1] += game.player.rect.y - original
 
         # Open menu

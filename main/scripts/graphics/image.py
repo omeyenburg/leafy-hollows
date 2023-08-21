@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from scripts.utility.const import *
 from pygame.locals import *
 import scripts.utility.file as file
 import pygame
@@ -6,6 +7,7 @@ import math
 import os
 
 
+# Potentially insecure...
 sprites = {}
 sprite_rects = []
 
@@ -33,6 +35,7 @@ def load_blocks():
     frames = []
     animation = []
     blocks = []
+    families = {}
 
     for path in block_paths:
         blocks.append(file.read_json(path))
@@ -42,21 +45,23 @@ def load_blocks():
         frames.extend(data["frames"])
         animation.append((data["name"], len(data["frames"]), data["speed"]))
         block_data[data["name"]] = (data["hardness"], data["family"], data["layer"])
+        if not data["family"] in families:
+            families[data["family"]] = len(families)
 
     width = math.ceil(math.sqrt(len(frames)))
     height = math.ceil(len(frames) / width)
-    image = pygame.Surface((width * 16, height * 16 + 1), SRCALPHA)
+    image = pygame.Surface((width * WORLD_BLOCK_SIZE, height * WORLD_BLOCK_SIZE + 1), SRCALPHA)
 
     for i, frame in enumerate(frames):
         y, x = divmod(i, width)
         path = file.find("data/images/blocks", frame, True)[0]
         block_surface = pygame.image.load(path)
-        image.blit(block_surface, (x * 16, (height - y - 1) * 16))
+        image.blit(block_surface, (x * WORLD_BLOCK_SIZE, (height - y - 1) * WORLD_BLOCK_SIZE))
 
     x = 0
     for block, length, speed in animation:
-        image.set_at((x, height * 16), (length, speed * 255 / 2, 0)) # length: 0-255 | speed: 0.0-2.0
-        block_data[block] = (x + 1, *block_data[block])
+        image.set_at((x, height * WORLD_BLOCK_SIZE), (length, speed * 255 / 2, families[block_data[block][1]])) # length: 0-255 | speed: 0.0-2.0
+        block_data[block] = (x + 1, block_data[block][2])
         x += length
 
     pygame.image.save(image, file.abspath("data/blocks (testing only).png"))

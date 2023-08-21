@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
-from scripts.utility.util import realistic
 from scripts.graphics.window import Window
+from scripts.utility.const import *
 from scripts.game.physics import *
 import scripts.graphics.sound as sound
 
 
 class Player(CollisionPhysicsObject):
     def __init__(self, spawn_pos: [float], speed: float, sprint_speed: float, crouch_speed: float, swim_speed: float, acceleration_time: float, jump_force: int):
-        self.rect_size = (0.9, 1.8)
+        self.rect_size = PLAYER_SIZE
         self.rect_size_crouch = tuple(self.rect_size[::-1])
         self.rect_size_swim = (self.rect_size[0], self.rect_size[0])
         self.speed: float = speed
@@ -71,7 +71,7 @@ class Player(CollisionPhysicsObject):
               or self.onWallRight and self.direction == 1 and world.get_block(*wall_block_left))
               and not self.onGround and (window.keybind("right") or window.keybind("left"))):
             self.state = "climb"
-            if (not realistic) and self.vel[1] < 0: # friction
+            if (not PHYSICS_REALISTIC) and self.vel[1] < 0: # friction
                 self.vel[1] = min(self.vel[1] + window.delta_time * 13, 0)
             if world.get_block(*wall_block_right) and not world.get_block(wall_block_right[0], round(self.rect.y + 1.3)) or world.get_block(*wall_block_left) and not world.get_block(wall_block_left[0], round(self.rect.y + 1.3)):
                 self.vel[1] = 0.2
@@ -119,7 +119,7 @@ class Player(CollisionPhysicsObject):
             max_speed = self.crouch_speed
         current_speed = (window.delta_time / self.acceleration_time) * max_speed
         if not (self.onGround or self.onWallLeft or self.onWallRight):
-            if realistic:
+            if PHYSICS_REALISTIC:
                 current_speed = 0
             elif not (window.keybind("right") and self.vel[0] < 0 or window.keybind("left") and self.vel[0] > 0):
                 current_speed /= 10 # Reduced control in air
