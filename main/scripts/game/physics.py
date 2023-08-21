@@ -1,23 +1,17 @@
 # -*- coding: utf-8 -*-
+from scripts.utility.const import *
 import scripts.utility.geometry as geometry
-import scripts.utility.util as util
+import uuid
 import math
 
 
-if util.realistic:
-    GRAVITY_CONSTANT: float = 9.81
-else:
-    GRAVITY_CONSTANT: float = 15
-GRAVITY_CONSTANT_WATER: float = GRAVITY_CONSTANT
-FRICTION_X: float = 0.1
-JUMP_THRESHOLD: int = 3 # Time to jump after leaving the ground in ticks
-WALL_JUMP_THRESHOLD: float = 0.3 # Time to jump after leaving a wall in seconds
-MAX_DISTANCE: float = 1.0 # Maximum distance in blocks an object can travel per tick
+def _generate_uuid():
+    return str(uuid.uuid4()) # 2^128 unique ids; low collision chance
 
 
 class CollisionPhysicsObject:
     def __init__(self, mass: float, position: [float], size: [float], force_func=None):
-        self.uuid = util.generate_id()
+        self.uuid = _generate_uuid()
         self.mass: float = mass
         self.rect: geometry.Rect = geometry.Rect(*position, *size)
         self.vel: [float] = [0.0, 0.0]
@@ -46,11 +40,11 @@ class CollisionPhysicsObject:
         """
         last_position = self.rect.topleft
 
-        self.rect.x += min(MAX_DISTANCE, max(-MAX_DISTANCE, self.vel[0] * delta_time))
-        self.rect.x = round(self.rect.x, 5) # bugs occur at higher precision
+        self.rect.x += min(PHYSICS_MAX_MOVE_DISTANCE, max(-PHYSICS_MAX_MOVE_DISTANCE, self.vel[0] * delta_time))
+        self.rect.x = round(self.rect.x, 5) # Bugs occur at higher precision
         self.x_collide(world, delta_time)
     
-        self.rect.y += min(MAX_DISTANCE, max(-MAX_DISTANCE, self.vel[1] * delta_time))
+        self.rect.y += min(PHYSICS_MAX_MOVE_DISTANCE, max(-PHYSICS_MAX_MOVE_DISTANCE, self.vel[1] * delta_time))
         self.rect.y = round(self.rect.y, 5)
         self.y_collide(world)
 
@@ -59,8 +53,10 @@ class CollisionPhysicsObject:
             self.rect.topleft = last_position
             self.vel = [0, 0]
 
-        # Adjust water level
+        # Push water to adjacent blocks
         stength = (abs(self.vel[0]) + abs(self.vel[1])) * 5
+        block_feet = (math.floor(self.rect.centerx), round(self.rect.top))
+        ...
 
     def get_collision(self, world):
         """
@@ -77,9 +73,9 @@ class CollisionPhysicsObject:
         Applies gravity to the object.
         """
         if self.inWater:
-            gravity = GRAVITY_CONSTANT_WATER
+            gravity = PHYSICS_GRAVITY_CONSTANT_WATER
         else:
-            gravity = GRAVITY_CONSTANT
+            gravity = PHYSICS_GRAVITY_CONSTANT
         self.apply_force(gravity * self.mass * delta_time, 270, 1)
     
     def x_collide(self, world, delta_time):
@@ -92,12 +88,12 @@ class CollisionPhysicsObject:
                     if self.vel[0] < 0:
                         self.rect.left = x + 1
                         self.vel[0] = 0
-                        self.onWallRight = max(2, int(WALL_JUMP_THRESHOLD / delta_time))
+                        self.onWallRight = max(2, int(PHYSICS_WALL_JUMP_THRESHOLD / delta_time))
 
                     if self.vel[0] > 0:
                         self.rect.right = x
                         self.vel[0] = 0                        
-                        self.onWallLeft = max(2, int(WALL_JUMP_THRESHOLD / delta_time))
+                        self.onWallLeft = max(2, int(PHYSICS_WALL_JUMP_THRESHOLD / delta_time))
     
     def y_collide(self, world):
         """
@@ -114,7 +110,7 @@ class CollisionPhysicsObject:
                         self.rect.top = y + 1
                         self.vel[1] = 0
 
-                        self.onGround = JUMP_THRESHOLD
+                        self.onGround = PHYSICS_JUMP_THRESHOLD
 
     def update(self, world, delta_time):
         """
@@ -125,7 +121,7 @@ class CollisionPhysicsObject:
             self.apply_force(delta_time * abs(world.wind) / (self.mass), 90 + 90 * min(1, max(-1, -world.wind)), self.mass)
         if self.onGround:
             self.onGround -= 1
-            friction = math.copysign(delta_time / FRICTION_X, self.vel[0])
+            friction = math.copysign(delta_time / PHYSICS_FRICTION_X, self.vel[0])
             if abs(friction) > abs(self.vel[0]):
                 self.vel[0] = 0
             else:
@@ -146,7 +142,7 @@ class CollisionPhysicsObject:
 
 class PhysicsObject: # No collision
     def __init__(self, mass: float, position: [float], size: [float], gravity: float=9.81):
-        self.uuid = util.generate_id()
+        self.uuid = _generate_uuid()
         self.mass: float = mass
         self.rect: geometry.Rect = geometry.Rect(*position, *size)
         self.vel: [float] = [0.0, 0.0]

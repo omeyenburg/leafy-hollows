@@ -6,17 +6,6 @@ import scripts.utility.file as file
 translate_german = file.read_json("data/translations/german.json")
 
 
-"""
-from deep_translator import GoogleTranslator
-class OnlineTranslator(GoogleTranslator):
-    def __init__(self, language):
-        super().__init__(source='english', target=language)
-
-    def translate(self, text):
-        return super().translate(text=text)
-"""
-
-
 class Translator:
     def __init__(self, language):
         self.language = language.lower()

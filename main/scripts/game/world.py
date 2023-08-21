@@ -1,34 +1,26 @@
 # -*- coding: utf-8 -*-
 from scripts.game.world_generation import generate_block
-from scripts.utility.util import realistic
-#from noise import *
+from scripts.utility.const import *
 import scripts.utility.geometry as geometry
-import scripts.game.worldnoise as noise
 import random
 import numpy
 import math
 
 
-WATER_PER_BLOCK = 1000
-WATER_SPEED = 0.1 # Water update delay
-
-
 class World(dict):
     def __init__(self, block_data: dict):
         super().__init__() # {(x, y): (block, plant, background, water_level)}
-
-        self.seed: float = noise.seed()
-        self.seed = 18125.25
-        self.view: numpy.array = None
+        self.seed: float = random.random() * 10 ** 6 # Float between 0 and 10^6
+        self.view: numpy.array = None # Sent to shader to render
         self.view_size: tuple = (0, 0)
-        self.block_data: dict = {name: (index, hardness, family, {"foreground": 0, "plant": 1, "background": 2, "water": 3}[layer]) for name, (index, hardness, family, layer) in block_data.items()} # {"block_name": (id, hardness, group, layer)}
-        self.block_index: dict = {index: name for name, (index, *_) in block_data.items()}
+        self.block_layer: dict = {name: {"foreground": 0, "plant": 1, "background": 2, "water": 3}[layer] for name, (index, layer) in block_data.items()}
+        self.block_name: dict = {name: index for name, (index, layer) in block_data.items()}
+        self.block_index: dict = {index: name for name, (index, layer) in block_data.items()}
         self.block_index[0] = "air"
-        self.block_name: dict = {name: index for name, (index, *_) in block_data.items()}
         self.entities: set = set()
         self.particles: set = set()
-        self.wind: float = 0.0 # wind direction
-        self.loaded_blocks: tuple = ((0, 0), (0, 0))
+        self.wind: float = 0.0 # Wind direction
+        self.loaded_blocks: tuple = ((0, 0), (0, 0)) # (start, end)
         self.water_update_timer: float = 0.0
 
     def add_entity(self, entity):
@@ -41,7 +33,7 @@ class World(dict):
         if not (x, y) in self:
             self[(x, y)] = [0, 0, 0, 0]
         if data:
-            layer = self.block_data[self.block_index[data]][3]
+            layer = self.block_layer[self.block_index[data]]
         self[(x, y)][layer] = data
     
     def get_block(self, x: int, y: int, layer: int=0, generate=True):
@@ -67,10 +59,10 @@ class World(dict):
         self.loaded_blocks = window.camera.visible_blocks()
         self.create_view(window)
 
-        self.wind = math.sin(window.time) * 20 + math.cos(window.time * 5) * 10
+        self.wind = math.sin(window.time) * WORLD_WIND_STRENGTH + math.cos(window.time * 5) * WORLD_WIND_STRENGTH / 2
 
         self.water_update_timer += window.delta_time
-        if self.water_update_timer > WATER_SPEED:
+        if self.water_update_timer > WORLD_WATER_SPEED:
             self.water_update_timer = 0.0
             for y in geometry.shuffled_range(self.view_size[1] - 1):
                 for x in geometry.shuffled_range(self.view_size[0] - 1):
@@ -86,8 +78,8 @@ class World(dict):
         if not water_level:
             return
 
-        emmitable_water = min(water_level / 2, WATER_PER_BLOCK / 2)
-        overflow_water = max(0, water_level - WATER_PER_BLOCK) / 4
+        emmitable_water = min(water_level / 2, WORLD_WATER_PER_BLOCK / 2)
+        overflow_water = max(0, water_level - WORLD_WATER_PER_BLOCK) / 4
         water_side = self.get_water_side(x, y)
 
         if self.get_water(x, y + 1):
@@ -96,7 +88,7 @@ class World(dict):
         # Block below
         if not self.get_block(x, y - 1):
             water_level_below = self.get_water(x, y - 1)
-            absorbable_water = max(0, WATER_PER_BLOCK - water_level_below + overflow_water)
+            absorbable_water = max(0, WORLD_WATER_PER_BLOCK - water_level_below + overflow_water)
 
             absorbed_water = min(absorbable_water, emmitable_water)
             water_level -= absorbed_water
@@ -117,7 +109,7 @@ class World(dict):
                 water_level_target = self.get_water(_x, _y)
                 total_water += water_level_target
                 blocks[(_x, _y)] = water_level_target
-        max_water = len(blocks) * WATER_PER_BLOCK
+        max_water = len(blocks) * WORLD_WATER_PER_BLOCK
         if total_water > max_water:
             emmitable_water = total_water - max_water
             total_water = max_water
@@ -163,91 +155,3 @@ class World(dict):
                 self.view[x, y] = self[start[0] + x, start[1] + y]
         
         window.world_view = self.view
-
-    def generate_old(self): # work in progress
-        points = []
-        position = [0, 0]
-        angle = 0
-        length = 10000
-        for i in range(length):
-            position = [position[0] + math.cos(angle), position[1] + math.sin(angle)]
-            points.append(position)
-            angle += snoise2(i * 20.215 + 0.0142, 1, octaves=3) / 2 # use simplex; perlin repeats
-
-        for point in points:
-            radius = int((pnoise1(sum(point) / 2 + 100, octaves=3) + 2) * 3)
-            for dx in range(-radius, radius + 1):
-                for dy in range(-radius, radius + 1):
-                    if dx ** 2 + dy ** 2 <= radius ** 2:
-                        coord = (int(point[0] + dx), int(point[1] + dy))
-                        self.set_block(*coord, 0)
-                        #self.set_water(*coord, 1000)
-
-    def generate_block(self, x, y):
-        z = noise.terrain(x, y, self.seed)
-        if z < 0.5:
-            self.set_block(x, y, self.block_name["grass"])
-        else:
-            self.set_block(x, y, self.block_name["stone"])
-        #self.set_block(x, y, 0)
-
-
-        """
-        world_gen = 1
-
-        if world_gen == 1:
-            z = noise.terrain(x, y, seed)
-            z_top1 = noise.terrain(x, y + 1, seed)
-            z_top2 = noise.terrain(x, y + 2, seed)
-            z_bottom1 = noise.terrain(x, y - 1, seed)
-            if z > 0 and z_top1 <= 0:
-                block = blocks["grass"]
-            elif z <= 0 and z_bottom1 > 0:
-                block = blocks["grass_idle"]
-            #elif z > 0 and z_top2 <= 0:
-            #    block = blocks["dirt"]
-            elif z > 0:
-                block = blocks["dirt"]
-            else:
-                block = 0 # air
-            #if 0 >= z > -0.3:
-            #    block += 1000 * blocks["stone"]
-        elif world_gen == 2:
-            z = abs(noise.terrain(x, y, seed))
-            z_top1 = abs(noise.terrain(x, y + 1, seed))
-            z_top2 = abs(noise.terrain(x, y + 2, seed))
-            z_bottom1 = abs(noise.terrain(x, y - 1, seed))
-
-            threshold = 0.25
-
-            if z > threshold and z_top1 <= threshold:
-                block = blocks["grass"]
-            elif z <= threshold and z_bottom1 > threshold:
-                block = blocks["grass_idle"]
-            elif z > threshold and z_top2 <= threshold:
-                block = blocks["dirt"]
-            elif z > threshold:
-                block = blocks["stone"]
-            else:
-                block = 0 # air
-            
-            if threshold > z > threshold * 0.7:
-                block += 1000 * blocks["stone"]
-        elif world_gen == 3:
-            h = pnoise2(x / 100 - seed, y / 10, octaves=4) * 3 + 4
-            d = pnoise1(x / 100 + seed * 3, octaves=4) * 5 + 145
-            z = pnoise1(x / d + seed, octaves=4) * 60
-            z2 = abs(noise.terrain(x, y, seed))
-            dist = abs(z - y)
-            if dist < h:
-                block = 0
-            else:
-                block = blocks["stone"]
-        
-            
-        return block
-
-        # Generate drip stone: 1dnoise(x) -> change treshold
-        # Generate spaced points: spaced_noise + check for free space
-        # noise.snoise2(x, y, octaves=1, persistence=0.5, lacunarity=2.0, repeatx=None, repeaty=None, base=0.0)
-        """

@@ -1,12 +1,8 @@
 # -*- coding: utf-8 -*-
+from scripts.utility.const import *
 import scripts.utility.file as file
 import pygame
 import math
-
-
-characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789äÄüÜöÖß_.,:;?!<=>#@%\'\"+-*/()[]"
-char_index = {char: characters.find(char) for char in characters}
-characters_length = len(characters)
 
 
 class Font:
@@ -26,22 +22,22 @@ class Font:
         self.char_rects = {}
         
         # Generate character images
-        character_images = [font.render(char, antialias, (255, 255, 255)) for char in characters]
+        character_images = [font.render(char, antialias, (255, 255, 255)) for char in FONT_CHARACTERS]
 
         # Get maximum character size
         self.char_width = max([char_img.get_width() for char_img in character_images])
-        self.char_height = font.render(characters, antialias, (0, 0, 0)).get_height()
+        self.char_height = font.render(FONT_CHARACTERS, antialias, (0, 0, 0)).get_height()
         
         # Get columns and rows
-        self.columns = int(characters_length ** 0.6)
-        self.rows = (characters_length + self.columns - 1) // self.columns
+        self.columns = int(FONT_CHARACTERS_LENGTH ** 0.6)
+        self.rows = (FONT_CHARACTERS_LENGTH + self.columns - 1) // self.columns
         
         # Create surface
         font_size = (self.columns * self.char_width, self.rows * self.char_height)
         image = pygame.Surface(font_size)
 
         # Blit characters and store character rectangles
-        for i in range(characters_length):
+        for i in range(FONT_CHARACTERS_LENGTH):
             row = i // self.columns
             column = i % self.columns
 
@@ -51,12 +47,12 @@ class Font:
             char_coord = (center[0] - char_size[0] / 2, center[1] - char_size[1] / 2)
 
             char_rect = (column * self.char_width / font_size[0], 1 - row * self.char_height / font_size[1] - 1 / self.rows, 1 / self.columns, 1 / self.rows)
-            self.char_rects[characters[i]] = char_rect
+            self.char_rects[FONT_CHARACTERS[i]] = char_rect
             image.blit(char_img, char_coord)
 
         return image
 
     def get_rect(self, char):
-        if not char in characters:
+        if not char in FONT_CHARACTERS:
             char = "?"
         return self.char_rects[char]

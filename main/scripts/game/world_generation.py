@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from scripts.utility.util import INTRO_LENGTH
+from scripts.utility.const import *
 from noise import *
 import math
 
@@ -36,8 +36,10 @@ def generate(world):
 
     # Replace dirt with terrain blocks
     for coord in world:
-        if world[coord][0] == world.block_name["dirt"]:
+        if world[coord][0] == world.block_name["placeholder0"]:
             generate_block(world, *coord)
+        elif world[coord][0] == world.block_name["placeholder1"]:
+            generate_block(world, *coord, repeat=INTRO_REPEAT)
 
 
     # Generate foliage
@@ -72,8 +74,11 @@ def flatten_edges(world):
         world.set_block(x, y, block_type)
 
 
-def generate_block(world, x, y):
-    z = snoise2(x / 30 + world.seed, y / 30 + world.seed, octaves=3, persistence=0.1, lacunarity=3)
+def generate_block(world, x, y, repeat=0):
+    if repeat:
+        z = snoise2(x / 16, y / 16, octaves=3, persistence=0.1, lacunarity=5, repeaty=repeat / 16)
+    else:
+        z = snoise2(x / 30 + world.seed, y / 30 + world.seed, octaves=3, persistence=0.1, lacunarity=5)
     if z < 0.5:
         world.set_block(x, y, world.block_name["grass"])
     else:
@@ -87,29 +92,27 @@ class Shape:
 
         surface_size = (50, 30)
         for x in range(-surface_size[0], surface_size[0] + 1):
-            surface_level = pnoise1(x / 20, octaves=3) * 9
+            surface_level = pnoise1(x / 20 + world.seed, octaves=3) * 9
             for y in range(-surface_size[0], surface_size[0] + 1):
                 if surface_level < y:
                     world.set_block(x, y, 0)
 
-        
         points = set()
         start_angle = angle = -math.pi/2
         length = INTRO_LENGTH
+        border_width = 40
         deviation = 3
-        repeat = 16
         lowest = 0
 
         for i in range(length):
-            position[0] = pnoise1(i * 20.215 + 0.0142, octaves=3, repeat=repeat) * deviation
+            position[0] = pnoise1(i * 16 + world.seed, octaves=3, repeat=INTRO_REPEAT * 16) * deviation
             position[1] = -i
             points.add(tuple(position))
 
         print("generated points")
 
         for (x, y) in points:
-            radius = int((pnoise1((x + y) / 2 + 100, octaves=3) + 2) * 2) #  + 7 * -y / length
-            border_width = 5
+            radius = int((pnoise1(y + world.seed, octaves=3, repeat=INTRO_REPEAT) + 2) * 2)
             for dx in range(-radius - border_width, radius + border_width + 1):
                 for dy in range(-radius - border_width, radius + border_width + 1):
                     coord = (int(x + dx), int(y + dy))
@@ -118,7 +121,7 @@ class Shape:
                         if y + dy < lowest:
                             lowest = y + dy
                     elif not coord in world:
-                        world.set_block(*coord, world.block_name["dirt"])
+                        world.set_block(*coord, world.block_name["placeholder1"])
 
         print("mined out path\n")
 
@@ -132,20 +135,20 @@ class Shape:
         angle = 0
         length = 2000
         deviation = 2 # 2 - 6 works fine
+        border_width = 5
 
         points = generate_points_segment(position, length, angle, deviation)
         print("generating points")
 
         for (x, y) in points:
             radius = int((pnoise1((x + y) / 2 + 100, octaves=3) + 2) * 3)
-            border_width = 5
             for dx in range(-radius - border_width, radius + border_width + 1):
                 for dy in range(-radius - border_width, radius + border_width + 1):
                     coord = (int(x + dx), int(y + dy))
                     if dx ** 2 + dy ** 2 <= radius ** 2:
                         world.set_block(*coord, 0)
                     elif not coord in world:
-                        world.set_block(*coord, world.block_name["dirt"])
+                        world.set_block(*coord, world.block_name["placeholder0"])
 
         print("mined out path\n")
 

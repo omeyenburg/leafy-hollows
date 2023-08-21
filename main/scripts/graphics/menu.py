@@ -1,20 +1,12 @@
 # -*- coding: utf-8 -*-
 from scripts.utility.language import Translator
 from scripts.graphics.window import Window
+from scripts.utility.const import *
 import scripts.utility.geometry as geometry
 import scripts.utility.options as options
-import scripts.utility.util as util
 import math
 import sys
 import os
-
-
-INTRO_LENGTH = 2000
-TEXT_SIZE_HEADING = 0.4
-TEXT_SIZE_BUTTON = 0.2
-TEXT_SIZE_OPTION = 0.14
-TEXT_SIZE_TEXT = 0.15
-TEXT_SIZE_DESCRIPTION = 0.14
 
 
 class Page:
@@ -399,12 +391,12 @@ class Menu:
 
         # Fullscreen button
         def button_fullscreen_update():
-            if util.system == "Darwin":
+            if PLATFORM == "Darwin":
                 return
             window.toggle_fullscreen()
             button_fullscreen.text = "Fullscreen: " + f"{str(window.fullscreen):5}"
 
-        if util.system == "Darwin":
+        if PLATFORM == "Darwin":
             button_fullscreen = Button(settings_video_scrollbox, (0.6, .18), row=2, column=0, callback=button_fullscreen_update, text="Fullscreen: Disabled", fontsize=TEXT_SIZE_OPTION, translator=self.translator)
         else:
             button_fullscreen = Button(settings_video_scrollbox, (0.6, .18), row=2, column=0, callback=button_fullscreen_update, text="Fullscreen: False", fontsize=TEXT_SIZE_OPTION, translator=self.translator)
@@ -590,12 +582,11 @@ class Menu:
     def get_intro_texts(self):
         intro_texts = [
             "Title",
-            "Move with [%s] and [%s].",
-            "Jump with [%s].",
-            "Crouch with [%s].",
-            "Sprint with [%s].",
-            "Explore more\nmovement techniques.",
-            "Escape the caves!"
+            "Move with [%s] and [%s]",
+            "Jump with [%s]",
+            "Crouch with [%s]",
+            "Sprint with [%s]",
+            "Escape from the caves!"
         ]
 
         formatter = (

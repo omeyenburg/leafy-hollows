@@ -5,27 +5,17 @@ import random
 import os
 
 
-pygame.mixer.init(channels=16)
-#pygame.mixer.set_num_channels(16)
-
-
 def load():
     """
     Load all sounds from a .wav or .ogg files.
     All sounds have to be in monophonic sounds.
     """
+    pygame.mixer.init(channels=16)
     sound_paths = file.find("data/sounds", "*.json", True)
     sound_files = {file.basename(path): path for path in file.find("data/sounds", "*.wav", True) + file.find("data/sounds", "*.wav", True)}
 
     loaded_sounds = {}
     played_sounds = {}
-
-    """
-    paths = file.find("data/sounds", "*.wav", True) + file.find("data/sounds", "*.ogg", True)
-    for path in paths:
-        name = file.basename(path).split(".")[0]
-        loaded_sounds[name] = pygame.mixer.Sound(path)
-    """
 
     for path in sound_paths:
         data = file.read_json(path)
@@ -33,8 +23,6 @@ def load():
         speed = data["speed"]
         volume = data["volume"]
         files = tuple([pygame.mixer.Sound(sound_files[sound_file]) for sound_file in data["sounds"]])
-        #for sound_file in files:
-        #    sound_file.set_volume(volume)
         loaded_sounds[name] = (speed, volume, files)
 
     return loaded_sounds, played_sounds

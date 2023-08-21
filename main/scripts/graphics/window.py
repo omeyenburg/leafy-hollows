@@ -10,16 +10,13 @@ from scripts.graphics.image import load_blocks, load_sprites, get_sprite_rect
 from scripts.graphics.shader import Shader
 from scripts.graphics.camera import Camera
 from scripts.graphics.font import Font
+from scripts.utility.const import *
 from pygame.locals import *
 import scripts.utility.options as options
 import scripts.graphics.sound as sound
 import scripts.game.world as world
-import scripts.utility.util as util
 import scripts.utility.file as file
 import pygame
-
-
-_OPENGL_VERSION: str = "3.3 core" # Explicitly use OpenGL 3.3 core (4.1 core also works)
 
 
 class Window:
@@ -37,9 +34,9 @@ class Window:
         self.loaded_sounds, self.played_sounds = sound.load()
 
         # Set OpenGL version
-        opengl_major = int(_OPENGL_VERSION.split(".")[0])
-        opengl_minor = int(_OPENGL_VERSION.split(".")[1][:1])
-        opengl_core = "core" in _OPENGL_VERSION
+        opengl_major = int(OPENGL_VERSION.split(".")[0])
+        opengl_minor = int(OPENGL_VERSION.split(".")[1][:1])
+        opengl_core = "core" in OPENGL_VERSION
 
         pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MAJOR_VERSION, opengl_major)
         pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MINOR_VERSION, opengl_minor)
@@ -48,7 +45,7 @@ class Window:
                                             pygame.GL_CONTEXT_PROFILE_CORE)
 
         # MacOS support
-        if util.system == "Darwin":
+        if PLATFORM == "Darwin":
             pygame.display.gl_set_attribute(pygame.GL_CONTEXT_FORWARD_COMPATIBLE_FLAG, True)
 
         # Antialiasing
@@ -71,7 +68,7 @@ class Window:
         self.resolution: float = 1.0
 
         # Key press states
-        if util.system == "Darwin":
+        if PLATFORM == "Darwin":
             self._mod_names = {
                 pygame.__dict__[identifier]: identifier[4:].replace("_R", "Right ").replace("_L", "Left ").replace("_", "").replace("META", "Cmd").title()
                 for index, identifier in enumerate(pygame.__dict__.keys())
@@ -290,14 +287,14 @@ class Window:
                 if event.unicode != "":
                     self.unicode = event.unicode
                 key = pygame.key.name(event.key)
-                if util.system == "Darwin":
+                if PLATFORM == "Darwin":
                     key = key.replace("meta", "cmd")
                 if key in self.keys:
                     self.keys[key] = 1
 
             elif event.type == KEYUP:
                 key = pygame.key.name(event.key)
-                if util.system == "Darwin":
+                if PLATFORM == "Darwin":
                     key = key.replace("meta", "cmd")
                 if key in self.keys:
                     self.keys[key] = 0

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from scripts.utility.const import *
 import math
 
 
@@ -9,7 +10,7 @@ class Camera:
         self.resolution_goal: float = 1.0
         self.resolution_speed: float = 0.0
         self.resolution_index: float = 1.0
-        self.pixels_per_meter: float = 16.0
+        self.pixels_per_meter: float = WORLD_BLOCK_SIZE
         self.threshold = 0.1
 
         self.pos: [float] = [0, 0]
@@ -19,7 +20,7 @@ class Camera:
 
     def set_zoom(self, resolution: float):
         self.resolution = self.resolution_goal = resolution
-        self.pixels_per_meter = 16 * self.resolution
+        self.pixels_per_meter = self.resolution * WORLD_BLOCK_SIZE
         self.resolution_index = 1
 
     def zoom(self, resolution: float, speed: float):
@@ -88,7 +89,7 @@ class Camera:
             self.resolution_index = self.resolution_index + self.resolution_speed
             factor = 1000 ** -((self.resolution_index - 1) ** 2) # f(x) = 1000^[-(x-1)^2]
             self.resolution = self.resolution_start * (1 - factor) + self.resolution_goal * factor
-            self.pixels_per_meter = 16 * self.resolution
+            self.pixels_per_meter = self.resolution * WORLD_BLOCK_SIZE
 
     def map_coord(self, coord: [float], from_pixel: bool=True, from_centered: bool=True, from_world: bool=False, pixel: bool=False, centered: bool=True, world: bool=False):
         """
