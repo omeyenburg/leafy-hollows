@@ -5,11 +5,11 @@
 # https://github.com/pyinstaller/pyinstaller/wiki/Recipe-OSX-Code-Signing
 # https://support.apple.com/en-us/HT204397
 
-from scripts.graphics.menu import Menu, TEXT_SIZE_DESCRIPTION
 from scripts.game.world_generation import generate
 from scripts.utility.thread import threaded
 from scripts.graphics.window import Window
 from scripts.game.world import World
+from scripts.graphics.menu import *
 from scripts.game.game import Game
 import scripts.utility.util as util
 import numpy
@@ -49,6 +49,8 @@ while True:
                 window.draw_text((-0.98, 0.95), str(round(window.fps, 3)), (250, 250, 250, 200), size=TEXT_SIZE_DESCRIPTION)
 
         menu.game_state = "intro"
+        window.camera.pos[1] = 30
+        game.player.vel[1] = 5
 
     elif menu.game_state == "intro":
         # Update & draw all game objects
@@ -70,11 +72,33 @@ while True:
             window.draw_text((-0.98, 0.75 - y_offset), "Seed: " + str(game.world.seed), (250, 250, 250, 200), size=TEXT_SIZE_DESCRIPTION)
             
         # Move camera
-        pos = (game.player.rect.centerx - game.player.vel[0] / 100, game.player.rect.centery - game.player.vel[0] / 100)
+        pos = (0, game.player.rect.centery - game.player.vel[0] / 100)
         window.camera.move(pos)
+
+        # Draw intro text
+        intro_texts = menu.get_intro_texts()
+
+        intro_text_position = (-game.player.rect.centery / util.INTRO_LENGTH - 0.01) * 1.12
+        if 0 < intro_text_position < 1:
+            skip_text = menu.translator.translate("Press [%s] to skip intro.") % window.options['key.jump'].title()
+            window.draw_text((-0.95, -0.9), skip_text, (255, 255, 255), 0.14)
+
+            intro_text_index = int(intro_text_position * len(intro_texts))
+            intro_text_fract = intro_text_position * len(intro_texts) - int(intro_text_position * len(intro_texts))
+            intro_text_size = 0.5 if intro_text_index == 0 else 0.16
+            y = 2 * (2 * intro_text_fract - 1) ** 21
+            intro_text = intro_texts[intro_text_index].split("\n")
+            for i, text in enumerate(intro_text):
+                window.draw_text((0.6, y - (i - len(intro_text) / 2) * 0.1), text, (255, 255, 255), intro_text_size, centered=True)
 
         # Update window + shader
         window.update()
+
+        # Skip intro
+        if window.keybind("jump") == 1:
+            original = game.player.rect.y
+            game.player.rect.y = min(game.player.rect.y, -util.INTRO_LENGTH + 32 - game.player.rect.y % 16)
+            window.camera.pos[1] += game.player.rect.y - original
 
         # Open menu
         if window.keybind("return") == 1:

@@ -3,12 +3,6 @@
     "speed": 0.5,
     "frames": [
         "player_crouch0.png",
-        "player_crouch1.png",
-        "player_crouch0.png",
-        "player_crouch1.png",
-        "player_crouch0.png",
-        "player_crouch1.png",
-        "player_crouch2.png",
         "player_crouch1.png"
     ]
 }

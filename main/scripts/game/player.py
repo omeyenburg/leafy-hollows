@@ -20,6 +20,7 @@ class Player(CollisionPhysicsObject):
         self.direction: int = 0 # 0 = right; 1 = left
         self.hit_ground = 0
         self.can_move: bool = False # Used for intro
+        self.charge_crouch_jump: float = 0
         super().__init__(50, spawn_pos, self.rect_size)
 
     def draw(self, window: Window):
@@ -33,23 +34,23 @@ class Player(CollisionPhysicsObject):
     
     def jump(self, window, duration: float):
         force = self.jump_force * duration / window.delta_time
-        if self.direction == 1 and self.state == "crouch": # Crouch jump left
-            self.apply_force(force * 2.3, 160, window.delta_time)
+        if self.direction == 1 and self.charge_crouch_jump and not window.keybind("left"): # Crouch jump left
+            self.apply_force(force * 8, 160, window.delta_time)
             self.state = "crouch_jump"
-        elif self.direction == 0 and self.state == "crouch": # Crouch jump right
-            self.apply_force(force * 2.3, 20, window.delta_time)
+        elif self.direction == 0 and self.charge_crouch_jump and not window.keybind("right"): # Crouch jump right
+            self.apply_force(force * 8, 20, window.delta_time)
             self.state = "crouch_jump"
         elif self.onGround: # Normal jump
             self.apply_force(force, 90, window.delta_time)
         elif self.vel[1] > 1.5: # Max wall jump velocity
             return
         elif self.onWallLeft and window.keybind("left") and window.keybind("jump") == 1: # Wall jump left
-            self.apply_force(force * 2.5, 120, window.delta_time)
+            self.apply_force(force * 2.5, 110, window.delta_time)
             self.onWallLeft = 0
         elif self.onWallRight and window.keybind("right") and window.keybind("jump") == 1: # Wall jump right
-            self.apply_force(force * 2.5, 60, window.delta_time)
+            self.apply_force(force * 2.5, 70, window.delta_time)
             self.onWallRight = 0
-        
+
     def move(self, world, window: Window):
         # animation states
         wall_block_right = (round(self.rect.x + 0.8), round(self.rect.y + 1))
@@ -58,7 +59,7 @@ class Player(CollisionPhysicsObject):
         if self.vel[1] < -5:
             self.state = "fall"
             self.hit_ground = 0.3
-        elif window.keybind("crouch") and self.onGround:
+        elif self.onGround and window.keybind("crouch"):
             self.state = "crouch"
         elif self.onGround:
             if self.hit_ground > 0:
@@ -161,8 +162,17 @@ class Player(CollisionPhysicsObject):
                     else:
                         self.vel[0] += current_speed
 
-            if window.keybind("jump") and not (self.state == "crouch" and world.get_block(round(self.rect.x), round(self.rect.y + 1))):
-                self.jump(window, 5) # how long is jump force applied --> variable jump height
+            if (self.onGround or self.onWallLeft or self.onWallRight) and window.keybind("jump"):
+                if self.state == "crouch" and self.onGround:
+                    self.charge_crouch_jump += window.delta_time
+                else:
+                    self.jump(window, 5) # How long is jump force applied --> variable jump height
+            elif self.onGround and self.charge_crouch_jump and self.state == "crouch": # 1s to charge max crouch jump
+                self.jump(window, 5 * min(1, self.charge_crouch_jump))
+                self.charge_crouch_jump = 0
+                self.onGround = 0
+            else:
+                self.charge_crouch_jump = 0
 
         # Play sounds
         if self.state == "walk":
