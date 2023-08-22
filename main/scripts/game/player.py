@@ -3,6 +3,7 @@ from scripts.graphics.window import Window
 from scripts.utility.const import *
 from scripts.game.physics import *
 import scripts.graphics.sound as sound
+import random
 
 
 class Player(CollisionPhysicsObject):
@@ -165,7 +166,7 @@ class Player(CollisionPhysicsObject):
             if (self.onGround or self.onWallLeft or self.onWallRight) and window.keybind("jump"):
                 if self.state == "crouch" and self.onGround:
                     self.charge_crouch_jump += window.delta_time
-                else:
+                elif not self.charge_crouch_jump:
                     self.jump(window, 5) # How long is jump force applied --> variable jump height
             elif self.onGround and self.charge_crouch_jump and self.state == "crouch": # 1s to charge max crouch jump
                 self.jump(window, 5 * min(1, self.charge_crouch_jump))
@@ -253,7 +254,7 @@ class Player(CollisionPhysicsObject):
             if world.get_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1])) > 0:
                 world.set_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), 0)
             else:
-                world.set_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), world.block_name["dirt"])
+                world.set_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), world.block_name["grass"])
         """
         if window.mouse_buttons[2] == 1: # place water
             mouse_pos = window.camera.map_coord(window.mouse_pos[:2], world=True)

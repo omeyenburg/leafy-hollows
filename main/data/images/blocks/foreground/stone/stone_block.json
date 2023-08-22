@@ -1,10 +1,10 @@
 {
-    "name": "stone",
+    "name": "stone_block",
     "family": "stone",
     "layer": "foreground",
     "hardness": 3,
     "speed": 0,
     "frames": [
-        "stone0.png"
+        "stone_block.png"
     ]
 }

@@ -54,7 +54,10 @@ def load_blocks():
 
     for i, frame in enumerate(frames):
         y, x = divmod(i, width)
-        path = file.find("data/images/blocks", frame, True)[0]
+        try:
+            path = file.find("data/images/blocks", frame, True)[0]
+        except IndexError:
+            raise Exception("Could not find block " + frame)
         block_surface = pygame.image.load(path)
         image.blit(block_surface, (x * WORLD_BLOCK_SIZE, (height - y - 1) * WORLD_BLOCK_SIZE))
 

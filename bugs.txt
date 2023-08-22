@@ -1,0 +1,2 @@
+- When: (player.x = -17) && (x = 16 -> any full block) && (player.direction == right):
+    wall jump not possible / player stuck in block

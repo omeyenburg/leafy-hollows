@@ -9,6 +9,14 @@ BIOMES = ["overgrown", "mushroom", "dripstone", "frozen", "underwater", "stone",
 CAVE_SHAPES = ["intro", "horizontal", "vertical", "blob", "structure"]
 
 
+def random(world, x, y=0, z=0):
+    return (hash(f"{world.seed}-{x}-{y}") % 2147483647) / 2147483647
+
+
+def randint(world, x: float, y: float=0.0, start: int=0, stop: int=1, z: float=0.0):
+    return round(start + random(world, x, y, z + start + stop) * (stop - start))
+
+
 def generate(world):
     """
     Main world generation function
@@ -34,16 +42,50 @@ def generate(world):
     print("flattened edges")
 
 
-    # Replace dirt with terrain blocks
-    for coord in world:
-        if world[coord][0] == world.block_name["placeholder0"]:
-            generate_block(world, *coord)
-        elif world[coord][0] == world.block_name["placeholder1"]:
-            generate_block(world, *coord, repeat=INTRO_REPEAT)
+    # Find block patterns
+    blocks_ground = set()
+    blocks_ceiling = set()
+    blocks_wall_right = set() # Air blocks, which have a wall to their left
+    blocks_wall_left = set()
 
+    for coord in world:
+        block_type = world[coord][0]
+
+        if block_type == world.block_name["placeholder0"]: # Generate terrain block
+            generate_block(world, *coord)
+            continue
+        elif block_type == world.block_name["placeholder1"]: # Generate intro block
+            generate_block(world, *coord, repeat=INTRO_REPEAT)
+            continue
+        elif block_type != 0: # Not air
+            continue
+
+        x, y = coord
+
+        if world.get_block(x, y - 1, generate=False) > 0: # On ground
+            blocks_ground.add(coord)
+        elif world.get_block(x, y + 1, generate=False) > 0: # On ceiling
+            blocks_ceiling.add(coord)
+        else:
+            if world.get_block(x + 1, y, generate=False) > 0: # On wall right
+                blocks_wall_right.add(coord)
+            if world.get_block(x - 1, y, generate=False) > 0: # On wall left
+                blocks_wall_left.add(coord)
 
     # Generate foliage
-    ...
+    generate_foliage(world, blocks_ground, blocks_ceiling, blocks_wall_right, blocks_wall_left)
+
+
+def generate_foliage(world, blocks_ground, blocks_ceiling, blocks_wall_right, blocks_wall_left):
+    p = 1
+    for coord in blocks_ground:
+        if random(world, *coord) > 0.4: # Put vegetation
+            if random(world, *coord, 1) > 0.5: # Put grass
+                block = ("grass0", "bush2", "plant0")[randint(world, *coord, 0, 2)]
+                block_type = world.block_name[block]
+            else: # Put mushroom
+                block_type = world.block_name["mushroom" + str(randint(world, *coord, 0, 6))]
+            world.set_block(*coord, block_type)
 
 
 def generate_points_segment(position: [float], length, start_angle: float, deviation: float):
@@ -80,9 +122,9 @@ def generate_block(world, x, y, repeat=0):
     else:
         z = snoise2(x / 30 + world.seed, y / 30 + world.seed, octaves=3, persistence=0.1, lacunarity=5)
     if z < 0.5:
-        world.set_block(x, y, world.block_name["grass"])
+        world.set_block(x, y, world.block_name["grass_block"])
     else:
-        world.set_block(x, y, world.block_name["stone"])
+        world.set_block(x, y, world.block_name["stone_block"])
 
 
 class Shape:

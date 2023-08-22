@@ -36,12 +36,12 @@ class World(dict):
             layer = self.block_layer[self.block_index[data]]
         self[(x, y)][layer] = data
     
-    def get_block(self, x: int, y: int, layer: int=0, generate=True):
+    def get_block(self, x: int, y: int, layer: int=0, generate=True, default=0):
         if not (x, y) in self:
             if generate:
                 generate_block(self, x, y)
             else:
-                return 0
+                return default
         return self[(x, y)][layer]
 
     def set_water(self, x, y, level):
