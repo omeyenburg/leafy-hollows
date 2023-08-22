@@ -34,6 +34,8 @@
     "Sprint": "Sprinten",
     "Crouch": "Kriechen",
     "Return": "Zurückgehen",
+    "Paused": "Pausiert",
+    "Main Menu": "Hauptmenü",
     "Press [%s] to skip intro": "Überspringe das Intro mit [%s]",
     "Move with [%s] and [%s]": "Laufe mit [%s] und [%s]",
     "Jump with [%s]": "Springe mit [%s]",

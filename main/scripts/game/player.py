@@ -262,7 +262,6 @@ class Player(CollisionPhysicsObject):
             world.set_water(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), water_level + 1000)
         """
 
-        self.draw(window)
         for particle in particle_list:
             particle.update(world, window.delta_time)
             tmp_draw_rect(window, particle.rect.topleft, [particle.rect.w, particle.rect.h], (0, 255, 255))

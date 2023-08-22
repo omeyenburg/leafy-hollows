@@ -20,3 +20,6 @@ class Game:
 
     def update(self):
         self.world.update(self.window)
+
+    def draw(self):
+        self.world.draw(self.window)

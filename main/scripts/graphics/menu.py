@@ -267,9 +267,10 @@ def HoverBox(window: Window, rect: list, text: list, translator=None):
 
 class Menu:
     def __init__(self, window: Window):
-        self.window = window
-        self.game_state = "menu"
-        self.translator = Translator(window.options["language"])
+        self.window: Window = window
+        self.game_state: str = "menu"
+        self.game_intro: int = False
+        self.translator: Translator = Translator(window.options["language"])
 
 
         ###---###  Main page  ###---###
@@ -280,6 +281,25 @@ class Menu:
         Button(self.main_page, (.65, .2), row=2, column=1, callback=window.quit, text="Quit", fontsize=TEXT_SIZE_BUTTON, translator=self.translator)
         self.main_page.layout()
         self.main_page.open()
+
+
+        ###---###  Pause page  ###---###
+        def button_pause_play_update():
+            if self.game_intro:
+                self.game_state = "intro"
+                self.game_intro = False
+            else:
+                self.game_state = "game"
+
+        def button_pause_menu_update():
+            self.game_state = "menu"
+            self.main_page.open()
+
+        self.pause_page = Page(columns=1, spacing=0.1)
+        Label(self.pause_page, (1, .3), row=0, column=0, text="Paused", fontsize=TEXT_SIZE_HEADING, translator=self.translator)
+        button_pause_play = Button(self.pause_page, (1.4, .2), row=1, column=0, text="Play", callback=button_pause_play_update, fontsize=TEXT_SIZE_BUTTON, translator=self.translator)
+        button_pause_menu = Button(self.pause_page, (1.4, .2), row=2, column=0, text="Main Menu", callback=button_pause_menu_update, fontsize=TEXT_SIZE_BUTTON, translator=self.translator)
+        self.pause_page.layout()
 
 
         ###---###  Generate world page  ###---###

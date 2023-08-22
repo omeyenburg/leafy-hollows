@@ -17,7 +17,7 @@ def randint(world, x: float, y: float=0.0, start: int=0, stop: int=1, z: float=0
     return round(start + random(world, x, y, z + start + stop) * (stop - start))
 
 
-def generate(world):
+def generate_world(world):
     """
     Main world generation function
     """
