@@ -1,10 +1,10 @@
 {
-    "name": "grass",
+    "name": "dirt_block",
     "family": "dirt",
     "layer": "foreground",
     "hardness": 1,
     "speed": 0,
     "frames": [
-        "grass.png"
+        "dirt_block.png"
     ]
 }

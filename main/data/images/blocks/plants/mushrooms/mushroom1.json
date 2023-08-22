@@ -1,0 +1,10 @@
+{
+    "name": "mushroom1",
+    "family": "mushroom",
+    "layer": "plant",
+    "hardness": 1,
+    "speed": 0,
+    "frames": [
+        "mushroom1.png"
+    ]
+}

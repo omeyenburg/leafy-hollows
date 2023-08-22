@@ -129,6 +129,7 @@ while True:
             window.draw_text((-0.98, 0.95 - y_offset), "Player Pos: " + str((round(game.player.rect.centerx, 1), round(game.player.rect.centery, 1))), (250, 250, 250, 200), size=TEXT_SIZE_DESCRIPTION)
             window.draw_text((-0.98, 0.85 - y_offset), "Mouse Pos: " + str((math.floor(pos[0]), math.floor(pos[1]))), (250, 250, 250, 200), size=TEXT_SIZE_DESCRIPTION)
             window.draw_text((-0.98, 0.75 - y_offset), "Seed: " + str(game.world.seed), (250, 250, 250, 200), size=TEXT_SIZE_DESCRIPTION)
+            window.draw_text((-0.98, 0.65 - y_offset), str(game.world.get((math.floor(pos[0]), math.floor(pos[1])), 0)), (250, 250, 250, 200), size=TEXT_SIZE_DESCRIPTION)
             
         # Move camera
         pos = (game.player.rect.centerx - game.player.vel[0] / 100, game.player.rect.centery - game.player.vel[0] / 100)
@@ -145,7 +146,10 @@ while True:
 
     else:
         # Update and draw the menu
+        #window.draw_post_processing()
+        window.clear_world()
         menu.update()
+        #window.draw_post_processing()
 
         # Write fps
         if window.options["show fps"]:

@@ -150,15 +150,16 @@ void draw_background() {
     ivec4 block_data = texelFetch(texWorld, ivec2(block_coord), 0);
     
     // background block type
-    int block_type = block_data.b;
+    int block_type = block_data.g;
+    //block_type = block.stone;
 
     // Pixel within block
     ivec2 source_pixel = get_source_pixel();
     
     // Background
     vec4 background = get_color_background();
-    fragColor = background;
-    return;
+    //fragColor = background;
+    //return;
 
     // Set pixel color
     block_color = get_color_block(block_type, source_pixel);

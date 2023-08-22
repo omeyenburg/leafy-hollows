@@ -454,6 +454,9 @@ class Window:
         # Quit
         pygame.quit()
         sys.exit()
+
+    def clear_world(self):
+        self.world_view = numpy.zeros((0, 0, 4))
     
     def _texture(self, image, blur=False):
         """
@@ -496,7 +499,6 @@ class Window:
         # View size
         size = self.world_view.shape[:2]        
         data = numpy.array(numpy.swapaxes(self.world_view, 0, 1), dtype=numpy.int32)
-        self.world_view = numpy.zeros((0, 0, 4))
         if self._world_size != size:
             if not self._texWorld is None:
                 glDeleteTextures(1, (self._texWorld,))

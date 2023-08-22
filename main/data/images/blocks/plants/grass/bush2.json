@@ -1,0 +1,10 @@
+{
+    "name": "bush2",
+    "family": "grass",
+    "layer": "plant",
+    "hardness": 1,
+    "speed": 0,
+    "frames": [
+        "bush2.png"
+    ]
+}
