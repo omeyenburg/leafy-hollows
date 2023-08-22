@@ -313,7 +313,7 @@ class Window:
             elif event.type == MOUSEWHEEL:
                 self.mouse_wheel = [self.mouse_wheel[0] + event.x, self.mouse_wheel[1] + event.y, event.x, event.y]
 
-    def update(self):
+    def update(self, camera=True):
         """
         Update the window and inputs.
         """
@@ -369,7 +369,8 @@ class Window:
         self._vbo_instances_index = 0
 
         # Move camera
-        self.camera.update() # Better at the start, but currently at the end for sync of world and instanced rendering
+        if camera or 1:
+            self.camera.update() # Better at the start, but currently at the end for sync of world and instanced rendering
 
         # Draw background and world
         self._shader.setvar("time", self.time)

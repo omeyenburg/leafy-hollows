@@ -56,9 +56,6 @@ class World(dict):
         return -1 if self.get((x, y), (0, 0, 0, 0))[3] < 0 else 1
 
     def update(self, window):
-        self.loaded_blocks = window.camera.visible_blocks()
-        self.create_view(window)
-
         self.wind = math.sin(window.time) * WORLD_WIND_STRENGTH + math.cos(window.time * 5) * WORLD_WIND_STRENGTH / 2
 
         self.water_update_timer += window.delta_time
@@ -72,6 +69,17 @@ class World(dict):
             entity.update(self, window)
         for particle in self.particles:
             particle.update(self, window)
+
+    def draw(self, window):
+        self.loaded_blocks = window.camera.visible_blocks()
+        self.create_view(window)
+        #print(self.loaded_blocks)
+
+        for entity in self.entities:
+            entity.draw(window)
+            #print(entity)
+        for particle in self.particles:
+            particle.draw(window)
 
     def update_block(self, window, x, y):
         water_level = self.get_water(x, y)

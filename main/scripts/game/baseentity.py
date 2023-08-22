@@ -162,9 +162,6 @@ class ChainedEntity(physics.CollisionPhysicsObject):
             #self.rect.x = (self.parent.rect.x + self.rect.x * 2) / 3
             #self.rect.y = (self.parent.rect.y + self.rect.y * 2) / 3
             
-
-        self.draw(world, window)
-
         
         if not self.fixed_point is None:
             self.rect.topleft = self.fixed_point
