@@ -249,6 +249,7 @@ class Player(CollisionPhysicsObject):
             mouse_pos = window.camera.map_coord(window.mouse_pos[:2], world=True)
             spawn_particle(mouse_pos)
 
+        """
         if window.mouse_buttons[2] == 1: # right click: place/break block
             mouse_pos = window.camera.map_coord(window.mouse_pos[:2], world=True)
             if world.get_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1])) > 0:
@@ -260,7 +261,7 @@ class Player(CollisionPhysicsObject):
             mouse_pos = window.camera.map_coord(window.mouse_pos[:2], world=True)
             water_level = world.get_water(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]))
             world.set_water(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), water_level + 1000)
-        """
+        
 
         for particle in particle_list:
             particle.update(world, window.delta_time)

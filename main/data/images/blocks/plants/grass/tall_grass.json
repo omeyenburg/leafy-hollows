@@ -4,7 +4,7 @@
     "layer": "plant",
     "hardness": 1,
     "speed": 0.5,
-    "flip": 0,
+    "flip": 1,
     "frames": [
         "tall_grass0.png",
         "tall_grass1.png"
