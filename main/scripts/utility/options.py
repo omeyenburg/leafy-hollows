@@ -11,8 +11,9 @@ default: dict = {
     "antialiasing": 16,
     "show fps": False,
     "show debug": False,
-    "language": "deutsch",
+    "language": "english",
     "volume": 1.0,
+    "simulation distance": 5,
     "key.left": "a",
     "key.right": "d",
     "key.jump": "space",
@@ -27,7 +28,7 @@ def load():
     Loads the options from the options.txt file.
     """
     options = default.copy()
-    user_options = file.read_json("data/user/options.json")
+    user_options = file.read("data/user/options.json", default=default, file_format="json")
 
     for keyword, value in user_options.items():
         if not keyword in default:
@@ -45,4 +46,4 @@ def save(options):
     """
     Save the options in the options.txt file.
     """
-    file.write_json("data/user/options.json", options)
+    file.write("data/user/options.json", options, file_format="json")

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import pickle
 import json
 import glob
 import sys
@@ -41,51 +42,64 @@ def relpath(path: str):
     return path[index:]
 
 
-def read(path: str, default=None, split=False):
+def read(path: str, default=None, file_format="text", split=False):
     """
     Reads the content of a file.
     """
     if not os.path.isabs(path):
         path = abspath(path)
+
     try:
-        with open(path, "r") as f:
-            if split:
-                lines = f.readlines()
-            else:
-                lines = f.read()
+        if file_format == "text":
+            with open(path, "r") as f:
+                if split:
+                    data = f.readlines()
+                else:
+                    data = f.read()
+
+        elif file_format == "json":
+            with open(path, "r") as f:
+                data = json.load(f)
+
+        elif file_format == "pickle":
+            with open(path, 'rb') as f:
+                data = pickle.load(f)
+
     except (ValueError if default is None else FileNotFoundError):
-        lines = default
-    return lines
+            data = default
+
+    return data
 
 
-def write(path: str, content: str):
+def write(path: str, data, file_format="text"):
     """
     Writes into a file.
     """
     if not os.path.isabs(path):
         path = abspath(path)
-    with open(path, "w") as f:
-        lines = f.write(content)
-    return lines
 
+    if file_format == "text":
+        with open(path, "w") as f:
+             f.write(data)
 
-def read_json(path: str):
-    """
-    Reads the content of a json file.
-    """
+    elif file_format == "json":
+        with open(path, "w") as f:
+            json.dump(data, f, indent=4)
+
+    elif file_format == "pickle":
+        with open(path, 'wb') as f:
+            pickle.dump(data, f)
+
+    
+def exists(path: str):
     if not os.path.isabs(path):
         path = abspath(path)
-    with open(path, "r") as f:
-        data = json.load(f)
-    return data
+    return os.path.exists(path)
 
 
-def write_json(path: str, content: str):
-    """
-    Writes into a json file.
-    """
+def delete(path: str):
     if not os.path.isabs(path):
         path = abspath(path)
-    with open(path, "w") as f:
-        lines = json.dump(content, f, indent=4)
-    return lines
+
+    if os.path.exists(path):
+        os.remove(path) 

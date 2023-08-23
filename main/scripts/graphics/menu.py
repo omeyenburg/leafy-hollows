@@ -4,6 +4,7 @@ from scripts.graphics.window import Window
 from scripts.utility.const import *
 import scripts.utility.geometry as geometry
 import scripts.utility.options as options
+import scripts.utility.file as file
 import math
 import sys
 import os
@@ -270,6 +271,7 @@ class Menu:
         self.window: Window = window
         self.game_state: str = "menu"
         self.game_intro: int = False
+        self.save_world = None # Function
         self.translator: Translator = Translator(window.options["language"])
 
 
@@ -293,6 +295,7 @@ class Menu:
 
         def button_pause_menu_update():
             self.game_state = "menu"
+            self.save_world()
             self.main_page.open()
 
         self.pause_page = Page(columns=1, spacing=0.1)
@@ -538,11 +541,47 @@ class Menu:
         ###---###  World settings page  ###---###
         settings_world_page = Page(parent=settings_page, columns=1, spacing=0.1)
         Label(settings_world_page, (1, .3), row=0, column=0, text="World Settings", fontsize=TEXT_SIZE_HEADING, translator=self.translator)
-        Button(settings_world_page, (1.4, .2), row=1, column=0, callback=settings_page.open, text="Back", fontsize=TEXT_SIZE_BUTTON, translator=self.translator)
+
+        # Simulation distance
+        def slider_simulation_distance_update():
+            simulation_distance = int(slider_simulation_distance.value * 45 + 5)
+            label_simulation_distance.text = "Simulation Distance: " + f"{simulation_distance:2d}"
+            window.options["simulation distance"] = simulation_distance
+
+        value = (window.options["simulation distance"] - 5) / 45
+        slider_simulation_distance = Slider(settings_world_page, (1.4, 0.18), row=1, column=0, value=value)
+        slider_simulation_distance.callback = slider_simulation_distance_update
+        label_simulation_distance = Label(settings_world_page, (1.4, 0.18), row=1, column=0, fontsize=TEXT_SIZE_OPTION, translator=self.translator)
+        slider_simulation_distance_update()
+
+        # Delete world
+        def button_delete_world_update():
+            if file.exists("data/world/world.data"):
+                label_delete_world.text = "If you delete your world, a new world will be created."
+            else:
+                label_delete_world.text = "Play to create a new world."
+            delete_world_page.open()
+
+        button_delete_world = Button(settings_world_page, (1.4, .2), row=2, column=0, callback=button_delete_world_update, text="Delete World", fontsize=TEXT_SIZE_BUTTON, translator=self.translator)
+
+        Button(settings_world_page, (1.4, .2), row=3, column=0, callback=settings_page.open, text="Back", fontsize=TEXT_SIZE_BUTTON, translator=self.translator)
         settings_world_page.layout()
         button_settings_world_open.callback = settings_world_page.open
 
 
+        ###---###  Delete world page  ###---###
+        def button_delete_world_confirm_update():
+            file.delete("data/world/world.data")
+            settings_world_page.open()
+
+        delete_world_page = Page(parent=settings_world_page, columns=1, spacing=0.1)
+        Label(delete_world_page, (1, .3), row=0, column=0, text="World Settings", fontsize=TEXT_SIZE_HEADING, translator=self.translator)
+        label_delete_world = Label(delete_world_page, (1.4, .2), row=1, column=0, fontsize=TEXT_SIZE_BUTTON, translator=self.translator)
+        button_delete_world_confirm = Button(delete_world_page, (1.4, .2), row=2, column=0, callback=button_delete_world_confirm_update, text="Delete my world!", fontsize=TEXT_SIZE_BUTTON, translator=self.translator)
+        Button(delete_world_page, (1.4, .2), row=3, column=0, callback=settings_world_page.open, text="Cancel", fontsize=TEXT_SIZE_BUTTON, translator=self.translator)
+        delete_world_page.layout()
+
+        
         ###---###  Controls settings page  ###---###
         settings_control_page = Page(parent=settings_page, columns=2, spacing=0.1)
         Label(settings_control_page, (1, .2), row=0, column=0, columnspan=2, text="Control Settings", fontsize=TEXT_SIZE_HEADING, translator=self.translator)

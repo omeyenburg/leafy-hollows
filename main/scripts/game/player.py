@@ -254,7 +254,7 @@ class Player(CollisionPhysicsObject):
             if world.get_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1])) > 0:
                 world.set_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), 0)
             else:
-                world.set_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), world.block_name["grass"])
+                world.set_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), world.block_name["grass_block"])
         """
         if window.mouse_buttons[2] == 1: # place water
             mouse_pos = window.camera.map_coord(window.mouse_pos[:2], world=True)

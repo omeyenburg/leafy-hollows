@@ -17,6 +17,7 @@ uniform vec2 offset;
 uniform vec2 camera;
 uniform float resolution;
 uniform float time;
+uniform int gray_screen;
 
 // Constants
 vec2 BLOCK_COUNT;
@@ -403,9 +404,11 @@ vec4 get_color_foreground() {
 }
 
 void draw_post_processing() {
-    // Water
     fragColor = get_color_foreground();
-    
+    if (gray_screen == 1) {
+        fragColor = (fragColor + vec4(0, 0, 0, 1)) / 2;
+    }
+
     /*
     // damage animation
     float red_spike = max(0, sin(2 * time) + sin(4 * time) + sin(8 * time) - 1.75) * 0.8 + 0.1;

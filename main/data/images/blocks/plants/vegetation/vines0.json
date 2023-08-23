@@ -1,0 +1,10 @@
+{
+    "name": "vines0",
+    "family": "vine",
+    "layer": "plant",
+    "hardness": 1,
+    "speed": 0,
+    "frames": [
+        "vines0.png"
+    ]
+}

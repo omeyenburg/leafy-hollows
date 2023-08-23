@@ -10,7 +10,6 @@ from scripts.utility.thread import threaded
 from scripts.graphics.window import Window
 from scripts.graphics.menu import Menu
 from scripts.game.world import World
-from scripts.game.game import Game
 from scripts.utility.const import *
 import numpy
 import math
@@ -21,24 +20,24 @@ import os
 # Create window
 window: Window = Window("Title")
 menu: Menu = Menu(window)
-game: Game = None
+world: World = None
+
+
+def quit():
+    if not world is None:
+        world.save()
 
 
 def generate():
-    global game
-
-    window.camera.reset()
-
-    # Create game
-    game = Game(window)
+    global world
 
     # Wait for world generation thread
     while True:
         menu.update()
         window.update()
 
-        done = threaded(generate_world, game.world, wait=True)
-        if done: break
+        world = threaded(World.load, window, wait=True)
+        if not world is None: break
 
         # Open menu
         if window.keybind("return") == 1:
@@ -49,14 +48,21 @@ def generate():
         if window.options["show fps"]:
             window.draw_text((-0.98, 0.95), str(round(window.fps, 3)), (250, 250, 250, 200), size=TEXT_SIZE_DESCRIPTION)
 
-    menu.game_state = "intro"
-    window.camera.pos[1] = 30
-    game.player.vel[1] = 5
+    if world.player.rect.x == 0:
+        menu.game_state = "intro"
+        window.camera.pos[1] = 50
+        world.player.vel[1] = 5
+        window.camera.set_zoom(CAMERA_RESOLUTION_INTRO)
+    else:
+        menu.game_state = "game"
+        window.camera.dest = list(world.player.rect.center)
+        window.camera.pos = list(world.player.rect.center)
+        window.camera.set_zoom(CAMERA_RESOLUTION_GAME)
 
 
 def draw_game():
-    # Update & draw all game objects
-    game.draw()
+    # Draw all world objects
+    world.draw(window)
 
     # Draw foreground blocks & post processing
     window.draw_post_processing()
@@ -69,21 +75,21 @@ def draw_game():
         y_offset = 0
     if window.options["show debug"]:
         pos = window.camera.map_coord(window.mouse_pos[:2], from_pixel=1, world=1)
-        window.draw_text((-0.98, 0.95 - y_offset), "Player Pos: " + str((round(game.player.rect.centerx, 1), round(game.player.rect.centery, 1))), (250, 250, 250, 200), size=TEXT_SIZE_DESCRIPTION)
+        window.draw_text((-0.98, 0.95 - y_offset), "Player Pos: " + str((round(world.player.rect.centerx, 1), round(world.player.rect.centery, 1))), (250, 250, 250, 200), size=TEXT_SIZE_DESCRIPTION)
         window.draw_text((-0.98, 0.85 - y_offset), "Mouse Pos: " + str((math.floor(pos[0]), math.floor(pos[1]))), (250, 250, 250, 200), size=TEXT_SIZE_DESCRIPTION)
-        window.draw_text((-0.98, 0.75 - y_offset), "Seed: " + str(game.world.seed), (250, 250, 250, 200), size=TEXT_SIZE_DESCRIPTION)
-        window.draw_text((-0.98, 0.65 - y_offset), str(game.world.get((math.floor(pos[0]), math.floor(pos[1])), 0)), (250, 250, 250, 200), size=TEXT_SIZE_DESCRIPTION)
+        window.draw_text((-0.98, 0.75 - y_offset), "Seed: " + str(world.seed), (250, 250, 250, 200), size=TEXT_SIZE_DESCRIPTION)
+        window.draw_text((-0.98, 0.65 - y_offset), str(world.get((math.floor(pos[0]), math.floor(pos[1])), 0)), (250, 250, 250, 200), size=TEXT_SIZE_DESCRIPTION)
 
 
 def draw_intro():
     # Move camera
-    pos = (0, game.player.rect.centery - game.player.vel[0] / 100)
+    pos = (0, world.player.rect.centery - world.player.vel[0] / 100)
     window.camera.move(pos)
 
     # Draw intro text
     intro_texts = menu.get_intro_texts()
 
-    intro_text_position = (-game.player.rect.centery / INTRO_LENGTH - 0.01) * 1.12
+    intro_text_position = (-world.player.rect.centery / INTRO_LENGTH - 0.01) * 1.12
     if 0 < intro_text_position < 1:
         skip_text = menu.translator.translate("Press [%s] to skip intro") % window.options['key.jump'].title()
         window.draw_text((-0.95, -0.9), skip_text, (255, 255, 255), 0.14)
@@ -98,51 +104,59 @@ def draw_intro():
 
     # Update window + shader
     window.update()
+    window.camera.update()
 
     # Skip intro
     if window.keybind("jump") == 1 and 0 < intro_text_position < 1:
-        original = game.player.rect.y
-        game.player.rect.y = min(game.player.rect.y, -INTRO_LENGTH + INTRO_REPEAT + game.player.rect.y % INTRO_REPEAT)
-        window.camera.pos[1] += game.player.rect.y - original
+        original = world.player.rect.y
+        world.player.rect.y = min(world.player.rect.y, -INTRO_LENGTH + INTRO_REPEAT + world.player.rect.y % INTRO_REPEAT)
+        window.camera.pos[1] += world.player.rect.y - original
 
     # Pause
     if window.keybind("return") == 1:
         menu.pause_page.open()
         menu.game_state = "pause"
         menu.game_intro = True
+        window.effects["gray_screen"] = 1
 
     # End intro
-    if game.player.onGround:
-        window.camera.zoom(2.0, 100.0)
+    if world.player.onGround:
+        window.camera.zoom(CAMERA_RESOLUTION_GAME, 100.0)
         menu.game_state = "game"
-        game.player.can_move = True
+        world.player.can_move = True
 
 
+window.callback_quit = quit
+window.camera.set_zoom(CAMERA_RESOLUTION_GAME)
 while True:
     if menu.game_state == "generate":
+        window.camera.reset()
         generate()
 
     elif menu.game_state == "intro":
-        game.update()
+        window.camera.set_zoom(CAMERA_RESOLUTION_INTRO)
+        world.update(window)
         draw_game()
         draw_intro()
 
     elif menu.game_state == "game":
         # Update and draw the game
-        game.update()
+        world.update(window)
         draw_game()
 
         # Update and draw the menu
         window.update()
+        window.camera.update()
 
         # Move camera
-        pos = (game.player.rect.centerx - game.player.vel[0] / 100, game.player.rect.centery - game.player.vel[0] / 100)
+        pos = (world.player.rect.centerx - world.player.vel[0] / 100, world.player.rect.centery - world.player.vel[0] / 100)
         window.camera.move(pos)
 
         # Pause
         if window.keybind("return") == 1:
             menu.pause_page.open()
             menu.game_state = "pause"
+            window.effects["gray_screen"] = 1
 
     elif menu.game_state == "pause":
         # Only draw the game
@@ -152,7 +166,7 @@ while True:
         if menu.game_intro:
             intro_texts = menu.get_intro_texts()
 
-            intro_text_position = (-game.player.rect.centery / INTRO_LENGTH - 0.01) * 1.12
+            intro_text_position = (-world.player.rect.centery / INTRO_LENGTH - 0.01) * 1.12
             if 0 < intro_text_position < 1:
                 skip_text = menu.translator.translate("Press [%s] to skip intro") % window.options['key.jump'].title()
                 window.draw_text((-0.95, -0.9), skip_text, (255, 255, 255), 0.14)
@@ -165,11 +179,16 @@ while True:
                 for i, text in enumerate(intro_text):
                     window.draw_text((0.6, y - (i - len(intro_text) / 2) * 0.1), text, (255, 255, 255), intro_text_size, centered=True)
 
+        # Save world
+        menu.save_world = world.save
+
         # Update and draw the menu
         menu.update()
 
         # Update window + shader
-        window.update(camera=False)
+        window.effects["gray_screen"] = 1
+        window.update()
+        window.effects["gray_screen"] = 0
 
         # Game
         if window.keybind("return") == 1:
