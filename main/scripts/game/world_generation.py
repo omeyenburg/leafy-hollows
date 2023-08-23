@@ -119,8 +119,11 @@ def generate_foliage(world, blocks_ground, blocks_ceiling, blocks_wall_right, bl
 
         if random.random() > 0.8: # Put vegetation
             length = int(math.sqrt(random.random() * 64) + 1)
-            block_type = world.block_name["vines0"]
             for i in range(length):
+                block = "vines0"
+                if random.random() > 0.5:
+                    block += "_flipped"
+                block_type = world.block_name[block]
                 x, y = coord[0], coord[1] - i
                 if world.get_block(x, y, 0, False, 1) or world.get_block(x, y, 1, False, 1):
                     break

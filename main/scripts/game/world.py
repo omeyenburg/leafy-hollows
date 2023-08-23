@@ -55,7 +55,7 @@ class World(dict):
     def set_water(self, x, y, level):
         if not (x, y) in self:
             generate_block(self, x, y)
-        self[(x, y)][3] = level
+        self[(x, y)][3] = int(level)
 
     def get_water(self, x, y):
         return abs(self.get((x, y), (0, 0, 0, 0))[3])
@@ -176,7 +176,7 @@ class World(dict):
     @staticmethod
     def load(window):
         world = file.read("data/world/world.data", default=0, file_format="pickle")
-        if isinstance(world, World):
+        if isinstance(world, World) and len(window.block_data) == len(world.block_name):
             return world
         
         world = World(window.block_data)

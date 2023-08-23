@@ -24,7 +24,6 @@ vec2 BLOCK_COUNT;
 const int BLOCK_SIZE_SOURCE = 16;
 const float BORDER_THRESHOLD = 0.0001;
 const vec4 TRANSPARENCY = vec4(0, 0, 0, 0);
-const vec4 WATER_COLOR = vec4(0.2, 0.6, 0.9, 0.4);
 const float WAVE_AMPLITUDE = 0.05;
 const float WAVE_FREQUENCY = 0.3;
 const float WATER_PER_BLOCK = 1000.0;
@@ -43,7 +42,8 @@ float amplitude_right = 0.0;
 ivec2 source_offset;
 ivec2 source;
 vec2 animation_data;
-vec4 block_color;
+vec4 block_color = TRANSPARENCY;
+vec4 water_color = TRANSPARENCY;
 
 
 // Image
@@ -275,16 +275,11 @@ vec4 get_color_foreground() {
         block_type_bottom = block_data_bottom.r;
         
     } else {
-        block_type = block_data.g;
-        block_color = get_color_block(block_type, source_pixel);
-
-        if (block_color.a > 1.0 - BORDER_THRESHOLD) {
-            return block_color;
-        }
+        block_color = get_color_block(block_data.g, source_pixel);
     }
 
     if (block_type == 0 && abs(block_data.a) < 1) {
-        return TRANSPARENCY;
+        return block_color;
     }
 
     float water_level = block_data.a / WATER_PER_BLOCK;
@@ -294,6 +289,13 @@ vec4 get_color_foreground() {
     float water_level_right = abs(block_data_right.a / WATER_PER_BLOCK);
     float water_level_top_left = abs(texelFetch(texWorld, ivec2(block_coord.x - 1, block_coord.y + 1), 0).a / WATER_PER_BLOCK);
     float water_level_top_right = abs(texelFetch(texWorld, ivec2(block_coord.x + 1, block_coord.y + 1), 0).a / WATER_PER_BLOCK);
+
+    if (block_color.a < BORDER_THRESHOLD) {
+        water_color = get_color_block(block.water, source_pixel);
+        water_color.a = 0.5;
+    } else {
+        water_color = mix(get_color_block(block.water, source_pixel), block_color, 0.6);
+    }
 
     int water_side = 1;
     if (water_level < 0) {
@@ -322,7 +324,7 @@ vec4 get_color_foreground() {
 
         if (water_level_top > BORDER_THRESHOLD && water_level_top_left > 0.1 && water_level_top_right > 0.1) {
             // covered water
-            return WATER_COLOR;
+            return water_color;
         } else if ((block_type_bottom != 0 || water_level_bottom > 0.9) && water_level_top > 0.1) {
             // vertical & horizontal water
             vertical = 1;
@@ -332,7 +334,7 @@ vec4 get_color_foreground() {
             vertical = 1;
         } else if (block_type_bottom == 0 && water_level_top > 0.1 && (water_level_left > BORDER_THRESHOLD && water_level_right > BORDER_THRESHOLD)) {
             // covered vertical water
-            return WATER_COLOR;
+            return water_color;
         } else if (block_type_bottom == 0 && water_level_top <= 0.1 && (water_level_left < BORDER_THRESHOLD && water_level_right < BORDER_THRESHOLD)) {
             // top of vertical water
             vertical = 1;
@@ -348,24 +350,24 @@ vec4 get_color_foreground() {
         } 
 
         if (vertical == 1 && abs((water_side + 1) / 2 - fsource_pixel.x) <= width && fsource_pixel.y <= height) {
-            return WATER_COLOR;
+            return water_color;
         } else if (corner == 1 && water_side == -1) {
             height = water_level_left;
 
             if (fsource_pixel.x + fsource_pixel.y <= (width + height) / 2 && fsource_pixel.x <= width && fsource_pixel.y <= height) {
-                return WATER_COLOR;
+                return water_color;
             }
         } else if (corner == 1 && water_side == 1) {
             height = water_level_right;                    
 
             if (abs((water_side + 1) / 2 - fsource_pixel.x) + fsource_pixel.y <= (width + height) / 2 && 1.0 - fsource_pixel.x <= width && fsource_pixel.y <= height) {
-                return WATER_COLOR;
+                return water_color;
             }
         }
 
         if (horizontal == 1) {
             if (false && water_level_top > BORDER_THRESHOLD && vertical == 0 || water_level > 1.0 - BORDER_THRESHOLD || water_level_top > 0.1 && water_level_top_left > 0.1 && water_level_left > 1.0 - BORDER_THRESHOLD * 10 || water_level_top > 0.1 && water_level_top_right > 0.1 && water_level_right > 1.0 - BORDER_THRESHOLD * 10) {
-                return WATER_COLOR;
+                return water_color;
             } else {
                 // Wave amplitude
                 if (block_type_left == 0) {
@@ -399,12 +401,12 @@ vec4 get_color_foreground() {
                 }
 
                 if (source_pixel.y - 1 < final_water_level) {
-                    return WATER_COLOR;
+                    return water_color;
                 }
             }
         }
     }
-    return TRANSPARENCY;
+    return block_color;
 }
 
 void draw_post_processing() {

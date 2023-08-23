@@ -48,13 +48,12 @@ def load_blocks():
         if not data["family"] in families:
             families[data["family"]] = len(families)
 
-        if data.get("flip", 0): # Plants can be flipped
+        if data.get("flip", 0) == 1: # Plants can be flipped
             block = data["name"] + "_flipped"
-            frames.extend([frame + "_flipped" for frame in data["frames"]])
+            frames.extend([frame + "_f" for frame in data["frames"]])
             animation.append((block, len(data["frames"]), data["speed"]))
             block_data[block] = (data["hardness"], data["family"], data["layer"])
-            if not data["family"] in families:
-                families[data["family"]] = len(families)
+
 
     width = math.ceil(math.sqrt(len(frames)))
     height = math.ceil(len(frames) / width)
@@ -62,17 +61,22 @@ def load_blocks():
 
     for i, frame in enumerate(frames):
         y, x = divmod(i, width)
-        flipped = False
-        if frame.endswith("_flipped"):
+
+        if frame.endswith("_f"):
             flipped = True
-            frame = frame[:-len("_flipped")]
+            frame = frame[:-2]
+        else:
+            flipped = False
+
         try:
             path = file.find("data/images/blocks", frame, True)[0]
         except IndexError:
             raise Exception("Could not find block " + frame)
+
         block_surface = pygame.image.load(path)
         if flipped:
             block_surface = pygame.transform.flip(block_surface, 1, 0)
+
         image.blit(block_surface, (x * WORLD_BLOCK_SIZE, (height - y - 1) * WORLD_BLOCK_SIZE))
 
     x = 0
