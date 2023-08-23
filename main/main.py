@@ -78,7 +78,7 @@ def draw_game():
         window.draw_text((-0.98, 0.95 - y_offset), "Player Pos: " + str((round(world.player.rect.centerx, 1), round(world.player.rect.centery, 1))), (250, 250, 250, 200), size=TEXT_SIZE_DESCRIPTION)
         window.draw_text((-0.98, 0.85 - y_offset), "Mouse Pos: " + str((math.floor(pos[0]), math.floor(pos[1]))), (250, 250, 250, 200), size=TEXT_SIZE_DESCRIPTION)
         window.draw_text((-0.98, 0.75 - y_offset), "Seed: " + str(world.seed), (250, 250, 250, 200), size=TEXT_SIZE_DESCRIPTION)
-        window.draw_text((-0.98, 0.65 - y_offset), str(world.get((math.floor(pos[0]), math.floor(pos[1])), 0)), (250, 250, 250, 200), size=TEXT_SIZE_DESCRIPTION)
+        window.draw_text((-0.98, 0.65 - y_offset), "Mouse Block: " + str(world.get((math.floor(pos[0]), math.floor(pos[1])), 0)), (250, 250, 250, 200), size=TEXT_SIZE_DESCRIPTION)
 
 
 def draw_intro():

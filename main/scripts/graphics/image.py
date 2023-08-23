@@ -43,10 +43,18 @@ def load_blocks():
     for data in sorted(blocks, key=lambda data: data["hardness"]):
         block = data["name"]
         frames.extend(data["frames"])
-        animation.append((data["name"], len(data["frames"]), data["speed"]))
-        block_data[data["name"]] = (data["hardness"], data["family"], data["layer"])
+        animation.append((block, len(data["frames"]), data["speed"]))
+        block_data[block] = (data["hardness"], data["family"], data["layer"])
         if not data["family"] in families:
             families[data["family"]] = len(families)
+
+        if data.get("flip", 0): # Plants can be flipped
+            block = data["name"] + "_flipped"
+            frames.extend([frame + "_flipped" for frame in data["frames"]])
+            animation.append((block, len(data["frames"]), data["speed"]))
+            block_data[block] = (data["hardness"], data["family"], data["layer"])
+            if not data["family"] in families:
+                families[data["family"]] = len(families)
 
     width = math.ceil(math.sqrt(len(frames)))
     height = math.ceil(len(frames) / width)
@@ -54,11 +62,17 @@ def load_blocks():
 
     for i, frame in enumerate(frames):
         y, x = divmod(i, width)
+        flipped = False
+        if frame.endswith("_flipped"):
+            flipped = True
+            frame = frame[:-len("_flipped")]
         try:
             path = file.find("data/images/blocks", frame, True)[0]
         except IndexError:
             raise Exception("Could not find block " + frame)
         block_surface = pygame.image.load(path)
+        if flipped:
+            block_surface = pygame.transform.flip(block_surface, 1, 0)
         image.blit(block_surface, (x * WORLD_BLOCK_SIZE, (height - y - 1) * WORLD_BLOCK_SIZE))
 
     x = 0

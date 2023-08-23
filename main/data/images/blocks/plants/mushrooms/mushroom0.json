@@ -4,6 +4,7 @@
     "layer": "plant",
     "hardness": 1,
     "speed": 0,
+    "flip": 1,
     "frames": [
         "mushroom0.png"
     ]

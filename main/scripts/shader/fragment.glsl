@@ -151,16 +151,13 @@ void draw_background() {
     ivec4 block_data = texelFetch(texWorld, ivec2(block_coord), 0);
     
     // background block type
-    int block_type = block_data.g;
-    //block_type = block.stone;
+    int block_type = block_data.b;
 
     // Pixel within block
     ivec2 source_pixel = get_source_pixel();
     
     // Background
     vec4 background = get_color_background();
-    //fragColor = background;
-    //return;
 
     // Set pixel color
     block_color = get_color_block(block_type, source_pixel);
@@ -219,10 +216,6 @@ vec4 get_color_foreground() {
     int block_type_top = block_data_top.r;
     int block_type_bottom = block_data_bottom.r;
 
-    if (block_type == 0 && abs(block_data.a) < 1) {
-        return TRANSPARENCY;
-    }
-
     // Pixel within block
     ivec2 source_pixel = get_source_pixel();
     vec2 fsource_pixel = vec2(source_pixel) / float(BLOCK_SIZE_SOURCE);
@@ -242,7 +235,7 @@ vec4 get_color_foreground() {
         source_pixel_offset.y -= BLOCK_SIZE_SOURCE;
     }
 
-    if (block_type > 0) {
+    if (block_type > 0.0) {
         // Get wrapped source pixel of foreground blocks
         ivec2 source_pixel_wrapped = get_source_pixel_wrapped(block_type, source_pixel);
 
@@ -281,6 +274,17 @@ vec4 get_color_foreground() {
         block_type_top = block_data_top.r;
         block_type_bottom = block_data_bottom.r;
         
+    } else {
+        block_type = block_data.g;
+        block_color = get_color_block(block_type, source_pixel);
+
+        if (block_color.a > 1.0 - BORDER_THRESHOLD) {
+            return block_color;
+        }
+    }
+
+    if (block_type == 0 && abs(block_data.a) < 1) {
+        return TRANSPARENCY;
     }
 
     float water_level = block_data.a / WATER_PER_BLOCK;
@@ -405,6 +409,7 @@ vec4 get_color_foreground() {
 
 void draw_post_processing() {
     fragColor = get_color_foreground();
+
     if (gray_screen == 1) {
         fragColor = (fragColor + vec4(0, 0, 0, 1)) / 2;
     }
