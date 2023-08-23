@@ -28,3 +28,5 @@ TEXT_SIZE_TEXT: float = 0.15
 TEXT_SIZE_DESCRIPTION: float = 0.14
 CAMERA_RESOLUTION_INTRO: float = 1.0
 CAMERA_RESOLUTION_GAME: float = 3.0
+BLOCKS_GRASS: tuple = ("flat_grass", "small_grass", "medium_grass", "tall_grass", "bush0", "bush1", "plant0", "wood0")
+BLOCKS_MUSHROOM: tuple = ("mushroom0", "mushroom1", "mushroom2", "mushroom3", "mushroom4", "mushroom5", "mushroom6")

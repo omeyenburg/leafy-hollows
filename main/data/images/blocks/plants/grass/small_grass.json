@@ -1,0 +1,12 @@
+{
+    "name": "small_grass",
+    "family": "grass",
+    "layer": "plant",
+    "hardness": 1,
+    "speed": 0.5,
+    "flip": 1,
+    "frames": [
+        "small_grass0.png",
+        "small_grass1.png"
+    ]
+}

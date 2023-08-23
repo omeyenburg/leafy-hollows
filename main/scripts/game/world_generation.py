@@ -93,14 +93,24 @@ def generate_foliage(world, blocks_ground, blocks_ceiling, blocks_wall_right, bl
             world.set_block(*coord, block_type)
     """
     for coord in blocks_ground:
-        if random.random() > 0.4: # Put vegetation
-            if random.random() > 0.5: # Put grass
-                r = random.randint(0, 2)
-                block = ("plant0", "bush2", "grass0")[r]
+        if random.random() > 0.2:
+            # Set plants
+            if random.random() > 0.3:
+                # Set grass
+                index = random.randint(0, len(BLOCKS_GRASS) - 1)
+                flipped = random.random() > 0.5
+                block = BLOCKS_GRASS[index]
+                if flipped and block + "_flipped" in world.block_name:
+                    block += "_flipped"
                 block_type = world.block_name[block]
-            else: # Put mushroom
-                r = random.randint(0, 13)
-                block_type = world.block_name["mushroom" + str(r)]
+            else:
+                # Set mushroom
+                index = random.randint(0, len(BLOCKS_MUSHROOM) - 1)
+                flipped = random.random() > 0.5
+                block = BLOCKS_MUSHROOM[index]
+                if flipped and block + "_flipped" in world.block_name:
+                    block += "_flipped"
+                block_type = world.block_name[block]
             world.set_block(*coord, block_type)
 
     for coord in blocks_ceiling:

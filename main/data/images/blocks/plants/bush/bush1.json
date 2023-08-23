@@ -1,10 +1,11 @@
 {
-    "name": "mushroom7",
-    "family": "mushroom",
+    "name": "bush1",
+    "family": "grass",
     "layer": "plant",
     "hardness": 1,
     "speed": 0,
+    "flip": 1,
     "frames": [
-        "mushroom0_flip.png"
+        "bush1.png"
     ]
 }

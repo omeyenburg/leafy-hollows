@@ -1,0 +1,12 @@
+{
+    "name": "tall_grass",
+    "family": "grass",
+    "layer": "plant",
+    "hardness": 1,
+    "speed": 0.5,
+    "flip": 0,
+    "frames": [
+        "tall_grass0.png",
+        "tall_grass1.png"
+    ]
+}
