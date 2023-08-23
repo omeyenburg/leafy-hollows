@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
-from scripts.game.world_generation import generate_block
+from scripts.game.world_generation import generate_world, generate_block
 from scripts.utility.const import *
 import scripts.utility.geometry as geometry
+import scripts.game.player as player
+import scripts.utility.file as file
 import random
 import numpy
 import math
@@ -10,7 +12,7 @@ import math
 class World(dict):
     def __init__(self, block_data: dict):
         super().__init__() # {(x, y): (block, plant, background, water_level)}
-        self.seed: float = random.random() * 10 ** 6 # Float between 0 and 10^6
+        self.seed: float = random.randint(-10**6, 10**6) + math.e # Float between -10^6 and 10^6
         self.view: numpy.array = None # Sent to shader to render
         self.view_size: tuple = (0, 0)
         self.block_layer: dict = {name: {"foreground": 0, "plant": 1, "background": 2, "water": 3}[layer] for name, (index, layer) in block_data.items()}
@@ -22,6 +24,12 @@ class World(dict):
         self.wind: float = 0.0 # Wind direction
         self.loaded_blocks: tuple = ((0, 0), (0, 0)) # (start, end)
         self.water_update_timer: float = 0.0
+
+        if PHYSICS_REALISTIC:
+            self.player: player.Player = player.Player(spawn_pos=[0, 0], speed=6, sprint_speed=10, crouch_speed=2, swim_speed=3, acceleration_time=0.2, jump_force=17)
+        else:
+            self.player: player.Player = player.Player(spawn_pos=[0, 0], speed=5, sprint_speed=7, crouch_speed=3, swim_speed=3, acceleration_time=.1, jump_force=21)
+        self.add_entity(self.player)
 
     def add_entity(self, entity):
         self.entities.add(entity)
@@ -73,11 +81,9 @@ class World(dict):
     def draw(self, window):
         self.loaded_blocks = window.camera.visible_blocks()
         self.create_view(window)
-        #print(self.loaded_blocks)
 
         for entity in self.entities:
             entity.draw(window)
-            #print(entity)
         for particle in self.particles:
             particle.draw(window)
 
@@ -163,3 +169,16 @@ class World(dict):
                 self.view[x, y] = self[start[0] + x, start[1] + y]
         
         window.world_view = self.view
+
+    def save(self):
+        file.write("data/world/world.data", self, file_format="pickle")
+
+    @staticmethod
+    def load(window):
+        world = file.read("data/world/world.data", default=0, file_format="pickle")
+        if isinstance(world, World):
+            return world
+        
+        world = World(window.block_data)
+        generate_world(world)
+        return world

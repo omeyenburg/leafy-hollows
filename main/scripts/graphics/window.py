@@ -14,7 +14,6 @@ from scripts.utility.const import *
 from pygame.locals import *
 import scripts.utility.options as options
 import scripts.graphics.sound as sound
-import scripts.game.world as world
 import scripts.utility.file as file
 import pygame
 
@@ -95,6 +94,7 @@ class Window:
         self._wireframe = False
         self._resize_supress = False
         self._refresh = False
+        self.effects = {}
 
         # Window
         flags = DOUBLEBUF | RESIZABLE | OPENGL
@@ -196,7 +196,7 @@ class Window:
         self._shader = Shader(
             "scripts/shader/vertex.glsl", "scripts/shader/fragment.glsl",
             replace={"block." + key: value for key, (value, *_) in self.block_data.items()},
-            texSprites="int", texFont="int", texBlocks="int", texWorld="int", offset="vec2", camera="vec2", resolution="float", time="float"
+            texSprites="int", texFont="int", texBlocks="int", texWorld="int", offset="vec2", camera="vec2", resolution="float", time="float", gray_screen="int"
         )
 
         self._shader.setvar("texSprites", 0)
@@ -313,7 +313,7 @@ class Window:
             elif event.type == MOUSEWHEEL:
                 self.mouse_wheel = [self.mouse_wheel[0] + event.x, self.mouse_wheel[1] + event.y, event.x, event.y]
 
-    def update(self, camera=True):
+    def update(self):
         """
         Update the window and inputs.
         """
@@ -368,13 +368,10 @@ class Window:
         # Reset instance index
         self._vbo_instances_index = 0
 
-        # Move camera
-        if camera or 1:
-            self.camera.update() # Better at the start, but currently at the end for sync of world and instanced rendering
-
         # Draw background and world
         self._shader.setvar("time", self.time)
         self._add_vbo_instance((0, 0, 1, 1), (0, 0, 0, 0), (4, 0, 0, 0))
+        self.effects = {}
 
     def toggle_fullscreen(self):
         """
@@ -486,8 +483,8 @@ class Window:
         """
         # Offset of world as a fraction of blocks
         offset = (
-            self.camera.pos[0] % 1 - (self.width / 2 / self.camera.pixels_per_meter) % 1 + 3,
-            self.camera.pos[1] % 1 - (self.height / 2 / self.camera.pixels_per_meter) % 1 + 3
+            self.camera.pos[0] % 1 - (self.width / 2 / self.camera.pixels_per_meter) % 1 + self.options["simulation distance"],
+            self.camera.pos[1] % 1 - (self.height / 2 / self.camera.pixels_per_meter) % 1 + self.options["simulation distance"]
         )
 
         # Send variables to shader
@@ -496,6 +493,11 @@ class Window:
         if self.resolution != self.camera.resolution:
             self.resolution = self.camera.resolution
         self._shader.setvar("resolution", self.camera.resolution)
+
+        gray_screen = self.effects.get("gray_screen", 2)
+        if gray_screen != 2:
+            self._shader.setvar("gray_screen", gray_screen)
+
         
         # View size
         size = self.world_view.shape[:2]        

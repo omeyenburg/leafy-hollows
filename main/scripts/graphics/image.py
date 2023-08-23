@@ -38,7 +38,7 @@ def load_blocks():
     families = {}
 
     for path in block_paths:
-        blocks.append(file.read_json(path))
+        blocks.append(file.read(path, file_format="json"))
 
     for data in sorted(blocks, key=lambda data: data["hardness"]):
         block = data["name"]
@@ -108,7 +108,7 @@ def load_sprites():
     sprite_paths = file.find("data/images/sprites", "*.json", True)
     for path in sprite_paths:
         sprite = file.basename(path)
-        data = file.read_json(path)
+        data = file.read(path, file_format="json")
         indices = []
         for frame in data["frames"]:
             frame = frame.split(".")[0]

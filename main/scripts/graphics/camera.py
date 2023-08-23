@@ -18,6 +18,18 @@ class Camera:
         self.dest: [float] = [0, 0]
         self.window: Window = window
 
+    def reset(self):
+        self.resolution: float = 1.0
+        self.resolution_start: float = 1.0
+        self.resolution_goal: float = 1.0
+        self.resolution_speed: float = 0.0
+        self.resolution_index: float = 1.0
+        self.pixels_per_meter: float = WORLD_BLOCK_SIZE
+
+        self.pos: [float] = [0, 0]
+        self.vel: [float] = [0, 0]
+        self.dest: [float] = [0, 0]
+
     def set_zoom(self, resolution: float):
         self.resolution = self.resolution_goal = resolution
         self.pixels_per_meter = self.resolution * WORLD_BLOCK_SIZE
@@ -30,11 +42,6 @@ class Camera:
             self.resolution_goal = resolution
             self.resolution_speed = 1 / speed
             self.resolution_index = 0
-
-    def reset(self):
-        self.pos: [float] = [0, 0]
-        self.vel: [float] = [0, 0]
-        self.dest: [float] = [0, 0]
 
     def set(self, pos):
         """
@@ -137,10 +144,11 @@ class Camera:
         return color
 
     def visible_blocks(self):
+        simulation_distance = self.window.options["simulation distance"]
         center = (math.floor(self.pos[0]),
                   math.floor(self.pos[1]))
-        start = (center[0] - math.floor(self.window.width / 2 / self.pixels_per_meter) - 3,
-                 center[1] - math.floor(self.window.height / 2 / self.pixels_per_meter) - 3)
-        end = (center[0] + math.ceil(self.window.width / 2 / self.pixels_per_meter) + 3,
-               center[1] + math.ceil(self.window.height / 2 / self.pixels_per_meter) + 3)
+        start = (center[0] - math.floor(self.window.width / 2 / self.pixels_per_meter) - simulation_distance,
+                 center[1] - math.floor(self.window.height / 2 / self.pixels_per_meter) - simulation_distance)
+        end = (center[0] + math.ceil(self.window.width / 2 / self.pixels_per_meter) + simulation_distance,
+               center[1] + math.ceil(self.window.height / 2 / self.pixels_per_meter) + simulation_distance)
         return start, end

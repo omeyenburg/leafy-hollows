@@ -3,7 +3,7 @@ import json
 import scripts.utility.file as file
 
 
-translate_german = file.read_json("data/translations/german.json")
+translate_german = file.read("data/translations/german.json", file_format="json")
 
 
 class Translator:
