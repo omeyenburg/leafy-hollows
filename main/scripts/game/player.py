@@ -234,6 +234,7 @@ class Player(CollisionPhysicsObject):
         #window.draw_block_highlight(math.floor(self.rect.left), int(self.rect.top - 1), (0, 0, 255))
         #window.draw_block_highlight(math.ceil(self.rect.right), int(self.rect.top - 1), (0, 0, 255))
 
+        """
         if window.mouse_buttons[0] == 1: # left click: pull player to mouse
             def mouse_pull(strenght):
                 mouse_pos = window.camera.map_coord(window.mouse_pos[:2], world=True)
@@ -244,11 +245,11 @@ class Player(CollisionPhysicsObject):
                 force = min(math.dist(self.rect.center, mouse_pos), 3) / window.delta_time * strenght
                 self.apply_force(force, angle_to_mouse, window.delta_time)
             mouse_pull(300) # constant activation balances out w/ gravity --> usable as rope
-
+        """
         if window.mouse_buttons[1] == 1: # middle click: spawn particle
             mouse_pos = window.camera.map_coord(window.mouse_pos[:2], world=True)
             spawn_particle(mouse_pos)
-
+        
         """
         if window.mouse_buttons[2] == 1: # right click: place/break block
             mouse_pos = window.camera.map_coord(window.mouse_pos[:2], world=True)

@@ -1,4 +1,11 @@
 #version 330 core
+#define MAX_BLOCK_EDGES 1024
+#define WAVE_AMPLITUDE 0.05
+#define WAVE_FREQUENCY 0.3
+#define WATER_PER_BLOCK 1000.0
+#define BLOCK_SIZE_SOURCE 16
+#define BORDER_THRESHOLD 0.0001
+#define TRANSPARENCY vec4(0, 0, 0, 0)
 
 // Inputs from vertex shader
 in vec2 vertTexcoord;
@@ -19,17 +26,13 @@ uniform float resolution;
 uniform float time;
 uniform int gray_screen;
 
-// Constants
-vec2 BLOCK_COUNT;
-const int BLOCK_SIZE_SOURCE = 16;
-const float BORDER_THRESHOLD = 0.0001;
-const vec4 TRANSPARENCY = vec4(0, 0, 0, 0);
-const float WAVE_AMPLITUDE = 0.05;
-const float WAVE_FREQUENCY = 0.3;
-const float WATER_PER_BLOCK = 1000.0;
-float BLOCK_SIZE_DEST = BLOCK_SIZE_SOURCE * resolution;
+layout(std140) uniform ShadowData {
+    int block_edges[MAX_BLOCK_EDGES];
+};
 
 // Predefined values
+vec2 BLOCK_COUNT;
+float BLOCK_SIZE_DEST = BLOCK_SIZE_SOURCE * resolution;
 int block_type = 0;
 int adjacent_x;
 int adjacent_y;
@@ -195,21 +198,55 @@ ivec4 get_next_closest_block(ivec2 source_pixel) {
     }
 }
 
+bool get_shadow(vec2 start, vec2 end) {
+    for (int i = 0; i < block_edges[0]; i++) {
+        vec4 edge = vec4(
+            block_edges[i * 4 + 1],
+            block_edges[i * 4 + 2],
+            block_edges[i * 4 + 3],
+            block_edges[i * 4 + 4]
+        );
+        if (edge[0] == edge[2]) { // Same x value
+            float distance_total = max(0.001, abs(start[0] - end[0]));
+            float distance_start = abs(start[0] - edge[0]) / distance_total;
+            float distance_end = abs(end[0] - edge[0]) / distance_total;
+            
+            float x = edge[0];
+            float y = start[1] * distance_end + end[1] * distance_start;
+            if (min(edge[1], edge[3]) < y && y < max(edge[1], edge[3]) && min(start[0], end[0]) < x && x < max(start[0], end[0])) {
+                return true;
+            }
+            
+        } else if (edge[1] == edge[3]) { // Same y value
+            float distance_total = max(0.001, abs(start[1] - end[1]));
+            float distance_start = abs(start[1] - edge[1]) / distance_total;
+            float distance_end = abs(end[1] - edge[1]) / distance_total;
+            
+            float x = start[0] * distance_end + end[0] * distance_start;
+            float y = edge[1];
+            if (min(edge[0], edge[2]) < x && x < max(edge[0], edge[2]) && min(start[1], end[1]) < y && y < max(start[1], end[1])) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 vec4 get_color_foreground() {
     BLOCK_COUNT = textureSize(texBlocks, 0) / BLOCK_SIZE_SOURCE;
 
-    // block in world
+    // Block coord in world
     ivec2 block_coord = ivec2(gl_FragCoord.x / BLOCK_SIZE_DEST + offset.x,
                               gl_FragCoord.y / BLOCK_SIZE_DEST + offset.y);
 
-    // block data (foreground, plant, background, water level)
+    // Block data (foreground, plant, background, water level)
     ivec4 block_data = texelFetch(texWorld, ivec2(block_coord), 0);
     ivec4 block_data_left = texelFetch(texWorld, ivec2(block_coord.x - 1, block_coord.y), 0);
     ivec4 block_data_right = texelFetch(texWorld, ivec2(block_coord.x + 1, block_coord.y), 0);
     ivec4 block_data_top = texelFetch(texWorld, ivec2(block_coord.x, block_coord.y + 1), 0);
     ivec4 block_data_bottom = texelFetch(texWorld, ivec2(block_coord.x, block_coord.y - 1), 0);
     
-    // block type
+    // Block type
     int block_type = block_data.r;
     int block_type_left = block_data_left.r;
     int block_type_right = block_data_right.r;
@@ -220,6 +257,7 @@ vec4 get_color_foreground() {
     ivec2 source_pixel = get_source_pixel();
     vec2 fsource_pixel = vec2(source_pixel) / float(BLOCK_SIZE_SOURCE);
     ivec2 source_pixel_offset = source_pixel;
+    vec2 water_source_pixel = source_pixel;
 
     // Get adjacent blocks
     if (source_pixel.x < BLOCK_SIZE_SOURCE / 2) {
@@ -278,10 +316,22 @@ vec4 get_color_foreground() {
         block_color = get_color_block(block_data.g, source_pixel);
     }
 
+    // Draw shadows
+    /*
+    vec2 center_coord = vec2(20, 10);
+    vec2 block_frag_coord = vec2(gl_FragCoord.x / BLOCK_SIZE_DEST + offset.x,
+                                 gl_FragCoord.y / BLOCK_SIZE_DEST + offset.y);
+
+    if (get_shadow(center_coord, block_frag_coord)) {
+        block_color = vec4(0, 0, 0, 1);
+    }*/
+    
+    // Skip water
     if (block_type == 0 && abs(block_data.a) < 1) {
         return block_color;
     }
 
+    // Draw water
     float water_level = block_data.a / WATER_PER_BLOCK;
     float water_level_top = abs(block_data_top.a / WATER_PER_BLOCK);
     float water_level_bottom = abs(block_data_bottom.a / WATER_PER_BLOCK);
@@ -291,11 +341,13 @@ vec4 get_color_foreground() {
     float water_level_top_right = abs(texelFetch(texWorld, ivec2(block_coord.x + 1, block_coord.y + 1), 0).a / WATER_PER_BLOCK);
 
     if (block_color.a < BORDER_THRESHOLD) {
-        water_color = get_color_block(block.water, source_pixel);
+        water_color = get_color_block(block.water, water_source_pixel);
         water_color.a = 0.5;
     } else {
-        water_color = mix(get_color_block(block.water, source_pixel), block_color, 0.6);
+        water_color = mix(get_color_block(block.water, water_source_pixel), block_color, 0.6);
     }
+
+    
 
     int water_side = 1;
     if (water_level < 0) {

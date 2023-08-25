@@ -67,13 +67,13 @@ def load_blocks():
     block_indices = {}
 
     for i, path in enumerate(block_paths):
-        data = file.read_json(path)
+        data = file.read(path, file_format="json")
         block = data["name"]
         image_name = data["frames"][0]
         path = file.find("data/images/blocks", image_name, True)[0]
         block_surface = pygame.image.load(path)
 
-        block_data[data["name"]] = (i + 1, data["layer"], block_surface)
+        block_data[data["name"]] = (i + 1, {"foreground":0, "plant":1, "background":2, "water":3}[data["layer"]], block_surface)
         block_indices[i + 1] = data["name"]
     return block_data, block_indices
 

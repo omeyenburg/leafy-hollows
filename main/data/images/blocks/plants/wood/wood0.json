@@ -1,0 +1,11 @@
+{
+    "name": "wood0",
+    "family": "rocks",
+    "layer": "plant",
+    "hardness": 1,
+    "speed": 0,
+    "flip": 1,
+    "frames": [
+        "wood0.png"
+    ]
+}

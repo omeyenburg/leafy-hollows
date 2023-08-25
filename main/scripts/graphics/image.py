@@ -54,7 +54,6 @@ def load_blocks():
             animation.append((block, len(data["frames"]), data["speed"]))
             block_data[block] = (data["hardness"], data["family"], data["layer"])
 
-
     width = math.ceil(math.sqrt(len(frames)))
     height = math.ceil(len(frames) / width)
     image = pygame.Surface((width * WORLD_BLOCK_SIZE, height * WORLD_BLOCK_SIZE + 1), SRCALPHA)

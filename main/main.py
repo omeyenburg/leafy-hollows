@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 
 # Apple: signing bundle
+# https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution
 # https://gist.github.com/txoof/0636835d3cc65245c6288b2374799c43
 # https://github.com/pyinstaller/pyinstaller/wiki/Recipe-OSX-Code-Signing
 # https://support.apple.com/en-us/HT204397
+# xattr -d com.apple.quarantine "title.app"
 
 from scripts.game.world_generation import generate_world
 from scripts.utility.thread import threaded
@@ -43,6 +45,7 @@ def generate():
         if window.keybind("return") == 1:
             menu.main_page.open()
             menu.game_state = "menu"
+            break
 
         # Write fps
         if window.options["show fps"]:

@@ -1,7 +1,7 @@
 {
     "name": "sprint",
     "speed": 0.3,
-    "volume": 0.2,
+    "volume": 0.4,
     "sounds": [
         "step0.wav",
         "step1.wav",

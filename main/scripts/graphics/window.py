@@ -3,6 +3,7 @@ from OpenGL.GL import *
 import numpy
 import math
 import sys
+import time
 import os
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
@@ -121,6 +122,7 @@ class Window:
         glBindVertexArray(self._instance_vao)
 
         # Create vertex buffer objects
+        #self._vertices_vbo, self._ebo, self._dest_vbo, self._source_or_color_vbo, self._shape_transform_vbo, self._shadow_ubo = glGenBuffers(6)
         self._vertices_vbo, self._ebo, self._dest_vbo, self._source_or_color_vbo, self._shape_transform_vbo = glGenBuffers(5)
 
         # Instanced shader inputs
@@ -130,6 +132,7 @@ class Window:
         self._dest_vbo_array = numpy.zeros(0, dtype=numpy.float32)
         self._source_or_color_vbo_array = numpy.zeros(0, dtype=numpy.float32)
         self._shape_transform_vbo_array = numpy.zeros(0, dtype=numpy.float32)
+        #self._shadow_ubo_array = numpy.array([0], dtype=numpy.float32) # Data length saved at index 0
         self._render_buffers_mapped = False
 
         # Vertices & texcoords
@@ -204,6 +207,17 @@ class Window:
         self._shader.setvar("texBlocks", 2)
         self._shader.setvar("texWorld", 3)
         self._shader.setvar("resolution", self.camera.resolution)
+
+        # Shadow UBO
+        """
+        glBindBuffer(GL_UNIFORM_BUFFER, self._shadow_ubo)
+        glBufferData(GL_UNIFORM_BUFFER, self._shadow_ubo_array.nbytes, self._shadow_ubo_array, GL_DYNAMIC_DRAW)
+        glBindBufferBase(GL_UNIFORM_BUFFER, 0, self._shadow_ubo)
+        block_index = glGetUniformBlockIndex(self._shader._program, "ShadowData")
+        glUniformBlockBinding(self._shader._program, block_index, 0)
+        glBindBuffer(GL_UNIFORM_BUFFER, 0)
+        """
+       
 
     def _add_vbo_instance(self, dest, source_or_color, shape_transform):
         """
@@ -441,6 +455,7 @@ class Window:
         self._callback(self.callback_quit)
 
         # OpenGL cleanup
+        #glDeleteBuffers(6, (self._vertices_vbo, self._ebo, self._dest_vbo, self._source_or_color_vbo, self._shape_transform_vbo, self._shadow_ubo))
         glDeleteBuffers(5, (self._vertices_vbo, self._ebo, self._dest_vbo, self._source_or_color_vbo, self._shape_transform_vbo))
         glDeleteVertexArrays(1, (self._instance_vao,))
         glDeleteTextures(4, (self._texSprites, self._texFont, self._texBlocks, self._texWorld))
@@ -498,6 +513,8 @@ class Window:
         if gray_screen != 2:
             self._shader.setvar("gray_screen", gray_screen)
 
+        # Cast shadows
+        #self._prepare_shadows()
         
         # View size
         size = self.world_view.shape[:2]        
@@ -523,6 +540,46 @@ class Window:
             # Write world data into texture
             glBindTexture(GL_TEXTURE_2D, self._texWorld)
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32I, *self._world_size, 0, GL_RGBA_INTEGER, GL_INT, data)
+
+    def _prepare_shadows(self):
+        if 0 in self.world_view.shape:
+            return
+
+        view = self.world_view[:, :, 0]
+        view[0, :] = 0
+        view[:, 0] = 0
+        view[view.shape[0] - 1, :] = 0
+        view[:, view.shape[1] - 1] = 0
+        edges = [0]
+
+        # Find corners
+        view_shifted_right = numpy.roll(view, shift=-1, axis=0)
+        view_shifted_down = numpy.roll(view, shift=-1, axis=1)
+        view_shifted_diag = numpy.roll(view, shift=(-1, -1), axis=(0, 1))
+
+        count_air_blocks = (view == 0).astype(int) + (view_shifted_right == 0).astype(int) + (view_shifted_down == 0).astype(int) + (view_shifted_diag == 0).astype(int)
+        corner_indices = numpy.where((count_air_blocks == 1) | (count_air_blocks == 3))
+        corners = set(zip(corner_indices[0], corner_indices[1]))
+
+        # Find vertical(?) edges
+        sorted_corners = sorted(corners, key=lambda corner: (corner[0], corner[1]))
+        flattened_corners = [coord for corner in sorted_corners for coord in corner]
+        edges.extend(flattened_corners)
+
+        # Find horizontal(?) edges
+        sorted_corners = sorted(corners, key=lambda corner: (corner[1], corner[0]))
+        flattened_corners = [coord for corner in sorted_corners for coord in corner]
+        edges.extend(flattened_corners)
+
+        edges[0] = (len(edges) - 1) // 4
+        self._shadow_ubo_array = numpy.array(edges, dtype=numpy.int32)
+        
+        # Write edges into buffer
+        glBindBuffer(GL_UNIFORM_BUFFER, self._shadow_ubo)
+        glBufferData(GL_UNIFORM_BUFFER, self._shadow_ubo_array.nbytes, self._shadow_ubo_array, GL_DYNAMIC_DRAW)
+        #glBufferSubData(GL_UNIFORM_BUFFER, 0, self._shadow_ubo_array.nbytes, self._shadow_ubo_array)
+        glBindBuffer(GL_UNIFORM_BUFFER, 0)
+
     
     def draw_image(self, image: str, position: [float], size: [float], angle: float=0.0, flip: [int]=(0, 0)):
         """
