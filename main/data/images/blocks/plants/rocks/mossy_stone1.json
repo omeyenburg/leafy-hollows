@@ -1,0 +1,11 @@
+{
+    "name": "mossy_stone1",
+    "family": "rocks",
+    "layer": "plant",
+    "hardness": 1,
+    "speed": 0,
+    "flip": 1,
+    "frames": [
+        "mossy_stone1.png"
+    ]
+}

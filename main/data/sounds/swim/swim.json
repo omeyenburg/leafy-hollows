@@ -1,7 +1,7 @@
 {
     "name": "swim",
     "speed": 0.6,
-    "volume": 0.5,
+    "volume": 0.3,
     "sounds": [
         "swim0.wav",
         "swim1.wav",

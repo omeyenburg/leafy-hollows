@@ -1,11 +1,11 @@
 {
-    "name": "vines0",
-    "family": "vine",
+    "name": "stone2",
+    "family": "rocks",
     "layer": "plant",
     "hardness": 1,
     "speed": 0,
     "flip": 1,
     "frames": [
-        "vines0.png"
+        "stone2.png"
     ]
 }

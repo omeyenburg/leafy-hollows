@@ -24,26 +24,56 @@ def generate_world(world):
     """
     # Starting point
     position = [0, 0]
-
+    poles = set() # List of x coords of poles
 
     # Generate intro
+    print("generate intro cave")
     Shape.intro(world, position)
 
+    # Line cave segment
+    last_special = 0
+    for i in range(30):
+        last_special += 1
+        cave_type = random.random()
 
-    # Horizontal cave
-    Shape.horizontal(world, position)
+        if cave_type > 0.7 or last_special < 5:
+            print("generate horizontal cave")
+            Shape.horizontal(world, position)
+        else:
+            last_special = 0
+            cave_type = random.random()
 
+            if cave_type > 0.5:
+                print("generate vertical cave")
+                Shape.vertical(world, position)
+                poles.add(int(position[0]))
+            else:
+                print("generate blob cave")
+                Shape.blob(world, position)
 
-    # Generate structures
+    # Generate structures between line cave segments
     ...
-
 
     # Smoother cave walls
     flatten_edges(world)
     print("flattened edges")
 
-
     # Find block edges with air
+    print("store block edges")
+    blocks_ground, blocks_ceiling, blocks_wall_right, blocks_wall_left = find_edge_blocks(world)
+
+    # Generate foliage
+    print("generate foliage")
+    generate_foliage(world, blocks_ground, blocks_ceiling, blocks_wall_right, blocks_wall_left)
+
+    # Generate poles
+    print("generate poles")
+    generate_poles(world, poles, blocks_ground, blocks_ceiling)
+
+    print("done")
+
+
+def find_edge_blocks(world):
     blocks_ground = set()
     blocks_ceiling = set()
     blocks_wall_right = set() # Air blocks, which have a wall to their left
@@ -72,11 +102,8 @@ def generate_world(world):
                 blocks_wall_right.add(coord)
             if world.get_block(x - 1, y, generate=False) > 0: # On wall left
                 blocks_wall_left.add(coord)
-    print("Stored block edges")
 
-    # Generate foliage
-    generate_foliage(world, blocks_ground, blocks_ceiling, blocks_wall_right, blocks_wall_left)
-    print("Generated foliage")
+    return blocks_ground, blocks_ceiling, blocks_wall_right, blocks_wall_left
 
 
 def generate_foliage(world, blocks_ground, blocks_ceiling, blocks_wall_right, blocks_wall_left):
@@ -94,40 +121,60 @@ def generate_foliage(world, blocks_ground, blocks_ceiling, blocks_wall_right, bl
     """
     for coord in blocks_ground:
         if random.random() > 0.2:
-            # Set plants
-            if random.random() > 0.3:
-                # Set grass
-                index = random.randint(0, len(BLOCKS_GRASS) - 1)
-                flipped = random.random() > 0.5
-                block = BLOCKS_GRASS[index]
-                if flipped and block + "_flipped" in world.block_name:
-                    block += "_flipped"
-                block_type = world.block_name[block]
+            group = random.random()
+            if group < 0.2:
+                block_pool = BLOCKS_VEGETATION_FLOOR_RARE
+            elif group < 0.4:
+                block_pool = BLOCKS_VEGETATION_FLOOR_UNCOMMON
             else:
-                # Set mushroom
-                index = random.randint(0, len(BLOCKS_MUSHROOM) - 1)
-                flipped = random.random() > 0.5
-                block = BLOCKS_MUSHROOM[index]
-                if flipped and block + "_flipped" in world.block_name:
-                    block += "_flipped"
-                block_type = world.block_name[block]
+                block_pool = BLOCKS_VEGETATION_FLOOR_COMMON
+            
+            index = random.randint(0, len(block_pool) - 1)
+            flipped = random.random() > 0.5
+            block = block_pool[index]
+            if flipped and block + "_flipped" in world.block_name:
+                block += "_flipped"
+            block_type = world.block_name[block]
             world.set_block(*coord, block_type)
 
     for coord in blocks_ceiling:
         if not world.get_block(coord[0], coord[1] + 1, 0, False, 0):
             continue
 
-        if random.random() > 0.8: # Put vegetation
-            length = int(math.sqrt(random.random() * 64) + 1)
-            for i in range(length):
-                block = "vines0"
+        if random.random() > 0.5:
+            index = random.randint(0, len(BLOCKS_VEGETATION_CEILING) - 1)
+            block = BLOCKS_VEGETATION_CEILING[index]
+
+            if block.startswith("vines"):
+                length = int(math.sqrt(random.random() * 64) + 1)
+            else:
+                length = 1
+
+            for i in range(length):                
                 if random.random() > 0.5:
-                    block += "_flipped"
-                block_type = world.block_name[block]
+                    block_type = world.block_name[block + "_flipped"]
+                else:
+                    block_type = world.block_name[block]
                 x, y = coord[0], coord[1] - i
                 if world.get_block(x, y, 0, False, 1) or world.get_block(x, y, 1, False, 1):
                     break
+
                 world.set_block(x, y, block_type)
+
+
+def generate_poles(world, poles, blocks_ground, blocks_ceiling):
+    blocks_ground = dict(blocks_ground)
+    blocks_ceiling = dict(blocks_ceiling)
+
+    for x in poles:
+        if not (x in blocks_ground and x in blocks_ceiling):
+            continue
+
+        y_ground = blocks_ground[x]
+        y_ceiling = max(y_ground, blocks_ceiling[x] - 3)
+
+        for y in range(y_ground, y_ceiling):
+            world.set_block(x, y, world.block_name["pole"])
 
 
 def generate_points_segment(position: [float], length, start_angle: float, deviation: float):
@@ -169,11 +216,24 @@ def generate_block(world, x, y, repeat=0):
         world.set_block(x, y, world.block_name["stone_block"])
 
 
+def line_cave(world, position, length, angle, deviation, radius):
+    border_padding = 4
+    points = generate_points_segment(position, length, angle, deviation)
+
+    for (x, y) in points:
+        p_radius = int(pnoise1((x + y) / 2 + 100, octaves=3) * 2 + radius)
+        for dx in range(-radius - border_padding, radius + border_padding + 1):
+            for dy in range(-radius - border_padding, radius + border_padding + 1):
+                coord = (int(x + dx), int(y + dy))
+                if dx ** 2 + dy ** 2 <= radius ** 2:
+                    world.set_block(*coord, 0)
+                elif not coord in world:
+                    world.set_block(*coord, world.block_name["placeholder0"])
+
+
 class Shape:
     @staticmethod
     def intro(world, position):
-        print("generating intro")
-
         surface_size = (50, 30)
         for x in range(-surface_size[0], surface_size[0] + 1):
             surface_level = pnoise1(x / 20 + world.seed, octaves=3) * 9
@@ -184,7 +244,7 @@ class Shape:
         points = set()
         start_angle = angle = -math.pi/2
         length = INTRO_LENGTH
-        border_width = 40
+        border_padding = 40
         deviation = 3
         lowest = 0
 
@@ -193,48 +253,49 @@ class Shape:
             position[1] = -i
             points.add(tuple(position))
 
-        print("generated points")
-
         for (x, y) in points:
             radius = int((pnoise1(y + world.seed, octaves=3, repeat=INTRO_REPEAT) + 2) * 2)
-            for dx in range(-radius - border_width, radius + border_width + 1):
-                for dy in range(-radius - border_width, radius + border_width + 1):
+            for dx in range(-radius - border_padding, radius + border_padding + 1):
+                for dy in range(-radius - border_padding, radius + border_padding + 1):
                     coord = (int(x + dx), int(y + dy))
-                    if dx ** 2 + (dy / 2) ** 2 <= radius ** 2:
+                    if dx ** 2 + (dy * 0.5) ** 2 <= radius ** 2:
                         world.set_block(*coord, 0)
                         if y + dy < lowest:
                             lowest = y + dy
                     elif not coord in world:
                         world.set_block(*coord, world.block_name["placeholder1"])
-
-        print("mined out path\n")
-
         position[1] = lowest
         
-
     @staticmethod
     def horizontal(world, position):
-        print("generated horizontal cave")
+        angle = snoise2(position[0] / 100 + world.seed, world.seed, octaves=4) * 0.8
+        length = random.randint(50, 150)
+        deviation = random.randint(2, 6) # 2 - 6 works fine
+        radius = 3
 
-        angle = 0
-        length = 2000
-        deviation = 2 # 2 - 6 works fine
-        border_width = 5
+        line_cave(world, position, length, angle, deviation, radius)
 
-        points = generate_points_segment(position, length, angle, deviation)
-        print("generating points")
+    @staticmethod
+    def vertical(world, position):
+        angle = math.pi / 2 * 3
+        length = random.randint(10, 30)
+        deviation = random.randint(1, 2)
+        radius = 2
 
-        for (x, y) in points:
-            radius = int((pnoise1((x + y) / 2 + 100, octaves=3) + 2) * 3)
-            for dx in range(-radius - border_width, radius + border_width + 1):
-                for dy in range(-radius - border_width, radius + border_width + 1):
-                    coord = (int(x + dx), int(y + dy))
-                    if dx ** 2 + dy ** 2 <= radius ** 2:
-                        world.set_block(*coord, 0)
-                    elif not coord in world:
-                        world.set_block(*coord, world.block_name["placeholder0"])
+        line_cave(world, position, length, angle, deviation, radius)
 
-        print("mined out path\n")
+    @staticmethod
+    def blob(world, position):
+        border_padding = 5
+        radius = int((pnoise1(position[0] + world.seed, octaves=3) + 3) * 3)
+        for dx in range(-radius - border_padding, radius + border_padding + 1):
+            for dy in range(-radius - border_padding, radius + border_padding + 1):
+                coord = (int(position[0] + dx), int(position[1] + dy))
+                if dy > 0 and dx ** 2 + (dy * 0.8) ** 2 <= radius ** 2:
+                    world.set_block(*coord, 0)
+                elif dx ** 2 + (dy * 2) ** 2 <= radius ** 2:
+                    world.set_block(*coord, 0)
+
 
 
         
