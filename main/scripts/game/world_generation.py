@@ -23,6 +23,7 @@ def generate_world(world):
     Main world generation function
     """
     # Starting point
+    branches = set()
     position = [0, 0]
     poles = set() # List of x coords of poles
 
@@ -36,20 +37,43 @@ def generate_world(world):
         last_special += 1
         cave_type = random.random()
 
-        if cave_type > 0.7 or last_special < 4:
+        if cave_type > 0.6 or last_special < 4:
             print("generate horizontal cave")
             Shape.horizontal(world, position)
         else:
             last_special = 0
             cave_type = random.random()
 
-            if cave_type > 0.5:
+            if cave_type > 0.6:
+                if random.random() > 0.5:
+                    print("generate vertical cave (branch)")
+                    Shape.vertical(world, position, True)
+                    poles.add(int(position[0]))
+                    branches.add((*position, 0))
+                else:
+                    print("generate horizontal cave (branch)")
+                    Shape.horizontal(world, position)
+                    branches.add((*position, 1))
+            elif cave_type > 0.3:
                 print("generate vertical cave")
                 Shape.vertical(world, position)
                 poles.add(int(position[0]))
             else:
                 print("generate blob cave")
                 Shape.blob(world, position)
+
+    for x, y, direction in branches:
+        length = random.randint(2, 3)
+        position = [x, y]
+
+        if direction:
+            print("generate vertical cave (branch)")
+            Shape.vertical(world, position, True)
+            poles.add(int(position[0]))
+
+        for i in range(length):
+            print("generate horizontal cave")
+            Shape.horizontal(world, position)
 
     # Generate structures between line cave segments
     ...
@@ -268,18 +292,21 @@ class Shape:
         
     @staticmethod
     def horizontal(world, position):
-        angle = snoise2(position[0] / 100 + world.seed, world.seed, octaves=4) * 0.7
+        angle = snoise2(position[0] / 100 + world.seed, world.seed, octaves=4) * 0.6
         length = random.randint(50, 150)
-        deviation = random.randint(2, 6) # 2 - 6 works fine
+        deviation = random.randint(2, 5)
         radius = 3
 
         line_cave(world, position, length, angle, deviation, radius)
 
     @staticmethod
-    def vertical(world, position):
+    def vertical(world, position, high=False):
         angle = math.pi / 2 * 3 * (random.randint(0, 1) * 2 - 1)
-        length = random.randint(10, 30)
-        deviation = random.randint(1, 2)
+        if high:
+            length = random.randint(40, 50)
+        else:
+            length = random.randint(10, 30)
+        deviation = 0.5
         radius = 1
 
         line_cave(world, position, length, angle, deviation, radius)

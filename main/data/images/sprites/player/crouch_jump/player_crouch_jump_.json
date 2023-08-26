@@ -2,7 +2,7 @@
     "name": "player_crouch_jump",
     "speed": 0.2,
     "frames": [
-        "player_crouch_jump0.png",
-        "player_crouch_jump1.png"
+        "player_crouch_jump_a.png",
+        "player_crouch_jump_b.png"
     ]
 }

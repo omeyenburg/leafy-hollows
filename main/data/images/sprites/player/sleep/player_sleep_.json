@@ -1,0 +1,14 @@
+{
+    "name": "player_sleep",
+    "speed": 0.3,
+    "frames": [
+        "player_sleep_a.png",
+        "player_sleep_a.png",
+        "player_sleep_a.png",
+        "player_sleep_a.png",
+        "player_sleep_a.png",
+        "player_sleep_b.png",
+        "player_sleep_c.png",
+        "player_sleep_d.png"
+    ]
+}

@@ -1,0 +1,12 @@
+{
+    "name": "player_fall",
+    "speed": 0.4,
+    "frames": [
+        "player_fall_a.png",
+        "player_fall_b.png",
+        "player_fall_c.png",
+        "player_fall_d.png",
+        "player_fall_c.png",
+        "player_fall_b.png"
+    ]
+}

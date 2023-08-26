@@ -2,7 +2,7 @@
     "name": "player_climb",
     "speed": 0.5,
     "frames": [
-        "player_climb0.png",
-        "player_climb1.png"
+        "player_climb_a.png",
+        "player_climb_b.png"
     ]
 }

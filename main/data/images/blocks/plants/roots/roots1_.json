@@ -1,12 +1,12 @@
 {
-    "name": "roots2",
+    "name": "roots1",
     "family": "roots",
     "layer": "plant",
     "hardness": 1,
     "speed": 0.5,
     "flip": 1,
     "frames": [
-        "roots2a.png",
-        "roots2b.png"
+        "roots1_a.png",
+        "roots1_b.png"
     ]
 }

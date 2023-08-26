@@ -1,0 +1,10 @@
+{
+    "name": "player_high_jump",
+    "speed": 0.4,
+    "frames": [
+        "player_high_jump_a.png",
+        "player_high_jump_b.png",
+        "player_high_jump_c.png",
+        "player_high_jump_b.png"
+    ]
+}

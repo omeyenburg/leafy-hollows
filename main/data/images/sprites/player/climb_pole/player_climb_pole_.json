@@ -1,0 +1,13 @@
+{
+    "name": "player_climb_pole",
+    "speed": 0.15,
+    "frames": [
+        "player_climb_pole_b.png",
+        "player_climb_pole_c.png",
+        "player_climb_pole_d.png",
+        "player_climb_pole_e.png",
+        "player_climb_pole_d.png",
+        "player_climb_pole_c.png"
+    ]
+}
+
