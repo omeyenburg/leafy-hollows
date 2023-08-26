@@ -6,8 +6,8 @@
     "speed": 0.1,
     "flip": 1,
     "frames": [
-        "torch0.png",
-        "torch1.png",
-        "torch2.png"
+        "torch_a.png",
+        "torch_b.png",
+        "torch_c.png"
     ]
 }

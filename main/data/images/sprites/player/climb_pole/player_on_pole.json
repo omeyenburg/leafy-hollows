@@ -1,9 +1,0 @@
-{
-    "name": "player_on_pole",
-    "speed": 0.2,
-    "frames": [
-        "player_climb_pole2.png",
-        "player_climb_pole3.png"
-    ]
-}
-

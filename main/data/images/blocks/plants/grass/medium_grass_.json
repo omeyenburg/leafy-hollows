@@ -1,12 +1,12 @@
 {
-    "name": "tall_grass",
+    "name": "medium_grass",
     "family": "grass",
     "layer": "plant",
     "hardness": 1,
     "speed": 0.5,
     "flip": 1,
     "frames": [
-        "tall_grass0.png",
-        "tall_grass1.png"
+        "medium_grass_a.png",
+        "medium_grass_b.png"
     ]
 }

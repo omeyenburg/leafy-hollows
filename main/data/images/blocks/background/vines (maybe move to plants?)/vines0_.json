@@ -1,12 +1,12 @@
 {
-    "name": "vines1",
+    "name": "vines0",
     "family": "roots",
-    "layer": "plant",
+    "layer": "background",
     "hardness": 1,
     "speed": 0.5,
     "flip": 1,
     "frames": [
-        "vines1a.png",
-        "vines1b.png"
+        "vines0_a.png",
+        "vines0_b.png"
     ]
 }

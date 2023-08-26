@@ -82,7 +82,7 @@ class Player(CollisionPhysicsObject):
         on_pole = world.get_block(pole_x, round(self.rect.y), layer=2) in world.blocks_climbable or grab_pole
 
         if window.keybind("jump") and on_pole:
-            self.onGround = True
+            self.onGround = 3
             if window.keybind("left") or window.keybind("right"):
                 self.vel[1] = 0
             elif grab_pole and not window.keybind("crouch"):

@@ -1,0 +1,8 @@
+{
+    "name": "player_on_pole",
+    "speed": 0,
+    "frames": [
+        "player_climb_pole_c.png"
+    ]
+}
+

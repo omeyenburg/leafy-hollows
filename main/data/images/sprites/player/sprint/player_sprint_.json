@@ -1,0 +1,12 @@
+{
+    "name": "player_sprint",
+    "speed": 0.08,
+    "frames": [
+        "player_sprint_a.png",
+        "player_sprint_b.png",
+        "player_sprint_c.png",
+        "player_sprint_d.png",
+        "player_sprint_e.png",
+        "player_sprint_f.png"
+    ]
+}
