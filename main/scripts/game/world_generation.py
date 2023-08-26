@@ -36,7 +36,7 @@ def generate_world(world):
         last_special += 1
         cave_type = random.random()
 
-        if cave_type > 0.7 or last_special < 5:
+        if cave_type > 0.7 or last_special < 4:
             print("generate horizontal cave")
             Shape.horizontal(world, position)
         else:
@@ -171,7 +171,7 @@ def generate_poles(world, poles, blocks_ground, blocks_ceiling):
             continue
 
         y_ground = blocks_ground[x]
-        y_ceiling = max(y_ground, blocks_ceiling[x] - 3)
+        y_ceiling = max(y_ground, blocks_ceiling[x] - 2)
 
         for y in range(y_ground, y_ceiling):
             world.set_block(x, y, world.block_name["pole"])
@@ -268,7 +268,7 @@ class Shape:
         
     @staticmethod
     def horizontal(world, position):
-        angle = snoise2(position[0] / 100 + world.seed, world.seed, octaves=4) * 0.8
+        angle = snoise2(position[0] / 100 + world.seed, world.seed, octaves=4) * 0.7
         length = random.randint(50, 150)
         deviation = random.randint(2, 6) # 2 - 6 works fine
         radius = 3
@@ -277,10 +277,10 @@ class Shape:
 
     @staticmethod
     def vertical(world, position):
-        angle = math.pi / 2 * 3
+        angle = math.pi / 2 * 3 * (random.randint(0, 1) * 2 - 1)
         length = random.randint(10, 30)
         deviation = random.randint(1, 2)
-        radius = 2
+        radius = 1
 
         line_cave(world, position, length, angle, deviation, radius)
 

@@ -19,6 +19,7 @@ class World(dict):
         self.block_name: dict = {name: index for name, (index, layer) in block_data.items()}
         self.block_index: dict = {index: name for name, (index, layer) in block_data.items()}
         self.block_index[0] = "air"
+        self.blocks_climbable: set = {self.block_name[name] for name in BLOCKS_CLIMBABLE}
         self.entities: set = set()
         self.particles: set = set()
         self.wind: float = 0.0 # Wind direction

@@ -1,12 +1,11 @@
 {
-    "name": "bush0",
+    "name": "flower7",
     "family": "grass",
     "layer": "plant",
     "hardness": 1,
-    "speed": 0.5,
+    "speed": 0,
     "flip": 1,
     "frames": [
-        "bush0a.png",
-        "bush0b.png"
+        "flower7.png"
     ]
 }
