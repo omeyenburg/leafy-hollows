@@ -8,21 +8,31 @@ import random
 
 class Player(CollisionPhysicsObject):
     def __init__(self, spawn_pos: [float], speed: float, sprint_speed: float, crouch_speed: float, swim_speed: float, acceleration_time: float, jump_force: int):
-        self.rect_size = PLAYER_SIZE
-        self.rect_size_crouch = tuple(self.rect_size[::-1])
-        self.rect_size_swim = (self.rect_size[0], self.rect_size[0])
+        super().__init__(50, spawn_pos, PLAYER_RECT_SIZE_NORMAL)
+
+        # Player rect size (based on state)
+        self.rect_size = PLAYER_RECT_SIZE_NORMAL
+        self.rect_size_crouch = PLAYER_RECT_SIZE_CROUCH
+        self.rect_size_swim = PLAYER_RECT_SIZE_SWIM
+
+        # Player speed (based on state)
         self.speed: float = speed
         self.sprint_speed: float = sprint_speed
         self.crouch_speed: float = crouch_speed
         self.swim_speed: float = swim_speed
+
+        # Physics attributes
         self.acceleration_time: float = acceleration_time
         self.jump_force: int = jump_force
+
+        # Animation states
         self.state: str = "idle" # state is used for movement & animations
         self.direction: int = 0 # 0 = right; 1 = left
         self.hit_ground = 0
-        self.can_move: bool = False # Used for intro
+        self.can_move: bool = False # Disabled during intro
+
+        # Long crouch jump
         self.charge_crouch_jump: float = 0
-        super().__init__(50, spawn_pos, self.rect_size)
 
     def draw(self, window: Window):
         # Draw hitbox
@@ -35,28 +45,60 @@ class Player(CollisionPhysicsObject):
     
     def jump(self, window, duration: float):
         force = self.jump_force * duration / window.delta_time
-        if self.direction == 1 and self.charge_crouch_jump and not window.keybind("left"): # Crouch jump left
+        if self.direction == 1 and self.charge_crouch_jump and not window.keybind("left"):
+            # Crouch jump left
             self.apply_force(force * 8, 160, window.delta_time)
             self.state = "crouch_jump"
-        elif self.direction == 0 and self.charge_crouch_jump and not window.keybind("right"): # Crouch jump right
+        elif self.direction == 0 and self.charge_crouch_jump and not window.keybind("right"):
+            # Crouch jump right
             self.apply_force(force * 8, 20, window.delta_time)
             self.state = "crouch_jump"
-        elif self.onGround: # Normal jump
+        elif self.onGround:
+            # Normal jump
             self.apply_force(force, 90, window.delta_time)
-        elif self.vel[1] > 1.5: # Max wall jump velocity
+        elif self.vel[1] > 1.5:
+            # Max wall jump velocity
             return
-        elif self.onWallLeft and window.keybind("left") and window.keybind("jump") == 1: # Wall jump left
+        elif self.onWallLeft and window.keybind("left") and window.keybind("jump") == 1:
+            # Wall jump left
             self.apply_force(force * 2.5, 110, window.delta_time)
             self.onWallLeft = 0
-        elif self.onWallRight and window.keybind("right") and window.keybind("jump") == 1: # Wall jump right
+        elif self.onWallRight and window.keybind("right") and window.keybind("jump") == 1:
+            # Wall jump right
             self.apply_force(force * 2.5, 70, window.delta_time)
             self.onWallRight = 0
 
     def move(self, world, window: Window):
-        # animation states
+        # Block_coords
         wall_block_right = (round(self.rect.x + 0.8), round(self.rect.y + 1))
         wall_block_left = (round(self.rect.x - 0.8), round(self.rect.y + 1))
 
+        # Climb poles & vines
+        if self.direction:
+            pole_x = math.floor(round(self.rect.x, 1))
+        else:
+            pole_x = math.ceil(round(self.rect.x, 1))
+        grab_pole = world.get_block(pole_x, round(self.rect.y + 1), layer=2) in world.blocks_climbable
+        on_pole = world.get_block(pole_x, round(self.rect.y), layer=2) in world.blocks_climbable or grab_pole
+
+        if window.keybind("jump") and on_pole:
+            self.onGround = True
+            if window.keybind("left") or window.keybind("right"):
+                self.vel[1] = 0
+            elif grab_pole and not window.keybind("crouch"):
+                self.rect.x = pole_x
+                self.vel[0] = 0
+                self.vel[1] = max(1.8, self.vel[1])
+                self.state = "climb_pole"
+                return
+            elif window.keybind("crouch") or not grab_pole:
+                self.rect.x = pole_x
+                self.vel[0] = 0
+                self.vel[1] = max(0.15, self.vel[1])
+                self.state = "on_pole"
+                return
+
+        # Animation states
         if self.vel[1] < -5:
             self.state = "fall"
             self.hit_ground = 0.3
@@ -96,6 +138,7 @@ class Player(CollisionPhysicsObject):
         elif self.vel[0] < -1:
             self.direction = 1
 
+        # Swap states between normal and crouching
         if self.state in ("crouch", "crouch_jump", "crawl"):
             if self.rect.size != self.rect_size_crouch:
                 self.rect.x += (self.rect_size[0] - self.rect_size_crouch[0]) / 2
@@ -113,6 +156,7 @@ class Player(CollisionPhysicsObject):
                 self.rect.size = self.rect_size_crouch
                 self.state = {"jump": "crouch_jump", "jump_high": "crouch_jump", "walk": "crawl", "sprint": "crawl"}.get(self.state, "crouch")
 
+        # Move player
         max_speed = self.speed
         if window.keybind("sprint"): # Keeps sprinting once key pressed / stops faster as long as pressed
             max_speed = self.sprint_speed
@@ -127,7 +171,7 @@ class Player(CollisionPhysicsObject):
             else:
                 current_speed /= 3 # Stop movement while in air
 
-        if self.can_move:
+        if self.can_move: # Disabled during intro
             if window.keybind("right"): # d has priority over a
                 if self.vel[0] < max_speed:
                     if self.vel[0] + current_speed > max_speed: # Guaranteeing exact max speed
@@ -250,18 +294,19 @@ class Player(CollisionPhysicsObject):
             mouse_pos = window.camera.map_coord(window.mouse_pos[:2], world=True)
             spawn_particle(mouse_pos)
         
-        """
+
         if window.mouse_buttons[2] == 1: # right click: place/break block
             mouse_pos = window.camera.map_coord(window.mouse_pos[:2], world=True)
             if world.get_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1])) > 0:
                 world.set_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), 0)
             else:
-                world.set_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), world.block_name["grass_block"])
+                world.set_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), world.block_name["dirt_block"])
         """
         if window.mouse_buttons[2] == 1: # place water
             mouse_pos = window.camera.map_coord(window.mouse_pos[:2], world=True)
             water_level = world.get_water(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]))
             world.set_water(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), water_level + 1000)
+        """
         
 
         for particle in particle_list:
