@@ -1,0 +1,8 @@
+{
+    "name": "dust",
+    "speed": 0.5,
+    "frames": [
+        "dust_a.png",
+        "dust_b.png"
+    ]
+}

@@ -6,6 +6,8 @@
 #define BLOCK_SIZE_SOURCE 16
 #define BORDER_THRESHOLD 0.0001
 #define TRANSPARENCY vec4(0, 0, 0, 0)
+#define CORNER_COLOR vec4(0.05, 0, 0, 0.8)
+#define FIRE_COLOR vec4(1.0, 0.6, 0.4, 0.8)
 
 // Inputs from vertex shader
 in vec2 vertTexcoord;
@@ -245,6 +247,10 @@ vec4 get_color_foreground() {
     ivec4 block_data_right = texelFetch(texWorld, ivec2(block_coord.x + 1, block_coord.y), 0);
     ivec4 block_data_top = texelFetch(texWorld, ivec2(block_coord.x, block_coord.y + 1), 0);
     ivec4 block_data_bottom = texelFetch(texWorld, ivec2(block_coord.x, block_coord.y - 1), 0);
+    ivec4 block_data_top_left = texelFetch(texWorld, ivec2(block_coord.x - 1, block_coord.y + 1), 0);
+    ivec4 block_data_top_right = texelFetch(texWorld, ivec2(block_coord.x + 1, block_coord.y + 1), 0);
+    ivec4 block_data_bottom_left = texelFetch(texWorld, ivec2(block_coord.x - 1, block_coord.y - 1), 0);
+    ivec4 block_data_bottom_right = texelFetch(texWorld, ivec2(block_coord.x + 1, block_coord.y - 1), 0);
     
     // Block type
     int block_type = block_data.r;
@@ -258,6 +264,44 @@ vec4 get_color_foreground() {
     vec2 fsource_pixel = vec2(source_pixel) / float(BLOCK_SIZE_SOURCE);
     ivec2 source_pixel_offset = source_pixel;
     vec2 water_source_pixel = source_pixel;
+
+    // Fire distance
+    float distance_fire = 2;
+    float fire_x = sin(time / 11) / 2 + cos(time / 17) / 2 + 8.5;
+    float fire_y = sin(time / 13) / 2 + cos(time / 19) / 2 + 8.5;
+    if (block_data.g == block.torch || block_data.g == block.torch_flipped) {
+        distance_fire = min(distance_fire, distance(vec2(fire_x, fire_y), source_pixel) / 10);
+    }
+    if (block_data_top.g == block.torch || block_data_top.g == block.torch_flipped) {
+        distance_fire = min(distance_fire, distance(vec2(fire_x, fire_y + BLOCK_SIZE_SOURCE), source_pixel) / 10);
+    }
+    if (block_data_bottom.g == block.torch || block_data_bottom.g == block.torch_flipped) {
+        distance_fire = min(distance_fire, distance(vec2(fire_x, fire_y - BLOCK_SIZE_SOURCE), source_pixel) / 10);
+    }
+    if (block_data_left.g == block.torch || block_data_left.g == block.torch_flipped) {
+        distance_fire = min(distance_fire, distance(vec2(fire_x - BLOCK_SIZE_SOURCE, fire_y), source_pixel) / 10);
+    }
+    if (block_data_right.g == block.torch || block_data_right.g == block.torch_flipped) {
+        distance_fire = min(distance_fire, distance(vec2(fire_x + BLOCK_SIZE_SOURCE, fire_y), source_pixel) / 10);
+    }
+    if (block_data_top_left.g == block.torch || block_data_top_left.g == block.torch_flipped) {
+        distance_fire = min(distance_fire, distance(vec2(fire_x - BLOCK_SIZE_SOURCE, fire_y + BLOCK_SIZE_SOURCE), source_pixel) / 10);
+    }
+    if (block_data_top_right.g == block.torch || block_data_top_right.g == block.torch_flipped) {
+        distance_fire = min(distance_fire, distance(vec2(fire_x + BLOCK_SIZE_SOURCE, fire_y + BLOCK_SIZE_SOURCE), source_pixel) / 10);
+    }
+    if (block_data_bottom_left.g == block.torch || block_data_bottom_left.g == block.torch_flipped) {
+        distance_fire = min(distance_fire, distance(vec2(fire_x - BLOCK_SIZE_SOURCE, fire_y - BLOCK_SIZE_SOURCE), source_pixel) / 10);
+    }
+    if (block_data_bottom_right.g == block.torch || block_data_bottom_right.g == block.torch_flipped) {
+        distance_fire = min(distance_fire, distance(vec2(fire_x + BLOCK_SIZE_SOURCE, fire_y - BLOCK_SIZE_SOURCE), source_pixel) / 10);
+    }
+    if (distance_fire < 2) {
+        distance_fire = min(2, distance_fire + (sin(time * 3) + 1) / 17 + (cos(time * 10) + 1) / 20);
+    }
+
+    // Fire color
+    vec4 fire_color = mix(FIRE_COLOR, TRANSPARENCY, distance_fire / 2);
 
     // Get adjacent blocks
     if (source_pixel.x < BLOCK_SIZE_SOURCE / 2) {
@@ -288,11 +332,11 @@ vec4 get_color_foreground() {
                     block_color = get_color_block(adjacent_y, ivec2(8, 8));
                 }
                 if (block_color.a > 0.0) {
-                    return block_color;
+                    return block_color + fire_color;
                 }
             }
         } else {
-            return block_color;
+            return block_color + fire_color;
         }
         
         // Set block to the closest other block -> let water flow into transparent gaps
@@ -328,7 +372,7 @@ vec4 get_color_foreground() {
     
     // Skip water
     if (block_type == 0 && abs(block_data.a) < 1) {
-        return block_color;
+        return block_color + fire_color;
     }
 
     // Draw water
@@ -340,14 +384,12 @@ vec4 get_color_foreground() {
     float water_level_top_left = abs(texelFetch(texWorld, ivec2(block_coord.x - 1, block_coord.y + 1), 0).a / WATER_PER_BLOCK);
     float water_level_top_right = abs(texelFetch(texWorld, ivec2(block_coord.x + 1, block_coord.y + 1), 0).a / WATER_PER_BLOCK);
 
-    if (block_color.a < BORDER_THRESHOLD) {
+    if (block_color.a < 1.0 - BORDER_THRESHOLD) {
         water_color = get_color_block(block.water, water_source_pixel);
         water_color.a = 0.5;
     } else {
         water_color = mix(get_color_block(block.water, water_source_pixel), block_color, 0.6);
     }
-
-    
 
     int water_side = 1;
     if (water_level < 0) {
@@ -372,35 +414,36 @@ vec4 get_color_foreground() {
         float width = min((water_level + water_level_top) * 0.5, 0.2);
         float height = 1.0;
 
+        // Get water state
         water_level = max(max(water_level, water_level_left), water_level_right);
-
         if (water_level_top > BORDER_THRESHOLD && water_level_top_left > 0.1 && water_level_top_right > 0.1) {
-            // covered water
+            // Covered water
             return water_color;
         } else if ((block_type_bottom != 0 || water_level_bottom > 0.9) && water_level_top > 0.1) {
-            // vertical & horizontal water
+            // Vertical & horizontal water
             vertical = 1;
             horizontal = 1;
         } else if (block_type_bottom == 0 && water_level_top > 0.1 && (water_level_left < BORDER_THRESHOLD || water_level_right < BORDER_THRESHOLD)) {
-            // vertical water
+            // Vertical water
             vertical = 1;
         } else if (block_type_bottom == 0 && water_level_top > 0.1 && (water_level_left > BORDER_THRESHOLD && water_level_right > BORDER_THRESHOLD)) {
-            // covered vertical water
+            // Covered vertical water
             return water_color;
         } else if (block_type_bottom == 0 && water_level_top <= 0.1 && (water_level_left < BORDER_THRESHOLD && water_level_right < BORDER_THRESHOLD)) {
-            // top of vertical water
+            // Top of vertical water
             vertical = 1;
             height = water_level;
             width = min(water_level, 0.2);
         } else if (block_type_bottom == 0 && water_level_top < BORDER_THRESHOLD && water_level_bottom < 1.0 - BORDER_THRESHOLD && (water_level_left < BORDER_THRESHOLD && water_level_right > BORDER_THRESHOLD || water_level_right < BORDER_THRESHOLD && water_level_left > BORDER_THRESHOLD)) {
-            // corner of vertical water and horizontal on one side
+            // Corner of vertical water and horizontal on one side
             corner = 1;
             width = min(water_level, 0.2);
         } else {
-            // horizontal water
+            // Horizontal water
             horizontal = 1;
         } 
 
+        // Draw vertical water
         if (vertical == 1 && abs((water_side + 1) / 2 - fsource_pixel.x) <= width && fsource_pixel.y <= height) {
             return water_color;
         } else if (corner == 1 && water_side == -1) {
@@ -417,6 +460,7 @@ vec4 get_color_foreground() {
             }
         }
 
+        // Draw horizontal water
         if (horizontal == 1) {
             if (false && water_level_top > BORDER_THRESHOLD && vertical == 0 || water_level > 1.0 - BORDER_THRESHOLD || water_level_top > 0.1 && water_level_top_left > 0.1 && water_level_left > 1.0 - BORDER_THRESHOLD * 10 || water_level_top > 0.1 && water_level_top_right > 0.1 && water_level_right > 1.0 - BORDER_THRESHOLD * 10) {
                 return water_color;
@@ -458,15 +502,19 @@ vec4 get_color_foreground() {
             }
         }
     }
-    return block_color;
+    return block_color + fire_color;
 }
 
 void draw_post_processing() {
+    float distance_center = sqrt(pow((vertTexcoord.x - 0.5) * 5, 2) + pow((vertTexcoord.y - 0.5) * 5, 2)) / 5;
     fragColor = get_color_foreground();
 
     if (gray_screen == 1) {
         fragColor = (fragColor + vec4(0, 0, 0, 1)) / 2;
     }
+
+    // Darker corners
+    fragColor = mix(fragColor, CORNER_COLOR, distance_center + 0.1);
 
     /*
     // damage animation

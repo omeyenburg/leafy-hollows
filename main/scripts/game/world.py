@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from scripts.game.world_generation import generate_world, generate_block
 from scripts.utility.const import *
+import scripts.graphics.particle as particle
 import scripts.utility.geometry as geometry
 import scripts.game.player as player
 import scripts.utility.file as file
@@ -10,18 +11,19 @@ import math
 
 
 class World(dict):
-    def __init__(self, block_data: dict):
+    def __init__(self, window):
         super().__init__() # {(x, y): (block, plant, background, water_level)}
         self.seed: float = random.randint(-10**6, 10**6) + math.e # Float between -10^6 and 10^6
         self.view: numpy.array = None # Sent to shader to render
         self.view_size: tuple = (0, 0)
-        self.block_layer: dict = {name: {"foreground": 0, "plant": 1, "background": 2, "water": 3}[layer] for name, (index, layer) in block_data.items()}
-        self.block_name: dict = {name: index for name, (index, layer) in block_data.items()}
-        self.block_index: dict = {index: name for name, (index, layer) in block_data.items()}
+        self.block_layer: dict = {name: {"foreground": 0, "plant": 1, "background": 2, "water": 3}[layer] for name, (index, layer) in window.block_data.items()}
+        self.block_name: dict = {name: index for name, (index, layer) in window.block_data.items()}
+        self.block_index: dict = {index: name for name, (index, layer) in window.block_data.items()}
         self.block_index[0] = "air"
         self.blocks_climbable: set = {self.block_name[name] for name in BLOCKS_CLIMBABLE}
         self.entities: set = set()
-        self.particles: set = set()
+        self.particles: list = []
+        self.particle_types: dict = {}
         self.wind: float = 0.0 # Wind direction
         self.loaded_blocks: tuple = ((0, 0), (0, 0)) # (start, end)
         self.water_update_timer: float = 0.0
@@ -31,6 +33,11 @@ class World(dict):
         else:
             self.player: player.Player = player.Player(spawn_pos=[0, 0], speed=5, sprint_speed=7, crouch_speed=3, swim_speed=3, acceleration_time=.1, jump_force=21)
         self.add_entity(self.player)
+
+        # Create particle types
+        particle.setup(window, self, "spark", time=2, delay=1, size=(0.2, 0.2), gravity=-0.7, growth=-1, speed=0, direction=0, divergence=2)
+        particle.setup(window, self, "big_leaf", time=10, delay=3, size=(0.2, 0.2), gravity=0.5, growth=-1, speed=0.5, direction=3/2*math.pi, divergence=2)
+        particle.setup(window, self, "small_leaf", time=10, delay=3, size=(0.15, 0.15), gravity=0.5, growth=-1, speed=0.5, direction=3/2*math.pi, divergence=2)
 
     def add_entity(self, entity):
         self.entities.add(entity)
@@ -76,8 +83,7 @@ class World(dict):
         
         for entity in self.entities:
             entity.update(self, window)
-        for particle in self.particles:
-            particle.update(self, window)
+        particle.update(window, self)
 
     def draw(self, window):
         self.loaded_blocks = window.camera.visible_blocks()
@@ -85,8 +91,6 @@ class World(dict):
 
         for entity in self.entities:
             entity.draw(window)
-        for particle in self.particles:
-            particle.draw(window)
 
     def update_block(self, window, x, y):
         water_level = self.get_water(x, y)
@@ -167,7 +171,11 @@ class World(dict):
             for x in range(view_size[0] - 1):
                 if not (start[0] + x, start[1] + y) in self:
                     generate_block(self, start[0] + x, start[1] + y)
-                self.view[x, y] = self[start[0] + x, start[1] + y]
+                block = self[start[0] + x, start[1] + y]
+                self.view[x, y] = block
+
+                if self.block_index[block[1]] in ("torch", "torch_flipped"):
+                    particle.spawn(window, self, "spark", start[0] + x, start[1] + y)
         
         window.world_view = self.view
 
@@ -178,8 +186,11 @@ class World(dict):
     def load(window):
         world = file.read("data/world/world.data", default=0, file_format="pickle")
         if isinstance(world, World) and len(window.block_data) == len(world.block_name):
+            for name in world.particle_types:
+                world.particle_types[name][0][0] = window.time
+            world.particles = []
             return world
         
-        world = World(window.block_data)
+        world = World(window)
         generate_world(world)
         return world

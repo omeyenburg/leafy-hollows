@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from scripts.utility.const import *
 from noise import *
+import scripts.game.structure as structure
 import random
 import math
 
@@ -9,19 +10,21 @@ import math
 BIOMES = ["overgrown", "mushroom", "dripstone", "frozen", "underwater", "stone", "desert", "hell", "crystal", "dwarf"]
 CAVE_SHAPES = ["intro", "horizontal", "vertical", "blob", "structure"]
 
-
+"""
 def _random(world, x, y=0, z=0):
     return (hash(f"{world.seed}-{x}-{y}") % 2147483647) / 2147483647
-
-
 def _randint(world, x: float, y: float=0.0, start: int=0, stop: int=1, z: float=0.0):
     return round(start + random(world, x, y, z + start + stop) * (stop - start))
+"""
 
 
 def generate_world(world):
     """
     Main world generation function
     """
+    # Load structures
+    structures = structure.load(world.block_name)
+
     # Starting point
     branches = set()
     position = [0, 0]
@@ -106,10 +109,10 @@ def find_edge_blocks(world):
     for coord in world:
         block_type = world[coord][0]
 
-        if block_type == world.block_name["placeholder0"]: # Generate terrain block
+        if block_type == world.block_name["placeholder_terrain"]: # Generate terrain block
             generate_block(world, *coord)
             continue
-        elif block_type == world.block_name["placeholder1"]: # Generate intro block
+        elif block_type == world.block_name["placeholder_intro"]: # Generate intro block
             generate_block(world, *coord, repeat=INTRO_REPEAT)
             continue
         elif block_type != 0: # Not air
@@ -252,7 +255,7 @@ def line_cave(world, position, length, angle, deviation, radius):
                 if dx ** 2 + dy ** 2 <= radius ** 2:
                     world.set_block(*coord, 0)
                 elif not coord in world:
-                    world.set_block(*coord, world.block_name["placeholder0"])
+                    world.set_block(*coord, world.block_name["placeholder_terrain"])
 
 
 class Shape:
@@ -287,7 +290,7 @@ class Shape:
                         if y + dy < lowest:
                             lowest = y + dy
                     elif not coord in world:
-                        world.set_block(*coord, world.block_name["placeholder1"])
+                        world.set_block(*coord, world.block_name["placeholder_intro"])
         position[1] = lowest
         
     @staticmethod

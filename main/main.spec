@@ -1,13 +1,13 @@
 # -*- mode: python ; coding: utf-8 -*-
 import platform
 
-name = "Hello World"
+name = "HelloWorld"
 
 a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[('scripts', 'scripts'), ('data', 'data')],
+    datas=[('data', 'data')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -31,7 +31,7 @@ exe = EXE(
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    console=False,
+    console=platform.system() == "Darwin",
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
@@ -56,7 +56,7 @@ if platform.system() == "Darwin":
         coll,
         name=name + '.app',
         icon='./icon/icon.icns',
-        bundle_identifier="com.hello_world.hello_world",
+        bundle_identifier=None,
     )
 else:
     app = BUNDLE(

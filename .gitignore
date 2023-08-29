@@ -1,9 +1,6 @@
-main/scripts/cfunctions/__pycache__
-main/scripts/graphics/__pycache__
-main/scripts/utility/__pycache__
-main/scripts/game/__pycache__
-main/data/world/world.data
-main/main.pyc
-.vscode
-.DS_Store
 experimental/android_test/.buildozer
+main/data/world/world.data
+**/__pycache__
+main/main.pyc
+**/.DS_Store
+**/.vscode
