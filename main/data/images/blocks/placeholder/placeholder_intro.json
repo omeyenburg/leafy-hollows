@@ -1,0 +1,10 @@
+{
+    "name": "placeholder_intro",
+    "family": "placeholder",
+    "layer": "foreground",
+    "hardness": 0,
+    "speed": 0,
+    "frames": [
+        "placeholder_intro.png"
+    ]
+}

@@ -197,7 +197,7 @@ class Window:
         
         # Instance shader
         self._shader = Shader(
-            "scripts/shader/vertex.glsl", "scripts/shader/fragment.glsl",
+            "data/shader/vertex.glsl", "data/shader/fragment.glsl",
             replace={"block." + key: value for key, (value, *_) in self.block_data.items()},
             texSprites="int", texFont="int", texBlocks="int", texWorld="int", offset="vec2", camera="vec2", resolution="float", time="float", gray_screen="int"
         )

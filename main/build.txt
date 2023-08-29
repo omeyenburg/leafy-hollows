@@ -1,6 +1,13 @@
-# Windows & MacOS
+# Windows
 pip install pyinstaller
 pyinstaller main.spec
+
+# MacOS
+pip install pyinstaller
+find . -name ".DS_Store" -exec rm -f {} \;
+pyinstaller main.spec
+chmod +x builddmg.sh
+./builddmg.sh
 
 # Android (only possible on MacOS & Linux)
 https://buildozer.readthedocs.io

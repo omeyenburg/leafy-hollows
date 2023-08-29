@@ -1,0 +1,7 @@
+{
+    "name": "small_leaf",
+    "speed": 0,
+    "frames": [
+        "small_leaf.png"
+    ]
+}

@@ -12,12 +12,12 @@ import os
 
 def get_file():
     print("\n"*5)
-    edit_file = input("Enter 'e' to edit a file or nothing to create a new file: ") == "e"
+    edit_file = input("Gib 'e' ein, um eine Struktur zu bearbeiten\noder nichts, um eine neu Struktur zu erstellen: ").startswith("e")
 
     if edit_file:
-        print("Select file")
+        print("Wähle die Datei")
         filepath = filedialog.askopenfilename(
-            title="Select file",
+            title="Wähle die Datei",
             filetypes=(("Structures", "*.struct"),),
             initialdir=os.path.join(os.path.dirname(__file__), "data", "structures"))
         # Read file or exit
@@ -25,9 +25,9 @@ def get_file():
             structure_data = pickle.load(f)
         print("selected", filepath)
     else:
-        print("Choose file name")
+        print("Wähle einen Namen und Speicherort")
         filepath = filedialog.asksaveasfilename(
-            title="Choose file name",
+            title="Wähle einen Namen und Speicherort",
             filetypes=(("Structures", "*.struct"),),
             initialdir=os.path.join(os.path.dirname(__file__), "data", "structures")
         )
@@ -35,12 +35,29 @@ def get_file():
             raise Exception
 
         name = os.path.basename(filepath).split(".")[0]
-        width = abs(int(input("Choose the width: ")))
-        height = abs(int(input("Choose the height: ")))
+        width = abs(int(input("Wähle die Breite in Blöcken: ")))
+        height = abs(int(input("Wähle die Höhe in Blöcken: ")))
         array = numpy.zeros((width, height, 4), dtype=int)
-        structure_data = {"name": name, "size": (width, height), "array": array}
 
-        print("created", filepath)
+        generation_data = None
+        structure_type_char = input(f"Wähle den Strukturtyp? ('room': r | 'terrain feature': t | 'village': v): ")
+        structure_type = "terrain feature"
+        if structure_type_char.startswith("r"):
+            structure_type = "room"
+        elif structure_type_char.startswith("v"):
+            structure_type = "village"
+        
+        if structure_type == "terrain feature":
+            generation_side = input("Wähle die Blockseite, wo die Struktur generiert wird ('floor': f | 'ceiling': c | 'right wall': r | 'left wall': l): ")
+            generation_data = "floor"
+            if generation_side.startswith("c"):
+                generation_data = "ceiling"
+            elif generation_side.startswith("r"):
+                generation_data = "right"
+            elif generation_side.startswith("l"):
+                generation_data = "left"
+
+        structure_data = {"name": name, "room": is_room, "size": (width, height), "array": array}
 
     return filepath, structure_data
 
@@ -104,7 +121,7 @@ window = pygame.display.set_mode()
 offset = [0, 0]
 offset_block_list = 0
 BLOCK_SIZE = 32
-font = pygame.freetype.SysFont(None, 10)
+font = pygame.freetype.SysFont(None, 20)
 options = {"erase": 0, "draw": 0, "draw water": 0, "add water": 0, "sub water": 0, "layer0": 1, "layer1": 1, "layer2": 1, "layer3": 1, "draw layer": 0}
 selected_block = list(block_data.keys())[0]
 
@@ -116,6 +133,7 @@ def get_block_rect(x, y):
 can_draw = 0
 while True:
     mouse_down = 0
+    scroll = 0
     window.fill((255, 255, 255))
     for event in pygame.event.get():
         if event.type == QUIT:
@@ -126,36 +144,35 @@ while True:
             if event.button == 1:
                 mouse_down = 1
                 can_draw = 1
+        if event.type == pygame.MOUSEWHEEL:
+            scroll = event.y
 
     keys = pygame.key.get_pressed()
     if keys[K_RIGHT]:
-        offset[0] = min(1, offset[0] + 0.1 / structure_data["size"][0])
+        offset[0] = offset[0] + 0.05 / structure_data["size"][0]
     if keys[K_LEFT]:
-        offset[0] = max(0, offset[0] - 0.1 / structure_data["size"][0])
+        offset[0] = offset[0] - 0.05 / structure_data["size"][0]
     if keys[K_DOWN]:
-        offset[1] = min(1, offset[1] + 0.1 / structure_data["size"][1])
+        offset[1] = offset[1] + 0.05 / structure_data["size"][1]
     if keys[K_UP]:
-        offset[1] = max(0, offset[1] - 0.1 / structure_data["size"][1])
+        offset[1] = offset[1] - 0.05 / structure_data["size"][1]
 
     mouse_pos = pygame.mouse.get_pos()
     mouse_buttons = pygame.mouse.get_pressed(5)
-    if mouse_buttons[3]:
-        offset_block_list = min(1, offset_block_list + 0.1)
-    elif mouse_buttons[4]:
-        offset_block_list = max(0, offset_block_list - 0.1)
+    offset_block_list = min(0, max(-1, offset_block_list + scroll / 10))
 
     if mouse_buttons[0] and mouse_pos[0] < window.get_width() - 120:
-        block_coord = (mouse_pos[0] // BLOCK_SIZE - offset[0], mouse_pos[1] // BLOCK_SIZE - offset[1])
+        block_coord = (int((mouse_pos[0] - offset[0] * BLOCK_SIZE) // BLOCK_SIZE), int((mouse_pos[1] - offset[1] * BLOCK_SIZE) // BLOCK_SIZE))
         if block_coord[0] < structure_data["size"][0] and block_coord[1] < structure_data["size"][1]:
             if options["erase"]:
                 if options["draw layer"] == 3:
                     structure_string_array[block_coord[0]][block_coord[1]][options["draw layer"]] = 0
                 else:
                     structure_string_array[block_coord[0]][block_coord[1]][options["draw layer"]] = "air"
-            elif options["draw"] and options["draw layer"] != 3:
+            elif options["draw"] and options["draw layer"] != 3 and selected_block != "water":
                 layer = block_data[selected_block][1]
                 structure_string_array[block_coord[0]][block_coord[1]][layer] = selected_block
-            elif options["draw water"] and can_draw:
+            elif can_draw and (options["draw water"] or options["draw"] and selected_block == "water"):
                 level = 1000
                 if options["add water"]:
                     level = min(1000, structure_string_array[block_coord[0]][block_coord[1]][3] + 100)
@@ -182,24 +199,27 @@ while True:
                 surface = block_data[block][2]
                 window.blit(pygame.transform.scale(surface, (BLOCK_SIZE, BLOCK_SIZE)), rect.topleft)
 
-    for i, (option, value) in enumerate(options.items()):
+    d = list(options.items())
+    d.append(("type", selected_block))
+    for i, (option, value) in enumerate(d):
         if option == "draw layer":
             color = (0, 0, 0)
-            rect = font.render_to(window, (window.get_width() - 120, i * BLOCK_SIZE / 2), option + ": " + str(value), color)
+            rect = font.render_to(window, (window.get_width() - 180, i * BLOCK_SIZE * 0.7), option + ": " + str(value), color)
+        elif option == "type":
+            rect = font.render_to(window, (window.get_width() - 180, i * BLOCK_SIZE * 0.7), value, (0, 0, 0))
         else:
             color = [(200, 50, 50), (50, 200, 50)][value]
-            rect = font.render_to(window, (window.get_width() - 120, i * BLOCK_SIZE / 2), option, color)
+            rect = font.render_to(window, (window.get_width() - 180, i * BLOCK_SIZE * 0.7), option, color)
         
-        if mouse_down and rect.collidepoint(mouse_pos):
+        if mouse_down and rect.collidepoint(mouse_pos) and option != "type":
             if option == "draw layer":
                 options[option] = (value + 1) % 4
             else:
                 options[option] = not value
             
-
     for i, (name, (index, layer, surface)) in enumerate(block_data.items()):
         if selected_block == name:
-            pygame.draw.rect(window, (50, 200, 50), (window.get_width() - 10 - BLOCK_SIZE, i * BLOCK_SIZE, 10, BLOCK_SIZE))
+            pygame.draw.rect(window, (50, 200, 50), (window.get_width() - 10 - BLOCK_SIZE, i * BLOCK_SIZE + BLOCK_SIZE * offset_block_list * len(block_data), 10, BLOCK_SIZE))
         rect = pygame.Rect(window.get_width() - BLOCK_SIZE, i * BLOCK_SIZE + BLOCK_SIZE * offset_block_list * len(block_data), BLOCK_SIZE, BLOCK_SIZE)
         window.blit(pygame.transform.scale(surface, (BLOCK_SIZE, BLOCK_SIZE)), rect.topleft)
         if mouse_down and rect.collidepoint(mouse_pos):

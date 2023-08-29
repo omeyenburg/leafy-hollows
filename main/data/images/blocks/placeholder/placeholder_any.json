@@ -1,10 +1,10 @@
 {
-    "name": "placeholder1",
+    "name": "placeholder_any",
     "family": "placeholder",
     "layer": "foreground",
     "hardness": 0,
     "speed": 0,
     "frames": [
-        "placeholder1.png"
+        "placeholder_any.png"
     ]
 }

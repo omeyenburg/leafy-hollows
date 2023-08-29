@@ -52,7 +52,7 @@ def play(window, sound: str, x: float=0.0, identifier: str=None, channel_volume:
     else:
         index = 0
 
-    if x < 0.5:
+    if x < -0.5:
         volume = 2 ** (-(x + 0.5) ** 2) * volume * channel_volume
         side = (1, 0)
     elif x > 0.5:
@@ -60,7 +60,7 @@ def play(window, sound: str, x: float=0.0, identifier: str=None, channel_volume:
         side = (0, 1)
     else:
         volume = volume * channel_volume
-        side = (0.5, 0.5)
+        side = (1, 1)
 
     files[index].set_volume(volume * window.options["volume"])
     channel = pygame.mixer.find_channel()

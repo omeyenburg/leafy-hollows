@@ -1,0 +1,18 @@
+{
+    "enable vsync": true,
+    "max fps": 1000,
+    "text resolution": 40,
+    "particles": 1,
+    "antialiasing": 0,
+    "show fps": false,
+    "show debug": false,
+    "language": "english",
+    "volume": 1,
+    "simulation distance": 5,
+    "key.left": "a",
+    "key.right": "d",
+    "key.jump": "space",
+    "key.sprint": "left shift",
+    "key.crouch": "c",
+    "key.return": "escape"
+}
