@@ -19,7 +19,9 @@ def find(folder: str, name: str, sub_folder=False):
     if not os.path.isabs(folder):
         folder = os.path.join(__file__, "..", "..", "..", *folder.split("/"))
     if sub_folder:
-        return glob.glob(os.path.abspath("/" + os.path.join(*folder.split("/"), "**", name)), recursive=True)
+        #print(glob.glob(os.path.abspath("/" + os.path.join(*folder.split("/"), "**", name)), recursive=True))
+        #print(os.path.abspath(os.path.join(*folder.split("/"), "**", name)))
+        return glob.glob(os.path.abspath(os.path.join(*folder.split("/"), "**", name)), recursive=True)
     return glob.glob(os.path.abspath("/" + os.path.join(*folder.split("/"), name)))
 
 
