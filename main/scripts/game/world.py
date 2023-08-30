@@ -176,6 +176,8 @@ class World(dict):
 
                 if self.block_index[block[1]] in ("torch", "torch_flipped"):
                     particle.spawn(window, self, "spark", start[0] + x, start[1] + y)
+                    if self.view[x, y, 3] > 600:
+                        self[(start[0] + x, start[1] + y)][1] = self.block_name["unlit_torch"]
         
         window.world_view = self.view
 

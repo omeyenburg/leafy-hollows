@@ -1,5 +1,4 @@
 #version 330 core
-#define MAX_BLOCK_EDGES 1024
 #define WAVE_AMPLITUDE 0.05
 #define WAVE_FREQUENCY 0.3
 #define WATER_PER_BLOCK 1000.0
@@ -27,10 +26,11 @@ uniform vec2 camera;
 uniform float resolution;
 uniform float time;
 uniform int gray_screen;
-
+/*
+//#define MAX_BLOCK_EDGES 1024
 layout(std140) uniform ShadowData {
     int block_edges[MAX_BLOCK_EDGES];
-};
+};*/
 
 // Predefined values
 vec2 BLOCK_COUNT;
@@ -199,7 +199,7 @@ ivec4 get_next_closest_block(ivec2 source_pixel) {
         return ivec4(source_pixel.x, 0, 0, 1);
     }
 }
-
+/*
 bool get_shadow(vec2 start, vec2 end) {
     for (int i = 0; i < block_edges[0]; i++) {
         vec4 edge = vec4(
@@ -233,6 +233,7 @@ bool get_shadow(vec2 start, vec2 end) {
     }
     return false;
 }
+*/
 
 vec4 get_color_foreground() {
     BLOCK_COUNT = textureSize(texBlocks, 0) / BLOCK_SIZE_SOURCE;

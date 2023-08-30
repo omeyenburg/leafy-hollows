@@ -138,31 +138,3 @@ class CollisionPhysicsObject:
         self.underWater = self.inWater and world.get_water(*block_head) > 0.2
 
         self.apply_velocity(world, delta_time)
-
-
-class PhysicsObject: # No collision
-    def __init__(self, mass: float, position: [float], size: [float], gravity: float=9.81):
-        self.uuid = _generate_uuid()
-        self.mass: float = mass
-        self.rect: geometry.Rect = geometry.Rect(*position, *size)
-        self.vel: [float] = [0.0, 0.0]
-        self.gravity_constant = gravity
-
-    def apply_force(self, force: float, angle: float, delta_time: float): # angle in degrees; 0 is right, counterclockwise
-        """
-        Applies force to the object.
-        """
-        r_angle = math.radians(angle)
-        self.vel[0] += math.cos(r_angle) * force / self.mass * delta_time
-        self.vel[1] += math.sin(r_angle) * force / self.mass * delta_time
-
-    def update(self, world, delta_time):
-        """
-        Moves the object.
-        """
-        self.apply_force(self.gravity_constant * self.mass * delta_time, 270, 1)
-        self.apply_force(delta_time * abs(world.wind) / (self.mass / 5), 90 + 90 * min(1, max(-1, -world.wind)), self.mass)
-        self.rect.x += self.vel[0] * delta_time
-        self.rect.x = round(self.rect.x, 5) # bugs occur at higher precision
-        self.rect.y += self.vel[1] * delta_time
-        self.rect.y = round(self.rect.y, 5)
