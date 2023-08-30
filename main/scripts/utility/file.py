@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from scripts.utility.const import *
 import pickle
 import json
 import glob
@@ -18,9 +19,15 @@ def find(folder: str, name: str, sub_folder=False):
     """
     if not os.path.isabs(folder):
         folder = os.path.join(__file__, "..", "..", "..", *folder.split("/"))
+    
+    # Darwin fix
+    prefix = ""
+    if PLATFORM == "Darwin":
+        prefix = "/"
+
     if sub_folder:
-        return glob.glob(os.path.abspath("/" + os.path.join(*folder.split("/"), "**", name)), recursive=True)
-    return glob.glob(os.path.abspath("/" + os.path.join(*folder.split("/"), name)))
+        return glob.glob(os.path.abspath(prefix + os.path.join(*folder.split("/"), "**", name)), recursive=True)
+    return glob.glob(os.path.abspath(prefix + os.path.join(*folder.split("/"), name)))
 
 
 def abspath(path: str):
@@ -62,8 +69,11 @@ def read(path: str, default=None, file_format="text", split=False):
                 data = json.load(f)
 
         elif file_format == "pickle":
-            with open(path, 'rb') as f:
-                data = pickle.load(f)
+            try:
+                with open(path, 'rb') as f:
+                    data = pickle.load(f)
+            except EOFError:
+                return None
 
     except (ValueError if default is None else FileNotFoundError):
             data = default

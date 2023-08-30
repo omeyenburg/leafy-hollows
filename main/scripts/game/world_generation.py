@@ -1,14 +1,49 @@
 # -*- coding: utf-8 -*-
 from scripts.utility.const import *
-from noise import *
 import scripts.game.structure as structure
 import random
 import math
 
 
+# Import noise / opensimplex
+try:
+    from noise import *
+except ModuleNotFoundError:
+    import opensimplex
+
+    def pnoise1(x: float, octaves: int=1, persistence: float=0.5, lacunarity: float=2.0, repeat: float=0):
+        z = 0
+        octaves = 1
+
+        if repeat:
+            x = abs(math.sin(x * math.pi / repeat + 2.928) * repeat)
+
+        for i in range(octaves):
+            divisor = 2 ** i
+            z += opensimplex.noise2(x / divisor, math.e) / divisor
+
+        return z
+
+    def snoise2(x: float, y: float, octaves: int=1, persistence: float=0.5, lacunarity: float=2.0, repeatx: float=0, repeaty: float=0):
+        z = 0
+        octaves = 1
+
+        if repeatx:
+            x = abs(math.sin(x * math.pi / repeatx + 0.214) * repeatx)
+        if repeaty:
+            y = abs(math.sin(y * math.pi / repeaty + 1.331) * repeaty)
+
+        for i in range(octaves):
+            divisor = 2 ** i
+            z += opensimplex.noise2(x / divisor, y / divisor) / divisor
+
+        return z
+
+
 # Replace with better names...? Add / Remove?
 BIOMES = ["overgrown", "mushroom", "dripstone", "frozen", "underwater", "stone", "desert", "hell", "crystal", "dwarf"]
 CAVE_SHAPES = ["intro", "horizontal", "vertical", "blob", "structure"]
+
 
 """
 def _random(world, x, y=0, z=0):
@@ -134,18 +169,6 @@ def find_edge_blocks(world):
 
 
 def generate_foliage(world, blocks_ground, blocks_ceiling, blocks_wall_right, blocks_wall_left):
-    """
-    for coord in blocks_ground:
-        if _random(world, *coord) > 0.4: # Put vegetation
-            if _random(world, *coord, 1) > 0.5: # Put grass
-                r = _randint(world, *coord, 0, 2)
-                block = ("plant0", "bush2", "grass0")[r]
-                block_type = world.block_name[block]
-            else: # Put mushroom
-                r = _randint(world, *coord, 0, 13, z=2140)
-                block_type = world.block_name["mushroom" + str(r)]
-            world.set_block(*coord, block_type)
-    """
     for coord in blocks_ground:
         if random.random() > 0.2:
             group = random.random()
@@ -217,6 +240,7 @@ def generate_points_segment(position: [float], length, start_angle: float, devia
         position[1] = position[1] + math.sin(angle) * step_size
         points.add(tuple(position))
         angle_change = snoise2(i * 20.215 + 0.0142, 1, octaves=3) * max_angle_change
+        #angle_change = opensimplex.noise2(i * 20.215 + 0.0142, 1) * max_angle_change
         angle_change -= (angle - start_angle) / deviation * max_angle_change
         angle += angle_change
 
@@ -234,10 +258,13 @@ def flatten_edges(world):
 
 def generate_block(world, x, y, repeat=0):
     if repeat:
-        z = snoise2(x / 16, y / 16, octaves=3, persistence=0.1, lacunarity=5, repeaty=repeat / 16)
+        z = snoise2(x / 16 + world.seed, y / 16, octaves=3, persistence=0.1, lacunarity=5, repeaty=repeat / 16)
+        #z = opensimplex.noise2(x / 16, y / 16)
     else:
-        z = snoise2(x / 30 + world.seed, y / 30 + world.seed, octaves=3, persistence=0.1, lacunarity=5)
-    if z < 0.5:
+        z = snoise2(x / 16 + world.seed, y / 16 + world.seed, octaves=3, persistence=0.1, lacunarity=5)
+        #z = opensimplex.noise2(x / 30 + world.seed, y / 30 + world.seed)
+
+    if z < 0.2:
         world.set_block(x, y, world.block_name["grass_block"])
     else:
         world.set_block(x, y, world.block_name["stone_block"])
@@ -249,6 +276,7 @@ def line_cave(world, position, length, angle, deviation, radius):
 
     for (x, y) in points:
         p_radius = int(pnoise1((x + y) / 2 + 100, octaves=3) * 2 + radius)
+        #p_radius = int(opensimplex.noise2(1.3, (x + y) / 2 + 100) * 2 + radius)
         for dx in range(-radius - border_padding, radius + border_padding + 1):
             for dy in range(-radius - border_padding, radius + border_padding + 1):
                 coord = (int(x + dx), int(y + dy))
@@ -264,6 +292,7 @@ class Shape:
         surface_size = (50, 30)
         for x in range(-surface_size[0], surface_size[0] + 1):
             surface_level = pnoise1(x / 20 + world.seed, octaves=3) * 9
+            #surface_level = opensimplex.noise2(1.3, x / 20 + world.seed) * 9
             for y in range(-surface_size[0], surface_size[0] + 1):
                 if surface_level < y:
                     world.set_block(x, y, 0)
@@ -277,11 +306,13 @@ class Shape:
 
         for i in range(length):
             position[0] = pnoise1(i * 16 + world.seed, octaves=3, repeat=INTRO_REPEAT * 16) * deviation
+            #position[0] = opensimplex.noise2(1.3, i * 16 + world.seed) * deviation
             position[1] = -i
             points.add(tuple(position))
 
         for (x, y) in points:
             radius = int((pnoise1(y + world.seed, octaves=3, repeat=INTRO_REPEAT) + 2) * 2)
+            #radius = int((opensimplex.noise2(1.3, y + world.seed) + 2) * 2)
             for dx in range(-radius - border_padding, radius + border_padding + 1):
                 for dy in range(-radius - border_padding, radius + border_padding + 1):
                     coord = (int(x + dx), int(y + dy))
@@ -296,6 +327,7 @@ class Shape:
     @staticmethod
     def horizontal(world, position):
         angle = snoise2(position[0] / 100 + world.seed, world.seed, octaves=4) * 0.6
+        #angle = opensimplex.noise2(position[0] / 100 + world.seed, world.seed) * 0.6
         length = random.randint(50, 150)
         deviation = random.randint(2, 5)
         radius = 3
@@ -318,6 +350,7 @@ class Shape:
     def blob(world, position):
         border_padding = 5
         radius = int((pnoise1(position[0] + world.seed, octaves=3) + 3) * 3)
+        #radius = int((opensimplex.noise2(1.3, position[0] + world.seed) + 3) * 3)
         for dx in range(-radius - border_padding, radius + border_padding + 1):
             for dy in range(-radius - border_padding, radius + border_padding + 1):
                 coord = (int(position[0] + dx), int(position[1] + dy))
@@ -325,7 +358,3 @@ class Shape:
                     world.set_block(*coord, 0)
                 elif dx ** 2 + (dy * 2) ** 2 <= radius ** 2:
                     world.set_block(*coord, 0)
-
-
-
-        

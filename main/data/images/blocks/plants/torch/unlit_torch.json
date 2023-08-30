@@ -1,0 +1,10 @@
+{
+    "name": "unlit_torch",
+    "family": "grass",
+    "layer": "plant",
+    "hardness": 1,
+    "speed": 0,
+    "frames": [
+        "unlit_torch.png"
+    ]
+}
