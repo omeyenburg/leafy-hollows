@@ -1,0 +1,11 @@
+{
+    "name": "topaz0",
+    "family": "crystal",
+    "layer": "plant",
+    "hardness": 1,
+    "speed": 0,
+    "flip": 1,
+    "frames": [
+        "topaz0.png"
+    ]
+}

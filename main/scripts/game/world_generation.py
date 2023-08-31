@@ -45,14 +45,7 @@ BIOMES = ["overgrown", "mushroom", "dripstone", "frozen", "underwater", "stone",
 CAVE_SHAPES = ["intro", "horizontal", "vertical", "blob", "structure"]
 
 
-"""
-def _random(world, x, y=0, z=0):
-    return (hash(f"{world.seed}-{x}-{y}") % 2147483647) / 2147483647
-def _randint(world, x: float, y: float=0.0, start: int=0, stop: int=1, z: float=0.0):
-    return round(start + random(world, x, y, z + start + stop) * (stop - start))
-"""
-
-
+# Called from World
 def generate_world(world):
     """
     Main world generation function
@@ -135,6 +128,7 @@ def generate_world(world):
     print("done")
 
 
+# Called from generate_world
 def find_edge_blocks(world):
     blocks_ground = set()
     blocks_ceiling = set()
@@ -168,50 +162,80 @@ def find_edge_blocks(world):
     return blocks_ground, blocks_ceiling, blocks_wall_right, blocks_wall_left
 
 
+# Called from generate_world
 def generate_foliage(world, blocks_ground, blocks_ceiling, blocks_wall_right, blocks_wall_left):
+    blocks_ground = random.choices(list(blocks_ground), k=int(WORLD_VEGETATION_FLOOR_DENSITY * len(blocks_ground)))
+    blocks_ceiling = random.choices(list(blocks_ceiling), k=int(WORLD_VEGETATION_CEILING_DENSITY * len(blocks_ceiling)))
+    blocks_wall_right = random.choices(list(blocks_wall_right), k=int(WORLD_VEGETATION_WALL_DENSITY * len(blocks_wall_right)))
+    blocks_wall_left = random.choices(list(blocks_wall_left), k=int(WORLD_VEGETATION_WALL_DENSITY * len(blocks_wall_left)))
+
     for coord in blocks_ground:
-        if random.random() > 0.2:
-            group = random.random()
-            if group < 0.2:
-                block_pool = BLOCKS_VEGETATION_FLOOR_RARE
-            elif group < 0.4:
-                block_pool = BLOCKS_VEGETATION_FLOOR_UNCOMMON
-            else:
-                block_pool = BLOCKS_VEGETATION_FLOOR_COMMON
-            
-            index = random.randint(0, len(block_pool) - 1)
-            flipped = random.random() > 0.5
-            block = block_pool[index]
-            if flipped and block + "_flipped" in world.block_name:
-                block += "_flipped"
-            block_type = world.block_name[block]
-            world.set_block(*coord, block_type)
+        generate_foliage_floor(world, coord)
 
     for coord in blocks_ceiling:
-        if not world.get_block(coord[0], coord[1] + 1, 0, False, 0):
-            continue
+        generate_foliage_ceiling(world, coord)
 
+    for coord in blocks_wall_right:
+        generate_foliage_wall(world, coord, flipped=0)
+    
+    for coord in blocks_wall_left:
+        generate_foliage_wall(world, coord, flipped=1)
+
+
+# Called from generate_foliage
+def generate_foliage_floor(world, coord):
+    group = random.random()
+    if group < 0.2:
+        block_pool = BLOCKS_VEGETATION_FLOOR_RARE
+    elif group < 0.4:
+        block_pool = BLOCKS_VEGETATION_FLOOR_UNCOMMON
+    else:
+        block_pool = BLOCKS_VEGETATION_FLOOR_COMMON
+    
+    index = random.randint(0, len(block_pool) - 1)
+    flipped = random.random() > 0.5
+    block = block_pool[index]
+    if flipped and block + "_flipped" in world.block_name:
+        block += "_flipped"
+    block_type = world.block_name[block]
+    world.set_block(*coord, block_type)
+
+
+# Called from generate_foliage
+def generate_foliage_ceiling(world, coord):
+    if not world.get_block(coord[0], coord[1] + 1, 0, False, 0):
+        return
+
+    index = random.randint(0, len(BLOCKS_VEGETATION_CEILING) - 1)
+    block = BLOCKS_VEGETATION_CEILING[index]
+
+    if block.startswith("vines"):
+        length = int(math.sqrt(random.random() * 64) + 1)
+    else:
+        length = 1
+
+    for i in range(length):                
         if random.random() > 0.5:
-            index = random.randint(0, len(BLOCKS_VEGETATION_CEILING) - 1)
-            block = BLOCKS_VEGETATION_CEILING[index]
-
-            if block.startswith("vines"):
-                length = int(math.sqrt(random.random() * 64) + 1)
-            else:
-                length = 1
-
-            for i in range(length):                
-                if random.random() > 0.5:
-                    block_type = world.block_name[block + "_flipped"]
-                else:
-                    block_type = world.block_name[block]
-                x, y = coord[0], coord[1] - i
-                if world.get_block(x, y, 0, False, 1) or world.get_block(x, y, 1, False, 1):
-                    break
-
-                world.set_block(x, y, block_type)
+            block_type = world.block_name[block + "_flipped"]
+        else:
+            block_type = world.block_name[block]
+        x, y = coord[0], coord[1] - i
+        if world.get_block(x, y, 0, False, 1) or world.get_block(x, y, 1, False, 1):
+            break
+        world.set_block(x, y, block_type)
 
 
+# Called from generate_foliage
+def generate_foliage_wall(world, coord, flipped=1):
+    index = random.randint(0, len(BLOCKS_VEGETATION_WALL) - 1)
+    block = BLOCKS_VEGETATION_WALL[index]
+    if flipped and block + "_flipped" in world.block_name:
+        block += "_flipped"
+    block_type = world.block_name[block]
+    world.set_block(*coord, block_type)
+
+
+# Called from generate_world
 def generate_poles(world, poles, blocks_ground, blocks_ceiling):
     blocks_ground = dict(blocks_ground)
     blocks_ceiling = dict(blocks_ceiling)
@@ -227,26 +251,7 @@ def generate_poles(world, poles, blocks_ground, blocks_ceiling):
             world.set_block(x, y, world.block_name["pole"])
 
 
-def generate_points_segment(position: [float], length, start_angle: float, deviation: float):
-    angle = start_angle
-    points = set()
-
-    angle_change = 0
-    max_angle_change = 0.5
-    step_size = 0.5
-
-    for i in range(length):
-        position[0] = position[0] + math.cos(angle) * step_size
-        position[1] = position[1] + math.sin(angle) * step_size
-        points.add(tuple(position))
-        angle_change = snoise2(i * 20.215 + 0.0142, 1, octaves=3) * max_angle_change
-        #angle_change = opensimplex.noise2(i * 20.215 + 0.0142, 1) * max_angle_change
-        angle_change -= (angle - start_angle) / deviation * max_angle_change
-        angle += angle_change
-
-    return points
-
-
+# Called from generate_world
 def flatten_edges(world):
     s = world.copy()
     p = 0
@@ -270,6 +275,29 @@ def generate_block(world, x, y, repeat=0):
         world.set_block(x, y, world.block_name["stone_block"])
 
 
+
+# Called from Shape.*
+def generate_points_segment(position: [float], length, start_angle: float, deviation: float):
+    angle = start_angle
+    points = set()
+
+    angle_change = 0
+    max_angle_change = 0.5
+    step_size = 0.5
+
+    for i in range(length):
+        position[0] = position[0] + math.cos(angle) * step_size
+        position[1] = position[1] + math.sin(angle) * step_size
+        points.add(tuple(position))
+        angle_change = snoise2(i * 20.215 + 0.0142, 1, octaves=3) * max_angle_change
+        #angle_change = opensimplex.noise2(i * 20.215 + 0.0142, 1) * max_angle_change
+        angle_change -= (angle - start_angle) / deviation * max_angle_change
+        angle += angle_change
+
+    return points
+
+
+# Called from Shape.*
 def line_cave(world, position, length, angle, deviation, radius):
     border_padding = 4
     points = generate_points_segment(position, length, angle, deviation)
@@ -286,6 +314,7 @@ def line_cave(world, position, length, angle, deviation, radius):
                     world.set_block(*coord, world.block_name["placeholder_terrain"])
 
 
+# Called from generate_world
 class Shape:
     @staticmethod
     def intro(world, position):

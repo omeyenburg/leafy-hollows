@@ -1,0 +1,11 @@
+{
+    "name": "amethyst1",
+    "family": "crystal",
+    "layer": "plant",
+    "hardness": 1,
+    "speed": 0,
+    "flip": 1,
+    "frames": [
+        "amethyst1.png"
+    ]
+}
