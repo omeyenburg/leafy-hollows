@@ -9,7 +9,7 @@ def _generate_uuid():
     return str(uuid.uuid4()) # 2^128 unique ids; low collision chance
 
 
-class CollisionPhysicsObject:
+class PhysicsObject:
     def __init__(self, mass: float, position: [float], size: [float], force_func=None):
         self.uuid = _generate_uuid()
         self.mass: float = mass

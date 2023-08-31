@@ -6,7 +6,7 @@ import scripts.graphics.sound as sound
 import random
 
 
-class Player(CollisionPhysicsObject):
+class Player(PhysicsObject):
     def __init__(self, spawn_pos: [float], speed: float, sprint_speed: float, crouch_speed: float, swim_speed: float, acceleration_time: float, jump_force: int):
         super().__init__(50, spawn_pos, PLAYER_RECT_SIZE_NORMAL)
 
@@ -45,6 +45,7 @@ class Player(CollisionPhysicsObject):
     
     def jump(self, window, duration: float):
         force = self.jump_force * duration / window.delta_time
+         
         if self.direction == 1 and self.charge_crouch_jump and not window.keybind("left"):
             # Crouch jump left
             self.apply_force(force * 8, 160, window.delta_time)
@@ -73,30 +74,29 @@ class Player(CollisionPhysicsObject):
             sound.play(window, "hit_ground")
 
     def move(self, world, window: Window):
-        # Block_coords
-        wall_block_right = (round(self.rect.x + 0.8), round(self.rect.y + 1))
-        wall_block_left = (round(self.rect.x - 0.8), round(self.rect.y + 1))
-
         # Climb poles & vines
-        grab_pole = world.get_block(round(self.rect.x), round(self.rect.y + 0.8), layer=2) in world.blocks_climbable
-        on_pole = world.get_block(round(self.rect.x), round(self.rect.y - 0.2), layer=2) in world.blocks_climbable or grab_pole
+        if self.direction:
+            pole_x = math.floor(round(self.rect.x, 1))
+        else:
+            pole_x = math.ceil(round(self.rect.x, 1))
+            
+        grab_pole = world.get_block(pole_x, round(self.rect.y + 0.8), layer=2) in world.blocks_climbable
+        on_pole = world.get_block(pole_x, round(self.rect.y - 0.2), layer=2) in world.blocks_climbable or grab_pole
 
         if window.keybind("jump") and (on_pole or grab_pole):
-            self.onGround = 2
-            if self.direction:
-                pole_x = math.floor(round(self.rect.x, 1))
-            else:
-                pole_x = math.ceil(round(self.rect.x, 1))
-                
             if (window.keybind("left") or window.keybind("right")) and on_pole:
-                if abs(self.vel[0]) > 1.5:
-                    self.onGround = 0
-                else:
-                    self.vel[1] = 1.5
+                if abs(self.vel[0]) < 1:
+                    if window.keybind("right"):
+                        self.direction = 1
+                        self.vel[0] += 1.5
+                    else:
+                        self.direction = 0
+                        self.vel[0] -= 1.5
+                    self.vel[1] = 5
             elif grab_pole and not window.keybind("crouch"):
                 self.rect.x = pole_x
                 self.vel[0] = 0
-                self.vel[1] = max(1.8, self.vel[1])
+                self.vel[1] = max(2, self.vel[1])
                 self.state = "climb_pole"
                 return
             elif (not grab_pole) or window.keybind("crouch"):
@@ -105,6 +105,10 @@ class Player(CollisionPhysicsObject):
                 self.vel[1] = max(0.15, self.vel[1])
                 self.state = "on_pole"
                 return
+
+        # Block_coords
+        wall_block_right = (round(self.rect.x + 0.8), round(self.rect.y + 1))
+        wall_block_left = (round(self.rect.x - 0.8), round(self.rect.y + 1))
 
         # Animation states
         if self.vel[1] < -5:

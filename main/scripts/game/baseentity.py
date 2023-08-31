@@ -8,7 +8,7 @@ class Entity(physics.PhysicsObject): # Used for ropes etc.
     ...
 
 
-class LivingEntity(physics.CollisionPhysicsObject):
+class LivingEntity(physics.PhysicsObject):
     def __init__(self, *args, health: int=0, **kwargs):
         super().__init__(*args, *kwargs)
         self.health: int = health
@@ -17,6 +17,7 @@ class LivingEntity(physics.CollisionPhysicsObject):
         self.health -= amount
 
 
+'''
 class ChainedEntity(physics.CollisionPhysicsObject):
     def __init__(self, *args, parent=None, length: int=0, start: [float, float]=None,
                  end: [float, float]=None, element_radius: int=1, collision: bool=False, **kwargs):
@@ -172,11 +173,4 @@ class ChainedEntity(physics.CollisionPhysicsObject):
         rect = window.camera.map_coord(self.rect, from_world=True)
         window.draw_rect(rect[:2], rect[2:], (0, 0, 255, 255))
 
-
-class Particle(physics.PhysicsObject): # Does not collide
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-
-class CollisionParticle(physics.CollisionPhysicsObject):
-    ...
+'''

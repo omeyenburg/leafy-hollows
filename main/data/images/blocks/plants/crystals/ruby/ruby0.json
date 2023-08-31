@@ -1,0 +1,11 @@
+{
+    "name": "ruby0",
+    "family": "crystal",
+    "layer": "plant",
+    "hardness": 1,
+    "speed": 0,
+    "flip": 1,
+    "frames": [
+        "ruby0.png"
+    ]
+}
