@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from scripts.utility.const import *
-import scripts.utility.file as file
+from scripts.utility import file
 import numpy
 
 

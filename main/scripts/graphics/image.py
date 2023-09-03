@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from scripts.utility.const import *
-from pygame.locals import *
-import scripts.utility.file as file
+from scripts.utility import file
 import pygame
 import math
 import os
@@ -56,7 +55,7 @@ def load_blocks():
 
     width = math.ceil(math.sqrt(len(frames)))
     height = math.ceil(len(frames) / width)
-    image = pygame.Surface((width * WORLD_BLOCK_SIZE, height * WORLD_BLOCK_SIZE + 1), SRCALPHA)
+    image = pygame.Surface((width * WORLD_BLOCK_SIZE, height * WORLD_BLOCK_SIZE + 1), pygame.SRCALPHA)
 
     for i, frame in enumerate(frames):
         y, x = divmod(i, width)
@@ -116,7 +115,7 @@ def load_sprites():
         images[image] = len(sprite_rects)
         sprite_rects.append(rect)
 
-    image = pygame.Surface((width, height), SRCALPHA)
+    image = pygame.Surface((width, height), pygame.SRCALPHA)
 
     for image_path, i in paths.items():
         image.blit(pygame.image.load(image_path), (sprite_rects[i][0], sprite_rects[i][1]))

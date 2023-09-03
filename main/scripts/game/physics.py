@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from scripts.utility.const import *
-import scripts.utility.geometry as geometry
+from scripts.utility import geometry
 import uuid
 import math
 
@@ -135,6 +135,9 @@ class PhysicsObject:
         block_head = (math.floor(self.rect.centerx), round(self.rect.bottom))
 
         self.inWater = world.get_water(*block_feet) > 0.2
-        self.underWater = self.inWater and world.get_water(*block_head) > 0.2
+        if self.inWater and world.get_water(*block_head) > 0.2:
+            self.underWater = 5
+        elif self.underWater:
+            self.underWater -= 1
 
         self.apply_velocity(world, delta_time)

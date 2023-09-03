@@ -2,6 +2,7 @@
     "name": "sprint",
     "speed": 0.3,
     "volume": 0.4,
+    "category": "player",
     "sounds": [
         "step0.wav",
         "step1.wav",

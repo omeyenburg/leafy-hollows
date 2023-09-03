@@ -2,6 +2,7 @@
     "name": "walk",
     "speed": 0.5,
     "volume": 0.4,
+    "category": "player",
     "sounds": [
         "step0.wav",
         "step1.wav",

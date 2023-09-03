@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import scripts.utility.file as file
+from scripts.utility import file
 import pygame
 import random
 import os
@@ -22,8 +22,9 @@ def load():
         name = data["name"]
         speed = data["speed"]
         volume = data["volume"]
+        category = data["category"]
         files = tuple([pygame.mixer.Sound(sound_files[sound_file]) for sound_file in data["sounds"]])
-        loaded_sounds[name] = (speed, volume, files)
+        loaded_sounds[name] = (speed, volume, files, category)
 
     return loaded_sounds, played_sounds
 
@@ -36,7 +37,7 @@ def play(window, sound: str, x: float=0.0, identifier: str=None, channel_volume:
     loaded_sounds = window.loaded_sounds
     played_sounds = window.played_sounds
 
-    delay, volume, files = loaded_sounds[sound]
+    delay, volume, files, category = loaded_sounds[sound]
 
     if delay != 0.0:
         if identifier is None:
@@ -62,8 +63,9 @@ def play(window, sound: str, x: float=0.0, identifier: str=None, channel_volume:
         volume = volume * channel_volume
         side = (1, 1)
 
-    files[index].set_volume(volume * window.options["volume"])
+    options_volume = window.options[category + " volume"] * window.options["master volume"]
+
+    files[index].set_volume(volume * options_volume)
     channel = pygame.mixer.find_channel()
     channel.play(files[index], fade_ms=100)
     channel.set_volume(*side)
-    

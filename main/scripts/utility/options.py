@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-import scripts.utility.file as file
-import os
+from scripts.utility import file
 
 
 default: dict = {
@@ -12,7 +11,9 @@ default: dict = {
     "show fps": False,
     "show debug": False,
     "language": "english",
-    "volume": 1.0,
+    "master volume": 1.0,
+    "player volume": 1.0,
+    "ambient volume": 1.0,
     "simulation distance": 5,
     "key.left": "a",
     "key.right": "d",

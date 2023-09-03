@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 from scripts.game.world_generation import generate_world, generate_block
 from scripts.utility.const import *
-import scripts.graphics.particle as particle
-import scripts.utility.geometry as geometry
-import scripts.game.player as player
-import scripts.utility.file as file
+from scripts.graphics import particle
+from scripts.utility import geometry
+from scripts.game import player
+from scripts.utility import file
 import random
 import numpy
 import math
@@ -83,7 +83,8 @@ class World(dict):
         
         for entity in self.entities:
             entity.update(self, window)
-        particle.update(window, self)
+        if window.options["particles"]:
+            particle.update(window, self)
 
     def draw(self, window):
         self.loaded_blocks = window.camera.visible_blocks()

@@ -12,7 +12,7 @@ error = Event()
 def _thread(func, wait, *args, **kwargs):
     try:
         result = func(*args, **kwargs)
-    except:
+    except Exception:
         traceback.print_exc()
         error.set()
     if wait: # wait for normal fps

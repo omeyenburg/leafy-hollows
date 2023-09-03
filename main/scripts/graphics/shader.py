@@ -1,33 +1,33 @@
 # -*- coding: utf-8 -*-
 from OpenGL.GL.shaders import compileProgram, compileShader
-from OpenGL.GL import *
-import scripts.utility.file as file
+from OpenGL import GL
+from scripts.utility import file
 
 
 class Shader:
     active = None
 
     def __init__(self, vertex, fragment, replace={}, **variables):
-        self._program = glCreateProgram()
+        self._program = GL.glCreateProgram()
         
         # Read & compile vertex shader
         content = file.read(vertex)
         for search, replacement in sorted(replace.items(), key=lambda n: len(n[0]), reverse=True):
             content = content.replace(str(search), str(replacement))
-        vertex_shader = compileShader(content, GL_VERTEX_SHADER)
-        glAttachShader(self._program, vertex_shader)
+        vertex_shader = compileShader(content, GL.GL_VERTEX_SHADER)
+        GL.glAttachShader(self._program, vertex_shader)
 
         # Read & compile fragment shader
         content = file.read(fragment)
         for search, replacement in sorted(replace.items(), key=lambda n: len(n[0]), reverse=True):
             content = content.replace(str(search), str(replacement))
-        fragment_shader = compileShader(content, GL_FRAGMENT_SHADER)
-        glAttachShader(self._program, fragment_shader)
+        fragment_shader = compileShader(content, GL.GL_FRAGMENT_SHADER)
+        GL.glAttachShader(self._program, fragment_shader)
 
-        glLinkProgram(self._program)
-        glValidateProgram(self._program)
-        glDeleteShader(vertex_shader)
-        glDeleteShader(fragment_shader)
+        GL.glLinkProgram(self._program)
+        GL.glValidateProgram(self._program)
+        GL.glDeleteShader(vertex_shader)
+        GL.glDeleteShader(fragment_shader)
 
         # Dict containing all variables which should be send to the fragment shader {variable1: (uniformLoc, glUniformFunc, value)}
         self._variables = {variable: Shader.get_uniform_loc(self._program, variable, variables[variable]) for variable in variables}
@@ -42,35 +42,35 @@ class Shader:
         """
         Activate the shader.
         """
-        glUseProgram(self._program)
+        GL.glUseProgram(self._program)
         Shader.active = self
 
     def delete(self):
         """
         Delete the shader.
         """
-        glDeleteProgram(self._program)
+        GL.glDeleteProgram(self._program)
 
     def get_uniform_loc(program, variable, data_type): # Get location and convert glsl data type to valid function
-        loc = glGetUniformLocation(program, variable)
-        func = data_type_map = {'int': glUniform1i,
-                                'uint': glUniform1ui,
-                                'float': glUniform1f,
-                                'vec2': glUniform2f,
-                                'vec3': glUniform3f,
-                                'vec4': glUniform4f,
-                                'bvec2': glUniform2i,
-                                'bvec3': glUniform3i,
-                                'bvec4': glUniform4i,
-                                'ivec2': glUniform2i,
-                                'ivec3': glUniform3i,
-                                'ivec4': glUniform4i,
-                                'uvec2': glUniform2ui,
-                                'uvec3': glUniform3ui,
-                                'uvec4': glUniform4ui,
-                                'mat2': glUniformMatrix2fv,
-                                'mat3': glUniformMatrix3fv,
-                                'mat4': glUniformMatrix4fv}[data_type]
+        loc = GL.glGetUniformLocation(program, variable)
+        func = data_type_map = {'int': GL.glUniform1i,
+                                'uint': GL.glUniform1ui,
+                                'float': GL.glUniform1f,
+                                'vec2': GL.glUniform2f,
+                                'vec3': GL.glUniform3f,
+                                'vec4': GL.glUniform4f,
+                                'bvec2': GL.glUniform2i,
+                                'bvec3': GL.glUniform3i,
+                                'bvec4': GL.glUniform4i,
+                                'ivec2': GL.glUniform2i,
+                                'ivec3': GL.glUniform3i,
+                                'ivec4': GL.glUniform4i,
+                                'uvec2': GL.glUniform2ui,
+                                'uvec3': GL.glUniform3ui,
+                                'uvec4': GL.glUniform4ui,
+                                'mat2': GL.glUniformMatrix2fv,
+                                'mat3': GL.glUniformMatrix3fv,
+                                'mat4': GL.glUniformMatrix4fv}[data_type]
         return [loc, func, None]
 
     def update(self):
