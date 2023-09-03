@@ -2,6 +2,7 @@
     "name": "hit_ground",
     "speed": 1.0,
     "volume": 1.0,
+    "category": "player",
     "sounds": [
         "step0.wav",
         "step1.wav",

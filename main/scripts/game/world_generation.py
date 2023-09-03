@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from scripts.utility.const import *
-import scripts.game.structure as structure
+from scripts.game import structure
 import random
 import math
 

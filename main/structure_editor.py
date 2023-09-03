@@ -57,7 +57,7 @@ def get_file():
             elif generation_side.startswith("l"):
                 generation_data = "left"
 
-        structure_data = {"name": name, "room": is_room, "size": (width, height), "array": array}
+        structure_data = {"name": name, "structure_type": structure_type, "size": (width, height), "array": array}
 
     return filepath, structure_data
 

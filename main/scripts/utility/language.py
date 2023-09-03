@@ -1,36 +1,30 @@
 # -*- coding: utf-8 -*-
-import json
-import scripts.utility.file as file
+from scripts.utility import file
 
 
 translate_german = file.read("data/translations/german.json", file_format="json")
 
 
-class Translator:
-    def __init__(self, language):
-        self.language = language.lower()
+def translate(language, text):
+    if ": " in text: # Recursive translation
+        return ": ".join([translate(language, text) for text in text.split(": ")])
+    if language == "english": # No translation
+        return text
+    if language == "deutsch": # German translation
+        # Format text
+        spaces_left = len(text) - len(text.lstrip(" "))
+        spaces_right = len(text) - len(text.rstrip(" "))
+        text = text.strip(" ")
+        if text.endswith("\n"):
+            text = text[:-1]
+            wrap = "\n"
+        else:
+            wrap = ""
 
-    def translate(self, text):
-        if ": " in text:
-            return ": ".join([self.translate(text) for text in text.split(": ")])
+        # Translate text
+        if text in translate_german:
+            text = translate_german[text]
 
-        if self.language == "english":
-            return text
+        return " " * spaces_left + text + " " * spaces_right + wrap
 
-        elif self.language == "deutsch":
-            spaces_left = len(text) - len(text.lstrip(" "))
-            spaces_right = len(text) - len(text.rstrip(" "))
-            text = text.strip(" ")
-
-            if text.endswith("\n"):
-                text = text[:-1]
-                wrap = "\n"
-            else:
-                wrap = ""
-
-            if text in translate_german:
-                text = translate_german[text]
-
-            return " " * spaces_left + text + " " * spaces_right + wrap
-
-        raise Exception("Unknown language " + self.language)
+    raise Exception("Unknown language " + language)

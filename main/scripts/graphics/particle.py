@@ -19,8 +19,10 @@ def spawn(window, world, name, x: float, y: float, speed: float=None, direction:
     """
     Spawn a particle.
     """
-    if world.particle_types[name][0][0] > window.time:
+    particle_multiplier = window.options["particles"]
+    if (not particle_multiplier) or world.particle_types[name][0][0] > window.time:
         return
+
     world.particle_types[name][0][0] = window.time + world.particle_types[name][3]
 
     if speed is None:
@@ -30,12 +32,16 @@ def spawn(window, world, name, x: float, y: float, speed: float=None, direction:
     if divergence is None:
         divergence = world.particle_types[name][8]
 
-    if divergence:
-        x += divergence * random.random() / 4
-        y += divergence * random.random() / 4
-        divergence *= random.random()
+    for _ in range(particle_multiplier):
+        if divergence:
+            x += divergence * random.random() / 4
+            y += divergence * random.random() / 4
+            divergence *= random.random()
 
-    world.particles.append([name, x, y, window.time + world.particle_types[name][2], speed, direction + divergence])
+        world.particles.append([name, x, y, window.time + world.particle_types[name][2], speed, direction + divergence])
+
+        if not divergence:
+            return
 
 
 def update(window, world):

@@ -93,7 +93,7 @@ class Camera:
 
         # Update zoom
         if self.resolution_index < 1:
-            self.resolution_index = self.resolution_index + self.resolution_speed
+            self.resolution_index = self.resolution_index + self.resolution_speed * self.window.delta_time * 60
             factor = 1000 ** -((self.resolution_index - 1) ** 2) # f(x) = 1000^[-(x-1)^2]
             self.resolution = self.resolution_start * (1 - factor) + self.resolution_goal * factor
             self.pixels_per_meter = self.resolution * WORLD_BLOCK_SIZE
