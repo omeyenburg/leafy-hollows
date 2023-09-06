@@ -3,6 +3,19 @@ from scripts.utility import file
 
 
 translate_german = file.read("data/translations/german.json", file_format="json")
+special_symbols = {
+    "<Ae>": "Ä",
+    "<ae>": "ä",
+    "<Oe>": "Ö",
+    "<oe>": "ö",
+    "<Ue>": "Ü",
+    "<ue>": "ü",
+    "<s>": "ß"
+}
+
+for key in translate_german:
+    for search, replace in special_symbols.items():
+        translate_german[key] = translate_german[key].replace(search, replace)
 
 
 def translate(language, text):
