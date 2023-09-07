@@ -5,13 +5,16 @@ import platform
 OPENGL_VERSION: str = "3.3 core"
 PLATFORM: str = platform.system()
 
-MENU_SPACING: float = 0.05
-MENU_BUTTON_SMALL_WIDTH: float = 0.65
-MENU_BUTTON_WIDTH: float = 2 * MENU_BUTTON_SMALL_WIDTH + MENU_SPACING
-MENU_BUTTON_HEIGHT: float = 0.16
+MENU_SPACING: float = 0.05 # Spacing between buttons, etc.
+MENU_BUTTON_SMALL_WIDTH: float = 0.65 # Width of short buttons
+MENU_BUTTON_WIDTH: float = 2 * MENU_BUTTON_SMALL_WIDTH + MENU_SPACING # Width of normal buttons
+MENU_BUTTON_HEIGHT: float = 0.16 # Heigth of buttons and sliders
 MENU_BUTTON_SMALL_SIZE: [float] = (MENU_BUTTON_SMALL_WIDTH, MENU_BUTTON_HEIGHT)
 MENU_BUTTON_SIZE: [float] = (MENU_BUTTON_WIDTH, MENU_BUTTON_HEIGHT)
+MENU_SLIDER_WIDTH: float = 0.03125
 MENU_HEADING_SIZE: [float] = (MENU_BUTTON_SMALL_WIDTH, 0.3)
+MENU_DESCRIPTION_HOVER_TIME: float = 0.3 # Hover time until description is visible
+MENU_OFFSET_HOVER: float = MENU_BUTTON_HEIGHT / 16
 
 FONT_CHARACTERS: str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789äÄüÜöÖß_.,:;?!<=>#@%\'\"+-*/()[]"
 FONT_CHARACTERS_INDEX: dict = {char: FONT_CHARACTERS.find(char) for char in FONT_CHARACTERS}

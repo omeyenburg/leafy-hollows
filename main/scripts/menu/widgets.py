@@ -52,8 +52,13 @@ class Page:
         mouse_pos = window.camera.map_coord(window.mouse_pos[:2], from_pixel=1, from_centered=1)
         for child in self.children:
             child.update(window)
-            if (not child.hover_callback is None) and child.rect.collidepoint(mouse_pos):
-                child.hover_callback()
+            if child.rect.collidepoint(mouse_pos):
+                if child.hover_time > MENU_DESCRIPTION_HOVER_TIME and not child.hover_callback is None:
+                    child.hover_callback()
+                else:
+                    child.hover_time += window.delta_time
+            else:
+                child.hover_time = 0
         if not self.callback is None:
             self.callback()
         if window.keybind("return") == 1 and not self.parent is None:
@@ -100,6 +105,7 @@ class Widget:
         self.columnspan = columnspan
         self.fontsize = fontsize
         self.hover_callback = hover_callback
+        self.hover_time = 0
 
         if not 0 <= self.column < parent.columns:
             raise ValueError("Invalid Column " + str(self.column) + " for parent with " + str(parent.columns) + " column(s).")
@@ -159,25 +165,39 @@ class Button(Widget):
             self.draw_idle(window)
 
     def draw_idle(self, window: Window):
-        window.draw_rect(self.rect[:2], self.rect[2:], (250, 0, 0, 200))
-        window.draw_text(self.rect.center, self.text, (50, 0, 0, 250), self.fontsize, centered=True)
+        if self.hover_time > MENU_DESCRIPTION_HOVER_TIME / 2:
+            offset = MENU_OFFSET_HOVER
+        else:
+            offset = 0
+        if self.rect.w == MENU_BUTTON_SMALL_WIDTH:
+            image = "small_button"
+        else:
+            image = "button"
+        window.draw_image(image, (self.rect[0], self.rect[1] - offset), self.rect[2:])
+        window.draw_text((self.rect.centerx, self.rect.centery - offset), self.text, (255, 255, 255, 200), self.fontsize, centered=True)
 
     def draw_clicked(self, window: Window):
-        window.draw_rect(self.rect[:2], self.rect[2:], (200, 0, 0, 200))
-        window.draw_text(self.rect.center, self.text, (0, 0, 0, 250), self.fontsize, centered=True)
+        offset = MENU_OFFSET_HOVER * 2
+        if self.rect.w == MENU_BUTTON_SMALL_WIDTH:
+            image = "small_button"
+        else:
+            image = "button"
+        window.draw_image(image, (self.rect[0], self.rect[1] - offset), self.rect[2:])
+        window.draw_text((self.rect.centerx, self.rect.centery - offset), self.text, (255, 255, 255, 200), self.fontsize, centered=True)
 
 
 class Slider(Widget):
-    def __init__(self, *args, callback=None, value=0.0, **kwargs):
+    def __init__(self, *args, callback=None, value=0.0, text="", **kwargs):
         super().__init__(*args, **kwargs)
         self.callback = callback
         self.value = value
         self.selected = False
         self.slider_rect = self.rect.copy()
+        self.text = text
 
     def update(self, window: Window):
         self.slider_rect.h = self.rect.h
-        self.slider_rect.w = self.rect.h / 6
+        self.slider_rect.w = MENU_SLIDER_WIDTH
         self.slider_rect.x = self.rect.x + (self.rect.w - self.slider_rect.w) * self.value
         self.slider_rect.y = self.rect.y
 
@@ -201,8 +221,18 @@ class Slider(Widget):
         self.draw(window)
 
     def draw(self, window: Window):
-        window.draw_rect(self.rect[:2], self.rect[2:], (60, 0, 0, 200))
-        window.draw_rect(self.slider_rect[:2], self.slider_rect[2:], (250, 0, 0, 200))
+        if self.hover_time > MENU_DESCRIPTION_HOVER_TIME / 2:
+            offset = MENU_OFFSET_HOVER
+        else:
+            offset = 0
+        if self.rect.w == MENU_BUTTON_SMALL_WIDTH:
+            image = "small_button"
+        else:
+            image = "button"
+        window.draw_image(image, (self.rect[0], self.rect[1] - offset), self.rect[2:])
+        window.draw_text((self.rect.centerx, self.rect.centery - offset), self.text, (255, 255, 255, 200), TEXT_SIZE_OPTION, centered=True)
+        window.draw_image("slider", (self.slider_rect[0], self.slider_rect[1] - offset), self.slider_rect[2:])
+
 
 class Entry(Widget):
     def __init__(self, *args, text="", **kwargs):
@@ -222,15 +252,6 @@ class Entry(Widget):
     def draw(self):
         window.draw_rect(self.rect[:2], self.rect[2:], (255, 0, 0, 200))
         window.draw_text(self.rect.center, self.text, (0, 0, 0, 255), self.fontsize, centered=True)
-
-
-class Switch(Widget):
-    def __init__(self, *args, text="", **kwargs):
-        super().__init__(*args, **kwargs)
-        self.text = text
-
-    def update(self):
-        font.write(window.world_surface, self.text, (255, 255, 255), 4, self.coords().center, center=1)
 
 
 class ScrollBox(Widget):
@@ -294,8 +315,13 @@ class ScrollBox(Widget):
         for child in self.children:
             rect = child.rect.copy()
             rect.y -= self.offset
-            if (not child.hover_callback is None) and rect.collidepoint(mouse_pos):
-                child.hover_callback()
+            if rect.collidepoint(mouse_pos):
+                if child.hover_time > MENU_DESCRIPTION_HOVER_TIME and not child.hover_callback is None:
+                    child.hover_callback()
+                else:
+                    child.hover_time += window.delta_time
+            else:
+                child.hover_time = 0
 
         if not self.callback is None:
             self.callback()
