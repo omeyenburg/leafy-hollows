@@ -1,5 +1,4 @@
 experimental/android_test/.buildozer
-main/data/world/world.data
 **/__pycache__
 main/main.pyc
 **/.DS_Store

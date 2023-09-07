@@ -89,17 +89,16 @@ class Menu:
                 if not window.options["enable vsync"]:
                     window.options["enable vsync"] = True
                     window.resize()
-            label_fps.text = "Max Fps: " + show_fps
+            slider_fps.text = "Max Fps: " + show_fps
 
         if window.options["enable vsync"]:
             value = 0
         else:
             value = window.options["max fps"] / 1000
-        slider_fps = Slider(settings_video_page, MENU_BUTTON_SMALL_SIZE, value=value, columnspan=0)
+        slider_fps = Slider(settings_video_page, MENU_BUTTON_SMALL_SIZE, value=value)
         slider_fps.callback = slider_fps_update
-        label_fps = Label(settings_video_page, MENU_BUTTON_SMALL_SIZE, fontsize=TEXT_SIZE_OPTION)
         slider_fps_update()
-        label_fps.hover_callback = lambda: self.info_hover_box(
+        slider_fps.hover_callback = lambda: self.info_hover_box(
             slider_fps.rect.centerx < 0,
             "Max Fps",
             "high",
@@ -109,14 +108,14 @@ class Menu:
         # Text resolution slider
         def slider_text_resolution_update():
             text_resolution = int(slider_text_resolution.value * 70) + 10
-            label_text_resolution.text = "Text Resolution: " + str(text_resolution)
+            slider_text_resolution.text = "Text Resolution: " + str(text_resolution)
             window.set_text_resolution(text_resolution)
 
         value = (window.options["text resolution"] - 10) / 70
-        slider_text_resolution = Slider(settings_video_page, MENU_BUTTON_SMALL_SIZE, value=value, columnspan=0)
+        slider_text_resolution = Slider(settings_video_page, MENU_BUTTON_SMALL_SIZE, value=value)
         slider_text_resolution.callback = slider_text_resolution_update
-        label_text_resolution = Label(settings_video_page, MENU_BUTTON_SMALL_SIZE, text="Text Resolution: " + str(window.options["text resolution"]), fontsize=TEXT_SIZE_OPTION)
-        label_text_resolution.hover_callback = lambda: self.info_hover_box(
+        slider_text_resolution_update()
+        slider_text_resolution.hover_callback = lambda: self.info_hover_box(
             slider_text_resolution.rect.centerx < 0,
             "Text Resolution",
             "medium"
@@ -143,15 +142,14 @@ class Menu:
         # Particle slider
         def slider_particles_update():
             particles = int(slider_particles.value * 10)
-            label_particles.text = "Particle Density: " + f"{particles:2d}"
+            slider_particles.text = "Particle Density: " + f"{particles:2d}"
             window.options["particles"] = particles
 
         value = window.options["particles"] / 10
-        slider_particles = Slider(settings_video_page, MENU_BUTTON_SMALL_SIZE, value=value, columnspan=0)
+        slider_particles = Slider(settings_video_page, MENU_BUTTON_SMALL_SIZE, value=value)
         slider_particles.callback = slider_particles_update
-        label_particles = Label(settings_video_page, MENU_BUTTON_SMALL_SIZE, fontsize=TEXT_SIZE_OPTION)
         slider_particles_update()
-        label_particles.hover_callback = lambda: self.info_hover_box(
+        slider_particles.hover_callback = lambda: self.info_hover_box(
             slider_particles.rect.centerx < 0,
             "Particle Density",
             "medium",
@@ -162,20 +160,19 @@ class Menu:
         def slider_antialiasing_update():
             antialiasing = (0, 1, 2, 4, 8, 16)[round(slider_antialiasing.value * 5)]
             if antialiasing == 0:
-                label_antialiasing.text = "Antialiasing: False"
+                slider_antialiasing.text = "Antialiasing: False"
             else:
-                label_antialiasing.text = "Antialiasing: " + f"{antialiasing:5d}"
+                slider_antialiasing.text = "Antialiasing: " + f"{antialiasing:5d}"
             window.set_antialiasing(antialiasing)
 
         if window.options["antialiasing"]:
             value = [i / 5 for i in range(1, 6)][round(math.log2(window.options["antialiasing"]))]
         else:
             value = 0
-        slider_antialiasing = Slider(settings_video_page, MENU_BUTTON_SMALL_SIZE, value=value, columnspan=0)
+        slider_antialiasing = Slider(settings_video_page, MENU_BUTTON_SMALL_SIZE, value=value)
         slider_antialiasing.callback = slider_antialiasing_update
-        label_antialiasing = Label(settings_video_page, MENU_BUTTON_SMALL_SIZE, fontsize=TEXT_SIZE_OPTION)
         slider_antialiasing_update()
-        label_antialiasing.hover_callback = lambda: self.info_hover_box(
+        slider_antialiasing.hover_callback = lambda: self.info_hover_box(
             slider_antialiasing.rect.centerx < 0,
             "Antialiasing",
             "low",
@@ -232,32 +229,22 @@ class Menu:
         Label(settings_audio_page, MENU_HEADING_SIZE, columnspan=2, text="Audio Settings", fontsize=TEXT_SIZE_HEADING)
         
         # Volume slider
-        def slider_volume_update(slider, label, category):
+        def slider_volume_update(slider, category):
             volume = slider.value
             if category == "master volume":
                 name = category.title()
             else:
                 name = category.split(" volume")[0].title()
-            label.text = name + ": " + f"{int(volume * 100):3d}%"
+            slider.text = name + ": " + f"{int(volume * 100):3d}%"
             window.options[category] = volume
 
         for category in filter(lambda option: option.endswith(" volume"), window.options):
             value = window.options[category]
             if category == "master volume":
                 slider_volume = Slider(settings_audio_page, MENU_BUTTON_SIZE, columnspan=2, value=value)
-                label_volume = Label(settings_audio_page, MENU_BUTTON_SIZE, column=-1, columnspan=2, fontsize=TEXT_SIZE_OPTION)
             else:
-                slider_volume = Slider(settings_audio_page, MENU_BUTTON_SMALL_SIZE, value=value, columnspan=0)
-                label_volume = Label(settings_audio_page, MENU_BUTTON_SMALL_SIZE, fontsize=TEXT_SIZE_OPTION)
-                """
-                label_volume.hover_callback = lambda l=label_volume, c=category: self.info_hover_box(
-                    l.rect.centerx < 0,
-                    c.title(),
-                    description="Set the volume of all sounds, which are related to " + c + ".",
-                    height=0.51
-                )
-                """
-            slider_volume.callback = lambda s=slider_volume, l=label_volume, c=category: slider_volume_update(s, l, c)
+                slider_volume = Slider(settings_audio_page, MENU_BUTTON_SMALL_SIZE, value=value)
+            slider_volume.callback = lambda s=slider_volume, c=category: slider_volume_update(s, c)
             slider_volume.callback()
 
         Button(settings_audio_page, MENU_BUTTON_SIZE, columnspan=2, callback=settings_page.open, text="Back", fontsize=TEXT_SIZE_BUTTON)
@@ -272,16 +259,15 @@ class Menu:
         # Simulation distance
         def slider_simulation_distance_update():
             simulation_distance = int(slider_simulation_distance.value * 15 + 5)
-            label_simulation_distance.text = "Simulation Distance: " + f"{simulation_distance:2d}"
+            slider_simulation_distance.text = "Simulation Distance: " + f"{simulation_distance:2d}"
             window.options["simulation distance"] = simulation_distance
 
         value = (window.options["simulation distance"] - 5) / 15
-        slider_simulation_distance = Slider(settings_world_page, MENU_BUTTON_SMALL_SIZE, value=value, columnspan=0)
+        slider_simulation_distance = Slider(settings_world_page, MENU_BUTTON_SMALL_SIZE, value=value)
         slider_simulation_distance.callback = slider_simulation_distance_update
-        label_simulation_distance = Label(settings_world_page, MENU_BUTTON_SMALL_SIZE, fontsize=TEXT_SIZE_OPTION)
         slider_simulation_distance_update()
-        label_simulation_distance.hover_callback = lambda: self.info_hover_box(
-            label_simulation_distance.rect.centerx < 0,
+        slider_simulation_distance.hover_callback = lambda: self.info_hover_box(
+            slider_simulation_distance.rect.centerx < 0,
             "Simulation Distance",
             "high",
             "Set the distance of blocks, which are updated around the visible region."

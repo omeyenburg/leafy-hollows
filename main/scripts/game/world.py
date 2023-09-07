@@ -183,11 +183,11 @@ class World(dict):
         window.world_view = self.view
 
     def save(self):
-        file.write("data/world/world.data", self, file_format="pickle")
+        file.write("data/user/world.data", self, file_format="pickle")
 
     @staticmethod
     def load(window):
-        world = file.read("data/world/world.data", default=0, file_format="pickle")
+        world = file.read("data/user/world.data", default=0, file_format="pickle")
         if isinstance(world, World) and len(window.block_data) == len(world.block_name):
             for name in world.particle_types:
                 world.particle_types[name][0][0] = window.time
