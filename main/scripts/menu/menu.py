@@ -14,7 +14,7 @@ class Menu:
 
         ###---###  Main page  ###---###
         self.main_page = Page(columns=2, spacing=MENU_SPACING)
-        Label(self.main_page, MENU_HEADING_SIZE, columnspan=2, text="Title", fontsize=TEXT_SIZE_HEADING)
+        Label(self.main_page, MENU_TITLE_SIZE, columnspan=2, text="Title", fontsize=TEXT_SIZE_HEADING)
         button_main_play = Button(self.main_page, MENU_BUTTON_SIZE, columnspan=2, text="Play", fontsize=TEXT_SIZE_BUTTON)
         button_main_settings = Button(self.main_page, MENU_BUTTON_SMALL_SIZE, text="Settings", fontsize=TEXT_SIZE_BUTTON)
         Button(self.main_page, MENU_BUTTON_SMALL_SIZE, callback=window.quit, text="Quit", fontsize=TEXT_SIZE_BUTTON)
@@ -59,20 +59,22 @@ class Menu:
 
         ###---###  Settings page  ###---###
         settings_page = Page(parent=self.main_page, columns=2, spacing=MENU_SPACING)
-        Label(settings_page, MENU_HEADING_SIZE, columnspan=2, text="Settings", fontsize=TEXT_SIZE_HEADING)
+
         button_settings_video_open = Button(settings_page, MENU_BUTTON_SMALL_SIZE, text="Video Settings", fontsize=TEXT_SIZE_BUTTON)
         button_settings_audio_open = Button(settings_page, MENU_BUTTON_SMALL_SIZE, text="Audio Settings", fontsize=TEXT_SIZE_BUTTON)
         button_settings_control_open = Button(settings_page, MENU_BUTTON_SMALL_SIZE, text="Control Settings", fontsize=TEXT_SIZE_BUTTON)
         button_settings_world_open = Button(settings_page, MENU_BUTTON_SMALL_SIZE, text="World Settings", fontsize=TEXT_SIZE_BUTTON)
-        button_settings_back = Button(settings_page, MENU_BUTTON_SIZE, columnspan=2, callback=self.main_page.open, text="Back", fontsize=TEXT_SIZE_BUTTON)
+
         settings_page.layout()
+        Label(settings_page, MENU_HEADING_SIZE, columnspan=2, text="Settings", fontsize=TEXT_SIZE_HEADING)
+        settings_page.layout_prepend()
+        Button(settings_page, MENU_BUTTON_SIZE, columnspan=2, callback=self.main_page.open, text="Back", fontsize=TEXT_SIZE_BUTTON)
+        settings_page.layout_append()
         button_main_settings.callback = settings_page.open
 
 
         ###---###  Video settings page  ###---###
         settings_video_page = Page(parent=settings_page, spacing=MENU_SPACING, columns=2)
-        Label(settings_video_page, MENU_HEADING_SIZE, columnspan=2, text="Video Settings", fontsize=TEXT_SIZE_HEADING)
-
 
         # Fps slider
         def slider_fps_update():
@@ -218,15 +220,17 @@ class Menu:
             "none",
             "Select either English or German as the language."
         )
-
-        button_settings_back = Button(settings_video_page, MENU_BUTTON_SIZE, columnspan=2, callback=settings_page.open, text="Back", fontsize=TEXT_SIZE_BUTTON)
+        
         settings_video_page.layout()
+        Label(settings_video_page, MENU_HEADING_SIZE, columnspan=2, text="Video Settings", fontsize=TEXT_SIZE_HEADING)
+        settings_video_page.layout_prepend()
+        Button(settings_video_page, MENU_BUTTON_SIZE, columnspan=2, callback=settings_page.open, text="Back", fontsize=TEXT_SIZE_BUTTON)
+        settings_video_page.layout_append()
         button_settings_video_open.callback = settings_video_page.open
 
 
         ###---###  Audio settings page  ###---###
         settings_audio_page = Page(parent=settings_page, columns=2, spacing=MENU_SPACING)
-        Label(settings_audio_page, MENU_HEADING_SIZE, columnspan=2, text="Audio Settings", fontsize=TEXT_SIZE_HEADING)
         
         # Volume slider
         def slider_volume_update(slider, category):
@@ -247,14 +251,16 @@ class Menu:
             slider_volume.callback = lambda s=slider_volume, c=category: slider_volume_update(s, c)
             slider_volume.callback()
 
-        Button(settings_audio_page, MENU_BUTTON_SIZE, columnspan=2, callback=settings_page.open, text="Back", fontsize=TEXT_SIZE_BUTTON)
         settings_audio_page.layout()
+        Label(settings_audio_page, MENU_HEADING_SIZE, columnspan=2, text="Audio Settings", fontsize=TEXT_SIZE_HEADING)
+        settings_audio_page.layout_prepend()
+        Button(settings_audio_page, MENU_BUTTON_SIZE, columnspan=2, callback=settings_page.open, text="Back", fontsize=TEXT_SIZE_BUTTON)
+        settings_audio_page.layout_append()
         button_settings_audio_open.callback = settings_audio_page.open
 
 
         ###---###  World settings page  ###---###
         settings_world_page = Page(parent=settings_page, columns=2, spacing=MENU_SPACING)
-        Label(settings_world_page, MENU_HEADING_SIZE, columnspan=2, text="World Settings", fontsize=TEXT_SIZE_HEADING)
 
         # Simulation distance
         def slider_simulation_distance_update():
@@ -275,7 +281,7 @@ class Menu:
 
         # Delete world
         def button_delete_world_update():
-            if file.exists("data/world/world.data"):
+            if file.exists("data/user/world.data"):
                 delete_world_page.open()
 
         button_delete_world = Button(settings_world_page, MENU_BUTTON_SMALL_SIZE, callback=button_delete_world_update, text="Delete World", fontsize=TEXT_SIZE_BUTTON)
@@ -285,30 +291,34 @@ class Menu:
             description="If you delete your world, a new world will be created."
         )
 
-        Button(settings_world_page, MENU_BUTTON_SIZE, columnspan=2, callback=settings_page.open, text="Back", fontsize=TEXT_SIZE_BUTTON)
         settings_world_page.layout()
+        Label(settings_world_page, MENU_HEADING_SIZE, columnspan=2, text="World Settings", fontsize=TEXT_SIZE_HEADING)
+        settings_world_page.layout_prepend()
+        Button(settings_world_page, MENU_BUTTON_SIZE, columnspan=2, callback=settings_page.open, text="Back", fontsize=TEXT_SIZE_BUTTON)
+        settings_world_page.layout_append()
         button_settings_world_open.callback = settings_world_page.open
 
 
         ###---###  Delete world page  ###---###
         def button_delete_world_confirm_update():
-            file.delete("data/world/world.data")
+            file.delete("data/user/world.data")
             settings_world_page.open()
 
         delete_world_page = Page(parent=settings_world_page, columns=1, spacing=MENU_SPACING)
-        Label(delete_world_page, MENU_HEADING_SIZE, text="World Settings", fontsize=TEXT_SIZE_HEADING)
         Label(delete_world_page, MENU_HEADING_SIZE, text="If you delete your world, a new world will be created.", fontsize=TEXT_SIZE_BUTTON)
         button_delete_world_confirm = Button(delete_world_page, MENU_BUTTON_SIZE, callback=button_delete_world_confirm_update, text="Delete my world!", fontsize=TEXT_SIZE_BUTTON)
         Button(delete_world_page, MENU_BUTTON_SIZE, callback=settings_world_page.open, text="Cancel", fontsize=TEXT_SIZE_BUTTON)
         delete_world_page.layout()
+        Label(delete_world_page, MENU_HEADING_SIZE, text="World Settings", fontsize=TEXT_SIZE_HEADING)
+        delete_world_page.layout_prepend()
 
         
         ###---###  Controls settings page  ###---###
         settings_control_page = Page(parent=settings_page, columns=2, spacing=MENU_SPACING)
-        Label(settings_control_page, MENU_HEADING_SIZE, columnspan=2, text="Control Settings", fontsize=TEXT_SIZE_HEADING)
+        Label(settings_control_page, MENU_BUTTON_SMALL_SIZE) 
         Label(settings_control_page, MENU_HEADING_SIZE, columnspan=2, text="Click a button and press a key to bind a new key to an action", fontsize=TEXT_SIZE_TEXT)
 
-        scrollbox = ScrollBox(settings_control_page, (MENU_BUTTON_WIDTH + MENU_SPACING, 1), columnspan=2, columns=2, spacing=MENU_SPACING)
+        scrollbox = ScrollBox(settings_control_page, (MENU_BUTTON_WIDTH + MENU_SPACING, MENU_SCROLL_BOX_HEIGHT), columnspan=2, columns=2, spacing=MENU_SPACING)
         keys = list(filter(lambda x: x.startswith("key."), window.options))
         buttons = {}
         selected = None
@@ -317,16 +327,21 @@ class Menu:
             nonlocal selected
             for i in buttons:
                 if i != key:
-                    buttons[i].clicked[0] = 0
+                    buttons[i].clicked = 0
+            if selected == key:
+                return
             selected = key
             scrollbox.parent = None
+            for i, _ in enumerate(window.mouse_buttons):
+                window.mouse_buttons[i] = 0            
 
         def update_key():
             nonlocal selected
             if not selected is None:
-                keys = window.get_pressed_mods() + window.get_pressed_keys()
+                keys = window.get_pressed_mods() + window.get_pressed_keys() + window.get_pressed_mouse()
+                
                 if keys:
-                    buttons[selected].clicked[0] = 0
+                    buttons[selected].clicked = 0
                     buttons[selected].text = keys[0]
                     window.options[buttons[selected].key_identifer] = keys[0].lower()
                     window.keys: dict = dict.fromkeys([value for key, value in window.options.items() if key.startswith("key.")], 0)
@@ -350,6 +365,8 @@ class Menu:
         Button(settings_control_page, MENU_BUTTON_SMALL_SIZE, callback=settings_page.open, text="Back", fontsize=TEXT_SIZE_BUTTON)
         Button(settings_control_page, MENU_BUTTON_SMALL_SIZE, callback=reset_keys, text="Reset", fontsize=TEXT_SIZE_BUTTON)
         settings_control_page.layout()
+        Label(settings_control_page, MENU_HEADING_SIZE, columnspan=2, text="Control Settings", fontsize=TEXT_SIZE_HEADING)
+        settings_control_page.layout_prepend()
         button_settings_control_open.callback = settings_control_page.open
 
     def update(self):
@@ -408,7 +425,7 @@ class Menu:
             (description, TEXT_SIZE_DESCRIPTION, (250, 250, 250, 200))
         )
 
-        rect = [0, -height / 2, MENU_BUTTON_SMALL_WIDTH + MENU_SPACING, 0.85 * height]
+        rect = [0, -height / 2 + MENU_DESCRIPTION_BOX_Y, MENU_BUTTON_SMALL_WIDTH + MENU_SPACING, MENU_DESCRIPTION_BOX_HEIGHT * height]
 
         if not side:
             rect[0] -= rect[2]

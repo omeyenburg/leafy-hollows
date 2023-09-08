@@ -47,6 +47,18 @@ class Page:
             child.rect.centery = -child.rect.centery
             child.layout()
 
+    def layout_prepend(self):
+        for child in self.children:
+            if child.rect.x == None or child.rect.y == None:
+                child.rect.x = -child.rect.w / 2
+                child.rect.y = MENU_TEXT_POSITION_TOP - child.rect.h
+
+    def layout_append(self):
+        for child in self.children:
+            if child.rect.x == None or child.rect.y == None:
+                child.rect.x = -child.rect.w / 2
+                child.rect.y = MENU_TEXT_POSITION_BOTTOM + child.rect.h
+
     def update(self, window: Window):
         self.draw(window)
         mouse_pos = window.camera.map_coord(window.mouse_pos[:2], from_pixel=1, from_centered=1)
@@ -77,7 +89,7 @@ class Page:
 class Widget:
     def __init__(self, parent, size: [float], row: int=None, column: int=None, columnspan: int=1, fontsize: float=1.0, hover_callback=None):
         self.parent: Page = parent
-        self.rect = geometry.Rect(0, 0, *size) # Rect will be moved, when parent.layout is called
+        self.rect = geometry.Rect(None, None, *size) # Rect will be moved, when parent.layout is called
         self.parent.children.append(self)
 
         # Adjust auto column/row of parent
@@ -133,51 +145,41 @@ class Button(Widget):
         super().__init__(*args, **kwargs)
         self.text = text
         self.callback = callback # When button pressed: function executed once
-        self.clicked = [0, 0, 0] # click time, mouse x, mouse y
+        self.clicked = 0
         self.duration = duration # When button pressed: self.clicked > 0 for [duration] seconds
 
     def update(self, window: Window):
         mouse_pos = window.camera.map_coord(window.mouse_pos[:2], from_pixel=1, from_centered=1)
-        if window.mouse_buttons[0] and self.rect.collidepoint(mouse_pos):
-            if self.clicked[0]:
-                start_mouse_pos = self.clicked[1:]
-            else:
-                start_mouse_pos = mouse_pos
-            if self.duration > 0:
-                self.clicked = [max(2, int(self.duration / window.delta_time)), *start_mouse_pos] 
-            else:
-                self.clicked = [self.duration, *start_mouse_pos]
+        if self.rect.collidepoint(mouse_pos):
+            if (window.mouse_buttons[0] == 1 or window.mouse_buttons[0] and self.clicked):
+                if self.duration > 0:
+                    self.clicked = max(2, int(self.duration / window.delta_time))
+                else:
+                    self.clicked = self.duration
+        elif self.clicked > 0:
+            self.clicked = 0
 
-        if self.clicked[0]:
-            self.clicked[0] -= 1
+        if self.clicked:
+            self.clicked -= 1
             self.draw_clicked(window)
-            start_mouse_distance = abs(self.clicked[1] - mouse_pos[0]) + abs(self.clicked[2] - mouse_pos[1])
-            #if start_mouse_distance > 0.01:
-            #    self.clicked[0] = 0
-            #    return
-            if window.mouse_buttons[0] == 0 and self.clicked[0] > 0:
-                self.clicked[0] = 0
-            if self.clicked[0] in (0, -2) and not self.callback is None:
+            if window.mouse_buttons[0] == 0 and self.clicked > 0:
+                self.clicked = 0
+            if self.clicked in (0, -2) and not self.callback is None:
                 sound.play(window, "click")
                 self.callback()
-                self.clicked[0] = 0
         else:
             self.draw_idle(window)
 
     def draw_idle(self, window: Window):
-        if self.hover_time > MENU_DESCRIPTION_HOVER_TIME / 2:
-            offset = MENU_OFFSET_HOVER
-        else:
-            offset = 0
         if self.rect.w == MENU_BUTTON_SMALL_WIDTH:
             image = "small_button"
         else:
             image = "button"
-        window.draw_image(image, (self.rect[0], self.rect[1] - offset), self.rect[2:])
-        window.draw_text((self.rect.centerx, self.rect.centery - offset), self.text, (255, 255, 255, 200), self.fontsize, centered=True)
+        window.draw_image(image, self.rect[:2], self.rect[2:])
+        window.draw_text(self.rect.center, self.text, (255, 255, 255, 200), self.fontsize, centered=True)
 
     def draw_clicked(self, window: Window):
-        offset = MENU_OFFSET_HOVER * 2
+        offset = MENU_OFFSET_HOVER
         if self.rect.w == MENU_BUTTON_SMALL_WIDTH:
             image = "small_button"
         else:
@@ -221,7 +223,7 @@ class Slider(Widget):
         self.draw(window)
 
     def draw(self, window: Window):
-        if self.hover_time > MENU_DESCRIPTION_HOVER_TIME / 2:
+        if self.selected:
             offset = MENU_OFFSET_HOVER
         else:
             offset = 0
@@ -230,8 +232,8 @@ class Slider(Widget):
         else:
             image = "button"
         window.draw_image(image, (self.rect[0], self.rect[1] - offset), self.rect[2:])
-        window.draw_text((self.rect.centerx, self.rect.centery - offset), self.text, (255, 255, 255, 200), TEXT_SIZE_OPTION, centered=True)
         window.draw_image("slider", (self.slider_rect[0], self.slider_rect[1] - offset), self.slider_rect[2:])
+        window.draw_text((self.rect.centerx, self.rect.centery - offset), self.text, (255, 255, 255, 200), TEXT_SIZE_OPTION, centered=True)
 
 
 class Entry(Widget):
