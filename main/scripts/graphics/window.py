@@ -77,7 +77,8 @@ class Window:
                 if identifier.startswith("KMOD_") and not identifier[5:] in ("NONE", "CTRL", "SHIFT", "ALT", "GUI", "META")
             }
 
-        self._key_names = [pygame.__dict__[identifier] for identifier in pygame.__dict__.keys() if identifier.startswith("K_")]
+        self._key_names = tuple([pygame.__dict__[identifier] for identifier in pygame.__dict__.keys() if identifier.startswith("K_")])
+        self._button_names = ("left click", "middle click", "right click")
         self.get_keys_all = pygame.key.get_pressed
         self.get_keys_all = pygame.key.get_mods
         self.get_key_name = pygame.key.name
@@ -245,17 +246,23 @@ class Window:
 
     def get_pressed_keys(self):
         """
-        Returns a list with the names of all pressed keys.
+        Returns a list containing all names of pressed keys.
         """
         keys = pygame.key.get_pressed()
         return [pygame.key.name(i).title() for i in self._key_names if keys[i]]
 
     def get_pressed_mods(self):
         """
-        Returns a list with the names of all pressed mods.
+        Returns a list containing all names of pressed mods.
         """
         mods = pygame.key.get_mods()
         return [self._mod_names[mod] for mod in self._mod_names if mods & mod]
+
+    def get_pressed_mouse(self):
+        """
+        Returns a list containing all names of mouse buttons.
+        """
+        return [("Left Click", "Middle Click", "Right Click")[i] for i, pressed in enumerate(self.mouse_buttons) if pressed == 1]
 
     def resize(self):
         """
@@ -272,10 +279,15 @@ class Window:
         GL.glViewport(0, 0, self.width, self.height)
 
     def _events(self):
-        self.keys = {key: (value if value != 1 else 2) for key, value in self.keys.items()}
+        """
+        Process input events.
+        """
         self.unicode = ""
         self.mouse_buttons = [2 if value == 1 else value for value in self.mouse_buttons]
         self.mouse_wheel[2], self.mouse_wheel[3] = 0, 0
+        for key, value in self.keys.items():
+            if value == 1:
+                self.keys[key] = 2
         
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -311,10 +323,16 @@ class Window:
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button < 4:
                     self.mouse_buttons[event.button - 1] = 1
+                    button_name = self._button_names[event.button - 1]
+                    if button_name in self.keys:
+                        self.keys[button_name] = 1
 
             elif event.type == pygame.MOUSEBUTTONUP:
                 if event.button < 4:
                     self.mouse_buttons[event.button - 1] = 0
+                    button_name = self._button_names[event.button - 1]
+                    if button_name in self.keys:
+                        self.keys[button_name] = 0
 
             elif event.type == pygame.MOUSEWHEEL:
                 self.mouse_wheel = [self.mouse_wheel[0] + event.x, self.mouse_wheel[1] + event.y, event.x, event.y]
@@ -431,6 +449,9 @@ class Window:
         return self.keys[self.options["key." + key]]
 
     def _callback(self, function):
+        """
+        Execute a callback.
+        """
         if not function is None:
             function()
 
@@ -466,6 +487,9 @@ class Window:
         sys.exit()
 
     def clear_world(self):
+        """
+        Clear the world view.
+        """
         self.world_view = numpy.zeros((0, 0, 4))
     
     def _texture(self, image, blur=False):
@@ -536,6 +560,9 @@ class Window:
             GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA32I, *self._world_size, 0, GL.GL_RGBA_INTEGER, GL.GL_INT, data)
 
     def _centered_text(self, position: [float], text: str, color: [int], size: int=1, spacing: float=1.25, fixed_size: int=1):
+        """
+        Draw centered text. Called from draw_text.
+        """
         x_offset = 0
         x_factor_fixed = 1 / self.width * self.screen_size[0] # Used when fixed_size == 1
         y_factor_fixed = 1 / self.height * self.screen_size[1] # Used when fixed_size == 1
@@ -554,13 +581,13 @@ class Window:
             rect = self._font.get_rect(letter)
 
             if fixed_size == 0:
-                dest_rect = [position[0] + x_offset + rect[2], position[1], rect[2] * size, rect[3] * 2 * size]
+                dest_rect = (position[0] + x_offset + rect[2], position[1], rect[2] * size, rect[3] * 2 * size)
                 x_offset += rect[2] * spacing * size * 2
             elif fixed_size == 1:
-                dest_rect = [position[0] + x_offset, position[1], rect[2] * size, rect[3] * 2 * size * y_factor_relational]
+                dest_rect = (position[0] + x_offset, position[1], rect[2] * size, rect[3] * 2 * size * y_factor_relational)
                 x_offset += char_size[0] * spacing * size * 2
             else:
-                dest_rect = [position[0] + x_offset + rect[2], position[1], rect[2] * size * x_factor_fixed, rect[3] * 2 * size * y_factor_fixed]
+                dest_rect = (position[0] + x_offset + rect[2], position[1], rect[2] * size * x_factor_fixed, rect[3] * 2 * size * y_factor_fixed)
                 x_offset += rect[2] * spacing * size * x_factor_fixed * 2
 
             if letter == " ":
@@ -578,7 +605,7 @@ class Window:
 
                 if width < 0 or height < 0:
                     return
-                dest_rect = [left + width, top + height, width, height]
+                dest_rect = (left + width, top + height, width, height)
 
                 if org[2] - width > 0.0001 or org[3] - height > 0.0001:
                     source_and_color = (
@@ -607,6 +634,9 @@ class Window:
             self._add_vbo_instance(dest_rect, source_and_color, (3, 0, 0, 0))
 
     def _uncentered_text(self, position: [float], text: str, color: [int], size: int=1, spacing: float=1.25, fixed_size: int=1, wrap: float=None):
+        """
+        Draw uncentered text. Called from draw_text.
+        """
         x_offset = 0
         y_offset = 0
         x_factor_fixed = 1 / self.width * self.screen_size[0] # Used when fixed_size == 1
@@ -638,13 +668,13 @@ class Window:
 
             # Create destination rect
             if fixed_size == 0:
-                dest_rect = [position[0] + x_offset, position[1] - y_offset * rect[3] * line_height * size, rect[2] * size, rect[3] * 2 * size]
+                dest_rect = (position[0] + x_offset, position[1] - y_offset * rect[3] * line_height * size, rect[2] * size, rect[3] * 2 * size)
                 x_offset += rect[2] * spacing * size * 2
             elif fixed_size == 1:
-                dest_rect = [position[0] + x_offset, position[1] - y_offset * rect[3] * line_height * size * y_factor_relational, rect[2] * size, rect[3] * 2 * size * y_factor_relational]
+                dest_rect = (position[0] + x_offset, position[1] - y_offset * rect[3] * line_height * size * y_factor_relational, rect[2] * size, rect[3] * 2 * size * y_factor_relational)
                 x_offset += rect[2] * spacing * size * 2
             else:
-                dest_rect = [position[0] + x_offset, position[1] - y_offset * rect[3] * line_height * size * y_factor_fixed, rect[2] * size * x_factor_fixed, rect[3] * 2 * size * y_factor_fixed]
+                dest_rect = (position[0] + x_offset, position[1] - y_offset * rect[3] * line_height * size * y_factor_fixed, rect[2] * size * x_factor_fixed, rect[3] * 2 * size * y_factor_fixed)
                 x_offset += rect[2] * spacing * size * x_factor_fixed * 2
 
             if letter == " ":
@@ -664,7 +694,7 @@ class Window:
                 if width < 0 or height < 0:
                     continue
 
-                dest_rect = [left + width, top + height, width, height]
+                dest_rect = (left + width, top + height, width, height)
 
                 if org[2] - width > 0.0001 or org[3] - height > 0.0001:
                     source_and_color = (
@@ -729,7 +759,14 @@ class Window:
             height = (bottom - top) / 2
 
             if width > 0 and height > 0:
-                dest_rect = [left + width, top + height, width, height]
+                dest_rect = (left + width, top + height, width, height)
+                if org[2] - width > 0.0001 or org[3] - height > 0.0001:
+                    rect = (
+                            rect[0] + rect[2] * ((1 - dest_rect[2] / org[2]) if dest_rect[0] > org[0] else 0),
+                            rect[1] + rect[3] * (round(1 - dest_rect[3] / org[3], 6) if dest_rect[1] > org[1] else 0),
+                            rect[2] * (width / org[2]),
+                            rect[3] * ((height / org[3]) if (height / org[3]) < 1 else 0)
+                        )
                 self._add_vbo_instance(dest_rect, rect, (0, *flip, angle / 180 * math.pi))
         else:
             self._add_vbo_instance(dest_rect, rect, (0, *flip, angle / 180 * math.pi))
@@ -792,9 +829,15 @@ class Window:
             return self._uncentered_text(position, text, color, size, spacing, fixed_size, wrap)
 
     def draw_post_processing(self):
+        """
+        Draw world and post processing.
+        """
         self._add_vbo_instance((0, 0, 1, 1), (0, 0, 0, 0), (5, 0, 0, 0))
 
     def draw_block_highlight(self, x_coord, y_coord, color=(255, 0, 0)):
+        """
+        Highlight a single block.
+        """
         if len(color) == 3:
             color = (*color, 100)
         rect = self.camera.map_coord((x_coord, y_coord, 1, 1), from_world=True)

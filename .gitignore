@@ -1,5 +1,6 @@
 experimental/android_test/.buildozer
-**/__pycache__
+main/data/user/*
 main/main.pyc
+**/__pycache__
 **/.DS_Store
 **/.vscode
