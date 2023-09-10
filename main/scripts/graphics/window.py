@@ -6,11 +6,13 @@ from scripts.graphics.shader import Shader
 from scripts.graphics.camera import Camera
 from scripts.graphics.font import Font
 from scripts.utility import options
+from scripts.graphics import shadow
 from scripts.graphics import sound
 from OpenGL import GL
 import pygame
-import numpy
 import ctypes
+import numpy
+import time
 import math
 import sys
 
@@ -180,7 +182,12 @@ class Window:
 
         # Font texture
         self._font_options = ("RobotoMono-Bold.ttf", "bold")
-        self._font, image = Font(self._font_options[0], resolution=self.options["text resolution"], bold="bold" in self._font_options, antialias="antialias" in self._font_options)
+        self._font, image = Font(
+            self._font_options[0],
+            resolution=self.options["text resolution"],
+            bold="bold" in self._font_options,
+            antialias="antialias" in self._font_options
+        )
         self._texFont = self._texture(image)
 
         # Block texture
@@ -192,25 +199,39 @@ class Window:
         self._texWorld = None
         
         # Instance shader
-        self._shader = Shader(
-            "data/shader/vertex.glsl", "data/shader/fragment.glsl",
+        self._instance_shader = Shader(
+            "data/shader/instance.vert",
+            "data/shader/instance.frag",
             replace={"block." + key: value for key, (value, *_) in self.block_data.items()},
             texSprites="int",
             texFont="int",
             texBlocks="int",
             texWorld="int",
+            texShadow="int",
             offset="vec2",
             camera="vec2",
             resolution="float",
+            shadow_resolution="float",
             time="float",
             gray_screen="int"
         )
 
-        self._shader.setvar("texSprites", 0)
-        self._shader.setvar("texFont", 1)
-        self._shader.setvar("texBlocks", 2)
-        self._shader.setvar("texWorld", 3)
-        self._shader.setvar("resolution", self.camera.resolution)
+        self._instance_shader.setvar("texSprites", 0)
+        self._instance_shader.setvar("texFont", 1)
+        self._instance_shader.setvar("texBlocks", 2)
+        self._instance_shader.setvar("texWorld", 3)
+        self._instance_shader.setvar("texShadow", 4)
+        self._instance_shader.setvar("resolution", self.camera.resolution)
+        self._instance_shader.setvar("shadow_resolution", self.options["shadow resolution"])
+
+        # Create shadow texture
+        self._shadow_texture_size = (self.width / 2, self.height / 2)
+        self._texShadow = GL.glGenTextures(1)
+        GL.glBindTexture(GL.GL_TEXTURE_2D, self._texShadow)
+        GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RED, *self._shadow_texture_size, 0, GL.GL_RED, GL.GL_UNSIGNED_BYTE, None)
+        GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR)
+        GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR)
+        GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
 
     def _add_vbo_instance(self, dest, source_or_color, shape_transform):
         """
@@ -274,7 +295,7 @@ class Window:
             flags = pygame.DOUBLEBUF | pygame.RESIZABLE
 
         # Called twice, because of Vsync...
-        self._window = pygame.display.set_mode((self.width, self.height), flags=flags | pygame.OPENGL)
+        self._window = pygame.display.set_mode((self.width, self.height), flags=pygame.OPENGL, vsync=self.options["enable vsync"])
         self._window = pygame.display.set_mode((self.width, self.height), flags=flags | pygame.OPENGL, vsync=self.options["enable vsync"])
         GL.glViewport(0, 0, self.width, self.height)
 
@@ -355,11 +376,11 @@ class Window:
         GL.glBindVertexArray(self._instance_vao)
 
         # Use instance shader
-        self._shader.activate()
+        self._instance_shader.activate()
 
         # Send variables to shader
         self._update_world()
-        self._shader.update()
+        self._instance_shader.update()
 
         # Bind textures
         GL.glActiveTexture(GL.GL_TEXTURE0)
@@ -373,6 +394,9 @@ class Window:
 
         GL.glActiveTexture(GL.GL_TEXTURE3)
         GL.glBindTexture(GL.GL_TEXTURE_2D, self._texWorld)
+
+        GL.glActiveTexture(GL.GL_TEXTURE4)
+        GL.glBindTexture(GL.GL_TEXTURE_2D, self._texShadow)
 
         # Send instance data to shader
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._dest_vbo)
@@ -393,7 +417,7 @@ class Window:
         self._vbo_instances_index = 0
 
         # Draw background and world
-        self._shader.setvar("time", self.time)
+        self._instance_shader.setvar("time", self.time)
         self._add_vbo_instance((0, 0, 1, 1), (0, 0, 0, 0), (4, 0, 0, 0))
         self.effects = {}
 
@@ -468,16 +492,17 @@ class Window:
             self._ebo,
             self._dest_vbo,
             self._source_or_color_vbo,
-            self._shape_transform_vbo
+            self._shape_transform_vbo,
         ))
         GL.glDeleteVertexArrays(1, (self._instance_vao,))
-        GL.glDeleteTextures(4, (
+        GL.glDeleteTextures(5, (
             self._texSprites,
             self._texFont,
             self._texBlocks,
-            self._texWorld
+            self._texWorld,
+            self._texShadow,
         ))
-        self._shader.delete()
+        self._instance_shader.delete()
 
         # Save options
         options.save(self.options)
@@ -523,16 +548,20 @@ class Window:
             self.camera.pos[1] % 1 - (self.height / 2 / self.camera.pixels_per_meter) % 1 + self.options["simulation distance"]
         )
 
+        # Draw shadows
+        if all(self.world_view.shape) and self.options["shadow resolution"]:
+            self._draw_shadows(offset)
+
         # Send variables to shader
-        self._shader.setvar("offset", *offset)
-        self._shader.setvar("camera", *self.camera.pos)
+        self._instance_shader.setvar("offset", *offset)
+        self._instance_shader.setvar("camera", *self.camera.pos)
         if self.resolution != self.camera.resolution:
             self.resolution = self.camera.resolution
-        self._shader.setvar("resolution", self.camera.resolution)
+        self._instance_shader.setvar("resolution", self.camera.resolution)
 
         gray_screen = self.effects.get("gray_screen", 2)
         if gray_screen != 2:
-            self._shader.setvar("gray_screen", gray_screen)
+            self._instance_shader.setvar("gray_screen", gray_screen)
 
         # View size
         size = self.world_view.shape[:2]        
@@ -558,6 +587,70 @@ class Window:
             # Write world data into texture
             GL.glBindTexture(GL.GL_TEXTURE_2D, self._texWorld)
             GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA32I, *self._world_size, 0, GL.GL_RGBA_INTEGER, GL.GL_INT, data)
+
+    def _draw_shadows(self, offset):
+        """
+        Calculate and draw shadows.
+        """
+        # Create view copy
+        view = self.world_view.copy()[:, :, 0]
+        view[0, :] = 0
+        view[:, 0] = 0
+        view[-1, :] = 0
+        view[:, -1] = 0
+
+        # Create shadow surface
+        shadow_resolution = self.options["shadow resolution"]
+        surface_size = (round(view.shape[0] * shadow_resolution), round(view.shape[1] * shadow_resolution))
+        surface = pygame.Surface(surface_size)
+
+        # Use torches as light source
+        """
+        light_sources = (
+            list(numpy.argwhere(self.world_view[:, :, 1] == self.block_data["torch"][0]))
+          + list(numpy.argwhere(self.world_view[:, :, 1] == self.block_data["torch_flipped"][0]))
+        )
+
+        for player_position in light_sources:
+            ...
+        """
+
+        # Use player as light source
+        center = (math.floor(self.camera.pos[0]),
+                  math.floor(self.camera.pos[1]))
+        start = (center[0] - math.floor(self.width / 2 / self.camera.pixels_per_meter) - self.options["simulation distance"],
+                 center[1] - math.floor(self.height / 2 / self.camera.pixels_per_meter) - self.options["simulation distance"])
+        player_position = (self.camera.dest[0] - start[0] - 1.0, self.camera.dest[1] - start[1] - 1.0)
+
+        # Find corners
+        corners, additional_corners = shadow.find_corners(view)
+
+        # Find edges
+        edges = shadow.find_edges(corners)
+
+        # Generate triangle_points
+        corners = list(additional_corners.union(corners))
+        triangle_points = shadow.get_triangle_points(view, shadow.List(player_position), numpy.array(corners), shadow.List(edges))
+        triangle_points.sort(key=lambda n: n[0], reverse=False)
+
+        # Draw to shadow surface
+        triangle_points = tuple(map(lambda n: (round(n[1] * shadow_resolution), round(n[2] * shadow_resolution)), triangle_points))
+        if len(triangle_points) > 2:
+            pygame.draw.polygon(surface, (255, 0, 0), triangle_points)
+
+        # Convert shadow surface to numpy array
+        surface_data = pygame.surfarray.pixels_red(surface).transpose()
+
+        # Convert shadow surface array to texture
+        if surface_size != self._shadow_texture_size:
+            self._shadow_texture_size = surface_size
+            GL.glBindTexture(GL.GL_TEXTURE_2D, self._texShadow)
+            GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RED, *surface_data.shape[::-1], 0, GL.GL_RED, GL.GL_UNSIGNED_BYTE, surface_data)
+            GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
+        else:
+            GL.glBindTexture(GL.GL_TEXTURE_2D, self._texShadow)
+            GL.glTexSubImage2D(GL.GL_TEXTURE_2D, 0, 0, 0, *surface_data.shape[::-1], GL.GL_RED, GL.GL_UNSIGNED_BYTE, surface_data)
+            GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
 
     def _centered_text(self, position: [float], text: str, color: [int], size: int=1, spacing: float=1.25, fixed_size: int=1):
         """
@@ -660,22 +753,24 @@ class Window:
             # Get letter rect in texture
             rect = self._font.get_rect(letter)
 
-            # Find next space
-            next_space = text.find(" ", i) - i
-            if (not wrap is None) and next_space >= 0 and x_offset + rect[2] * spacing * size * 2 * next_space > wrap:
-                x_offset = 0
-                y_offset += 1
-
             # Create destination rect
             if fixed_size == 0:
                 dest_rect = (position[0] + x_offset, position[1] - y_offset * rect[3] * line_height * size, rect[2] * size, rect[3] * 2 * size)
-                x_offset += rect[2] * spacing * size * 2
+                letter_x_offset = rect[2] * spacing * size * 2
             elif fixed_size == 1:
                 dest_rect = (position[0] + x_offset, position[1] - y_offset * rect[3] * line_height * size * y_factor_relational, rect[2] * size, rect[3] * 2 * size * y_factor_relational)
-                x_offset += rect[2] * spacing * size * 2
+                letter_x_offset = rect[2] * spacing * size * 2
             else:
                 dest_rect = (position[0] + x_offset, position[1] - y_offset * rect[3] * line_height * size * y_factor_fixed, rect[2] * size * x_factor_fixed, rect[3] * 2 * size * y_factor_fixed)
-                x_offset += rect[2] * spacing * size * x_factor_fixed * 2
+                letter_x_offset = rect[2] * spacing * size * x_factor_fixed * 2
+
+            x_offset += letter_x_offset
+
+            # Find next space
+            next_space = text.find(" ", i + 1) - i
+            if (not wrap is None) and next_space >= 0 and x_offset + letter_x_offset * next_space > wrap:
+                x_offset = 0
+                y_offset += 1
 
             if letter == " ":
                 continue
