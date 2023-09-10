@@ -123,24 +123,6 @@ class Menu:
             "medium"
         )
 
-        # Fullscreen button
-        def button_fullscreen_update():
-            if PLATFORM == "Darwin":
-                return
-            window.toggle_fullscreen()
-            button_fullscreen.text = "Fullscreen: " + f"{str(window.fullscreen):5}"
-
-        if PLATFORM != "Darwin":
-            if PLATFORM == "Darwin":
-                button_fullscreen = Button(settings_video_page, MENU_BUTTON_SMALL_SIZE, callback=button_fullscreen_update, text="Fullscreen: Disabled", fontsize=TEXT_SIZE_OPTION)
-            else:
-                button_fullscreen = Button(settings_video_page, MENU_BUTTON_SMALL_SIZE, callback=button_fullscreen_update, text="Fullscreen: False", fontsize=TEXT_SIZE_OPTION)
-            button_fullscreen.hover_callback = lambda: self.info_hover_box(
-                button_fullscreen.rect.centerx < 0,
-                "Fullscreen",
-                "none"
-            )
-
         # Particle slider
         def slider_particles_update():
             particles = int(slider_particles.value * 10)
@@ -162,7 +144,7 @@ class Menu:
         def slider_antialiasing_update():
             antialiasing = (0, 1, 2, 4, 8, 16)[round(slider_antialiasing.value * 5)]
             if antialiasing == 0:
-                slider_antialiasing.text = "Antialiasing: False"
+                slider_antialiasing.text = "Antialiasing: Off"
             else:
                 slider_antialiasing.text = "Antialiasing: " + f"{antialiasing:5d}"
             window.set_antialiasing(antialiasing)
@@ -180,6 +162,48 @@ class Menu:
             "low",
             "Set the level of antialiasing. Antialiasing creates smoother edges of shapes."
         )
+
+        # Shadow resolution slider
+        def slider_shadow_resolution_update():
+            shadow_resolution = (0, 1, 2, 4, 8, 16, 32)[round(slider_shadow_resolution.value * 6)]
+            if shadow_resolution == 0:
+                slider_shadow_resolution.text = "Shadow resolution: Off"
+            else:
+                slider_shadow_resolution.text = "Shadow resolution: " + f"{shadow_resolution:5d}"
+            window.options["shadow resolution"] = shadow_resolution
+            window._instance_shader.setvar("shadow_resolution", window.options["shadow resolution"])
+
+        if window.options["shadow resolution"]:
+            value = [i / 6 for i in range(1, 7)][round(math.log2(window.options["shadow resolution"]))]
+        else:
+            value = 0
+        slider_shadow_resolution = Slider(settings_video_page, MENU_BUTTON_SMALL_SIZE, value=value)
+        slider_shadow_resolution.callback = slider_shadow_resolution_update
+        slider_shadow_resolution_update()
+        slider_shadow_resolution.hover_callback = lambda: self.info_hover_box(
+            slider_shadow_resolution.rect.centerx < 0,
+            "Shadow resolution",
+            "high",
+            "Set the resolution of shadows."
+        )
+
+        # Fullscreen button
+        def button_fullscreen_update():
+            if PLATFORM == "Darwin":
+                return
+            window.toggle_fullscreen()
+            button_fullscreen.text = "Fullscreen: " + f"{str(window.fullscreen):5}"
+
+        if PLATFORM != "Darwin":
+            if PLATFORM == "Darwin":
+                button_fullscreen = Button(settings_video_page, MENU_BUTTON_SMALL_SIZE, callback=button_fullscreen_update, text="Fullscreen: Disabled", fontsize=TEXT_SIZE_OPTION)
+            else:
+                button_fullscreen = Button(settings_video_page, MENU_BUTTON_SMALL_SIZE, callback=button_fullscreen_update, text="Fullscreen: False", fontsize=TEXT_SIZE_OPTION)
+            button_fullscreen.hover_callback = lambda: self.info_hover_box(
+                button_fullscreen.rect.centerx < 0,
+                "Fullscreen",
+                "none"
+            )
 
         # Show fps button
         def button_show_fps_update():

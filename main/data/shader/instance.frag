@@ -21,20 +21,17 @@ uniform sampler2D texSprites;
 uniform sampler2D texFont;
 uniform sampler2D texBlocks;
 uniform isampler2D texWorld;
+uniform sampler2D texShadow;
 uniform vec2 offset;
 uniform vec2 camera;
 uniform float resolution;
+uniform float shadow_resolution;
 uniform float time;
 uniform int gray_screen;
-/*
-//#define MAX_BLOCK_EDGES 1024
-layout(std140) uniform ShadowData {
-    int block_edges[MAX_BLOCK_EDGES];
-};*/
 
 // Predefined values
+float BLOCK_SIZE_DEST;
 vec2 BLOCK_COUNT;
-float BLOCK_SIZE_DEST = BLOCK_SIZE_SOURCE * resolution;
 int block_type = 0;
 int adjacent_x;
 int adjacent_y;
@@ -146,6 +143,7 @@ vec4 get_color_background() {
 }
 
 void draw_background() {
+    BLOCK_SIZE_DEST = BLOCK_SIZE_SOURCE * resolution;
     BLOCK_COUNT = textureSize(texBlocks, 0) / BLOCK_SIZE_SOURCE;
 
     // block in world
@@ -199,43 +197,9 @@ ivec4 get_next_closest_block(ivec2 source_pixel) {
         return ivec4(source_pixel.x, 0, 0, 1);
     }
 }
-/*
-bool get_shadow(vec2 start, vec2 end) {
-    for (int i = 0; i < block_edges[0]; i++) {
-        vec4 edge = vec4(
-            block_edges[i * 4 + 1],
-            block_edges[i * 4 + 2],
-            block_edges[i * 4 + 3],
-            block_edges[i * 4 + 4]
-        );
-        if (edge[0] == edge[2]) { // Same x value
-            float distance_total = max(0.001, abs(start[0] - end[0]));
-            float distance_start = abs(start[0] - edge[0]) / distance_total;
-            float distance_end = abs(end[0] - edge[0]) / distance_total;
-            
-            float x = edge[0];
-            float y = start[1] * distance_end + end[1] * distance_start;
-            if (min(edge[1], edge[3]) < y && y < max(edge[1], edge[3]) && min(start[0], end[0]) < x && x < max(start[0], end[0])) {
-                return true;
-            }
-            
-        } else if (edge[1] == edge[3]) { // Same y value
-            float distance_total = max(0.001, abs(start[1] - end[1]));
-            float distance_start = abs(start[1] - edge[1]) / distance_total;
-            float distance_end = abs(end[1] - edge[1]) / distance_total;
-            
-            float x = start[0] * distance_end + end[0] * distance_start;
-            float y = edge[1];
-            if (min(edge[0], edge[2]) < x && x < max(edge[0], edge[2]) && min(start[1], end[1]) < y && y < max(start[1], end[1])) {
-                return true;
-            }
-        }
-    }
-    return false;
-}
-*/
 
 vec4 get_color_foreground() {
+    BLOCK_SIZE_DEST = BLOCK_SIZE_SOURCE * resolution;
     BLOCK_COUNT = textureSize(texBlocks, 0) / BLOCK_SIZE_SOURCE;
 
     // Block coord in world
@@ -362,14 +326,18 @@ vec4 get_color_foreground() {
     }
 
     // Draw shadows
-    /*
-    vec2 center_coord = vec2(20, 10);
-    vec2 block_frag_coord = vec2(gl_FragCoord.x / BLOCK_SIZE_DEST + offset.x,
-                                 gl_FragCoord.y / BLOCK_SIZE_DEST + offset.y);
-
-    if (get_shadow(center_coord, block_frag_coord)) {
-        block_color = vec4(0, 0, 0, 1);
-    }*/
+    if (shadow_resolution > 1.0 - BORDER_THRESHOLD) {
+        //ivec2 shadow_texture_size = textureSize(texShadow, 0);
+        //ivec2 shadow_position = ivec2(shadow_texture_size.x * vertTexcoord.x, shadow_texture_size.y * vertTexcoord.y);
+        //float shadow_intensity = texelFetch(texShadow, shadow_position, 0).r;
+        ivec2 shadow_position = ivec2(vec2(gl_FragCoord.x + offset.x * BLOCK_SIZE_DEST - BLOCK_SIZE_DEST, gl_FragCoord.y + offset.y * BLOCK_SIZE_DEST - BLOCK_SIZE_DEST) * shadow_resolution / 16 / resolution);
+        float shadow_intensity = 0;
+        for (int x = -1; x < 2; x += 2)
+        for (int y = -1; y < 2; y += 2) {
+            shadow_intensity += texelFetch(texShadow, shadow_position + ivec2(x, y), 0).r;
+        }
+        block_color = mix(vec4(0, 0, 0, 0.5), block_color, 0.5 + shadow_intensity / 8);
+    }
     
     // Skip water
     if (block_type == 0 && abs(block_data.a) < 1) {
@@ -514,8 +482,12 @@ void draw_post_processing() {
         fragColor = (fragColor + vec4(0, 0, 0, 1)) / 2;
     }
 
-    // Darker corners
+    // Darker corners    
     fragColor = mix(fragColor, CORNER_COLOR, distance_center + 0.1);
+
+    
+    
+    
 
     /*
     // damage animation
