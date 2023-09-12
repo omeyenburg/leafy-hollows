@@ -1,0 +1,16 @@
+{
+    "name": "player_swim",
+    "speed": 0.6,
+    "volume": 0.4,
+    "category": "player",
+    "sounds": [
+        "player_swim0.wav",
+        "player_swim1.wav",
+        "player_swim2.wav",
+        "player_swim3.wav",
+        "player_swim4.wav",
+        "player_swim5.wav",
+        "player_swim6.wav",
+        "player_swim7.wav"
+    ]
+}

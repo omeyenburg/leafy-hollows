@@ -1,10 +1,10 @@
 {
-    "enable vsync": false,
+    "enable vsync": true,
     "max fps": 1000,
     "text resolution": 40,
-    "shadow resolution": 8,
+    "shadow resolution": 16,
     "particles": 0,
-    "antialiasing": 16,
+    "antialiasing": 0,
     "show fps": true,
     "show debug": false,
     "language": "english",
@@ -16,6 +16,6 @@
     "key.right": "d",
     "key.jump": "space",
     "key.sprint": "left shift",
-    "key.crouch": "c",
+    "key.crouch": "left click",
     "key.return": "escape"
 }

@@ -256,12 +256,24 @@ class Player(PhysicsObject):
         """
         Play walking sounds.
         """
-        if self.state == "walk":
-            sound.play(window, "walk")
-        elif self.state == "sprint":
-            sound.play(window, "sprint")
-        elif self.state == "hit_ground":
-            sound.play(window, "hit_ground")
+        ground_block_coord = (round(self.rect.centerx), round(self.rect.top - 1))
+        ground_block = world.get_block(*ground_block_coord)
+        sound_file = ""
+
+        if self.state == "sprint":
+            if ground_block == world.block_name["grass_block"]:
+                sound_file = "player_run_grass"
+            elif ground_block == world.block_name["stone_block"]:
+                sound_file = "player_run_stone"
+        else:
+            if ground_block in (world.block_name["grass_block"], world.block_name["dirt_block"]):
+                sound_file = "player_walk_grass"
+            elif ground_block == world.block_name["stone_block"]:
+                sound_file = "player_walk_stone"
+
+        if sound_file:
+            volume = min(1, (abs(self.vel[0]) + abs(self.vel[1])) / 8)
+            sound.play(window, sound_file, channel_volume=volume)
 
     def sounds_under_water(self, world, window: Window):
         """
