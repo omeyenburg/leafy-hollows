@@ -1,0 +1,9 @@
+{
+    "name": "walk_wooden_planks",
+    "speed": 0.5,
+    "volume": 0.4,
+    "category": "player",
+    "sounds": [
+        "walk_wooden_planks.wav"
+    ]
+}

@@ -167,9 +167,9 @@ class Menu:
         def slider_shadow_resolution_update():
             shadow_resolution = (0, 1, 2, 4, 8, 16, 32)[round(slider_shadow_resolution.value * 6)]
             if shadow_resolution == 0:
-                slider_shadow_resolution.text = "Shadow resolution: Off"
+                slider_shadow_resolution.text = "Shadow Resolution: Off"
             else:
-                slider_shadow_resolution.text = "Shadow resolution: " + f"{shadow_resolution:5d}"
+                slider_shadow_resolution.text = "Shadow Resolution: " + f"{shadow_resolution:5d}"
             window.options["shadow resolution"] = shadow_resolution
             window._instance_shader.setvar("shadow_resolution", window.options["shadow resolution"])
 
@@ -182,9 +182,9 @@ class Menu:
         slider_shadow_resolution_update()
         slider_shadow_resolution.hover_callback = lambda: self.info_hover_box(
             slider_shadow_resolution.rect.centerx < 0,
-            "Shadow resolution",
+            "Shadow Resolution",
             "high",
-            "Set the resolution of shadows."
+            "Set the resolution of shadows or disable shadow rendering."
         )
 
         # Fullscreen button
@@ -226,7 +226,8 @@ class Menu:
         button_show_debug.hover_callback = lambda: self.info_hover_box(
             button_show_debug.rect.centerx < 0,
             "Show debug",
-            "low"
+            "low",
+            "Show debug information for developers."
         )
 
         # Language button

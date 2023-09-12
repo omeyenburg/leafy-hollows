@@ -26,6 +26,7 @@
     "Back": "Zur<ue>ck",
     "Cancel": "Abbrechen",
     "Text Resolution": "Text Aufl<oe>sung",
+    "Shadow Resolution": "Schatten Aufl<oe>sung",
     "Show Fps": "Zeige Fps",
     "Show debug": "Zeige Debug",
     "Post process": "Nachbearbeitung",
@@ -56,5 +57,6 @@
     "Limit the Fps at a cap. When Vsync is enabled, the Fps limit is synchronized with your screen's refresh rate.": "Begrenze die maximalen Fps. Wenn Vsync aktiviert ist, ist das Fps limit synchronisiert mit deinem Bildschirm.",
     "Limit the amount of particles, which can be spawned at once.": "Begrenze die Menge an Partikeln, die gleichzeitig erstellt werden k<oe>nnen.",
     "Select either English or German as the language.": "W<ae>hle entweder Englisch oder Deutsch, als die verwendete Sprache.",
-    "Set the level of antialiasing. Antialiasing creates smoother edges of shapes.": "Lege den Grad der Antialiasing fest. Antialiasing erzeugt glattere Kanten von Formen."
+    "Set the level of antialiasing. Antialiasing creates smoother edges of shapes.": "Lege den Grad der Antialiasing fest. Antialiasing erzeugt glattere Kanten von Formen.",
+    "Set the resolution of shadows or disable shadow rendering.": "Lege die Aufl<oe>sung von Schatten fest oder deaktiviere Schatten."
 }
