@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from scripts.utility.const import *
 import pickle
+import numpy
 import json
 import glob
 import sys
@@ -75,6 +76,13 @@ def read(path: str, default=None, file_format="text", split=False):
             except EOFError:
                 return None
 
+        elif file_format == "pickle":
+            try:
+                with open(path, 'rb') as f:
+                    data = numpy.fromfile(f)
+            except EOFError:
+                return None
+
     except (ValueError if default is None else FileNotFoundError):
             data = default
 
@@ -99,6 +107,10 @@ def write(path: str, data, file_format="text"):
     elif file_format == "pickle":
         with open(path, 'wb') as f:
             pickle.dump(data, f)
+
+    elif file_format == "numpy":
+        with open(path, 'wb') as f:
+            data.tofile(f)
 
     
 def exists(path: str):

@@ -1,6 +1,6 @@
 {
-    "name": "player_walk_grass",
-    "speed": 0.5,
+    "name": "player_hit_ground",
+    "speed": 0.7,
     "volume": 0.2,
     "category": "player",
     "sounds": [

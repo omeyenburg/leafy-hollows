@@ -2,7 +2,7 @@ import glob
 import os
 
 
-prefix = "player_swim"
+prefix = "player_walk_gravel"
 suffix = "wav"
 
 

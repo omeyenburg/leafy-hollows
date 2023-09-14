@@ -5,9 +5,9 @@ import os
 
 suffix = "wav"
 options = {
-    "name": "player_swim",
-    "speed": 0.6,
-    "volume": 0.4,
+    "name": "player_walk_gravel",
+    "speed": 0.5,
+    "volume": 0.2,
     "category": "player",
 }
 

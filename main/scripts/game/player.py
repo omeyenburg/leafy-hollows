@@ -291,14 +291,14 @@ class Player(PhysicsObject):
          
         if self.direction == 1 and self.charge_crouch_jump and not window.keybind("left"):
             # Crouch jump left
-            self.apply_force(force * 8, 160, window.delta_time)
+            self.apply_force(force * 7, 160, window.delta_time)
             self.state = "crouch_jump"
-            sound.play(window, "hit_ground")
+            sound.play(window, "player_hit_ground")
         elif self.direction == 0 and self.charge_crouch_jump and not window.keybind("right"):
             # Crouch jump right
-            self.apply_force(force * 8, 20, window.delta_time)
+            self.apply_force(force * 7, 20, window.delta_time)
             self.state = "crouch_jump"
-            sound.play(window, "hit_ground")
+            sound.play(window, "player_hit_ground")
         elif self.onGround:
             # Normal jump
             self.apply_force(force, 90, window.delta_time)
@@ -309,12 +309,12 @@ class Player(PhysicsObject):
             # Wall jump left
             self.apply_force(force * 2.5, 110, window.delta_time)
             self.onWallLeft = 0
-            sound.play(window, "hit_ground")
+            sound.play(window, "player_hit_ground")
         elif self.onWallRight and window.keybind("right") and window.keybind("jump") == 1:
             # Wall jump right
             self.apply_force(force * 2.5, 70, window.delta_time)
             self.onWallRight = 0
-            sound.play(window, "hit_ground")
+            sound.play(window, "player_hit_ground")
 
     def adjust_hitbox(self, world):
         """
