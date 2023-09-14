@@ -16,6 +16,6 @@
     "key.right": "d",
     "key.jump": "space",
     "key.sprint": "left shift",
-    "key.crouch": "left click",
+    "key.crouch": "c",
     "key.return": "escape"
 }

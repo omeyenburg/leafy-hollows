@@ -127,6 +127,9 @@ class Widget:
         for child in self.children:
             child.update(window)
 
+    def draw(self, window: Window):
+        return
+
     def layout(self):
         return
 
@@ -137,6 +140,9 @@ class Label(Widget):
         self.text = text
 
     def update(self, window: Window):
+        self.draw(window)
+
+    def draw(self, window: Window):
         window.draw_text(self.rect.center, self.text, (250, 250, 250, 200), self.fontsize, centered=True)
 
 
@@ -159,6 +165,9 @@ class Button(Widget):
         elif self.clicked > 0:
             self.clicked = 0
 
+        self.draw(window)
+
+    def draw(self, window: Window):
         if self.clicked:
             self.clicked -= 1
             self.draw_clicked(window)
@@ -262,6 +271,7 @@ class ScrollBox(Widget):
         self.children: Widget = []
         self.columns = columns
         self.spacing = spacing
+        self.selected = False
         self.offset = 0
         self.start_offset = 0
         self.end_offset = 0
@@ -306,13 +316,20 @@ class ScrollBox(Widget):
         # Draw & Update children
         self.draw(window)
         mouse_pos = window.camera.map_coord(window.mouse_pos[:2], from_pixel=1, from_centered=1)
+    
         window.stencil_rect = (self.rect[0] + self.rect[2] / 2, self.rect[1] + self.rect[3] / 2, self.rect[2] / 2, self.rect[3] / 2)
         for child in self.children:
             y = child.rect.y
             child.rect.y -= self.offset
-            child.update(window)
+            if geometry.Rect(*self.rect).collidepoint(mouse_pos):
+                child.update(window)
+                self.selected = True
+            else:
+                child.draw(window)
+                self.selected = False
             child.rect.y = y
         window.stencil_rect = ()
+        
 
         for child in self.children:
             rect = child.rect.copy()

@@ -1,7 +1,7 @@
 {
     "name": "player_walk_snow",
-    "speed": 0.7,
-    "volume": 0.3,
+    "speed": 0.5,
+    "volume": 0.2,
     "category": "player",
     "sounds": [
         "player_walk_snow00.wav",
@@ -19,15 +19,6 @@
         "player_walk_snow12.wav",
         "player_walk_snow13.wav",
         "player_walk_snow14.wav",
-        "player_walk_snow15.wav",
-        "player_walk_snow16.wav",
-        "player_walk_snow17.wav",
-        "player_walk_snow18.wav",
-        "player_walk_snow19.wav",
-        "player_walk_snow20.wav",
-        "player_walk_snow21.wav",
-        "player_walk_snow22.wav",
-        "player_walk_snow23.wav",
-        "player_walk_snow24.wav"
+        "player_walk_snow15.wav"
     ]
 }

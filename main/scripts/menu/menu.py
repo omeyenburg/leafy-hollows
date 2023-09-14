@@ -192,7 +192,7 @@ class Menu:
             if PLATFORM == "Darwin":
                 return
             window.toggle_fullscreen()
-            button_fullscreen.text = "Fullscreen: " + f"{str(window.fullscreen):5}"
+            button_fullscreen.text = "Fullscreen: " + f"{str(window._fullscreen):5}"
 
         if PLATFORM != "Darwin":
             if PLATFORM == "Darwin":
@@ -350,6 +350,9 @@ class Menu:
 
         def select_key(key):
             nonlocal selected
+            if not scrollbox.selected:
+                return
+
             for i in buttons:
                 if i != key:
                     buttons[i].clicked = 0
@@ -362,10 +365,12 @@ class Menu:
 
         def update_key():
             nonlocal selected
-            if not selected is None:
+            if scrollbox.selected and not selected is None:
                 keys = window.get_pressed_mods() + window.get_pressed_keys() + window.get_pressed_mouse()
                 
                 if keys:
+                    if selected == "key.return" and keys[0].lower() == "left click":
+                        keys[0] = "Escape"
                     buttons[selected].clicked = 0
                     buttons[selected].text = keys[0]
                     window.options[buttons[selected].key_identifer] = keys[0].lower()
@@ -380,6 +385,8 @@ class Menu:
                 window.options[option] = value
                 window.keys: dict = dict.fromkeys([value for key, value in window.options.items() if key.startswith("key.")], 0)
                 buttons[option].text = value.title()
+                print(option, value)
+            print("reset")
 
         for i, key in enumerate(keys):
             Label(scrollbox, MENU_BUTTON_SMALL_SIZE, row=i, column=0, text=key.split(".")[1].title(), fontsize=TEXT_SIZE_TEXT)
