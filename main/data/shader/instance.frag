@@ -46,6 +46,8 @@ ivec2 source;
 vec2 animation_data;
 vec4 block_color = TRANSPARENCY;
 vec4 water_color = TRANSPARENCY;
+ivec2 block_texture_size;
+int block_animation_rows;
 
 
 // Image
@@ -88,19 +90,26 @@ void draw_text() {
 
 
 // World background
+ivec2 get_block_data_location(int block_type) {
+    return ivec2(
+        mod(block_type - 1, block_texture_size.x),
+        block_animation_rows - (block_type - 1) / block_texture_size.x - 1
+    );
+}
+
 ivec2 get_source_pixel() {
     return ivec2(
         mod(gl_FragCoord.x / resolution + offset.x * BLOCK_SIZE_SOURCE, BLOCK_SIZE_SOURCE),
-        mod(gl_FragCoord.y / resolution + offset.y * BLOCK_SIZE_SOURCE, BLOCK_SIZE_SOURCE) + 1 // Row 0 is used to save animation data
+        mod(gl_FragCoord.y / resolution + offset.y * BLOCK_SIZE_SOURCE, BLOCK_SIZE_SOURCE) + block_animation_rows // Row 0 is used to save animation data
     );
 }
 
 ivec2 get_source_pixel_wrapped(int block_type, ivec2 source_pixel_wrapped) {
-    int block_family = int(texelFetch(texBlocks, ivec2(block_type - 1, 0), 0).b * 255);
-    int block_family_adjacent_x = int(texelFetch(texBlocks, ivec2(adjacent_x - 1, 0), 0).b * 255);
-    int block_family_adjacent_y = int(texelFetch(texBlocks, ivec2(adjacent_y - 1, 0), 0).b * 255);
-    if (block_family <= block_family_adjacent_x && block_family <= block_family_adjacent_y) {
-        source_pixel_wrapped = ivec2(8, 8);
+    int block_family = int(texelFetch(texBlocks, get_block_data_location(block_type), 0).b * 255);
+    int block_family_adjacent_x = int(texelFetch(texBlocks, get_block_data_location(adjacent_x), 0).b * 255);
+    int block_family_adjacent_y = int(texelFetch(texBlocks, get_block_data_location(adjacent_y), 0).b * 255);
+    if (block_family <= block_family_adjacent_x && block_family <= block_family_adjacent_y && block_type <= adjacent_x && block_type <= adjacent_y) {
+        source_pixel_wrapped = ivec2(7, 7);
     } else if (block_type <= adjacent_x) {
         if (source_pixel_wrapped.x < BLOCK_SIZE_SOURCE / 2) {
             source_pixel_wrapped.x += 4;
@@ -120,7 +129,7 @@ ivec2 get_source_pixel_wrapped(int block_type, ivec2 source_pixel_wrapped) {
 vec4 get_color_block(int block_type, vec2 source_pixel) {
     if (block_type != 0) {
         // Current frame
-        animation_data = texelFetch(texBlocks, ivec2(block_type - 1, 0), 0).rg;
+        animation_data = texelFetch(texBlocks, get_block_data_location(block_type), 0).rg;
         animation_frames = int(animation_data.r * 255);
         animation_speed = animation_data.g * 2;
         image_id = block_type + int(mod(time / animation_speed / animation_frames, animation_frames)) - 1;
@@ -144,7 +153,9 @@ vec4 get_color_background() {
 
 void draw_background() {
     BLOCK_SIZE_DEST = BLOCK_SIZE_SOURCE * resolution;
-    BLOCK_COUNT = textureSize(texBlocks, 0) / BLOCK_SIZE_SOURCE;
+    block_texture_size = textureSize(texBlocks, 0);
+    block_animation_rows = int(mod(block_texture_size.y, BLOCK_SIZE_SOURCE));
+    BLOCK_COUNT = block_texture_size / BLOCK_SIZE_SOURCE;
 
     // block in world
     vec2 block_coord = vec2(gl_FragCoord.x / BLOCK_SIZE_DEST + offset.x,
@@ -200,7 +211,9 @@ ivec4 get_next_closest_block(ivec2 source_pixel) {
 
 vec4 get_color_foreground() {
     BLOCK_SIZE_DEST = BLOCK_SIZE_SOURCE * resolution;
-    BLOCK_COUNT = textureSize(texBlocks, 0) / BLOCK_SIZE_SOURCE;
+    block_texture_size = textureSize(texBlocks, 0);
+    block_animation_rows = int(mod(block_texture_size.y, BLOCK_SIZE_SOURCE));
+    BLOCK_COUNT = block_texture_size / BLOCK_SIZE_SOURCE;
 
     // Block coord in world
     ivec2 block_coord = ivec2(gl_FragCoord.x / BLOCK_SIZE_DEST + offset.x,
@@ -282,6 +295,9 @@ vec4 get_color_foreground() {
         source_pixel_offset.y -= BLOCK_SIZE_SOURCE;
     }
 
+    // Shadow position (changed for block gaps)
+    vec2 shadow_position = vec2(vec2(gl_FragCoord.x + offset.x * BLOCK_SIZE_DEST - BLOCK_SIZE_DEST, gl_FragCoord.y + offset.y * BLOCK_SIZE_DEST - BLOCK_SIZE_DEST) * shadow_resolution / 16 / resolution);
+
     if (block_type > 0.0) {
         // Get wrapped source pixel of foreground blocks
         ivec2 source_pixel_wrapped = get_source_pixel_wrapped(block_type, source_pixel);
@@ -292,9 +308,9 @@ vec4 get_color_foreground() {
         if (block_color.a < 1.0) {
             if (block_type != 0) {
                 if (abs(source_pixel_offset.x) < abs(source_pixel_offset.y)) {
-                    block_color = get_color_block(adjacent_x, ivec2(8, 8));
+                    block_color = get_color_block(adjacent_x, ivec2(7, 7));
                 } else {
-                    block_color = get_color_block(adjacent_y, ivec2(8, 8));
+                    block_color = get_color_block(adjacent_y, ivec2(7, 7));
                 }
                 if (block_color.a > 0.0) {
                     return block_color + fire_color;
@@ -308,6 +324,7 @@ vec4 get_color_foreground() {
         ivec4 next_closest_block = get_next_closest_block(source_pixel);
         source_pixel = next_closest_block.xy;
         block_coord += next_closest_block.zw;
+        shadow_position += next_closest_block.zw;
 
         block_data = texelFetch(texWorld, ivec2(block_coord), 0);
         block_data_left = texelFetch(texWorld, ivec2(block_coord.x - 1, block_coord.y), 0);
@@ -320,23 +337,34 @@ vec4 get_color_foreground() {
         block_type_right = block_data_right.r;
         block_type_top = block_data_top.r;
         block_type_bottom = block_data_bottom.r;
-        
-    } else {
+    }
+    
+    if (block_color.a < 1.0 - BORDER_THRESHOLD) {
         block_color = get_color_block(block_data.g, source_pixel);
     }
 
+    vec2 fsource_pixel16 = vec2(
+        mod(gl_FragCoord.x / resolution + offset.x * BLOCK_SIZE_SOURCE, BLOCK_SIZE_SOURCE),
+        mod(gl_FragCoord.y / resolution + offset.y * BLOCK_SIZE_SOURCE, BLOCK_SIZE_SOURCE) + block_animation_rows // Row 0 is used to save animation data
+    );
+
     // Draw shadows
-    if (shadow_resolution > 1.0 - BORDER_THRESHOLD) {
-        //ivec2 shadow_texture_size = textureSize(texShadow, 0);
-        //ivec2 shadow_position = ivec2(shadow_texture_size.x * vertTexcoord.x, shadow_texture_size.y * vertTexcoord.y);
-        //float shadow_intensity = texelFetch(texShadow, shadow_position, 0).r;
-        ivec2 shadow_position = ivec2(vec2(gl_FragCoord.x + offset.x * BLOCK_SIZE_DEST - BLOCK_SIZE_DEST, gl_FragCoord.y + offset.y * BLOCK_SIZE_DEST - BLOCK_SIZE_DEST) * shadow_resolution / 16 / resolution);
-        float shadow_intensity = 0;
-        for (int x = -1; x < 2; x += 2)
-        for (int y = -1; y < 2; y += 2) {
-            shadow_intensity += texelFetch(texShadow, shadow_position + ivec2(x, y), 0).r;
+    if (shadow_resolution > 1.0 - BORDER_THRESHOLD && block_type < BORDER_THRESHOLD) {
+        if (fsource_pixel16.x == 0) {
+            shadow_position.x += 1;
         }
-        block_color = mix(vec4(0, 0, 0, 0.5), block_color, 0.5 + shadow_intensity / 8);
+        if (fsource_pixel16.y == 0 || fsource_pixel16.y == 2) {
+            shadow_position.y += 1;
+        }
+        float shadow_intensity = 0;
+        float samples = 0;
+        for (float x = -1; x < 2; x += 0.1)
+        for (float y = -1; y < 2; y += 0.1) {
+            //shadow_intensity += texelFetch(texShadow, shadow_position + ivec2(x, y), 0).r;
+            shadow_intensity += texture(texShadow, (shadow_position + vec2(x, y)) / textureSize(texShadow, 0), 0).r;
+            samples += 1;
+        }
+        block_color = mix(vec4(0.05, 0, 0.05, 0.6), block_color, 0.5 + shadow_intensity / samples);
     }
     
     // Skip water
@@ -353,12 +381,11 @@ vec4 get_color_foreground() {
     float water_level_top_left = abs(texelFetch(texWorld, ivec2(block_coord.x - 1, block_coord.y + 1), 0).a / WATER_PER_BLOCK);
     float water_level_top_right = abs(texelFetch(texWorld, ivec2(block_coord.x + 1, block_coord.y + 1), 0).a / WATER_PER_BLOCK);
 
-    if (block_color.a < 1.0 - BORDER_THRESHOLD) {
-        water_color = get_color_block(block.water, water_source_pixel);
-        water_color.a = 0.5;
-    } else {
-        water_color = mix(get_color_block(block.water, water_source_pixel), block_color, 0.6);
-    }
+    water_color = get_color_block(block.water, water_source_pixel);// + fire_color;
+    water_color.a = 0.5;
+    water_color = mix(water_color, block_color, block_color.a * 0.6) + fire_color;
+
+    fsource_pixel.y -= 1 / float(BLOCK_SIZE_SOURCE);
 
     int water_side = 1;
     if (water_level < 0) {
@@ -410,7 +437,7 @@ vec4 get_color_foreground() {
         } else {
             // Horizontal water
             horizontal = 1;
-        } 
+        }
 
         // Draw vertical water
         if (vertical == 1 && abs((water_side + 1) / 2 - fsource_pixel.x) <= width && fsource_pixel.y <= height) {
@@ -485,9 +512,6 @@ void draw_post_processing() {
     // Darker corners    
     fragColor = mix(fragColor, CORNER_COLOR, distance_center + 0.1);
 
-    
-    
-    
 
     /*
     // damage animation
@@ -521,45 +545,6 @@ void main() {
 
         case 5: // Post processing
             draw_post_processing();
-            break;
-
-            /*
-            for (int x = 0; x < BLOCK_COUNT.x; x++) {
-                for (int y = 0; y < BLOCK_COUNT.y; y++) {
-                    if (texelFetch(texWorld, ivec2(x, y), 0).r > 0) {
-                        vec2 p2 = vec2(x, y);
-                        vec2 p3 = vec2(x, (1+y));
-
-                        float A1 = p1.y - p0.y;
-                        float B1 = p0.x - p1.x;
-                        float C1 = A1 * p0.x + B1 * p0.y;
-                        float A2 = p3.y - p2.y;
-                        float B2 = p2.x - p3.x;
-                        float C2 = A2 * p2.x + B2 * p2.y;
-                        float denominator = A1 * B2 - A2 * B1;
-                    
-                        //if (denominator == 0 || distance(p2, p0) + distance(p3, p0) == distance(p2, p3)) {
-                        //	//gl_FragColor = vec4(1, 1, 1, 1);
-                        //} else {
-                        if (denominator != 0) {
-                            vec2 p4 = vec2((B2 * C1 - B1 * C2) / denominator, (A1 * C2 - A2 * C1) / denominator);
-                            float p0f = p0.x + p0.y;
-                            float p1f = p1.x + p1.y;
-                            float p2f = p2.x + p2.y;
-                            float p3f = p3.x + p3.y;
-                            float p4f = p4.x + p4.y;
-                            float tef = p1.x + p1.y; // && (p0f < p4f && tef/160 < p4f ^^ p0f > p4f && tef/160 > p4f)
-                            if (p4f <= max(p2f, p3f) && p4f >= min(p2f, p3f) && (p0.x <= p4.x && vertTexcoord.x >= p4.x || p0.x >= p4.x && vertTexcoord.x <= p4.x) && (p0.y <= p4.y && vertTexcoord.y >= p4.y || p0.y >= p4.y && vertTexcoord.y <= p4.y)) {
-                                fragColor = vec4(0, 0, 0, 1);
-                            //} else {
-                            //	//gl_FragColor = vec4(1, 1, 1, 1);
-                            }
-                        }
-
-                    }
-                }
-            }
-            */
             break;
     }
 }

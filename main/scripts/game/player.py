@@ -166,10 +166,10 @@ class Player(PhysicsObject):
             if (window.keybind("left") or window.keybind("right")) and on_pole:
                 if abs(self.vel[0]) < 1:
                     if window.keybind("right"):
-                        self.direction = 1
+                        self.direction = 0
                         self.vel[0] += 10 * window.delta_time ** 0.2
                     else:
-                        self.direction = 0
+                        self.direction = 1
                         self.vel[0] -= 10 * window.delta_time ** 0.2
                     self.vel[1] = 5
             elif grab_pole and not window.keybind("crouch"):
@@ -281,7 +281,7 @@ class Player(PhysicsObject):
         """
         speed = abs(self.vel[0]) + abs(self.vel[1])
         if speed > 0.5:
-            sound.play(window, "swim", channel_volume=min(1, speed))
+            sound.play(window, "player_swim", channel_volume=min(1, speed))
 
     def jump(self, window, duration: float):
         """
@@ -367,7 +367,7 @@ class Player(PhysicsObject):
 
             # Try to climb
             self.move_climb(world, window)
-
+            
             if not self.onPole:
                 # Normal movement
                 self.animation_normal(world, window)
@@ -410,7 +410,7 @@ class Player(PhysicsObject):
             if world.get_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1])) > 0:
                 world.set_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), 0)
             else:
-                world.set_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), world.block_name["dirt_block"])
+                world.set_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), world.block_name["stone_block"])
         """
 
         # Place water

@@ -1,0 +1,14 @@
+{
+    "name": "big_bush0",
+    "family": "crystal",
+    "layer": "background",
+    "hardness": 1,
+    "speed": 0,
+    "size": [
+        64,
+        64
+    ],
+    "frames": [
+        "big_bush0.png"
+    ]
+}

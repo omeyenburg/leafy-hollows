@@ -1,0 +1,14 @@
+{
+    "name": "big_diamond1",
+    "family": "crystal",
+    "layer": "plant",
+    "hardness": 1,
+    "speed": 0,
+    "size": [
+        32,
+        32
+    ],
+    "frames": [
+        "big_diamond1.png"
+    ]
+}

@@ -87,13 +87,13 @@ class PhysicsObject:
                 if world.get_block(x, y):
                     if self.vel[0] < 0:
                         self.rect.left = x + 1
-                        self.vel[0] = 0
                         self.onWallRight = max(2, int(PHYSICS_WALL_JUMP_THRESHOLD / delta_time))
 
                     if self.vel[0] > 0:
                         self.rect.right = x
-                        self.vel[0] = 0                        
                         self.onWallLeft = max(2, int(PHYSICS_WALL_JUMP_THRESHOLD / delta_time))
+
+                    self.vel[0] = self.vel[0] // 2
     
     def y_collide(self, world):
         """
