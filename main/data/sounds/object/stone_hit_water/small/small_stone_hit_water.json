@@ -1,0 +1,9 @@
+{
+    "name": "small_stone_hit_water",
+    "speed": 1.0,
+    "volume": 1.0,
+    "category": "ambient",
+    "sounds": [
+        "small_stone_hit_water0.ogg"
+    ]
+}

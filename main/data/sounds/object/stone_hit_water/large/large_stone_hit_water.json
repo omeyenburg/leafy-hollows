@@ -1,0 +1,10 @@
+{
+    "name": "large_stone_hit_water",
+    "speed": 1.0,
+    "volume": 1.0,
+    "category": "ambient",
+    "sounds": [
+        "large_stone_hit_water0.ogg",
+        "large_stone_hit_water1.ogg"
+    ]
+}

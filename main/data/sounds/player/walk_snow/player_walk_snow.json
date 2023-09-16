@@ -4,21 +4,9 @@
     "volume": 0.2,
     "category": "player",
     "sounds": [
-        "player_walk_snow00.wav",
-        "player_walk_snow01.wav",
-        "player_walk_snow02.wav",
-        "player_walk_snow03.wav",
-        "player_walk_snow04.wav",
-        "player_walk_snow05.wav",
-        "player_walk_snow06.wav",
-        "player_walk_snow07.wav",
-        "player_walk_snow08.wav",
-        "player_walk_snow09.wav",
-        "player_walk_snow10.wav",
-        "player_walk_snow11.wav",
-        "player_walk_snow12.wav",
-        "player_walk_snow13.wav",
-        "player_walk_snow14.wav",
-        "player_walk_snow15.wav"
+        "player_walk_snow0.ogg",
+        "player_walk_snow1.ogg",
+        "player_walk_snow2.ogg",
+        "player_walk_snow3.ogg"
     ]
 }

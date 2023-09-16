@@ -4,18 +4,8 @@
     "volume": 0.4,
     "category": "player",
     "sounds": [
-        "player_walk_wet_ground00.wav",
-        "player_walk_wet_ground01.wav",
-        "player_walk_wet_ground02.wav",
-        "player_walk_wet_ground03.wav",
-        "player_walk_wet_ground04.wav",
-        "player_walk_wet_ground05.wav",
-        "player_walk_wet_ground06.wav",
-        "player_walk_wet_ground07.wav",
-        "player_walk_wet_ground08.wav",
-        "player_walk_wet_ground09.wav",
-        "player_walk_wet_ground10.wav",
-        "player_walk_wet_ground11.wav",
-        "player_walk_wet_ground12.wav"
-    ]
+        "player_walk_wet_ground0.ogg",
+        "player_walk_wet_ground1.ogg",
+        "player_walk_wet_ground2.ogg",
+        "player_walk_wet_ground3.ogg"    ]
 }

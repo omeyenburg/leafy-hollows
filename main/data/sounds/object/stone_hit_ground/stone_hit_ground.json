@@ -1,0 +1,17 @@
+{
+    "name": "stone_hit_ground",
+    "speed": 1.0,
+    "volume": 1.0,
+    "category": "ambient",
+    "sounds": [
+        "stone_hit_ground0.ogg",
+        "stone_hit_ground1.ogg",
+        "stone_hit_ground2.ogg",
+        "stone_hit_ground3.ogg",
+        "stone_hit_ground4.ogg",
+        "stone_hit_ground5.ogg",
+        "stone_hit_ground6.ogg",
+        "stone_hit_ground7.ogg",
+        "stone_hit_ground8.ogg"
+    ]
+}

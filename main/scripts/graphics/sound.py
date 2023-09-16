@@ -12,7 +12,7 @@ def load():
     """
     pygame.mixer.init(channels=16)
     sound_paths = file.find("data/sounds", "*.json", True)
-    sound_files = {file.basename(path): path for path in file.find("data/sounds", "*.wav", True) + file.find("data/sounds", "*.wav", True)}
+    sound_files = {file.basename(path): path for path in (file.find("data/sounds", "*.wav", True) + file.find("data/sounds", "*.ogg", True))}
 
     loaded_sounds = {}
     played_sounds = {}
