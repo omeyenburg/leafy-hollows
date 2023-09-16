@@ -1,0 +1,14 @@
+{
+    "name": "big_amethyst",
+    "family": "crystal",
+    "layer": "plant",
+    "hardness": 1,
+    "speed": 0,
+    "size": [
+        32,
+        32
+    ],
+    "frames": [
+        "big_amethyst.png"
+    ]
+}

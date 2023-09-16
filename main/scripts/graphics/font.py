@@ -9,7 +9,10 @@ class Font:
     def __new__(cls, name=None, resolution=1, bold=False, antialias=False):
         instance = super().__new__(cls)
         image = instance._load(name, resolution, bold, antialias)
-        pygame.image.save(image, file.abspath("data/font (testing only).png"))
+
+        if CREATE_TEXTURE_ATLAS_FILE:
+            pygame.image.save(image, file.abspath("data/font (testing only).png"))
+
         return instance, image
 
     def _load(self, name, resolution, bold, antialias):

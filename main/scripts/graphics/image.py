@@ -40,14 +40,27 @@ def load_blocks():
         blocks.append(file.read(path, file_format="json"))
 
     for data in sorted(blocks, key=lambda data: data["hardness"]):
+        # Large blocks
         block = data["name"]
-        frames.extend(data["frames"])
-        animation.append((block, len(data["frames"]), data["speed"]))
-        block_data[block] = (data["hardness"], data["family"], data["layer"])
+        size = data.get("size", (WORLD_BLOCK_SIZE, WORLD_BLOCK_SIZE))
+
+        if size == (WORLD_BLOCK_SIZE, WORLD_BLOCK_SIZE):
+            frames.extend(data["frames"])
+            block_data[block] = (data["hardness"], data["family"], data["layer"])
+            animation.append((block, len(data["frames"]), data["speed"]))
+        else:
+            for frame in data["frames"]:
+                for x in range(0, size[0], WORLD_BLOCK_SIZE):
+                    for y in range(0, size[1], WORLD_BLOCK_SIZE):
+                        frames.append((frame, x, y))
+                        sub_block = f"{block}_{x // WORLD_BLOCK_SIZE}_{y // WORLD_BLOCK_SIZE}"
+                        block_data[sub_block] = (data["hardness"], data["family"], data["layer"])
+                        animation.append((sub_block, len(data["frames"]), data["speed"]))        
+        
         if not data["family"] in families:
             families[data["family"]] = len(families)
 
-        if data.get("flip", 0) == 1: # Plants can be flipped
+        if data.get("flip", 0) == 1 and size == (WORLD_BLOCK_SIZE, WORLD_BLOCK_SIZE): # Plants can be flipped
             block = data["name"] + "_flipped"
             frames.extend([frame + "_f" for frame in data["frames"]])
             animation.append((block, len(data["frames"]), data["speed"]))
@@ -55,10 +68,17 @@ def load_blocks():
 
     width = math.ceil(math.sqrt(len(frames)))
     height = math.ceil(len(frames) / width)
-    image = pygame.Surface((width * WORLD_BLOCK_SIZE, height * WORLD_BLOCK_SIZE + 1), pygame.SRCALPHA)
+    block_animation_rows = len(frames) // (width * WORLD_BLOCK_SIZE) + 1
+    image = pygame.Surface((width * WORLD_BLOCK_SIZE, height * WORLD_BLOCK_SIZE + block_animation_rows), pygame.SRCALPHA)
 
     for i, frame in enumerate(frames):
         y, x = divmod(i, width)
+
+        if isinstance(frame, str):
+            pos = (0, 0)
+        else:
+            pos = frame[1:]
+            frame = frame[0]
 
         if frame.endswith("_f"):
             flipped = True
@@ -75,15 +95,17 @@ def load_blocks():
         if flipped:
             block_surface = pygame.transform.flip(block_surface, 1, 0)
 
-        image.blit(block_surface, (x * WORLD_BLOCK_SIZE, (height - y - 1) * WORLD_BLOCK_SIZE))
+        image.blit(block_surface, (x * WORLD_BLOCK_SIZE, (height - y - 1) * WORLD_BLOCK_SIZE), (*pos, WORLD_BLOCK_SIZE, WORLD_BLOCK_SIZE))
 
     x = 0
     for block, length, speed in animation:
-        image.set_at((x, height * WORLD_BLOCK_SIZE), (length, speed * 255 / 2, families[block_data[block][1]])) # length: 0-255 | speed: 0.0-2.0
+        image.set_at((x % (width * WORLD_BLOCK_SIZE), height * WORLD_BLOCK_SIZE + x // (width * WORLD_BLOCK_SIZE)), (length, speed * 255 / 2, families[block_data[block][1]])) # length: 0-255 | speed: 0.0-2.0
         block_data[block] = (x + 1, block_data[block][2])
         x += length
 
-    pygame.image.save(image, file.abspath("data/blocks (testing only).png"))
+    if CREATE_TEXTURE_ATLAS_FILE:
+        pygame.image.save(image, file.abspath("data/blocks (testing only).png"))
+
     return block_data, image
 
 
@@ -134,6 +156,7 @@ def load_sprites():
                 raise Exception(f"Could not find any data of '{frame}'.\nRun\n'python data/images/layout/setup.py'\nor\n'python3 data/images/layout/setup.py'")
         sprites[data["name"]] = (tuple(indices), data["speed"])
 
+    if CREATE_TEXTURE_ATLAS_FILE:
+        pygame.image.save(image, file.abspath("data/sprites (testing only).png"))
 
-    pygame.image.save(image, file.abspath("data/sprites (testing only).png"))
     return image

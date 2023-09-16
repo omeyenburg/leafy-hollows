@@ -1,0 +1,14 @@
+{
+    "name": "tree3",
+    "family": "crystal",
+    "layer": "background",
+    "hardness": 1,
+    "speed": 0,
+    "size": [
+        64,
+        64
+    ],
+    "frames": [
+        "tree3.png"
+    ]
+}

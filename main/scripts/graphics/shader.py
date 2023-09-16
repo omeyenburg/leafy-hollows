@@ -8,6 +8,7 @@ class Shader:
     active = None
 
     def __init__(self, vertex, fragment, replace={}, **variables):
+        # Create shader
         self._program = GL.glCreateProgram()
         
         # Read & compile vertex shader
@@ -21,9 +22,22 @@ class Shader:
         content = file.read(fragment)
         for search, replacement in sorted(replace.items(), key=lambda n: len(n[0]), reverse=True):
             content = content.replace(str(search), str(replacement))
+
+        # For testing: print fragment shader code
+        """
+        c = content
+        n = c.count("\n") + 1
+        for i, s in reversed(list(enumerate(c))):
+            if s == "\n":
+                c = c[:i + 1] + str(n) + "\t" + c[i + 1:]
+                n -= 1
+        print(c)
+        """
+        
         fragment_shader = compileShader(content, GL.GL_FRAGMENT_SHADER)
         GL.glAttachShader(self._program, fragment_shader)
 
+        # Clean up
         GL.glLinkProgram(self._program)
         GL.glValidateProgram(self._program)
         GL.glDeleteShader(vertex_shader)
