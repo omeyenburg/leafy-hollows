@@ -4,6 +4,6 @@
     "volume": 1.0,
     "category": "ambient",
     "sounds": [
-        "click.wav"
+        "click.ogg"
     ]
 }

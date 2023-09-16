@@ -4,23 +4,9 @@
     "volume": 0.2,
     "category": "player",
     "sounds": [
-        "player_walk_gravel00.wav",
-        "player_walk_gravel01.wav",
-        "player_walk_gravel02.wav",
-        "player_walk_gravel03.wav",
-        "player_walk_gravel04.wav",
-        "player_walk_gravel05.wav",
-        "player_walk_gravel06.wav",
-        "player_walk_gravel07.wav",
-        "player_walk_gravel08.wav",
-        "player_walk_gravel09.wav",
-        "player_walk_gravel10.wav",
-        "player_walk_gravel11.wav",
-        "player_walk_gravel12.wav",
-        "player_walk_gravel13.wav",
-        "player_walk_gravel14.wav",
-        "player_walk_gravel15.wav",
-        "player_walk_gravel16.wav",
-        "player_walk_gravel17.wav"
+        "player_walk_gravel0.ogg",
+        "player_walk_gravel1.ogg",
+        "player_walk_gravel2.ogg",
+        "player_walk_gravel3.ogg"
     ]
 }

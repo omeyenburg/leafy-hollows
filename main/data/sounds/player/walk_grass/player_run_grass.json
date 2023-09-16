@@ -1,15 +1,12 @@
 {
     "name": "player_run_grass",
     "speed": 0.4,
-    "volume": 0.2,
+    "volume": 0.4,
     "category": "player",
     "sounds": [
-        "player_walk_grass0.wav",
-        "player_walk_grass1.wav",
-        "player_walk_grass2.wav",
-        "player_walk_grass3.wav",
-        "player_walk_grass4.wav",
-        "player_walk_grass5.wav",
-        "player_walk_grass6.wav"
+        "player_walk_grass0.ogg",
+        "player_walk_grass1.ogg",
+        "player_walk_grass2.ogg",
+        "player_walk_grass3.ogg"
     ]
 }

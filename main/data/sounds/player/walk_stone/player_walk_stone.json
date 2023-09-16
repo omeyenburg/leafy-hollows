@@ -4,8 +4,8 @@
     "volume": 0.2,
     "category": "player",
     "sounds": [
-        "player_walk_stone1.wav",
-        "player_walk_stone2.wav",
-        "player_walk_stone3.wav"
+        "player_walk_stone0.ogg",
+        "player_walk_stone1.ogg",
+        "player_walk_stone2.ogg"
     ]
 }
