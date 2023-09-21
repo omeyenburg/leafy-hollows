@@ -294,7 +294,7 @@ class Window:
         else:
             flags = pygame.DOUBLEBUF | pygame.RESIZABLE
 
-        # Called twice, because of Vsync...
+        # Toggle vsync: Restart required on Windows; Instant on Darwin
         self._window = pygame.display.set_mode((self.width, self.height), flags=pygame.OPENGL, vsync=self.options["enable vsync"])
         self._window = pygame.display.set_mode((self.width, self.height), flags=flags | pygame.OPENGL, vsync=self.options["enable vsync"])
         GL.glViewport(0, 0, self.width, self.height)
