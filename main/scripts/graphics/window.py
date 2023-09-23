@@ -24,12 +24,10 @@ class Window:
 
         # Callbacks
         self.callback_quit = None
+        self.loading_progress: [str, int] = ["", 0, 0] # description, progress, total progress
 
         # Initialize pygame
         pygame.init()
-
-        # Load sounds
-        self.loaded_sounds, self.played_sounds = sound.load()
 
         # Set OpenGL version
         opengl_major = int(OPENGL_VERSION.split(".")[0])
@@ -131,7 +129,6 @@ class Window:
         self._dest_vbo_array = numpy.zeros(0, dtype=numpy.float32)
         self._source_or_color_vbo_array = numpy.zeros(0, dtype=numpy.float32)
         self._shape_transform_vbo_array = numpy.zeros(0, dtype=numpy.float32)
-        self._render_buffers_mapped = False
 
         # Vertices & texcoords
         vertices = numpy.array([
@@ -176,7 +173,7 @@ class Window:
         GL.glVertexAttribPointer(4, 4, GL.GL_FLOAT, GL.GL_FALSE, 0, ctypes.c_void_p(0))
         GL.glVertexAttribDivisor(4, 1)
 
-        # Sprite texture
+        # Create sprite texture
         image = load_sprites()
         self._texSprites = self._texture(image)
 
@@ -190,14 +187,23 @@ class Window:
         )
         self._texFont = self._texture(image)
 
-        # Block texture
+        # Create world texture (contains world block data)
+        self._world_size = (0, 0)
+        self._texWorld = None
+
+        # Create block texture
         self.block_data, image = load_blocks()
         self._texBlocks = self._texture(image)
 
-        # World texture (contains world block data)
-        self._world_size = (0, 0)
-        self._texWorld = None
-        
+        # Create shadow texture
+        self._shadow_texture_size = (self.width / 2, self.height / 2)
+        self._texShadow = GL.glGenTextures(1)
+        GL.glBindTexture(GL.GL_TEXTURE_2D, self._texShadow)
+        GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RED, *self._shadow_texture_size, 0, GL.GL_RED, GL.GL_UNSIGNED_BYTE, None)
+        GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_NEAREST)
+        GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_NEAREST)
+        GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
+
         # Instance shader
         self._instance_shader = Shader(
             "data/shader/instance.vert",
@@ -224,14 +230,17 @@ class Window:
         self._instance_shader.setvar("resolution", self.camera.resolution)
         self._instance_shader.setvar("shadow_resolution", self.options["shadow resolution"])
 
-        # Create shadow texture
-        self._shadow_texture_size = (self.width / 2, self.height / 2)
-        self._texShadow = GL.glGenTextures(1)
-        GL.glBindTexture(GL.GL_TEXTURE_2D, self._texShadow)
-        GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RED, *self._shadow_texture_size, 0, GL.GL_RED, GL.GL_UNSIGNED_BYTE, None)
-        GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_NEAREST)
-        GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_NEAREST)
-        GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
+    def setup(self):
+        """
+        Threaded function called after __init__().
+        """
+        self.loading_progress[:3] = "Loading textures", 0.1, 2
+
+        # Load sounds
+        self.loading_progress[:2] = "Loading sounds", 1
+        self.loaded_sounds, self.played_sounds = sound.load()
+    
+        self.loading_progress[:2] = "Finishing", 2
 
     def _add_vbo_instance(self, dest, source_or_color, shape_transform):
         """

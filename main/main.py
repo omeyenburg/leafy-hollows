@@ -19,11 +19,18 @@ import math
 window: Window = Window("Title")
 menu: Menu = Menu(window)
 world: World = None
+menu.load_threaded("Title", "menu", window.setup)
+menu.main_page.open()
 
 
 def save_world():
-    if not world is None:
+    global world
+    if menu.game_state in ("game", "intro") and not world is None:
+        window.loading_progress[:3] = "Saving", 1, 2
+        menu.load_threaded("Saving world", "save_world", world.save)
         world.save()
+        del world
+        world = None
 
 
 def generate():
@@ -52,6 +59,23 @@ def generate():
                 (250, 250, 250, 200),
                 size=TEXT_SIZE_DESCRIPTION
             )
+
+    if world.player.rect.x == 0:
+        menu.game_state = "intro"
+        window.camera.pos[1] = 50
+        world.player.vel[1] = 5
+        window.camera.set_zoom(CAMERA_RESOLUTION_INTRO)
+    else:
+        menu.game_state = "game"
+        window.camera.dest = list(world.player.rect.center)
+        window.camera.pos = list(world.player.rect.center)
+        window.camera.set_zoom(CAMERA_RESOLUTION_GAME)
+
+
+def load_world():
+    global world
+
+    world = menu.load_threaded("Loading world", "load_world", World.load, window, wait=True)
 
     if world.player.rect.x == 0:
         menu.game_state = "intro"
@@ -182,9 +206,9 @@ def main():
     window.callback_quit = save_world
     window.camera.set_zoom(CAMERA_RESOLUTION_GAME)
     while True:
-        if menu.game_state == "generate":
+        if menu.game_state == "load_world":
             window.camera.reset()
-            generate()
+            load_world()
 
         elif menu.game_state == "intro":
             window.camera.set_zoom(CAMERA_RESOLUTION_INTRO)

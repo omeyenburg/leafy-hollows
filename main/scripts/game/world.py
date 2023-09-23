@@ -187,13 +187,15 @@ class World(dict):
 
     @staticmethod
     def load(window):
+        window.loading_progress[:3] = "Loading world file", 1, 2
         world = file.read("data/user/world.data", default=0, file_format="pickle")
         if isinstance(world, World) and len(window.block_data) == len(world.block_name):
+            window.loading_progress[:3] = "Loading world", 2, 2
             for name in world.particle_types:
                 world.particle_types[name][0][0] = window.time
             world.particles = []
             return world
         
         world = World(window)
-        generate_world(world)
+        generate_world(world, window)
         return world

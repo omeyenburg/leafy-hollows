@@ -362,6 +362,24 @@ class ScrollBox(Widget):
             window.draw_rect((x, y), (w, h), (200, 200, 200, 200))
 
 
+class LoadingBar(Widget):
+    def __init__(self, *args, value=0.0, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.value = value
+
+    def update(self, window: Window):
+        self.draw(window)
+
+    def draw(self, window: Window):
+        window.draw_rect(self.rect[:2], self.rect[2:], (0, 0, 0))
+        slider_rect = self.rect.copy()
+        slider_rect.y += slider_rect.h * 0.1
+        slider_rect.h *= 0.8
+        slider_rect.x += slider_rect.w * 0.01
+        slider_rect.w *= 0.98 * self.value
+        window.draw_rect(slider_rect[:2], slider_rect[2:], (200, 200, 200))
+
+
 def HoverBox(window: Window, rect: list, text: list):
     """
     Draw a box with multi colored text.

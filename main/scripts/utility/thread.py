@@ -17,20 +17,19 @@ def _thread(func, wait, *args, **kwargs):
         error.set()
     if wait: # wait for normal fps
         time.sleep(2)
-    if result is None:
-        result = True
-    threads[func] = result
+    threads[func] = (result, True)
 
 
 def threaded(func, *args, wait=False, **kwargs):
     if error.is_set():
         sys.exit()
     if func in threads:
-        if threads[func] is None:
-            return
-        result = threads[func]
+        if not threads[func][1]:
+            return None, False
+        result = threads[func][0]
         del threads[func]
-        return result
-    threads[func] = None
+        return result, True
+    threads[func] = (None, False)
     thread = Thread(target=_thread, daemon=True, args=(func, wait, *args), kwargs=kwargs)
     thread.start()
+    return None, False
