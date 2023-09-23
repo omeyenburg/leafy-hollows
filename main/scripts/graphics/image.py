@@ -90,7 +90,6 @@ def load_blocks():
             path = file.find("data/images/blocks", frame, True)[0]
         except IndexError:
             raise Exception("Could not find block " + frame)
-
         block_surface = pygame.image.load(path)
         if flipped:
             block_surface = pygame.transform.flip(block_surface, 1, 0)

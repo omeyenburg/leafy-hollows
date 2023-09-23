@@ -46,11 +46,14 @@ CAVE_SHAPES = ["intro", "horizontal", "vertical", "blob", "structure"]
 
 
 # Called from World
-def generate_world(world):
+def generate_world(world, window):
     """
     Main world generation function
     """
+    window.loading_progress[2] = 5
+
     # Load structures
+    window.loading_progress[:2] = "Loading structures", 0
     structures = structure.load(world.block_name)
 
     # Starting point
@@ -59,17 +62,17 @@ def generate_world(world):
     poles = set() # List of x coords of poles
 
     # Generate intro
-    print("generate intro cave")
+    window.loading_progress[:2] = "Generating intro", 1
     Shape.intro(world, position)
 
     # Line cave segment
+    window.loading_progress[:2] = "Generating caves", 2
     last_special = 0
     for i in range(30):
         last_special += 1
         cave_type = random.random()
 
         if cave_type > 0.6 or last_special < 4:
-            print("generate horizontal cave")
             Shape.horizontal(world, position)
         else:
             last_special = 0
@@ -77,55 +80,47 @@ def generate_world(world):
 
             if cave_type > 0.6:
                 if random.random() > 0.5:
-                    print("generate vertical cave (branch)")
                     Shape.vertical(world, position, True)
                     poles.add(int(position[0]))
                     branches.add((*position, 0))
                 else:
-                    print("generate horizontal cave (branch)")
                     Shape.horizontal(world, position)
                     branches.add((*position, 1))
             elif cave_type > 0.3:
-                print("generate vertical cave")
                 Shape.vertical(world, position)
                 poles.add(int(position[0]))
             else:
-                print("generate blob cave")
                 Shape.blob(world, position)
 
+    window.loading_progress[:2] = "Generating cave branches", 3
     for x, y, direction in branches:
         length = random.randint(2, 3)
         position = [x, y]
 
         if direction:
-            print("generate vertical cave (branch)")
             Shape.vertical(world, position, True)
             poles.add(int(position[0]))
 
         for i in range(length):
-            print("generate horizontal cave")
             Shape.horizontal(world, position)
 
     # Generate structures between line cave segments
     ...
 
     # Smoother cave walls
+    window.loading_progress[:2] = "Generating foliage", 4
     flatten_edges(world)
-    print("flattened edges")
 
     # Find block edges with air
-    print("store block edges")
     blocks_ground, blocks_ceiling, blocks_wall_right, blocks_wall_left = find_edge_blocks(world)
 
     # Generate foliage
-    print("generate foliage")
     generate_foliage(world, blocks_ground, blocks_ceiling, blocks_wall_right, blocks_wall_left)
 
     # Generate poles
-    print("generate poles")
     generate_poles(world, poles, blocks_ground, blocks_ceiling)
 
-    print("done")
+    window.loading_progress[:2] = "Finishing", 5
 
 
 # Called from generate_world
