@@ -182,7 +182,8 @@ class World(dict):
         
         window.world_view = self.view
 
-    def save(self):
+    def save(self, window):
+        window.loading_progress[:3] = "Saving", 1.5, 2
         file.write("data/user/world.data", self, file_format="pickle")
 
     @staticmethod

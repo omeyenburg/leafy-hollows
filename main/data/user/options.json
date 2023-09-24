@@ -2,7 +2,7 @@
     "enable vsync": true,
     "max fps": 1000,
     "text resolution": 40,
-    "shadow resolution": 16,
+    "shadow resolution": 8,
     "particles": 0,
     "antialiasing": 0,
     "show fps": true,

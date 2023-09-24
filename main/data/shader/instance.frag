@@ -151,6 +151,29 @@ vec4 get_color_background() {
     return vec4(sin(vertTexcoord.x) / 2 + 0.5, cos(vertTexcoord.y) / 2 + 0.5, cos(vertTexcoord.x), 0.5);
 }
 
+ivec4 get_next_closest_block(ivec2 source_pixel) {
+    int x_distance = int(min(source_pixel.x, BLOCK_SIZE_SOURCE - source_pixel.x));
+    int y_distance = int(min(source_pixel.y, BLOCK_SIZE_SOURCE - source_pixel.y));
+
+    if (x_distance <= y_distance) {
+        // Block on x-axis
+        if (x_distance == source_pixel.x) {
+            // left
+            return ivec4(15, source_pixel.y, -1, 0);
+        }
+        // right
+        return ivec4(0, source_pixel.y, 1, 0);
+    } else {
+        // Block on y-axis
+        if (y_distance == source_pixel.y) {
+            // top
+            return ivec4(source_pixel.x, 15, 0, -1);
+        }
+        // bottom
+        return ivec4(source_pixel.x, 0, 0, 1);
+    }
+}
+
 void draw_background() {
     BLOCK_SIZE_DEST = BLOCK_SIZE_SOURCE * resolution;
     block_texture_size = textureSize(texBlocks, 0);
@@ -178,6 +201,13 @@ void draw_background() {
 
     // Mix background and block
     if (block_color.a < 1.0) {
+        if (source_pixel.x == 0 || source_pixel.y == 0 || source_pixel.x == 15 || source_pixel.y == 15) {
+            vec4 closest_block = get_next_closest_block(source_pixel);
+            source_pixel = ivec2(closest_block.xy);
+            block_coord = closest_block.zw;
+            block_type = texelFetch(texWorld, ivec2(block_coord), 0).b;
+            block_color = block_color * block_color.a + get_color_block(block_type, source_pixel) * (1 - block_color.a);
+        }
         fragColor = block_color * block_color.a + background * (1 - block_color.a);
     } else {
         fragColor = block_color;
@@ -186,29 +216,6 @@ void draw_background() {
 
 
 // Post processing
-ivec4 get_next_closest_block(ivec2 source_pixel) {
-    int x_distance = int(min(source_pixel.x, BLOCK_SIZE_SOURCE - source_pixel.x));
-    int y_distance = int(min(source_pixel.y, BLOCK_SIZE_SOURCE - source_pixel.y));
-
-    if (x_distance <= y_distance) {
-        // Block on x-axis
-        if (x_distance == source_pixel.x) {
-            // left
-            return ivec4(15, source_pixel.y, -1, 0);
-        }
-        // right
-        return ivec4(0, source_pixel.y, 1, 0);
-    } else {
-        // Block on y-axis
-        if (y_distance == source_pixel.y) {
-            // top
-            return ivec4(source_pixel.x, 15, 0, -1);
-        }
-        // bottom
-        return ivec4(source_pixel.x, 0, 0, 1);
-    }
-}
-
 vec4 get_color_foreground() {
     BLOCK_SIZE_DEST = BLOCK_SIZE_SOURCE * resolution;
     block_texture_size = textureSize(texBlocks, 0);
