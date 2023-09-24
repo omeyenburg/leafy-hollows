@@ -16,20 +16,10 @@ class Menu:
         ###---###  Main page  ###---###
         self.main_page = Page(columns=2, spacing=MENU_SPACING)
         Label(self.main_page, MENU_TITLE_SIZE, columnspan=2, text="Title", fontsize=TEXT_SIZE_HEADING)
-        button_main_play = Button(self.main_page, MENU_BUTTON_SIZE, columnspan=2, text="Play", fontsize=TEXT_SIZE_BUTTON)
+        button_main_play = Button(self.main_page, MENU_BUTTON_SIZE, columnspan=2, text="Play", fontsize=TEXT_SIZE_BUTTON, callback=lambda: self.set_state("load_world"))
         button_main_settings = Button(self.main_page, MENU_BUTTON_SMALL_SIZE, text="Settings", fontsize=TEXT_SIZE_BUTTON)
         Button(self.main_page, MENU_BUTTON_SMALL_SIZE, callback=window.quit, text="Quit", fontsize=TEXT_SIZE_BUTTON)
         self.main_page.layout()
-
-        def open_load_world_page():
-            self.loading_page.open()
-            self.loading_page_progress = 0.0
-            self.game_state = "load_world"
-
-        button_main_play.callback = open_load_world_page
-
-
-        #self.main_page.open()
 
 
         ###---###  Pause page  ###---###
@@ -51,24 +41,25 @@ class Menu:
         button_pause_menu = Button(self.pause_page, MENU_BUTTON_SIZE, text="Main Menu", callback=button_pause_menu_update, fontsize=TEXT_SIZE_BUTTON)
         self.pause_page.layout()
 
+
         ###---###  Loading page  ###---###
         self.loading_page_title: str = ""
         self.loading_page_progress: float = 0.0
         
         def update_loading_page():
-            #dots = int(window.time * 2 % 4)
-            #label_generate_world.text = "Loading World" + "." * dots + " " * (3 - dots)
             title_loading_page.text = self.loading_page_title
             description_loading_page.text = self.window.loading_progress[0]
             if self.window.loading_progress[2]:
-                self.loading_page_progress = (self.loading_page_progress + self.window.loading_progress[1] / self.window.loading_progress[2]) / 2
+                add = self.window.delta_time * 0.1
+                if self.window.loading_progress[1] % 1 + add < 1:
+                    self.window.loading_progress[1] += add
+                self.loading_page_progress = max(0.05, min(1.0, (self.loading_page_progress + self.window.loading_progress[1] / self.window.loading_progress[2]) / 2))
             progress_loading_page.value = self.loading_page_progress
 
-
-        self.loading_page = Page(columns=1, callback=update_loading_page)
-        title_loading_page = Label(self.loading_page, MENU_HEADING_SIZE, fontsize=TEXT_SIZE_HEADING)
+        self.loading_page = Page(columns=1, spacing=MENU_SPACING, callback=update_loading_page)
+        title_loading_page = Label(self.loading_page, MENU_TITLE_SIZE, fontsize=TEXT_SIZE_HEADING)
         progress_loading_page = LoadingBar(self.loading_page, MENU_BUTTON_SIZE)
-        description_loading_page = Label(self.loading_page, MENU_HEADING_SIZE, fontsize=TEXT_SIZE_BUTTON)
+        description_loading_page = Label(self.loading_page, MENU_BUTTON_SIZE, fontsize=TEXT_SIZE_BUTTON)
         self.loading_page.layout()
 
 
@@ -479,10 +470,14 @@ class Menu:
 
         self.hover_box = (rect, texts)
 
+    def set_state(self, state):
+        self.game_state = state
+
     def load_threaded(self, title, prepare_state, func, *args, **kwargs):
         self.loading_page.open()
         self.loading_page.opened_tick = 0
         self.loading_page_title = title
+        self.loading_page_progress = 0.0
         self.window.loading_progress = ["", 0, 0]
 
         # Wait for thread

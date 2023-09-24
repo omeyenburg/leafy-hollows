@@ -50,7 +50,7 @@ def generate_world(world, window):
     """
     Main world generation function
     """
-    window.loading_progress[2] = 5
+    window.loading_progress[2] = 11
 
     # Load structures
     window.loading_progress[:2] = "Loading structures", 0
@@ -63,10 +63,10 @@ def generate_world(world, window):
 
     # Generate intro
     window.loading_progress[:2] = "Generating intro", 1
-    Shape.intro(world, position)
+    Shape.intro(world, window, position)
 
     # Line cave segment
-    window.loading_progress[:2] = "Generating caves", 2
+    window.loading_progress[:2] = "Generating caves", 5
     last_special = 0
     for i in range(30):
         last_special += 1
@@ -92,7 +92,7 @@ def generate_world(world, window):
             else:
                 Shape.blob(world, position)
 
-    window.loading_progress[:2] = "Generating cave branches", 3
+    window.loading_progress[:2] = "Generating cave branches", 7
     for x, y, direction in branches:
         length = random.randint(2, 3)
         position = [x, y]
@@ -108,19 +108,20 @@ def generate_world(world, window):
     ...
 
     # Smoother cave walls
-    window.loading_progress[:2] = "Generating foliage", 4
+    window.loading_progress[:2] = "Generating foliage", 9
     flatten_edges(world)
 
     # Find block edges with air
     blocks_ground, blocks_ceiling, blocks_wall_right, blocks_wall_left = find_edge_blocks(world)
 
     # Generate foliage
+    window.loading_progress[1] = 7
     generate_foliage(world, blocks_ground, blocks_ceiling, blocks_wall_right, blocks_wall_left)
 
     # Generate poles
     generate_poles(world, poles, blocks_ground, blocks_ceiling)
 
-    window.loading_progress[:2] = "Finishing", 5
+    window.loading_progress[:2] = "Finishing", 11
 
 
 # Called from generate_world
@@ -179,24 +180,34 @@ def generate_foliage(world, blocks_ground, blocks_ceiling, blocks_wall_right, bl
 
 # Called from generate_foliage
 def generate_foliage_floor(world, coord):
-    group: float = random.random()
-    group_layout: bool = False
+    wall_left = world.get_block(coord[0] - 1, coord[1], generate=False)
+    wall_right = world.get_block(coord[0] + 1, coord[1], generate=False)
 
-    if group < 0.15:
-        block_pool = BLOCKS_VEGETATION_GROUP_FLOOR
-        group_layout = True
-    elif group < 0.3:
-        block_pool = BLOCKS_VEGETATION_FLOOR_RARE
-    elif group < 0.6:
-        block_pool = BLOCKS_VEGETATION_FLOOR_UNCOMMON
+    if wall_left and not wall_right:
+        block_pool = BLOCKS_STEP_GROUND
+        flipped = 1
+    elif wall_right and not wall_left:
+        block_pool = BLOCKS_STEP_GROUND
+        flipped = 0
     else:
-        block_pool = BLOCKS_VEGETATION_FLOOR_COMMON
+        flipped: bool = random.random() > 0.5
+        group: float = random.random()
+        group_layout: bool = False
+
+        if group < 0.15:
+            block_pool = BLOCKS_VEGETATION_GROUP_FLOOR
+            group_layout = True
+        elif group < 0.3:
+            block_pool = BLOCKS_VEGETATION_FLOOR_RARE
+        elif group < 0.6:
+            block_pool = BLOCKS_VEGETATION_FLOOR_UNCOMMON
+        else:
+            block_pool = BLOCKS_VEGETATION_FLOOR_COMMON
     
     index = random.randint(0, len(block_pool) - 1)
-    
     block = block_pool[index]
     if isinstance(block, str):
-        if block + "_flipped" in world.block_name and random.random() > 0.5:
+        if block + "_flipped" in world.block_name and flipped:
             block += "_flipped"
         if world.get_block(*coord, world.block_layer[block]):
             return
@@ -341,7 +352,7 @@ def line_cave(world, position, length, angle, deviation, radius):
 # Called from generate_world
 class Shape:
     @staticmethod
-    def intro(world, position):
+    def intro(world, window, position):
         surface_size = (50, 30)
         for x in range(-surface_size[0], surface_size[0] + 1):
             surface_level = pnoise1(x / 20 + world.seed, octaves=3) * 9
@@ -349,6 +360,8 @@ class Shape:
             for y in range(-surface_size[0], surface_size[0] + 1):
                 if surface_level < y:
                     world.set_block(x, y, 0)
+                
+        window.loading_progress[1] = 2
 
         points = set()
         start_angle = angle = -math.pi/2
@@ -362,6 +375,8 @@ class Shape:
             #position[0] = opensimplex.noise2(1.3, i * 16 + world.seed) * deviation
             position[1] = -i
             points.add(tuple(position))
+
+        window.loading_progress[1] = 3
 
         for (x, y) in points:
             radius = int((pnoise1(y + world.seed, octaves=3, repeat=INTRO_REPEAT) + 2) * 2)

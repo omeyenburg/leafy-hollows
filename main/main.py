@@ -25,10 +25,10 @@ menu.main_page.open()
 
 def save_world():
     global world
+    window.clear_world()
+    
     if menu.game_state in ("game", "intro") and not world is None:
-        window.loading_progress[:3] = "Saving", 1, 2
-        menu.load_threaded("Saving world", "save_world", world.save)
-        world.save()
+        menu.load_threaded("Saving world", "save_world", world.save, window)
         del world
         world = None
 
@@ -286,3 +286,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+    # Profiler
+    #import cProfile
+    #cProfile.run('main()')

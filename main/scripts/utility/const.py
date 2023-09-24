@@ -66,7 +66,7 @@ BLOCKS_VEGETATION_FLOOR_RARE: tuple = (*["mushroom" + str(i) for i in range(7)],
                                        "amethyst0", "amethyst1", "diamond0", "diamond1", "jade0", "ruby0", "ruby1")
 BLOCKS_VEGETATION_GROUP_FLOOR: tuple = (
     ("big_amethyst", 2, 2),
-    #("big_diamond0", 2, 2), # side
+    ("big_diamond0", 2, 2),
     ("big_diamond1", 2, 2),
     ("big_diamond2", 4, 4),
     ("big_jade0", 4, 4),
@@ -75,12 +75,12 @@ BLOCKS_VEGETATION_GROUP_FLOOR: tuple = (
     ("big_topaz0", 2, 2),
     #("big_bush0", 4, 4),
     #("big_bush1", 4, 4),
-    #("dead_tree0", 4, 4),
+    ("dead_tree0", 4, 4),
     ("tree0", 4, 4),
     ("tree1", 4, 4),
-    #("tree2", 4, 4), # pine
-    #("tree3", 4, 4)  # pine
+    ("giant_mushroom0", 4, 4)
 )
 BLOCKS_VEGETATION_CEILING: tuple = ("roots0", "roots1", "roots2", "vines0", "vines1")
 BLOCKS_VEGETATION_WALL: tuple = ("topaz0",)
+BLOCKS_STEP_GROUND: tuple = ("grass_block_step",)
 BLOCKS_CLIMBABLE: tuple = ("pole", "vines0", "vines0_flipped")
