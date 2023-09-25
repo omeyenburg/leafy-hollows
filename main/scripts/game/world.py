@@ -8,6 +8,7 @@ from scripts.utility import file
 import random
 import numpy
 import math
+import time
 
 
 class World(dict):
@@ -183,8 +184,10 @@ class World(dict):
         window.world_view = self.view
 
     def save(self, window):
-        window.loading_progress[:3] = "Saving", 1.5, 2
+        window.loading_progress[:3] = "Saving", 0, 1.1
         file.write("data/user/world.data", self, file_format="pickle")
+        window.loading_progress[1] = 1.1
+        time.sleep(0.1)
 
     @staticmethod
     def load(window):
