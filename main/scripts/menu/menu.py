@@ -31,8 +31,9 @@ class Menu:
                 self.game_state = "game"
 
         def button_pause_menu_update():
+            if not self.save_world is None:
+                self.save_world()
             self.game_state = "menu"
-            self.save_world()
             self.main_page.open()
 
         self.pause_page = Page(columns=1, spacing=MENU_SPACING)
@@ -481,13 +482,11 @@ class Menu:
         self.window.loading_progress = ["", 0, 0]
 
         # Wait for thread
-        while True:
+        finished = False
+        while not finished:
             self.update()
             self.window.update()
-
             value, finished = threaded(func, *args, **kwargs)
-            if finished:
-                break
 
             # Write fps
             if self.window.options["show fps"]:

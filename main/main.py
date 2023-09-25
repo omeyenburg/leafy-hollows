@@ -27,10 +27,9 @@ def save_world():
     global world
     window.clear_world()
     
-    if menu.game_state in ("game", "intro") and not world is None:
+    if menu.game_state in ("game", "intro", "pause") and not world is None:
         menu.load_threaded("Saving world", "save_world", world.save, window)
         del world
-        world = None
 
 
 def generate():
@@ -203,8 +202,11 @@ def update_intro():
 
 
 def main():
+    menu.save_world = save_world
     window.callback_quit = save_world
     window.camera.set_zoom(CAMERA_RESOLUTION_GAME)
+
+
     while True:
         if menu.game_state == "load_world":
             window.camera.reset()
@@ -246,9 +248,6 @@ def main():
             # Draw menu
             if menu.game_intro:
                 draw_intro()
-
-            # Save world
-            menu.save_world = world.save
 
             # Update and draw the menu
             menu.update()

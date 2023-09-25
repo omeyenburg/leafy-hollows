@@ -1,9 +1,9 @@
 pyinstaller-hooks-contrib==2023.8
 PyOpenGL-accelerate==3.1.7
-pyinstaller==5.13.2
+pyinstaller==6.0.0
 opensimplex==0.4.5
 PyOpenGL==3.1.7
-pygame-ce==2.3.1
-numpy==1.24.4
-numba==0.57.1
+pygame-ce==2.3.2
+numpy==1.25.2
+numba==0.58.0
 noise==1.2.2
