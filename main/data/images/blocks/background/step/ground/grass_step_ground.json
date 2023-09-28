@@ -1,0 +1,11 @@
+{
+    "name": "grass_step_ground",
+    "family": "grass",
+    "layer": "background",
+    "hardness": 1,
+    "speed": 0,
+    "flip": 1,
+    "frames": [
+        "grass_step_ground.png"
+    ]
+}

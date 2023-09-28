@@ -82,5 +82,13 @@ BLOCKS_VEGETATION_GROUP_FLOOR: tuple = (
 )
 BLOCKS_VEGETATION_CEILING: tuple = ("roots0", "roots1", "roots2", "vines0", "vines1")
 BLOCKS_VEGETATION_WALL: tuple = ("topaz0",)
-BLOCKS_STEP_GROUND: tuple = ("grass_block_step",)
+BLOCKS_STEP_GROUND: dict = {
+    "grass_block": ("grass_step_ground",),
+    "dirt_block": ("dirt_step_ground",),
+    "stone_block": ("stone_step_ground",),
+}
+BLOCKS_STEP_CEILING: dict = {
+    "dirt_block": ("dirt_step_ceiling",),
+    "stone_block": ("stone_step_ceiling",),
+}
 BLOCKS_CLIMBABLE: tuple = ("pole", "vines0", "vines0_flipped")
