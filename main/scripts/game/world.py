@@ -15,13 +15,39 @@ class World(dict):
     def __init__(self, window):
         super().__init__() # {(x, y): (block, plant, background, water_level)}
         self.seed: float = random.randint(-10**6, 10**6) + math.e # Float between -10^6 and 10^6
+        self.version_checksum = self.get_version_checksum(window.block_data)
         self.view: numpy.array = None # Sent to shader to render
         self.view_size: tuple = (0, 0)
-        self.block_layer: dict = {name: {"foreground": 0, "plant": 1, "background": 2, "water": 3}[layer] for name, (index, layer) in window.block_data.items()}
-        self.block_name: dict = {name: index for name, (index, layer) in window.block_data.items()}
-        self.block_index: dict = {index: name for name, (index, layer) in window.block_data.items()}
+
+        self.block_family: dict = {
+            (name + "_flipped" if flipped else name):
+            family
+            for name, (index, family, layer) in window.block_data.items()
+            for flipped in range(2)
+        }
+        self.block_layer: dict = {
+            (name + "_flipped" if flipped else name):
+            {"foreground": 0, "plant": 1, "background": 2, "water": 3}[layer]
+            for name, (index, family, layer) in window.block_data.items()
+            for flipped in range(2)
+        }
+        self.block_name: dict = {
+            (name + "_flipped" if flipped else name):
+            index + flipped
+            for name, (index, family, layer) in window.block_data.items()
+            for flipped in range(2)
+        }
+        self.block_index: dict = {
+            index + flipped:
+            (name + "_flipped" if flipped else name)
+            for name, (index, family, layer) in window.block_data.items()
+            for flipped in range(2)
+        }
+        self.block_family["air"] = "air"
         self.block_index[0] = "air"
+        self.block_group_size = window.block_group_size
         self.blocks_climbable: set = {self.block_name[name] for name in BLOCKS_CLIMBABLE}
+
         self.entities: set = set()
         self.particles: list = []
         self.particle_types: dict = {}
@@ -193,13 +219,23 @@ class World(dict):
     def load(window):
         window.loading_progress[:3] = "Loading world file", 1, 2
         world = file.read("data/user/world.data", default=0, file_format="pickle")
-        if isinstance(world, World) and len(window.block_data) == len(world.block_name):
-            window.loading_progress[:3] = "Loading world", 2, 2
-            for name in world.particle_types:
-                world.particle_types[name][0][0] = window.time
-            world.particles = []
-            return world
+        try:
+            if isinstance(world, World) and World.get_version_checksum(window.block_data) == world.version_checksum:
+                window.loading_progress[:3] = "Loading world", 2, 2
+                for name in world.particle_types:
+                    world.particle_types[name][0][0] = window.time
+                world.particles = []
+                return world
+        except:
+            pass
         
         world = World(window)
         generate_world(world, window)
         return world
+
+    @staticmethod
+    def get_version_checksum(block_data):
+        return (len(block_data)
+            + sum(bytes(str(block_data), encoding="utf-8"))
+            + sum(bytes(list(block_data)[0], encoding="utf-8"))
+        )

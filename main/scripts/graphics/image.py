@@ -6,21 +6,16 @@ import math
 import os
 
 
-# Potentially insecure...
-sprites = {}
-sprite_rects = []
-
-
-def get_sprite_rect(image, time):
+def get_sprite_rect(window, image):
     """
     Returns the rectangle of the current animation frame of an image.
     """
-    frames, speed = sprites[image]
+    frames, speed = window.sprites[image]
     if speed != 0 or len(frames) > 1:
-        index = int(time // speed % len(frames))
+        index = int(window.time // speed % len(frames))
     else:
         index = 0
-    return sprite_rects[frames[index]]
+    return window.sprite_rects[frames[index]]
 
 
 def load_blocks():
@@ -35,6 +30,8 @@ def load_blocks():
     animation = []
     blocks = []
     families = {}
+    block_pools = {}
+    block_group_size = {}
 
     for path in block_paths:
         blocks.append(file.read(path, file_format="json"))
@@ -42,13 +39,18 @@ def load_blocks():
     for data in sorted(blocks, key=lambda data: data["hardness"]):
         # Large blocks
         block = data["name"]
-        size = data.get("size", (WORLD_BLOCK_SIZE, WORLD_BLOCK_SIZE))
+        sample_image_path = file.find("data/images/blocks", data["frames"][0], True)[0]
+        size = pygame.image.load(sample_image_path).get_size()
+
+        if "pool" in data:
+            block_pools.setdefault(data["pool"], []).append(block)
 
         if size == (WORLD_BLOCK_SIZE, WORLD_BLOCK_SIZE):
             frames.extend(data["frames"])
             block_data[block] = (data["hardness"], data["family"], data["layer"])
             animation.append((block, len(data["frames"]), data["speed"]))
         else:
+            block_group_size[block] = (size[0] // WORLD_BLOCK_SIZE, size[1] // WORLD_BLOCK_SIZE)
             for frame in data["frames"]:
                 for x in range(0, size[0], WORLD_BLOCK_SIZE):
                     for y in range(0, size[1], WORLD_BLOCK_SIZE):
@@ -59,12 +61,6 @@ def load_blocks():
         
         if not data["family"] in families:
             families[data["family"]] = len(families)
-
-        if data.get("flip", 0) == 1 and size == (WORLD_BLOCK_SIZE, WORLD_BLOCK_SIZE): # Plants can be flipped
-            block = data["name"] + "_flipped"
-            frames.extend([frame + "_f" for frame in data["frames"]])
-            animation.append((block, len(data["frames"]), data["speed"]))
-            block_data[block] = (data["hardness"], data["family"], data["layer"])
 
     width = math.ceil(math.sqrt(len(frames)))
     height = math.ceil(len(frames) / width)
@@ -80,40 +76,36 @@ def load_blocks():
             pos = frame[1:]
             frame = frame[0]
 
-        if frame.endswith("_f"):
-            flipped = True
-            frame = frame[:-2]
-        else:
-            flipped = False
-
         try:
             path = file.find("data/images/blocks", frame, True)[0]
         except IndexError:
             raise Exception("Could not find block " + frame)
         block_surface = pygame.image.load(path)
-        if flipped:
-            block_surface = pygame.transform.flip(block_surface, 1, 0)
 
         image.blit(block_surface, (x * WORLD_BLOCK_SIZE, (height - y - 1) * WORLD_BLOCK_SIZE), (*pos, WORLD_BLOCK_SIZE, WORLD_BLOCK_SIZE))
 
     x = 0
     for block, length, speed in animation:
         image.set_at((x % (width * WORLD_BLOCK_SIZE), height * WORLD_BLOCK_SIZE + x // (width * WORLD_BLOCK_SIZE)), (length, speed * 255 / 2, families[block_data[block][1]])) # length: 0-255 | speed: 0.0-2.0
-        block_data[block] = (x + 1, block_data[block][2])
+        block_data[block] = (x * 2 + 1, *block_data[block][1:])
         x += length
 
     if CREATE_TEXTURE_ATLAS_FILE:
         pygame.image.save(image, file.abspath("data/blocks (testing only).png"))
 
-    return block_data, image
+    # Print block pools
+    #for pool in block_pools:print(pool, ":\n", block_pools[pool], "\n")    
+    #for block in block_data:print(block, ":\n", block_data[block], "\n")    
+
+    return block_data, block_pools, block_group_size, image
 
 
 def load_sprites():
     """
     Load image texture atlas from files in a folder.
     """
-    global sprite_rects
-    global sprites
+    sprites = {}
+    sprite_rects = []
 
     images_data = file.read("data/images/layout/sprites.properties", split=True)
     images = {}
@@ -158,4 +150,4 @@ def load_sprites():
     if CREATE_TEXTURE_ATLAS_FILE:
         pygame.image.save(image, file.abspath("data/sprites (testing only).png"))
 
-    return image
+    return sprites, sprite_rects, image

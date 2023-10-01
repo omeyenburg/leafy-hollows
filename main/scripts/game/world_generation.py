@@ -79,7 +79,7 @@ def generate_world(world, window):
             cave_type = random.random()
 
             if cave_type > 0.6:
-                if random.random() > 0.5:
+                if random.randint(0, 1):
                     Shape.vertical(world, position, True)
                     poles.add(int(position[0]))
                     branches.add((*position, 0))
@@ -116,7 +116,7 @@ def generate_world(world, window):
 
     # Generate foliage
     window.loading_progress[1] = 7
-    generate_foliage(world, blocks_ground, blocks_ceiling, blocks_wall_right, blocks_wall_left)
+    generate_foliage(world, window.block_pools, blocks_ground, blocks_ceiling, blocks_wall_right, blocks_wall_left)
 
     # Generate poles
     generate_poles(world, poles, blocks_ground, blocks_ceiling)
@@ -159,98 +159,102 @@ def find_edge_blocks(world):
 
 
 # Called from generate_world
-def generate_foliage(world, blocks_ground, blocks_ceiling, blocks_wall_right, blocks_wall_left):
+def generate_foliage(world, block_pools, blocks_ground, blocks_ceiling, blocks_wall_right, blocks_wall_left):
     blocks_ground = random.choices(list(blocks_ground), k=int(WORLD_VEGETATION_FLOOR_DENSITY * len(blocks_ground)))
     blocks_ceiling = random.choices(list(blocks_ceiling), k=int(WORLD_VEGETATION_CEILING_DENSITY * len(blocks_ceiling)))
     blocks_wall_right = random.choices(list(blocks_wall_right), k=int(WORLD_VEGETATION_WALL_DENSITY * len(blocks_wall_right)))
     blocks_wall_left = random.choices(list(blocks_wall_left), k=int(WORLD_VEGETATION_WALL_DENSITY * len(blocks_wall_left)))
 
     for coord in blocks_ground:
-        generate_foliage_floor(world, coord)
+        generate_foliage_floor(world, block_pools, coord)
     for coord in blocks_ceiling:
-        generate_foliage_ceiling(world, coord)
+        generate_foliage_ceiling(world, block_pools, coord)
     for coord in blocks_wall_right:
-        generate_foliage_wall(world, coord, flipped=0)
+        generate_foliage_wall(world, block_pools, coord, flipped=0)
     for coord in blocks_wall_left:
-        generate_foliage_wall(world, coord, flipped=1)
+        generate_foliage_wall(world, block_pools, coord, flipped=1)
 
 
 # Called from generate_foliage
-def generate_foliage_floor(world, coord):
-    block_left = world.get_block(coord[0] - 1, coord[1], generate=False)
-    block_right = world.get_block(coord[0] + 1, coord[1], generate=False)
-    block_below = world.block_index[world.get_block(coord[0], coord[1] - 1, generate=False)]
+def generate_foliage_floor(world, block_pools, coord):
+    group_layout = False
 
-    if block_left and not block_right:
-        block_pool = BLOCKS_STEP_GROUND.get(block_below, tuple(BLOCKS_STEP_GROUND.values())[0])
-        flipped = 1
-    elif block_right and not block_left:
-        block_pool = BLOCKS_STEP_GROUND.get(block_below, tuple(BLOCKS_STEP_GROUND.values())[0])
-        flipped = 0
-    else:
-        flipped: bool = random.random() > 0.5
+    block_pool, flipped = get_step(world, block_pools, coord, "ground")
+    if not block_pool:
+        flipped: bool = random.randint(0, 1)
         group: float = random.random()
-        group_layout: bool = False
 
         if group < 0.15:
-            block_pool = BLOCKS_VEGETATION_GROUP_FLOOR
+            block_pool = block_pools["vegetation_block_group_floor"]
             group_layout = True
         elif group < 0.3:
-            block_pool = BLOCKS_VEGETATION_FLOOR_RARE
+            block_pool = block_pools["vegetation_floor_rare"]
         elif group < 0.6:
-            block_pool = BLOCKS_VEGETATION_FLOOR_UNCOMMON
+            block_pool = block_pools["vegetation_floor_uncommon"]
         else:
-            block_pool = BLOCKS_VEGETATION_FLOOR_COMMON
+            block_pool = block_pools["vegetation_floor_common"]
 
     index = random.randint(0, len(block_pool) - 1)
     block = block_pool[index]
-    if isinstance(block, str):
-        if block + "_flipped" in world.block_name and flipped:
-            block += "_flipped"
+    if not group_layout:
         if world.get_block(*coord, world.block_layer[block]):
             return
-        block_type = world.block_name[block]
+        block_type = world.block_name[block] + flipped
         world.set_block(*coord, block_type)
     else:
-        coord = (coord[0] - block[1] // 2, coord[1] + block[2] - 1)
+        width, height = world.block_group_size[block]
+        layer = world.block_layer[block + "_0_0"]
+        coord = (coord[0] - width // 2, coord[1] + height - 1)
 
         # Check for full blocks below
-        for x in range(block[1]):
-            if not world.get_block(coord[0] + x, coord[1] - block[2], 0):
+        for x in range(width):
+            if not world.get_block(coord[0] + x, coord[1] - height, 0):
                 return
 
         # Check for collisions
-        for x in range(block[1]):
-            for y in range(block[2]):
-                if world.get_block(coord[0] + x, coord[1] - y, world.block_layer[block[0] + "_0_0"]):
+        for x in range(width):
+            for y in range(height):
+                if world.get_block(coord[0] + x, coord[1] - y, layer):
                     return
 
         # Place blocks
-        for x in range(block[1]):
-            for y in range(block[2]):
-                name = f"{block[0]}_{x}_{y}"
-                block_type = world.block_name[name]
+        for x in range(width):
+            for y in range(height):
+                name = f"{block}_{abs((width - 1) * flipped - x)}_{y}"
+                block_type = world.block_name[name] + flipped
                 world.set_block(coord[0] + x, coord[1] - y, block_type)
 
 
+def get_step(world, block_pools, coord, side):
+    block_left = world.get_block(coord[0] - 1, coord[1], generate=False)
+    block_right = world.get_block(coord[0] + 1, coord[1], generate=False)
+    block_vertical = world.get_block(coord[0], coord[1] - 2 * (side == "ground") + 1, generate=False)
+    block_pool = []
+
+    if block_left and not block_right:
+        flipped = 1
+    elif block_right and not block_left:
+        flipped = 0
+    else:
+        return [], 0
+    
+    pool_identifier = world.block_family[world.block_index[block_vertical]]
+    pool_identifier += ("_step_ground" if side == "ground" else "_step_ceiling")
+    if pool_identifier in block_pools:
+        block_pool = block_pools[pool_identifier]
+
+    return block_pool, flipped
+
+
 # Called from generate_foliage
-def generate_foliage_ceiling(world, coord):
+def generate_foliage_ceiling(world, block_pools, coord):
     if not world.get_block(coord[0], coord[1] + 1, 0, False, 0):
         return
 
-    block_left = world.get_block(coord[0] - 1, coord[1], generate=False)
-    block_right = world.get_block(coord[0] + 1, coord[1], generate=False)
-    block_above = world.block_index[world.get_block(coord[0], coord[1] + 1, generate=False)]
-    
-    if block_left and not block_right:
-        block_pool = BLOCKS_STEP_CEILING.get(block_above, tuple(BLOCKS_STEP_CEILING.values())[0])
-        flipped = 1
-    elif block_right and not block_left:
-        block_pool = BLOCKS_STEP_CEILING.get(block_above, tuple(BLOCKS_STEP_CEILING.values())[0])
-        flipped = 0
-    else:
-        block_pool = BLOCKS_VEGETATION_CEILING
-        flipped = random.random() > 0.5
+    block_pool, flipped = get_step(world, block_pools, coord, "ceiling")
+    if not block_pool:
+        block_pool = block_pools["vegetation_ceiling"]
+        flipped = random.randint(0, 1)
 
     index = random.randint(0, len(block_pool) - 1)
     block = block_pool[index]
@@ -261,11 +265,7 @@ def generate_foliage_ceiling(world, coord):
         length = 1
 
     for i in range(length):                
-        if flipped:
-            block_type = world.block_name[block + "_flipped"]
-        else:
-            block_type = world.block_name[block]
-
+        block_type = world.block_name[block] + flipped
         x, y = coord[0], coord[1] - i
         if world.get_block(x, y, 0, False, 1) or world.get_block(x, y, world.block_layer[block], False, 1):
             break
@@ -273,13 +273,14 @@ def generate_foliage_ceiling(world, coord):
         world.set_block(x, y, block_type)
 
         if i != length - 1:
-            flipped = random.random() > 0.5
+            flipped = random.randint(0, 1)
 
 
 # Called from generate_foliage
-def generate_foliage_wall(world, coord, flipped=1):
-    index = random.randint(0, len(BLOCKS_VEGETATION_WALL) - 1)
-    block = BLOCKS_VEGETATION_WALL[index]
+def generate_foliage_wall(world, block_pools, coord, flipped=1):
+    block_pool = block_pools["vegetation_wall"]
+    index = random.randint(0, len(block_pool) - 1)
+    block = block_pool[index]
     if world.get_block(*coord, world.block_layer[block]):
         return
     if flipped and block + "_flipped" in world.block_name:

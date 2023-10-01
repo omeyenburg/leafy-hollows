@@ -5,6 +5,7 @@
     "hardness": 1,
     "speed": 0.5,
     "flip": 1,
+    "pool": "vegetation_ceiling",
     "frames": [
         "roots1_a.png",
         "roots1_b.png"

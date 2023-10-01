@@ -4,10 +4,7 @@
     "layer": "plant",
     "hardness": 1,
     "speed": 0,
-    "size": [
-        32,
-        32
-    ],
+    "pool": "vegetation_block_group_floor",
     "frames": [
         "big_ruby1.png"
     ]

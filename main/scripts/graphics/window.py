@@ -174,7 +174,7 @@ class Window:
         GL.glVertexAttribDivisor(4, 1)
 
         # Create sprite texture
-        image = load_sprites()
+        self.sprites, self.sprite_rects, image = load_sprites()
         self._texSprites = self._texture(image)
 
         # Font texture
@@ -192,7 +192,7 @@ class Window:
         self._texWorld = None
 
         # Create block texture
-        self.block_data, image = load_blocks()
+        self.block_data, self.block_pools, self.block_group_size, image = load_blocks()
         self._texBlocks = self._texture(image)
 
         # Create shadow texture
@@ -848,7 +848,7 @@ class Window:
         """
         Draw an image on the window.
         """
-        rect = get_sprite_rect(image, self.time)
+        rect = get_sprite_rect(self, image)
 
         dest_rect = (position[0] + size[0] / 2, position[1] + size[1] / 2, size[0] / 2, size[1] / 2)
         if self.stencil_rect:

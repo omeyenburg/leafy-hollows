@@ -105,6 +105,13 @@ ivec2 get_source_pixel() {
 }
 
 vec4 get_color_block(int block_type, vec2 source_pixel) {
+    // Flip source_pixel for flipped blocks
+    // (flipped blocks === even block_type && block_type != 0)
+    if (mod(block_type, 2) == 0) {
+        source_pixel.x = 15 - source_pixel.x;
+    }
+    block_type = (block_type - 1) / 2 + 1;
+
     if (block_type != 0) {
         // Current frame
         animation_data = texelFetch(texBlocks, get_block_data_location(block_type), 0).rg;
@@ -163,6 +170,12 @@ void draw_background() {
     // Background color
     vec4 background = get_color_background();
 
+    // Return background color
+    if (foreground_block_type == 0 || source_pixel.x != 0 && source_pixel.x != 15 && source_pixel.y != source_pixel_y_min && source_pixel.y != source_pixel_y_max) {
+        fragColor = mix(background, block_color, block_color.a);
+        return;
+    }
+
     // Move source pixel at edge to next block
     if (source_pixel.x == 0) {
         source_pixel.x = 15;
@@ -179,7 +192,7 @@ void draw_background() {
         source_pixel.y = source_pixel_y_min;
         block_coord.y += 1;
     }
-            
+    
     block_type = texelFetch(texWorld, block_coord, 0).b;
     block_color = mix(get_color_block(block_type, source_pixel), block_color, block_color.a);
 
@@ -246,6 +259,10 @@ ivec2 get_source_pixel_wrapped(int block_type, ivec2 source_pixel_wrapped) {
     return source_pixel_wrapped;
 }
 
+int unflip_block_type(int block_type) {
+    return ((block_type - 1) & ~1) + 1;
+}
+
 vec4 get_color_foreground() {
     BLOCK_SIZE_DEST = BLOCK_SIZE_SOURCE * resolution;
     block_texture_size = textureSize(texBlocks, 0);
@@ -284,33 +301,88 @@ vec4 get_color_foreground() {
     float distance_fire = 2;
     float fire_x = sin(time / 11) / 2 + cos(time / 17) / 2 + 8.5;
     float fire_y = sin(time / 13) / 2 + cos(time / 19) / 2 + 8.5;
-    if (block_data.g == block.torch || block_data.g == block.torch_flipped) {
-        distance_fire = min(distance_fire, distance(vec2(fire_x, fire_y), source_pixel) / 10);
+    if (unflip_block_type(block_data.g) == block.torch) {
+        distance_fire = min(
+            distance_fire,
+            distance(
+                vec2(fire_x, fire_y),
+                source_pixel
+            ) / 10
+        );
     }
-    if (block_data_top.g == block.torch || block_data_top.g == block.torch_flipped) {
-        distance_fire = min(distance_fire, distance(vec2(fire_x, fire_y + BLOCK_SIZE_SOURCE), source_pixel) / 10);
+    if (unflip_block_type(block_data_top.g) == block.torch) {
+        distance_fire = min(
+            distance_fire,
+            distance(
+                vec2(fire_x, fire_y + BLOCK_SIZE_SOURCE),
+                source_pixel
+            ) / 10
+        );
     }
-    if (block_data_bottom.g == block.torch || block_data_bottom.g == block.torch_flipped) {
-        distance_fire = min(distance_fire, distance(vec2(fire_x, fire_y - BLOCK_SIZE_SOURCE), source_pixel) / 10);
+    if (unflip_block_type(block_data_bottom.g) == block.torch) {
+        distance_fire = min(
+            distance_fire,
+            distance(
+                vec2(fire_x, fire_y - BLOCK_SIZE_SOURCE),
+                source_pixel
+            ) / 10
+        );
     }
-    if (block_data_left.g == block.torch || block_data_left.g == block.torch_flipped) {
-        distance_fire = min(distance_fire, distance(vec2(fire_x - BLOCK_SIZE_SOURCE, fire_y), source_pixel) / 10);
+    if (unflip_block_type(block_data_left.g) == block.torch) {
+        distance_fire = min(
+            distance_fire,
+            distance(
+                vec2(fire_x - BLOCK_SIZE_SOURCE, fire_y),
+                source_pixel
+            ) / 10
+        );
     }
-    if (block_data_right.g == block.torch || block_data_right.g == block.torch_flipped) {
-        distance_fire = min(distance_fire, distance(vec2(fire_x + BLOCK_SIZE_SOURCE, fire_y), source_pixel) / 10);
+    if (unflip_block_type(block_data_right.g) == block.torch) {
+        distance_fire = min(
+            distance_fire,
+            distance(
+                vec2(fire_x + BLOCK_SIZE_SOURCE, fire_y),
+                source_pixel
+            ) / 10
+        );
     }
-    if (block_data_top_left.g == block.torch || block_data_top_left.g == block.torch_flipped) {
-        distance_fire = min(distance_fire, distance(vec2(fire_x - BLOCK_SIZE_SOURCE, fire_y + BLOCK_SIZE_SOURCE), source_pixel) / 10);
+    if (unflip_block_type(block_data_top_left.g) == block.torch) {
+        distance_fire = min(
+            distance_fire,
+            distance(
+                vec2(fire_x - BLOCK_SIZE_SOURCE, fire_y + BLOCK_SIZE_SOURCE),
+                source_pixel
+            ) / 10
+        );
     }
-    if (block_data_top_right.g == block.torch || block_data_top_right.g == block.torch_flipped) {
-        distance_fire = min(distance_fire, distance(vec2(fire_x + BLOCK_SIZE_SOURCE, fire_y + BLOCK_SIZE_SOURCE), source_pixel) / 10);
+    if (unflip_block_type(block_data_top_right.g) == block.torch) {
+        distance_fire = min(
+            distance_fire,
+            distance(
+                vec2(fire_x + BLOCK_SIZE_SOURCE, fire_y + BLOCK_SIZE_SOURCE),
+                source_pixel
+            ) / 10
+        );
     }
-    if (block_data_bottom_left.g == block.torch || block_data_bottom_left.g == block.torch_flipped) {
-        distance_fire = min(distance_fire, distance(vec2(fire_x - BLOCK_SIZE_SOURCE, fire_y - BLOCK_SIZE_SOURCE), source_pixel) / 10);
+    if (unflip_block_type(block_data_bottom_left.g) == block.torch) {
+        distance_fire = min(
+            distance_fire,
+            distance(
+                vec2(fire_x - BLOCK_SIZE_SOURCE, fire_y - BLOCK_SIZE_SOURCE),
+                source_pixel
+            ) / 10
+        );
     }
-    if (block_data_bottom_right.g == block.torch || block_data_bottom_right.g == block.torch_flipped) {
-        distance_fire = min(distance_fire, distance(vec2(fire_x + BLOCK_SIZE_SOURCE, fire_y - BLOCK_SIZE_SOURCE), source_pixel) / 10);
+    if (unflip_block_type(block_data_bottom_right.g) == block.torch) {
+        distance_fire = min(
+            distance_fire,
+            distance(
+                vec2(fire_x + BLOCK_SIZE_SOURCE, fire_y - BLOCK_SIZE_SOURCE),
+                source_pixel
+            ) / 10
+        );
     }
+
     if (distance_fire < 2) {
         distance_fire = min(2, distance_fire + (sin(time * 3) + 1) / 17 + (cos(time * 10) + 1) / 20);
     }

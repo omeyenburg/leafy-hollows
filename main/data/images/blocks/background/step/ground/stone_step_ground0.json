@@ -1,12 +1,12 @@
 {
-    "name": "stone_step_ceiling",
+    "name": "stone_step_ground0",
     "family": "stone",
     "layer": "background",
     "hardness": 1,
     "speed": 0,
     "flip": 1,
-    "pool": "stone_step_ceiling",
+    "pool": "stone_step_ground",
     "frames": [
-        "stone_step_ceiling.png"
+        "stone_step_ground0.png"
     ]
 }
