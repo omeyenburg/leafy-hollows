@@ -56,39 +56,8 @@ WORLD_WATER_PER_BLOCK: int = 1000
 WORLD_WATER_SPEED: float = 0.1 # Water update delay
 WORLD_WIND_STRENGTH: int = 20
 WORLD_BLOCK_SIZE: int = 16
-WORLD_VEGETATION_FLOOR_DENSITY: float = 0.8
+WORLD_VEGETATION_FLOOR_DENSITY: float = 1.0
 WORLD_VEGETATION_CEILING_DENSITY: float = 0.4
 WORLD_VEGETATION_WALL_DENSITY: float = 0.05
 
-BLOCKS_VEGETATION_FLOOR_COMMON: tuple = ("flat_grass", "small_grass", "medium_grass")
-BLOCKS_VEGETATION_FLOOR_UNCOMMON: tuple = ("tall_grass", "bush0", "bush1", "torch", *["flower" + str(i) for i in range(11)])
-BLOCKS_VEGETATION_FLOOR_RARE: tuple = (*["mushroom" + str(i) for i in range(7)], "plant0", "wood0", "bones0", "bones1", "bones2", "bones3", "stone0", "stone1", "stone2", "stone3", "mossy_stone0", "mossy_stone1", "mossy_stone3",
-                                       "amethyst0", "amethyst1", "diamond0", "diamond1", "jade0", "ruby0", "ruby1")
-BLOCKS_VEGETATION_GROUP_FLOOR: tuple = (
-    ("big_amethyst", 2, 2),
-    ("big_diamond0", 2, 2),
-    ("big_diamond1", 2, 2),
-    ("big_diamond2", 4, 4),
-    ("big_jade0", 4, 4),
-    ("big_ruby0", 4, 4),
-    ("big_ruby1", 2, 2),
-    ("big_topaz0", 2, 2),
-    #("big_bush0", 4, 4),
-    #("big_bush1", 4, 4),
-    ("dead_tree0", 4, 4),
-    ("tree0", 4, 4),
-    ("tree1", 4, 4),
-    ("giant_mushroom0", 4, 4)
-)
-BLOCKS_VEGETATION_CEILING: tuple = ("roots0", "roots1", "roots2", "vines0", "vines1")
-BLOCKS_VEGETATION_WALL: tuple = ("topaz0",)
-BLOCKS_STEP_GROUND: dict = {
-    "grass_block": ("grass_step_ground",),
-    "dirt_block": ("dirt_step_ground",),
-    "stone_block": ("stone_step_ground",),
-}
-BLOCKS_STEP_CEILING: dict = {
-    "dirt_block": ("dirt_step_ceiling",),
-    "stone_block": ("stone_step_ceiling",),
-}
 BLOCKS_CLIMBABLE: tuple = ("pole", "vines0", "vines0_flipped")

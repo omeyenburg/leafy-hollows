@@ -4,10 +4,7 @@
     "layer": "plant",
     "hardness": 1,
     "speed": 0,
-    "size": [
-        64,
-        64
-    ],
+    "pool": "vegetation_block_group_floor",
     "frames": [
         "big_diamond2.png"
     ]

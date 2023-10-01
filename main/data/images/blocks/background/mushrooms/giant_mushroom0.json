@@ -4,10 +4,7 @@
     "layer": "background",
     "hardness": 1,
     "speed": 0,
-    "size": [
-        64,
-        64
-    ],
+    "pool": "vegetation_block_group_floor",
     "frames": [
         "giant_mushroom0.png"
     ]
