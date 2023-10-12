@@ -1,11 +1,11 @@
 {
-    "name": "stone_step_ceiling",
+    "name": "large_stone",
     "family": "stone",
     "layer": "background",
     "hardness": 1,
     "speed": 0,
-    "pool": "stone_step_ceiling",
+    "pool": "vegetation_block_group_floor",
     "frames": [
-        "stone_step_ceiling.png"
+        "large_stone.png"
     ]
 }

@@ -4,7 +4,6 @@
     "layer": "background",
     "hardness": 1,
     "speed": 0,
-    "flip": 1,
     "pool": "dirt_step_ground",
     "frames": [
         "dirt_step_ground1.png"

@@ -45,19 +45,22 @@ class Page:
             child.rect.centerx = sum(width[:child.column + 1]) - total_width / 2 + self.spacing * (child.column + (child.columnspan - 1) / 2) + width[child.column] * (child.columnspan - 1) / 2 - width[child.column] / 2
             child.rect.centery = sum(height[:child.row + 1]) - total_height / 2 + self.spacing * child.row - height[child.row] + child.rect.h - height[child.row] / 2
             child.rect.centery = -child.rect.centery
+            child.layout_moved = True
             child.layout()
 
     def layout_prepend(self):
         for child in self.children:
-            if child.rect.x == None or child.rect.y == None:
+            if not child.layout_moved:
                 child.rect.x = -child.rect.w / 2
                 child.rect.y = MENU_TEXT_POSITION_TOP - child.rect.h
+                child.layout_moved = True
 
     def layout_append(self):
         for child in self.children:
-            if child.rect.x == None or child.rect.y == None:
+            if not child.layout_moved:
                 child.rect.x = -child.rect.w / 2
                 child.rect.y = MENU_TEXT_POSITION_BOTTOM + child.rect.h
+                child.layout_moved = True
 
     def update(self, window: Window):
         self.draw(window)
@@ -89,7 +92,7 @@ class Page:
 class Widget:
     def __init__(self, parent, size: [float], row: int=None, column: int=None, columnspan: int=1, fontsize: float=1.0, hover_callback=None):
         self.parent: Page = parent
-        self.rect = geometry.Rect(None, None, *size) # Rect will be moved, when parent.layout is called
+        self.rect = geometry.Rect(0, 0, *size) # Rect will be moved, when parent.layout is called
         self.parent.children.append(self)
 
         # Adjust auto column/row of parent
@@ -118,6 +121,7 @@ class Widget:
         self.fontsize = fontsize
         self.hover_callback = hover_callback
         self.hover_time = 0
+        self.layout_moved = False
 
         if not 0 <= self.column < parent.columns:
             raise ValueError("Invalid Column " + str(self.column) + " for parent with " + str(parent.columns) + " column(s).")
@@ -300,7 +304,7 @@ class ScrollBox(Widget):
 
         self.slider_rect.h = (1 - (self.start_offset - self.end_offset)) * self.rect.h
         self.slider_rect.x = self.rect.right
-        self.slider_rect.y = self.rect.bottom - self.slider_y * (self.rect.h - self.slider_rect.h) - self.slider_rect.h
+        self.slider_rect.y = self.rect.y + self.rect.h - self.slider_y * (self.rect.h - self.slider_rect.h) - self.slider_rect.h
 
         if self.slider_rect.collidepoint((window.mouse_pos[0] / window.width * 2, window.mouse_pos[1] / window.height * 2)) and window.mouse_buttons[0] == 1:
             self.slider_selected = True
@@ -310,7 +314,7 @@ class ScrollBox(Widget):
             self.slider_selected = False
 
         if self.slider_selected and self.offset_length != 0:
-            self.slider_y = -(window.mouse_pos[1] / window.height * 2 - self.rect.bottom) / self.rect.h
+            self.slider_y = -(window.mouse_pos[1] / window.height * 2 - self.rect.y + self.rect.h) / self.rect.h
             self.offset = self.slider_y * self.offset_length + self.start_offset
 
         # Draw & Update children
@@ -347,7 +351,7 @@ class ScrollBox(Widget):
 
     def layout(self):
         Page.layout(self)
-        self.start_offset = self.children[0].rect.bottom - self.rect.bottom + self.spacing
+        self.start_offset = self.children[0].rect.y + self.children[0].rect.h - self.rect.y - self.rect.h + self.spacing
         self.end_offset = self.children[-1].rect.y - self.rect.y - self.spacing
         self.offset = self.start_offset
         self.offset_length = min(0, self.end_offset - self.start_offset)

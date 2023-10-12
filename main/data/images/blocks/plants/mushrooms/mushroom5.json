@@ -4,7 +4,6 @@
     "layer": "plant",
     "hardness": 1,
     "speed": 0,
-    "flip": 1,
     "pool": "vegetation_floor_rare",
     "frames": [
         "mushroom5.png"
