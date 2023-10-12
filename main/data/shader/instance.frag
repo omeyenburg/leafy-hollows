@@ -237,6 +237,13 @@ ivec4 get_next_closest_block(ivec2 source_pixel) {
     }
 }
 
+vec4 mix_overlay_color(vec4 block_color, vec4 overlay_color) {
+    float alpha = block_color.a + overlay_color.a;
+    vec4 out_color = mix(block_color, overlay_color, overlay_color.a);
+    out_color.a = alpha;
+    return out_color;
+}
+
 ivec2 get_source_pixel_wrapped(int block_type, ivec2 source_pixel_wrapped) {
     int block_family = int(texelFetch(texBlocks, get_block_data_location(block_type), 0).b * 255);
     int block_family_adjacent_x = int(texelFetch(texBlocks, get_block_data_location(adjacent_x), 0).b * 255);
@@ -297,7 +304,7 @@ vec4 get_color_foreground() {
     ivec2 source_pixel_offset = ivec2(source_pixel.x, source_pixel.y - block_animation_rows);
     vec2 water_source_pixel = source_pixel;
 
-    // Fire distance
+    // Fire block distance
     float distance_fire = 2;
     float fire_x = sin(time / 11) / 2 + cos(time / 17) / 2 + 8.5;
     float fire_y = sin(time / 13) / 2 + cos(time / 19) / 2 + 8.5;
@@ -388,7 +395,20 @@ vec4 get_color_foreground() {
     }
 
     // Fire color
-    vec4 fire_color = mix(FIRE_COLOR, TRANSPARENCY, distance_fire / 2);
+    vec4 overlay_color = mix(FIRE_COLOR, TRANSPARENCY, distance_fire / 2);
+
+    // Air block distance
+    float distance_air = 5;
+    for (int dx = -5; dx <= 5; dx += 1)
+    for (int dy = -5; dy <= 5; dy += 1)
+    if (texelFetch(texWorld, ivec2(block_coord.x + dx, block_coord.y + dy), 0).r == 0) {
+        distance_air = min(distance_air, distance(vec2((dx + 0.5) * BLOCK_SIZE_SOURCE, (dy + 0.5) * BLOCK_SIZE_SOURCE), source_pixel) / 10);
+    }
+    overlay_color = mix(overlay_color, vec4(0, 0, 0, 1.0), max(0, (distance_air - 1.5) / 3.5));
+
+    if (overlay_color.a >= 1.0) {
+        return overlay_color;
+    }
 
     // Get adjacent blocks
     if (source_pixel.x < BLOCK_SIZE_SOURCE / 2) {
@@ -422,11 +442,11 @@ vec4 get_color_foreground() {
                     block_color = get_color_block(adjacent_y, ivec2(7, 7));
                 }
                 if (block_color.a > 0.0) {
-                    return block_color + fire_color;
+                    return mix_overlay_color(block_color, overlay_color);
                 }
             }
         } else {
-            return block_color + fire_color;
+            return mix_overlay_color(block_color, overlay_color);
         }
         
         // Set block to the closest other block -> let water flow into transparent gaps
@@ -478,7 +498,7 @@ vec4 get_color_foreground() {
     
     // Skip water
     if (block_type == 0 && abs(block_data.a) < 1) {
-        return block_color + fire_color;
+        return mix_overlay_color(block_color, overlay_color);
     }
 
     // Draw water
@@ -490,9 +510,9 @@ vec4 get_color_foreground() {
     float water_level_top_left = abs(texelFetch(texWorld, ivec2(block_coord.x - 1, block_coord.y + 1), 0).a / WATER_PER_BLOCK);
     float water_level_top_right = abs(texelFetch(texWorld, ivec2(block_coord.x + 1, block_coord.y + 1), 0).a / WATER_PER_BLOCK);
 
-    water_color = get_color_block(block.water, water_source_pixel);// + fire_color;
+    water_color = get_color_block(block.water, water_source_pixel);
     water_color.a = 0.5;
-    water_color = mix(water_color, block_color, block_color.a * 0.6) + fire_color;
+    water_color = mix(mix(water_color, block_color, block_color.a * 0.6), overlay_color, overlay_color.a);
 
     fsource_pixel.y -= 1 / float(BLOCK_SIZE_SOURCE);
 
@@ -607,7 +627,7 @@ vec4 get_color_foreground() {
             }
         }
     }
-    return block_color + fire_color;
+    return mix_overlay_color(block_color, overlay_color);
 }
 
 void draw_post_processing() {

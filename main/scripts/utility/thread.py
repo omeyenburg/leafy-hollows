@@ -15,6 +15,7 @@ def _thread(func, wait, *args, **kwargs):
     except Exception:
         traceback.print_exc()
         error.set()
+        result = None
     if wait: # wait for normal fps
         time.sleep(2)
     threads[func] = (result, True)

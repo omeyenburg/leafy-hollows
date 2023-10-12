@@ -225,6 +225,10 @@ class World(dict):
                 for name in world.particle_types:
                     world.particle_types[name][0][0] = window.time
                 world.particles = []
+                world.player.rect.y = -1550
+                world.player.rect.x = 0.1
+                world.player.vel = [0.0, 3.0]
+                world.player.onGround = False
                 return world
         except:
             pass

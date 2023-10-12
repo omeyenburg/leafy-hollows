@@ -38,7 +38,7 @@ class PhysicsObject:
         """
         Applies velocity to the object.
         """
-        last_position = self.rect.topleft
+        last_position = self.rect.center
 
         self.rect.x += min(PHYSICS_MAX_MOVE_DISTANCE, max(-PHYSICS_MAX_MOVE_DISTANCE, self.vel[0] * delta_time))
         self.rect.x = round(self.rect.x, 5) # Bugs occur at higher precision
@@ -50,11 +50,12 @@ class PhysicsObject:
 
         # Reset object position
         if self.get_collision(world):
-            self.rect.topleft = last_position
+            self.rect.center = last_position
             self.vel = [0, 0]
 
         # Push water to adjacent blocks
         stength = (abs(self.vel[0]) + abs(self.vel[1])) * 5
+        #block_feet = (math.floor(self.rect.centerx), round(self.rect.y))
         block_feet = (math.floor(self.rect.centerx), round(self.rect.top))
         ...
 
@@ -63,6 +64,7 @@ class PhysicsObject:
         Returns whether the object collides with a block.
         """
         for x in range(math.floor(self.rect.left), math.ceil(self.rect.right)):
+            #for y in range(math.floor(self.rect.y), math.ceil(self.rect.y + self.rect.h)):
             for y in range(math.floor(self.rect.top), math.ceil(self.rect.bottom)):
                 if world.get_block(x, y):
                     return True
@@ -83,6 +85,7 @@ class PhysicsObject:
         Resolves collisions on the x-axis.
         """
         for x in range(math.floor(round(self.rect.left, 5)), math.ceil(round(self.rect.right, 5))):
+            #for y in range(math.floor(round(self.rect.y, 5)), math.ceil(round(self.rect.y + self.rect.h, 5))):
             for y in range(math.floor(round(self.rect.top, 5)), math.ceil(round(self.rect.bottom, 5))):
                 if world.get_block(x, y):
                     if self.vel[0] < 0:
@@ -100,6 +103,7 @@ class PhysicsObject:
         Resolves collisions on the y-axis.
         """
         for x in range(math.floor(round(self.rect.left, 5)), math.ceil(round(self.rect.right, 5))):
+            #for y in range(math.floor(round(self.rect.y, 5)), math.ceil(round(self.rect.y + self.rect.h, 5))):
             for y in range(math.floor(round(self.rect.top, 5)), math.ceil(round(self.rect.bottom, 5))):
                 if world.get_block(x, y):
                     if self.vel[1] > 0:
@@ -133,6 +137,8 @@ class PhysicsObject:
 
         block_feet = (math.floor(self.rect.centerx), round(self.rect.top))
         block_head = (math.floor(self.rect.centerx), round(self.rect.bottom))
+        #block_feet = (math.floor(self.rect.centerx), round(self.rect.y))
+        #block_head = (math.floor(self.rect.centerx), round(self.rect.y + self.rect.h))
 
         self.inWater = world.get_water(*block_feet) > 0.2
         if self.inWater and world.get_water(*block_head) > 0.2:

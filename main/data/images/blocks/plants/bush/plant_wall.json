@@ -1,11 +1,11 @@
 {
-    "name": "flat_grass",
+    "name": "plant_wall",
     "family": "grass",
     "layer": "plant",
     "hardness": 1,
     "speed": 0,
-    "pool": "vegetation_floor_common",
+    "pool": "vegetation_wall",
     "frames": [
-        "flat_grass.png"
+        "plant_wall.png"
     ]
 }
