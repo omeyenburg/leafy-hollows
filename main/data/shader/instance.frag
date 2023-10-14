@@ -237,9 +237,9 @@ ivec4 get_next_closest_block(ivec2 source_pixel) {
     }
 }
 
-vec4 mix_overlay_color(vec4 block_color, vec4 overlay_color) {
-    float alpha = block_color.a + overlay_color.a;
-    vec4 out_color = mix(block_color, overlay_color, overlay_color.a);
+vec4 mix_overlay_color(vec4 block_color, vec4 overlay_color_add, vec4 overlay_color_sub) {
+    float alpha = block_color.a + overlay_color_add.a + overlay_color_sub.a;
+    vec4 out_color = mix(block_color + overlay_color_add, overlay_color_sub, overlay_color_sub.a);
     out_color.a = alpha;
     return out_color;
 }
@@ -395,7 +395,7 @@ vec4 get_color_foreground() {
     }
 
     // Fire color
-    vec4 overlay_color = mix(FIRE_COLOR, TRANSPARENCY, distance_fire / 2);
+    vec4 overlay_color_add = mix(FIRE_COLOR, TRANSPARENCY, distance_fire / 2);
 
     // Air block distance
     float distance_air = 5;
@@ -404,10 +404,10 @@ vec4 get_color_foreground() {
     if (texelFetch(texWorld, ivec2(block_coord.x + dx, block_coord.y + dy), 0).r == 0) {
         distance_air = min(distance_air, distance(vec2((dx + 0.5) * BLOCK_SIZE_SOURCE, (dy + 0.5) * BLOCK_SIZE_SOURCE), source_pixel) / 10);
     }
-    overlay_color = mix(overlay_color, vec4(0, 0, 0, 1.0), max(0, (distance_air - 1.5) / 3.5));
+    vec4 overlay_color_sub = vec4(0, 0, 0, max(0, (distance_air - 1.5) / 3.5));
 
-    if (overlay_color.a >= 1.0) {
-        return overlay_color;
+    if (overlay_color_sub.a >= 1.0) {
+        return overlay_color_sub;
     }
 
     // Get adjacent blocks
@@ -442,11 +442,11 @@ vec4 get_color_foreground() {
                     block_color = get_color_block(adjacent_y, ivec2(7, 7));
                 }
                 if (block_color.a > 0.0) {
-                    return mix_overlay_color(block_color, overlay_color);
+                    return mix_overlay_color(block_color, overlay_color_add, overlay_color_sub);
                 }
             }
         } else {
-            return mix_overlay_color(block_color, overlay_color);
+            return mix_overlay_color(block_color, overlay_color_add, overlay_color_sub);
         }
         
         // Set block to the closest other block -> let water flow into transparent gaps
@@ -498,7 +498,7 @@ vec4 get_color_foreground() {
     
     // Skip water
     if (block_type == 0 && abs(block_data.a) < 1) {
-        return mix_overlay_color(block_color, overlay_color);
+        return mix_overlay_color(block_color, overlay_color_add, overlay_color_sub);
     }
 
     // Draw water
@@ -512,7 +512,7 @@ vec4 get_color_foreground() {
 
     water_color = get_color_block(block.water, water_source_pixel);
     water_color.a = 0.5;
-    water_color = mix(mix(water_color, block_color, block_color.a * 0.6), overlay_color, overlay_color.a);
+    water_color = mix(mix(water_color, block_color, block_color.a * 0.6), overlay_color_add + overlay_color_sub, overlay_color_add.a + overlay_color_sub.a);
 
     fsource_pixel.y -= 1 / float(BLOCK_SIZE_SOURCE);
 
@@ -627,7 +627,7 @@ vec4 get_color_foreground() {
             }
         }
     }
-    return mix_overlay_color(block_color, overlay_color);
+    return mix_overlay_color(block_color, overlay_color_add, overlay_color_sub);
 }
 
 void draw_post_processing() {
