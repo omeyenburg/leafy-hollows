@@ -60,14 +60,6 @@ class Rect:
         yield self.w
         yield self.h
 
-    def __getattribute__(self, name):
-        if name == "__class__" and filter(lambda i: "pygame" in i[0].f_locals, stack()):
-            return pygame_Rect # Pretend to be a pygame.Rect
-        return super().__getattribute__(name)
-
-    def __reduce__(self):
-        return (self.__class__, (self.x, self.y, self.w, self.h)) # Define values to pickle
-
     @property
     def center(self):
         return (self.x + self._w_half, self.y + self._h_half)
