@@ -12,40 +12,42 @@ import time
 
 
 class World(dict):
-    def __init__(self, window):
+    def __init__(self, block_data, block_pools, block_group_size, block_properties):
         super().__init__() # {(x, y): (block, plant, background, water_level)}
         self.seed: float = random.randint(-10**6, 10**6) + math.e # Float between -10^6 and 10^6
-        self.version_checksum = self.get_version_checksum(window.block_data)
+        self.version_checksum = self.get_version_checksum(block_data)
         self.view: numpy.array = None # Sent to shader to render
         self.view_size: tuple = (0, 0)
 
+        self.block_pools = block_pools
+        self.block_properties = block_properties
         self.block_family: dict = {
             (name + "_flipped" if flipped else name):
             family
-            for name, (index, family, layer) in window.block_data.items()
+            for name, (index, family, layer) in block_data.items()
             for flipped in range(2)
         }
         self.block_layer: dict = {
             (name + "_flipped" if flipped else name):
             {"foreground": 0, "plant": 1, "background": 2, "water": 3}[layer]
-            for name, (index, family, layer) in window.block_data.items()
+            for name, (index, family, layer) in block_data.items()
             for flipped in range(2)
         }
         self.block_name: dict = {
             (name + "_flipped" if flipped else name):
             index + flipped
-            for name, (index, family, layer) in window.block_data.items()
+            for name, (index, family, layer) in block_data.items()
             for flipped in range(2)
         }
         self.block_index: dict = {
             index + flipped:
             (name + "_flipped" if flipped else name)
-            for name, (index, family, layer) in window.block_data.items()
+            for name, (index, family, layer) in block_data.items()
             for flipped in range(2)
         }
         self.block_family["air"] = "air"
         self.block_index[0] = "air"
-        self.block_group_size = window.block_group_size
+        self.block_group_size = block_group_size
         self.blocks_climbable: set = {self.block_name[name] for name in BLOCKS_CLIMBABLE}
 
         self.entities: set = set()
@@ -62,9 +64,9 @@ class World(dict):
         self.add_entity(self.player)
 
         # Create particle types
-        particle.setup(window, self, "spark", time=2, delay=1, size=(0.2, 0.2), gravity=-0.7, growth=-1, speed=0, direction=0, divergence=2)
-        particle.setup(window, self, "big_leaf", time=10, delay=3, size=(0.2, 0.2), gravity=0.5, growth=-1, speed=0.5, direction=3/2*math.pi, divergence=2)
-        particle.setup(window, self, "small_leaf", time=10, delay=3, size=(0.15, 0.15), gravity=0.5, growth=-1, speed=0.5, direction=3/2*math.pi, divergence=2)
+        particle.setup(self, "spark", time=2, delay=1, size=(0.2, 0.2), gravity=-0.7, growth=-1, speed=0, direction=0, divergence=2)
+        particle.setup(self, "big_leaf", time=10, delay=3, size=(0.2, 0.2), gravity=0.5, growth=-1, speed=0.5, direction=3/2*math.pi, divergence=2)
+        particle.setup(self, "small_leaf", time=10, delay=3, size=(0.15, 0.15), gravity=0.5, growth=-1, speed=0.5, direction=3/2*math.pi, divergence=2)
 
     def add_entity(self, entity):
         self.entities.add(entity)
@@ -216,20 +218,22 @@ class World(dict):
         time.sleep(0.1)
 
     @staticmethod
-    def load(window):
+    def load(window, block_data):
         window.loading_progress[:3] = "Loading world file", 1, 2
         world = file.read("data/user/world.data", default=0, file_format="pickle")
+
         try:
-            if isinstance(world, World) and World.get_version_checksum(window.block_data) == world.version_checksum:
+            if isinstance(world, World) and World.get_version_checksum(block_data[0]) == world.version_checksum:
                 window.loading_progress[:3] = "Loading world", 2, 2
                 for name in world.particle_types:
                     world.particle_types[name][0][0] = window.time
                 world.particles = []
                 return world
-        except:
+        except Exception as e:
+            print(e)
             pass
-        
-        world = World(window)
+
+        world = World(*block_data)
         generate_world(world, window)
         return world
 

@@ -7,21 +7,24 @@ from scripts.utility import file
 class Shader:
     active = None
 
-    def __init__(self, vertex, fragment, replace={}, **variables):
+    def __init__(self, vertex: str="", fragment: str="", variables={}, constants={}):
         # Create shader
         self._program = GL.glCreateProgram()
         
         # Read & compile vertex shader
+        constants = sorted(constants.items(), key=lambda n: len(n[0]), reverse=True)
         content = file.read(vertex)
-        for search, replacement in sorted(replace.items(), key=lambda n: len(n[0]), reverse=True):
+        for search, replacement in constants:
             content = content.replace(str(search), str(replacement))
         vertex_shader = compileShader(content, GL.GL_VERTEX_SHADER)
         GL.glAttachShader(self._program, vertex_shader)
 
         # Read & compile fragment shader
         content = file.read(fragment)
-        for search, replacement in sorted(replace.items(), key=lambda n: len(n[0]), reverse=True):
+        for search, replacement in constants:
             content = content.replace(str(search), str(replacement))
+        fragment_shader = compileShader(content, GL.GL_FRAGMENT_SHADER)
+        GL.glAttachShader(self._program, fragment_shader)
 
         # For testing: print fragment shader code
         """
@@ -33,9 +36,6 @@ class Shader:
                 n -= 1
         print(c)
         """
-        
-        fragment_shader = compileShader(content, GL.GL_FRAGMENT_SHADER)
-        GL.glAttachShader(self._program, fragment_shader)
 
         # Clean up
         GL.glLinkProgram(self._program)
@@ -65,7 +65,10 @@ class Shader:
         """
         GL.glDeleteProgram(self._program)
 
-    def get_uniform_loc(program, variable, data_type): # Get location and convert glsl data type to valid function
+    def get_uniform_loc(program, variable, data_type):
+        """
+        Returns variable location, glsl data type as a valid function and the variable value.
+        """
         loc = GL.glGetUniformLocation(program, variable)
         func = data_type_map = {'int': GL.glUniform1i,
                                 'uint': GL.glUniform1ui,

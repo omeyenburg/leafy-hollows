@@ -7,6 +7,7 @@
 # https://support.apple.com/en-us/HT204397
 # xattr -d com.apple.quarantine "title.app"
 
+from scripts.graphics.image import load_blocks
 from scripts.utility.thread import threaded
 from scripts.graphics.window import Window
 from scripts.menu.menu import Menu
@@ -15,8 +16,10 @@ from scripts.utility.const import *
 import math
 
 
-# Create window
-window: Window = Window("Title")
+# Setup
+caption = "Title"
+*block_data, block_atlas_image = load_blocks()
+window: Window = Window(caption, block_data[0], block_atlas_image)
 menu: Menu = Menu(window)
 world: World = None
 menu.load_threaded("Title", "menu", window.setup)
@@ -32,49 +35,10 @@ def save_world():
         del world
 
 
-def generate():
-    global world
-
-    # Wait for world generation thread
-    while True:
-        menu.update()
-        window.update()
-
-        world = threaded(World.load, window, wait=True)
-        if not world is None:
-            break
-
-        # Open menu
-        if window.keybind("return") == 1:
-            menu.main_page.open()
-            menu.game_state = "menu"
-            return
-
-        # Write fps
-        if window.options["show fps"]:
-            window.draw_text(
-                (-0.98, 0.95),
-                str(round(window.fps, 3)),
-                (250, 250, 250, 200),
-                size=TEXT_SIZE_DESCRIPTION
-            )
-
-    if world.player.rect.x == 0:
-        menu.game_state = "intro"
-        window.camera.pos[1] = 50
-        world.player.vel[1] = 5
-        window.camera.set_zoom(CAMERA_RESOLUTION_INTRO)
-    else:
-        menu.game_state = "game"
-        window.camera.dest = list(world.player.rect.center)
-        window.camera.pos = list(world.player.rect.center)
-        window.camera.set_zoom(CAMERA_RESOLUTION_GAME)
-
-
 def load_world():
     global world
 
-    world = menu.load_threaded("Loading world", "load_world", World.load, window, wait=True)
+    world = menu.load_threaded("Loading world", "load_world", World.load, window, block_data, wait=True)
 
     if world.player.rect.x == 0:
         menu.game_state = "intro"
@@ -239,7 +203,6 @@ def main():
             if window.keybind("return") == 1:
                 menu.pause_page.open()
                 menu.game_state = "pause"
-                window.effects["gray_screen"] = 1
 
         elif menu.game_state == "pause":
             # Draw world

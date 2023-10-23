@@ -52,22 +52,20 @@ int block_animation_rows;
 
 // Image
 void draw_image() {
-    if (vertTexcoord.x < BORDER_THRESHOLD || vertTexcoord.y < BORDER_THRESHOLD || vertTexcoord.x > 1.0 - BORDER_THRESHOLD || vertTexcoord.y > 1.0 - BORDER_THRESHOLD) {
-        fragColor = TRANSPARENCY;
-    } else {
-        fragColor = texture(texSprites, vertTexcoord * vertSourceOrColor.zw + vertSourceOrColor.xy);
-    }
+    int border = int(
+        step(BORDER_THRESHOLD, vertTexcoord.x) *
+        step(BORDER_THRESHOLD, vertTexcoord.y) *
+        step(vertTexcoord.x, 1.0 - BORDER_THRESHOLD) *
+        step(vertTexcoord.y, 1.0 - BORDER_THRESHOLD)
+    );
+    vec4 color = texture(texSprites, vertTexcoord * vertSourceOrColor.zw + vertSourceOrColor.xy);
+    fragColor = color * border, TRANSPARENCY * (1 - border);
 }
 
 
 // Circle
 void draw_circle() {
-    if (length(vertTexcoord - 0.5) <= 0.5) {
-        fragColor = vertSourceOrColor;
-    } else {
-        // Pixel outside circle
-        fragColor = TRANSPARENCY;
-    }
+    fragColor = mix(TRANSPARENCY, vertSourceOrColor, float(length(vertTexcoord - 0.5) <= 0.5));
 }
 
 
@@ -75,17 +73,11 @@ void draw_circle() {
 void draw_text() {
     vec4 text_color = floor(vertSourceOrColor) / 255.0;
     vec4 text_source = fract(vertSourceOrColor);
-
-    if (text_source.w == 0) {
-        text_source.w = 1;
-    }
-
-    if (texture(texFont, vec2(vertTexcoord.x * text_source.z + text_source.x, vertTexcoord.y * text_source.w + text_source.y)) == vec4(1.0, 1.0, 1.0, 1.0)) {
-        fragColor = text_color;
-    } else {
-        // Pixel outside letter
-        fragColor = TRANSPARENCY;
-    }
+    int draw = int(texture(texFont, vec2(
+        vertTexcoord.x * text_source.z + text_source.x,
+        vertTexcoord.y * text_source.w + text_source.y
+    )).r);
+    fragColor = text_color * draw + TRANSPARENCY * (1 - draw);
 }
 
 
@@ -107,33 +99,43 @@ ivec2 get_source_pixel() {
 vec4 get_color_block(int block_type, vec2 source_pixel) {
     // Flip source_pixel for flipped blocks
     // (flipped blocks === even block_type && block_type != 0)
-    if (mod(block_type, 2) == 0) {
-        source_pixel.x = 15 - source_pixel.x;
-    }
+    source_pixel.x = mix(15 - source_pixel.x, source_pixel.x, block_type & 1);
     block_type = (block_type - 1) / 2 + 1;
 
-    if (block_type != 0) {
-        // Current frame
-        animation_data = texelFetch(texBlocks, get_block_data_location(block_type), 0).rg;
-        animation_frames = int(animation_data.r * 255);
-        animation_speed = animation_data.g * 2;
-        image_id = block_type + int(mod(time / animation_speed / animation_frames, animation_frames)) - 1;
+    // Current frame
+    animation_data = texelFetch(texBlocks, get_block_data_location(block_type), 0).rg;
+    animation_frames = int(animation_data.r * 255);
+    animation_speed = animation_data.g * 2;
+    image_id = block_type + int(mod(time / animation_speed / animation_frames, animation_frames)) - 1;
 
-        // Source image coordinate in texture
-        source_offset = ivec2(mod(image_id, BLOCK_COUNT.x), image_id / BLOCK_COUNT.x) * BLOCK_SIZE_SOURCE;
-        source = ivec2(source_pixel.x + source_offset.x,
-                       source_pixel.y + source_offset.y);
+    // Source image coordinate in texture
+    source_offset = ivec2(
+        mod(image_id, BLOCK_COUNT.x),
+        image_id / BLOCK_COUNT.x
+    ) * BLOCK_SIZE_SOURCE;
+    source = ivec2(
+        source_pixel.x + source_offset.x,
+        source_pixel.y + source_offset.y
+    );
 
-        // Fetch and return pixel color
-        return texelFetch(texBlocks, source, 0);
-    } else {
-        // Block is air
-        return TRANSPARENCY;
-    }
+    // Fetch and return pixel color
+    return texelFetch(texBlocks, source, 0) * min(block_type, 1);
 }
 
 vec4 get_color_background() {
-    return vec4(sin(vertTexcoord.x) / 2 + 0.5, cos(vertTexcoord.y) / 2 + 0.5, cos(vertTexcoord.x), 0.5);
+    return vec4(
+        sin(vertTexcoord.x) / 2 + 0.5,
+        cos(vertTexcoord.y) / 2 + 0.5,
+        cos(vertTexcoord.x),
+        0.5
+    );
+
+    return vec4(
+        sin(vertTexcoord.x + time) / 2 + 0.5,
+        cos(vertTexcoord.y + time * 0.4) / 2 + 0.5,
+        cos(vertTexcoord.x + time * 0.2),
+        0.5
+    );
 }
 
 void draw_background() {
@@ -143,8 +145,10 @@ void draw_background() {
     BLOCK_COUNT = block_texture_size / BLOCK_SIZE_SOURCE;
 
     // block in world
-    ivec2 block_coord = ivec2(gl_FragCoord.x / BLOCK_SIZE_DEST + offset.x,
-                              gl_FragCoord.y / BLOCK_SIZE_DEST + offset.y);
+    ivec2 block_coord = ivec2(
+        gl_FragCoord.x / BLOCK_SIZE_DEST + offset.x,
+        gl_FragCoord.y / BLOCK_SIZE_DEST + offset.y
+    );
 
     // block data (foreground, plant, background, water level)
     ivec4 block_data = texelFetch(texWorld, block_coord, 0);
@@ -160,55 +164,30 @@ void draw_background() {
 
     // Block color
     block_color = get_color_block(block_type, source_pixel);
-
-    // Return block color
-    if (block_color.a > 1.0 - BORDER_THRESHOLD) {
-        fragColor = block_color;
-        return;
-    }
+    int return_block_color = int(block_color.a > 1.0 - BORDER_THRESHOLD);
 
     // Background color
-    vec4 background = get_color_background();
-
-    // Return background color
-    if (foreground_block_type == 0 || source_pixel.x != 0 && source_pixel.x != 15 && source_pixel.y != source_pixel_y_min && source_pixel.y != source_pixel_y_max) {
-        fragColor = mix(background, block_color, block_color.a);
-        return;
-    }
+    vec4 background_color = mix(get_color_background(), block_color, block_color.a);
+    int return_background_color = int(return_block_color == 0 && (foreground_block_type == 0 || source_pixel.x != 0 && source_pixel.x != 15 && source_pixel.y != source_pixel_y_min && source_pixel.y != source_pixel_y_max));
 
     // Move source pixel at edge to next block
-    if (source_pixel.x == 0) {
-        source_pixel.x = 15;
-        block_coord.x -= 1;
-    } else if (source_pixel.x == 15) {
-        source_pixel.x = 0;
-        block_coord.x += 1;
-    }
-
-    if (source_pixel.y == source_pixel_y_min) {
-        source_pixel.y = source_pixel_y_max;
-        block_coord.y -= 1;
-    } else if (source_pixel.y == source_pixel_y_max) {
-        source_pixel.y = source_pixel_y_min;
-        block_coord.y += 1;
-    }
+    int on_edge_left = int(source_pixel.x == 0);
+    int on_edge_right = int(source_pixel.x == 15);
+    int on_edge_bottom = int(source_pixel.y == source_pixel_y_min);
+    int on_edge_top = int(source_pixel.y == source_pixel_y_max);
     
+    source_pixel.x = on_edge_left * 15 + (1 - on_edge_left - on_edge_right) * source_pixel.x;
+    block_coord.x += on_edge_right - on_edge_left;
+    source_pixel.y = on_edge_bottom * source_pixel_y_max + on_edge_top * source_pixel_y_min + (1 - on_edge_bottom - on_edge_top) * source_pixel.y;
+    block_coord.y += on_edge_top - on_edge_bottom;
+
+    // Get adjacent block color
     block_type = texelFetch(texWorld, block_coord, 0).b;
     block_color = mix(get_color_block(block_type, source_pixel), block_color, block_color.a);
+    block_color = mix(background_color, block_color, block_color.a);
 
-    // Return block color
-    if (block_color.a > 1.0 - BORDER_THRESHOLD || foreground_block_type == 0) {
-        fragColor = mix(background, block_color, block_color.a);
-        return;
-    }
-
-    // Move source pixel to block center
-    source_pixel.x += int((7.5 - source_pixel.x) / 4.0);
-    source_pixel.y += int((7.5 - source_pixel.y - block_animation_rows) / 4.0) + block_animation_rows;
-    
-    block_type = texelFetch(texWorld, block_coord, 0).r;
-    block_color = mix(get_color_block(block_type, source_pixel), block_color, block_color.a);
-    fragColor = mix(background, block_color, block_color.a);
+    // Mix colors
+    fragColor = background_color * return_background_color + block_color * (1 - return_background_color);
 }
 
 
@@ -218,6 +197,7 @@ ivec4 get_next_closest_block(ivec2 source_pixel) {
     int x_distance = int(min(source_pixel.x, BLOCK_SIZE_SOURCE - source_pixel.x));
     int y_distance = int(min(source_pixel.y, BLOCK_SIZE_SOURCE - source_pixel.y));
 
+    /*
     if (x_distance <= y_distance) {
         // Block on x-axis
         if (x_distance == source_pixel.x) {
@@ -234,7 +214,21 @@ ivec4 get_next_closest_block(ivec2 source_pixel) {
         }
         // bottom
         return ivec4(source_pixel.x, block_animation_rows, 0, 1);
-    }
+    }*/
+
+    int x_smaller_y = int(x_distance <= y_distance);
+    int x_edge = int(x_distance == source_pixel.x);
+    int y_edge = int(y_distance == source_pixel.y);
+
+    return (
+        x_smaller_y * (
+            x_edge * ivec4(15, source_pixel.y + block_animation_rows, -1, 0) +
+            (1 - x_edge) * ivec4(0, source_pixel.y + block_animation_rows, 1, 0)
+        ) + (1 - x_smaller_y) * (
+            y_edge * ivec4(source_pixel.x, 15 + block_animation_rows, 0, -1) +
+            (1 - y_edge) * ivec4(source_pixel.x, block_animation_rows, 0, 1)
+        )
+    );
 }
 
 vec4 mix_overlay_color(vec4 block_color, vec4 overlay_color_add, vec4 overlay_color_sub) {
@@ -248,6 +242,30 @@ ivec2 get_source_pixel_wrapped(int block_type, ivec2 source_pixel_wrapped) {
     int block_family = int(texelFetch(texBlocks, get_block_data_location(block_type), 0).b * 255);
     int block_family_adjacent_x = int(texelFetch(texBlocks, get_block_data_location(adjacent_x), 0).b * 255);
     int block_family_adjacent_y = int(texelFetch(texBlocks, get_block_data_location(adjacent_y), 0).b * 255);
+
+    int center = int(block_family <= block_family_adjacent_x && block_family <= block_family_adjacent_y && block_type <= adjacent_x && block_type <= adjacent_y);
+    int x_edge = int(block_type <= adjacent_x);
+    int y_edge = int(block_type <= adjacent_y);
+    int left_edge = int(source_pixel_wrapped.x < BLOCK_SIZE_SOURCE / 2);
+    int lower_edge = int(source_pixel_wrapped.y < BLOCK_SIZE_SOURCE / 2);
+
+    return (
+        center * ivec2(7, 7) +
+        (1 - center) * (
+            source_pixel_wrapped +
+            x_edge * (
+                left_edge * ivec2(4, 0) +
+                (1 - left_edge) * ivec2(-4, 0)
+            ) +
+            (1 - x_edge) * y_edge * (
+                lower_edge * ivec2(0, 4) +
+                (1 - lower_edge) * ivec2(0, -4)
+            )
+        )
+    );
+
+
+    /*
     if (block_family <= block_family_adjacent_x && block_family <= block_family_adjacent_y && block_type <= adjacent_x && block_type <= adjacent_y) {
         source_pixel_wrapped = ivec2(7, 7);
     } else if (block_type <= adjacent_x) {
@@ -262,7 +280,7 @@ ivec2 get_source_pixel_wrapped(int block_type, ivec2 source_pixel_wrapped) {
         } else {
             source_pixel_wrapped.y -= 4;
         }
-    }
+    }*/
     return source_pixel_wrapped;
 }
 
@@ -303,7 +321,7 @@ vec4 get_color_foreground() {
     vec2 fsource_pixel = vec2(source_pixel.x, source_pixel.y - block_animation_rows) / float(BLOCK_SIZE_SOURCE);
     ivec2 source_pixel_offset = ivec2(source_pixel.x, source_pixel.y - block_animation_rows);
     vec2 water_source_pixel = source_pixel;
-
+    
     // Fire block distance
     float distance_fire = 2;
     float fire_x = sin(time / 11) / 2 + cos(time / 17) / 2 + 8.5;
@@ -396,19 +414,20 @@ vec4 get_color_foreground() {
 
     // Fire color
     vec4 overlay_color_add = mix(FIRE_COLOR, TRANSPARENCY, distance_fire / 2);
-
+    
     // Air block distance
-    float distance_air = 5;
-    for (int dx = -5; dx <= 5; dx += 1)
-    for (int dy = -5; dy <= 5; dy += 1)
+    float distance_air = 3;
+    for (int dx = -3; dx <= 3; dx += 1)
+    for (int dy = -3; dy <= 3; dy += 1)
     if (texelFetch(texWorld, ivec2(block_coord.x + dx, block_coord.y + dy), 0).r == 0) {
         distance_air = min(distance_air, distance(vec2((dx + 0.5) * BLOCK_SIZE_SOURCE, (dy + 0.5) * BLOCK_SIZE_SOURCE), source_pixel) / 10);
     }
-    vec4 overlay_color_sub = vec4(0, 0, 0, max(0, (distance_air - 1.5) / 3.5));
+    vec4 overlay_color_sub = vec4(0, 0, 0, max(0, (distance_air - 1.5) / 1.5));
 
     if (overlay_color_sub.a >= 1.0) {
         return overlay_color_sub;
     }
+    //vec4 overlay_color_sub = vec4(0);
 
     // Get adjacent blocks
     if (source_pixel.x < BLOCK_SIZE_SOURCE / 2) {
@@ -631,22 +650,7 @@ vec4 get_color_foreground() {
 }
 
 void draw_post_processing() {
-    float distance_center = sqrt(pow((vertTexcoord.x - 0.5) * 5, 2) + pow((vertTexcoord.y - 0.5) * 5, 2)) / 5;
-    fragColor = get_color_foreground();
-
-    if (gray_screen == 1) {
-        fragColor = (fragColor + vec4(0, 0, 0, 1)) / 2;
-    }
-
-    // Darker corners    
-    fragColor = mix(fragColor, CORNER_COLOR, distance_center + 0.1);
-
-
-    /*
-    // damage animation
-    float red_spike = max(0, sin(2 * time) + sin(4 * time) + sin(8 * time) - 1.75) * 0.8 + 0.1;
-    fragColor = vec4(red_spike, 0.05, 0, sqrt(pow((vertTexcoord.x - 0.5) * 5, 2) + pow((vertTexcoord.y - 0.5) * 5, 2)) / 5);
-    */
+    fragColor = mix((get_color_foreground() + vec4(0, 0, 0, gray_screen)) / (1 + gray_screen), CORNER_COLOR, sqrt(pow((vertTexcoord.x - 0.5) * 5, 2) + pow((vertTexcoord.y - 0.5) * 5, 2)) / 5 + 0.1);
 }
 
 
@@ -672,7 +676,7 @@ void main() {
             draw_background();
             break;
 
-        case 5: // Post processing
+        case 5: // Post processing        
             draw_post_processing();
             break;
     }
