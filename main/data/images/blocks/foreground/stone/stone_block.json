@@ -6,5 +6,8 @@
     "speed": 0,
     "frames": [
         "stone_block.png"
-    ]
+    ],
+    "properties": {
+        "friction": 0.01
+    }
 }

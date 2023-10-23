@@ -3,7 +3,7 @@ import random
 import math
 
 
-def setup(window, world, image: str, time: float, delay: float, size: tuple=(1, 1), gravity: float=None, growth: float=0, speed: float=None, direction: float=None, divergence: float=None):
+def setup(world, image: str, time: float, delay: float, size: tuple=(1, 1), gravity: float=None, growth: float=0, speed: float=None, direction: float=None, divergence: float=None):
     """
     Create a particle type.
     image: image name
@@ -12,7 +12,7 @@ def setup(window, world, image: str, time: float, delay: float, size: tuple=(1, 
     gravity: own gravity
     growth: grow or shrink the particle over time (0 = neutral)
     """
-    world.particle_types[image] = ([window.time + delay], image, time, delay, gravity, growth, speed, direction, divergence, size)
+    world.particle_types[image] = ([delay], image, time, delay, gravity, growth, speed, direction, divergence, size)
 
 
 def spawn(window, world, name, x: float, y: float, speed: float=None, direction: float=None, divergence: float=None):

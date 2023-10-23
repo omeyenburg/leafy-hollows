@@ -10,13 +10,11 @@ def _generate_uuid():
 
 
 class PhysicsObject:
-    def __init__(self, mass: float, position: [float], size: [float], force_func=None):
+    def __init__(self, mass: float, position: [float], size: [float]):
         self.uuid = _generate_uuid()
         self.mass: float = mass
         self.rect: geometry.Rect = geometry.Rect(*position, *size)
         self.vel: [float] = [0.0, 0.0]
-        if not force_func is None:
-            self.apply_force = force_func
 
         self.onGround: int = 0
         self.onWallLeft: int = 0
@@ -24,10 +22,20 @@ class PhysicsObject:
         self.inWater: bool = False
         self.underWater: bool = False
 
+        self.ground_block = 0
+
+    def get_ground_friction(self, world):
+        properties = world.block_properties.get(self.ground_block, 0)
+        if properties:
+            return properties["friction"]
+        return 0.1
+
     def apply_force(self, force: float, angle: float, delta_time: float): # angle in degrees; 0 is right, counterclockwise
         """
         Applies force to the object.
         """
+        #ground_friction = self.get_ground_friction(world)
+        #force *= ground_friction * 10
         if self.underWater:
             force /= 3
         r_angle = math.radians(angle)
@@ -121,11 +129,13 @@ class PhysicsObject:
         Moves the object.
         """
         self.gravity(delta_time)
-        if not (hasattr(self, "can_move") and not self.can_move):
+        if (not hasattr(self, "can_move") and not self.can_move):
             self.apply_force(delta_time * abs(world.wind) / (self.mass), 90 + 90 * min(1, max(-1, -world.wind)), self.mass)
         if self.onGround:
             self.onGround -= 1
-            friction = math.copysign(delta_time / PHYSICS_FRICTION_X, self.vel[0])
+            block_friction = self.get_ground_friction(world)
+            block_friction = 0.1
+            friction = math.copysign(delta_time / block_friction, self.vel[0])
             if abs(friction) > abs(self.vel[0]):
                 self.vel[0] = 0
             else:
@@ -146,4 +156,11 @@ class PhysicsObject:
         elif self.underWater:
             self.underWater -= 1
 
+        # Add velocity to position
         self.apply_velocity(world, delta_time)
+
+        # Save ground block
+        if self.onGround:
+            self.ground_block = world.get_block(math.floor(self.rect.centerx), round(self.rect.y - 1), generate=False)
+        else:
+            self.ground_block = 0

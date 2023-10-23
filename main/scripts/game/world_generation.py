@@ -116,7 +116,7 @@ def generate_world(world, window):
 
     # Generate foliage
     window.loading_progress[1] = 7
-    generate_foliage(world, window.block_pools, blocks_ground, blocks_ceiling, blocks_wall_right, blocks_wall_left)
+    generate_foliage(world, world.block_pools, blocks_ground, blocks_ceiling, blocks_wall_right, blocks_wall_left)
 
     # Generate poles
     generate_poles(world, poles, blocks_ground, blocks_ceiling)

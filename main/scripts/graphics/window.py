@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from scripts.graphics.image import load_blocks, load_sprites, get_sprite_rect
+from scripts.graphics.image import load_sprites, get_sprite_rect
 from scripts.utility.const import OPENGL_VERSION, PLATFORM
 from scripts.utility.language import translate
 from scripts.graphics.shader import Shader
@@ -18,7 +18,7 @@ import sys
 
 
 class Window:
-    def __init__(self, caption):
+    def __init__(self, caption, block_data, block_atlas_image):
         # Load options
         self.options: dict = options.load()
 
@@ -92,7 +92,6 @@ class Window:
         self._fullscreen = False
         self._wireframe = False
         self._resize_supress = False
-        self._refresh = False
         self.effects = {}
 
         # Window
@@ -174,26 +173,25 @@ class Window:
         GL.glVertexAttribDivisor(4, 1)
 
         # Create sprite texture
-        self.sprites, self.sprite_rects, image = load_sprites()
-        self._texSprites = self._texture(image)
+        self.sprites, self.sprite_rects, sprite_atlas_image = load_sprites()
+        self._texSprites = self._texture(sprite_atlas_image)
 
         # Font texture
         self._font_options = ("RobotoMono-Bold.ttf", "bold")
-        self._font, image = Font(
+        self._font, font_atlas_image = Font(
             self._font_options[0],
             resolution=self.options["text resolution"],
             bold="bold" in self._font_options,
             antialias="antialias" in self._font_options
         )
-        self._texFont = self._texture(image)
+        self._texFont = self._texture(font_atlas_image)
 
         # Create world texture (contains world block data)
         self._world_size = (0, 0)
         self._texWorld = None
 
         # Create block texture
-        self.block_data, self.block_pools, self.block_group_size, image = load_blocks()
-        self._texBlocks = self._texture(image)
+        self._texBlocks = self._texture(block_atlas_image)
 
         # Create shadow texture
         self._shadow_texture_size = (self.width / 2, self.height / 2)
@@ -206,20 +204,24 @@ class Window:
 
         # Instance shader
         self._instance_shader = Shader(
-            "data/shader/instance.vert",
-            "data/shader/instance.frag",
-            replace={"block." + key: value for key, (value, *_) in self.block_data.items()},
-            texSprites="int",
-            texFont="int",
-            texBlocks="int",
-            texWorld="int",
-            texShadow="int",
-            offset="vec2",
-            camera="vec2",
-            resolution="float",
-            shadow_resolution="float",
-            time="float",
-            gray_screen="int"
+            vertex="data/shader/instance.vert",
+            fragment="data/shader/instance.frag",
+            variables={
+                "texSprites": "int",
+                "texFont": "int",
+                "texBlocks": "int",
+                "texWorld": "int",
+                "texShadow": "int",
+                "offset": "vec2",
+                "camera": "vec2",
+                "resolution": "float",
+                "shadow_resolution": "float",
+                "time": "float",
+                "gray_screen": "int"
+            },
+            constants={
+                "block." + key: value for key, (value, *_) in block_data.items()
+            },
         )
 
         self._instance_shader.setvar("texSprites", 0)
@@ -229,6 +231,23 @@ class Window:
         self._instance_shader.setvar("texShadow", 4)
         self._instance_shader.setvar("resolution", self.camera.resolution)
         self._instance_shader.setvar("shadow_resolution", self.options["shadow resolution"])
+
+        # Use instance shader
+        self._instance_shader.activate()
+        GL.glBindVertexArray(self._instance_vao)
+
+        # Bind textures (except world texture)
+        GL.glActiveTexture(GL.GL_TEXTURE0)
+        GL.glBindTexture(GL.GL_TEXTURE_2D, self._texSprites)
+
+        GL.glActiveTexture(GL.GL_TEXTURE1)
+        GL.glBindTexture(GL.GL_TEXTURE_2D, self._texFont)
+
+        GL.glActiveTexture(GL.GL_TEXTURE2)
+        GL.glBindTexture(GL.GL_TEXTURE_2D, self._texBlocks)
+
+        GL.glActiveTexture(GL.GL_TEXTURE4)
+        GL.glBindTexture(GL.GL_TEXTURE_2D, self._texShadow)
 
     def setup(self):
         """
@@ -375,34 +394,22 @@ class Window:
         self._events()
         self._clock.tick(self.options["max fps"])
         self.fps = self._clock.get_fps()
-        self.delta_time = (1 / self.fps) if self.fps > 0 else self.delta_time
+        if self.fps != 0:
+            self.delta_time = (1 / self.fps)
         self.time += self.delta_time
 
         # Reset
         GL.glClear(GL.GL_COLOR_BUFFER_BIT)
 
-        # Use VAO
-        GL.glBindVertexArray(self._instance_vao)
-
-        # Use instance shader
-        self._instance_shader.activate()
-
         # Send variables to shader
+        for effect, value in self.effects.items():
+            self._instance_shader.setvar(effect, value)
         self._update_world()
         self._instance_shader.update()
 
-        # Bind textures
-        GL.glActiveTexture(GL.GL_TEXTURE0)
-        GL.glBindTexture(GL.GL_TEXTURE_2D, self._texSprites)
-
+        # Rebind textures
         GL.glActiveTexture(GL.GL_TEXTURE1)
         GL.glBindTexture(GL.GL_TEXTURE_2D, self._texFont)
-
-        GL.glActiveTexture(GL.GL_TEXTURE2)
-        GL.glBindTexture(GL.GL_TEXTURE_2D, self._texBlocks)
-
-        GL.glActiveTexture(GL.GL_TEXTURE3)
-        GL.glBindTexture(GL.GL_TEXTURE_2D, self._texWorld)
 
         GL.glActiveTexture(GL.GL_TEXTURE4)
         GL.glBindTexture(GL.GL_TEXTURE_2D, self._texShadow)
@@ -417,10 +424,7 @@ class Window:
 
         # Draw
         GL.glDrawElementsInstanced(GL.GL_TRIANGLES, 6, GL.GL_UNSIGNED_INT, None, self._vbo_instances_index)
-        if self._refresh:
-            pygame.display.flip()
-        else:
-            self._refresh = True
+        pygame.display.flip()
 
         # Reset instance index
         self._vbo_instances_index = 0
@@ -436,7 +440,6 @@ class Window:
         """
         self._fullscreen = not self._fullscreen
         self._resize_supress = True
-        self._refresh = False
 
         if self._fullscreen:
             self.pre_fullscreen = self.size
@@ -459,6 +462,8 @@ class Window:
             antialias="antialias" in self._font_options
         )
         self._texFont = self._texture(image)
+        GL.glActiveTexture(GL.GL_TEXTURE1)
+        GL.glBindTexture(GL.GL_TEXTURE_2D, self._texFont)
 
     def set_antialiasing(self, level: int):
         """
@@ -504,13 +509,15 @@ class Window:
             self._shape_transform_vbo,
         ))
         GL.glDeleteVertexArrays(1, (self._instance_vao,))
-        GL.glDeleteTextures(5, (
+        textures = [
             self._texSprites,
             self._texFont,
             self._texBlocks,
             self._texWorld,
             self._texShadow,
-        ))
+        ]
+        textures.remove(None)
+        GL.glDeleteTextures(len(textures), textures)
         self._instance_shader.delete()
 
         # Save options
@@ -557,8 +564,15 @@ class Window:
             self.camera.pos[1] % 1 - (self.height / 2 / self.camera.pixels_per_meter) % 1 + self.options["simulation distance"]
         )
 
+        if not all(self.world_view.shape):
+            if not self._texWorld is None:
+                GL.glDeleteTextures(1, (self._texWorld,))
+                self._texWorld = None
+                self._world_size =  (0, 0)
+            return
+
         # Draw shadows
-        if all(self.world_view.shape) and self.options["shadow resolution"]:
+        if self.options["shadow resolution"]:
             self._draw_shadows(offset)
 
         # Send variables to shader
@@ -566,14 +580,10 @@ class Window:
         self._instance_shader.setvar("camera", *self.camera.pos)
         if self.resolution != self.camera.resolution:
             self.resolution = self.camera.resolution
-        self._instance_shader.setvar("resolution", self.camera.resolution)
-
-        gray_screen = self.effects.get("gray_screen", 2)
-        if gray_screen != 2:
-            self._instance_shader.setvar("gray_screen", gray_screen)
+            self._instance_shader.setvar("resolution", self.camera.resolution)
 
         # View size
-        size = self.world_view.shape[:2]        
+        size = self.world_view.shape[:2]
         data = numpy.array(numpy.swapaxes(self.world_view, 0, 1), dtype=numpy.int32)
         if self._world_size != size:
             if not self._texWorld is None:
@@ -591,11 +601,14 @@ class Window:
             GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP_TO_EDGE)
             GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP_TO_EDGE)
             GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
+            GL.glActiveTexture(GL.GL_TEXTURE3)
+            GL.glBindTexture(GL.GL_TEXTURE_2D, texture)
             self._texWorld = texture
         else:
             # Write world data into texture
             GL.glBindTexture(GL.GL_TEXTURE_2D, self._texWorld)
-            GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA32I, *self._world_size, 0, GL.GL_RGBA_INTEGER, GL.GL_INT, data)
+            #GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA32I, *self._world_size, 0, GL.GL_RGBA_INTEGER, GL.GL_INT, data)
+            GL.glTexSubImage2D(GL.GL_TEXTURE_2D, 0, 0, 0, *self._world_size, GL.GL_RGBA_INTEGER, GL.GL_INT, data)
 
     def _draw_shadows(self, offset):
         """
@@ -653,9 +666,14 @@ class Window:
         # Convert shadow surface array to texture
         if surface_size != self._shadow_texture_size:
             self._shadow_texture_size = surface_size
+            GL.glActiveTexture(GL.GL_TEXTURE4)
             GL.glBindTexture(GL.GL_TEXTURE_2D, self._texShadow)
             GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RED, *surface_data.shape[::-1], 0, GL.GL_RED, GL.GL_UNSIGNED_BYTE, surface_data)
+            #GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_NEAREST)
+            #GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_NEAREST)
             GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
+            GL.glActiveTexture(GL.GL_TEXTURE4)
+            GL.glBindTexture(GL.GL_TEXTURE_2D, self._texShadow)
         else:
             GL.glBindTexture(GL.GL_TEXTURE_2D, self._texShadow)
             GL.glTexSubImage2D(GL.GL_TEXTURE_2D, 0, 0, 0, *surface_data.shape[::-1], GL.GL_RED, GL.GL_UNSIGNED_BYTE, surface_data)

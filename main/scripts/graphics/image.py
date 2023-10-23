@@ -32,6 +32,7 @@ def load_blocks():
     families = {}
     block_pools = {}
     block_group_size = {}
+    block_properties = {}
 
     for path in block_paths:
         blocks.append(file.read(path, file_format="json"))
@@ -41,6 +42,9 @@ def load_blocks():
         block = data["name"]
         sample_image_path = file.find("data/images/blocks", data["frames"][0], True)[0]
         size = pygame.image.load(sample_image_path).get_size()
+        properties = data.get("properties", 0)
+        if properties:
+            block_properties[block] = properties
 
         if "pool" in data:
             block_pools.setdefault(data["pool"], []).append(block)
@@ -88,6 +92,9 @@ def load_blocks():
     for block, length, speed in animation:
         image.set_at((x % (width * WORLD_BLOCK_SIZE), height * WORLD_BLOCK_SIZE + x // (width * WORLD_BLOCK_SIZE)), (length, speed * 255 / 2, families[block_data[block][1]])) # length: 0-255 | speed: 0.0-2.0
         block_data[block] = (x * 2 + 1, *block_data[block][1:])
+        if block in block_properties:
+            block_properties[x * 2 + 1] = block_properties[block]
+            del block_properties[block]
         x += length
 
     if CREATE_TEXTURE_ATLAS_FILE:
@@ -97,7 +104,7 @@ def load_blocks():
     #for pool in block_pools:print(pool, ":\n", block_pools[pool], "\n")    
     #for block in block_data:print(block, ":\n", block_data[block], "\n")    
 
-    return block_data, block_pools, block_group_size, image
+    return block_data, block_pools, block_group_size, block_properties, image
 
 
 def load_sprites():
