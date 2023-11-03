@@ -58,15 +58,21 @@ class World(dict):
         self.water_update_timer: float = 0.0
 
         if PHYSICS_REALISTIC:
-            self.player: player.Player = player.Player(spawn_pos=[0, 0], speed=6, sprint_speed=10, crouch_speed=2, swim_speed=3, acceleration_time=0.2, jump_force=17)
+            self.player: player.Player = player.Player(spawn_pos=[0, 0])
         else:
-            self.player: player.Player = player.Player(spawn_pos=[0, 0], speed=5, sprint_speed=7, crouch_speed=3, swim_speed=3, acceleration_time=.1, jump_force=21)
+            self.player: player.Player = player.Player(spawn_pos=[0, 0])
         self.add_entity(self.player)
 
         # Create particle types
         particle.setup(self, "spark", time=2, delay=1, size=(0.2, 0.2), gravity=-0.7, growth=-1, speed=0, direction=0, divergence=2)
         particle.setup(self, "big_leaf", time=10, delay=3, size=(0.2, 0.2), gravity=0.5, growth=-1, speed=0.5, direction=3/2*math.pi, divergence=2)
         particle.setup(self, "small_leaf", time=10, delay=3, size=(0.15, 0.15), gravity=0.5, growth=-1, speed=0.5, direction=3/2*math.pi, divergence=2)
+
+    def get_block_friction(self, block_type: int):
+        properties = self.block_properties.get(block_type, 0)
+        if properties:
+            return properties["friction"]
+        return 0.1
 
     def add_entity(self, entity):
         self.entities.add(entity)

@@ -6,7 +6,7 @@ default: dict = {
     "enable vsync": True,
     "max fps": 1000,
     "text resolution": 40,
-    "shadow resolution": 4,
+    "shadow resolution": 0,
     "particles": 1,
     "antialiasing": 16,
     "show fps": False,

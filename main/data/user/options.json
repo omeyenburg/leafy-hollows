@@ -6,7 +6,7 @@
     "particles": 0,
     "antialiasing": 0,
     "show fps": true,
-    "show debug": false,
+    "show debug": true,
     "language": "english",
     "master volume": 1,
     "player volume": 1,

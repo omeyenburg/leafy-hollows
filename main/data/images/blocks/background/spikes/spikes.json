@@ -1,0 +1,10 @@
+{
+    "name": "spikes",
+    "family": "background",
+    "layer": "background",
+    "hardness": 1,
+    "speed": 0,
+    "frames": [
+        "spikes.png"
+    ]
+}

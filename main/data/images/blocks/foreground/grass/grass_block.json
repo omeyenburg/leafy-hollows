@@ -8,6 +8,10 @@
         "grass_block.png"
     ],
     "properties": {
-        "friction": 0.1
+        "friction": 0.9
+    },
+    "generation": {
+        "pool": "terrain",
+        "weight": 3
     }
 }

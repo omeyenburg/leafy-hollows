@@ -1,0 +1,10 @@
+{
+    "name": "ladder",
+    "family": "background",
+    "layer": "background",
+    "hardness": 1,
+    "speed": 0,
+    "frames": [
+        "ladder.png"
+    ]
+}

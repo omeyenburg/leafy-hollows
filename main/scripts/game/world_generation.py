@@ -371,10 +371,9 @@ def line_cave(world, position, length, angle, deviation, radius):
 class Shape:
     @staticmethod
     def intro(world, window, position):
-        surface_size = (50, 30)
+        surface_size = (80, 50)
         for x in range(-surface_size[0], surface_size[0] + 1):
             surface_level = pnoise1(x / 20 + world.seed, octaves=3) * 9
-            #surface_level = opensimplex.noise2(1.3, x / 20 + world.seed) * 9
             for y in range(-surface_size[0], surface_size[0] + 1):
                 if surface_level < y:
                     world.set_block(x, y, 0)
@@ -384,13 +383,12 @@ class Shape:
         points = set()
         start_angle = angle = -math.pi/2
         length = INTRO_LENGTH
-        border_padding = 40
+        border_padding = 4
         deviation = 3
         lowest = 0
 
         for i in range(length):
             position[0] = pnoise1(i * 16 + world.seed, octaves=3, repeat=INTRO_REPEAT * 16) * deviation
-            #position[0] = opensimplex.noise2(1.3, i * 16 + world.seed) * deviation
             position[1] = -i
             points.add(tuple(position))
 
@@ -398,7 +396,6 @@ class Shape:
 
         for (x, y) in points:
             radius = int((pnoise1(y + world.seed, octaves=3, repeat=INTRO_REPEAT) + 2) * 2)
-            #radius = int((opensimplex.noise2(1.3, y + world.seed) + 2) * 2)
             for dx in range(-radius - border_padding, radius + border_padding + 1):
                 for dy in range(-radius - border_padding, radius + border_padding + 1):
                     coord = (int(x + dx), int(y + dy))
@@ -413,7 +410,6 @@ class Shape:
     @staticmethod
     def horizontal(world, position):
         angle = snoise2(position[0] / 100 + world.seed, world.seed, octaves=4) * 0.6
-        #angle = opensimplex.noise2(position[0] / 100 + world.seed, world.seed) * 0.6
         length = random.randint(50, 150)
         deviation = random.randint(2, 5)
         radius = 3
@@ -436,7 +432,6 @@ class Shape:
     def blob(world, position):
         border_padding = 5
         radius = int((pnoise1(position[0] + world.seed, octaves=3) + 3) * 3)
-        #radius = int((opensimplex.noise2(1.3, position[0] + world.seed) + 3) * 3)
         for dx in range(-radius - border_padding, radius + border_padding + 1):
             for dy in range(-radius - border_padding, radius + border_padding + 1):
                 coord = (int(position[0] + dx), int(position[1] + dy))

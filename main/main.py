@@ -81,23 +81,53 @@ def draw_game():
         )
         window.draw_text(
             (-0.98, 0.85 - y_offset),
+            "Player Speed: " + str(tuple(map(lambda n: round(n, 1), world.player.vel))),
+            (250, 250, 250, 200),
+            size=TEXT_SIZE_DESCRIPTION
+        )
+        window.draw_text(
+            (-0.98, 0.75 - y_offset),
             "Mouse Pos: " + str((math.floor(mouse_pos[0]),
             math.floor(mouse_pos[1]))),
             (250, 250, 250, 200),
             size=TEXT_SIZE_DESCRIPTION
         )
         window.draw_text(
-            (-0.98, 0.75 - y_offset),
+            (-0.98, 0.65 - y_offset),
             "Seed: " + str(world.seed),
             (250, 250, 250, 200),
             size=TEXT_SIZE_DESCRIPTION
         )
         window.draw_text(
-            (-0.98, 0.65 - y_offset),
+            (-0.98, 0.55 - y_offset),
             "Mouse Block: " + str(world.get(
                 (math.floor(mouse_pos[0]), math.floor(mouse_pos[1])),
                 0
             )),
+            (250, 250, 250, 200),
+            size=TEXT_SIZE_DESCRIPTION
+        )
+        window.draw_text(
+            (-0.98, 0.45 - y_offset),
+            "Below Player: " + str(world.player.block_below),
+            (250, 250, 250, 200),
+            size=TEXT_SIZE_DESCRIPTION
+        )
+        window.draw_text(
+            (-0.98, 0.35 - y_offset),
+            "Player State: " + world.player.state,
+            (250, 250, 250, 200),
+            size=TEXT_SIZE_DESCRIPTION
+        )
+        window.draw_text(
+            (-0.98, 0.25 - y_offset),
+            "Left to Player: " + str(world.player.block_left),
+            (250, 250, 250, 200),
+            size=TEXT_SIZE_DESCRIPTION
+        )
+        window.draw_text(
+            (-0.98, 0.15 - y_offset),
+            "Right to Player: " + str(world.player.block_right),
             (250, 250, 250, 200),
             size=TEXT_SIZE_DESCRIPTION
         )
@@ -159,7 +189,7 @@ def update_intro():
         window.effects["gray_screen"] = 1
 
     # End intro
-    if world.player.onGround:
+    if world.player.block_below:
         window.camera.zoom(CAMERA_RESOLUTION_GAME, 100.0)
         menu.game_state = "game"
         world.player.can_move = True
