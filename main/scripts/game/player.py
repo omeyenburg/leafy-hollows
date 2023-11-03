@@ -7,7 +7,7 @@ import random
 
 
 class Player(PhysicsObject):
-    def __init__(self, spawn_pos: [float], speed: float, sprint_speed: float, crouch_speed: float, swim_speed: float, acceleration_time: float, jump_force: int):
+    def __init__(self, spawn_pos: [float], jump_force: int):
         super().__init__(50, spawn_pos, PLAYER_RECT_SIZE_NORMAL)
 
         # Player rect size (based on state)
@@ -16,20 +16,20 @@ class Player(PhysicsObject):
         self.rect_size_swim = PLAYER_RECT_SIZE_SWIM
 
         # Player speed (based on state)
-        self.speed: float = speed
-        self.sprint_speed: float = sprint_speed
-        self.crouch_speed: float = crouch_speed
-        self.swim_speed: float = swim_speed
+        self.walk_speed: float = 4
+        self.sprint_speed: float = 6
+        self.crouch_speed: float = 2
+        self.swim_speed: float = 3
 
         # Physics attributes
-        self.acceleration_time: float = acceleration_time
-        self.jump_force: int = jump_force
-        self.onPole: bool = False
+        self.acceleration_time: float = 0.1
+        self.jump_force: int = 23
+        self.on_pole: bool = False
 
         # Animation states
-        self.state: str = "idle" # state is used for movement & animations
-        self.direction: int = 0 # 0 = right; 1 = left
-        self.hit_ground = 0
+        self.state: str = "idle"    # state is used for movement & animations
+        self.direction: int = 0     # 0 -> right; 1 -> left
+        self.hit_ground = 0         # Used for hit ground animation
         self.can_move: bool = False # Disabled during intro
 
         # Long crouch jump
@@ -41,22 +41,32 @@ class Player(PhysicsObject):
         """
         # Draw hitbox
         #rect = window.camera.map_coord((self.rect.x, self.rect.y, self.rect.w, self.rect.h), from_world=True)
-        #window.draw_rect(rect[:2], rect[2:], (255, 0, 0))
+        #window.draw_rect(rect[:2], rect[2:], (255, 0, 0, 100))
 
         # Draw player
         rect = window.camera.map_coord((self.rect.x - 1 + self.rect.w / 2, self.rect.y, 2, 2), from_world=True)
         window.draw_image("player_" + self.state, rect[:2], rect[2:], flip=(self.direction, 0))
+
+        window.draw_block_highlight(math.floor(self.rect.centerx), round(self.rect.y - 1))
 
     def move_normal(self, world, window: Window):
         """
         Move player: idle, walk, crouch and jump
         """
         if not self.can_move:
-            # Movement is disabled during intro
-            return
+            return # Movement disabled during intro
+
+        # Friction
+        # ice: 0.005
+        # stone: 0.4
+        block_fricton = world.get_block_friction(self.block_below)
+
+        # Walking
+        key_right = window.keybind("right")
+        key_left = window.keybind("left")
 
         # Set max speed
-        max_speed = self.speed
+        max_speed = self.walk_speed
         if window.keybind("sprint"): # Keeps sprinting once key pressed / stops faster as long as pressed
             max_speed = self.sprint_speed
         if self.state == "crouch":
@@ -67,68 +77,64 @@ class Player(PhysicsObject):
             max_speed /= 2
 
         # Set current speed
-        current_speed = (window.delta_time / self.acceleration_time) * max_speed
-        if not (self.onGround or self.onWallLeft or self.onWallRight):
-            if PHYSICS_REALISTIC or PHYSICS_PREVENT_MOVEMENT_IN_AIR:
-                current_speed = 0
-            elif not (window.keybind("right") and self.vel[0] < 0 or window.keybind("left") and self.vel[0] > 0):
-                current_speed /= 10 # Reduced control in air
-            else:
-                current_speed /= 3 # Stop movement while in air
+        acceleration_speed = max_speed * block_fricton * self.acceleration_time * (1 + block_fricton)
 
-        # Walking
-        right = window.keybind("right")
-        left = window.keybind("left")
-
-        if right:
-            if self.vel[0] < max_speed:
-                if self.vel[0] + current_speed > max_speed: # Guaranteeing exact max speed
-                    self.vel[0] = max_speed
-                else:
-                    self.vel[0] += current_speed
-            if self.onGround and abs(self.vel[0]) > 1 and not (self.onWallLeft or self.onWallRight):
-                if self.state == "crouch":
-                    self.state = "crawl"
-                elif window.keybind("sprint"):
-                    self.state = "sprint"
-                else:
-                    self.state = "walk"
-        if left:
-            if self.vel[0] > -max_speed:
-                if self.vel[0] - current_speed < -max_speed: # Guaranteeing exact max speed
-                    self.vel[0] = -max_speed
-                else:
-                    self.vel[0] -= current_speed
-            if self.onGround and abs(self.vel[0]) > 1 and not (self.onWallLeft or self.onWallRight):
-                if self.state == "crouch":
-                    self.state = "crawl"
-                elif window.keybind("sprint"):
-                    self.state = "sprint"
-                else:
-                    self.state = "walk"
-        if not (right or left):   
-            if abs(self.vel[0]) <= current_speed:
-                self.vel[0] = 0
+        # Adjust movement in air
+        if not (self.block_below or self.block_right or self.block_left):
+            max_speed = 0
+            if PHYSICS_REALISTIC or PHYSICS_PREVENT_MOVEMENT_IN_AIR or not (key_right and key_left):
+                acceleration_speed = 0    # Stop movement while in air
             else:
-                if self.vel[0] > 0:
-                    self.vel[0] -= current_speed
-                else:
-                    self.vel[0] += current_speed
+                acceleration_speed *= 0.1 # Reduced control in air
+
+        # Apply acceleration to the right
+        if key_right and self.vel[0] < max_speed:
+            if self.vel[0] + acceleration_speed > max_speed: # Guaranteeing exact max speed
+                self.vel[0] = max_speed
+            else:
+                self.vel[0] += acceleration_speed
+
+        # Apply acceleration to the left
+        if key_left and self.vel[0] > -max_speed:
+            if self.vel[0] - acceleration_speed < -max_speed: # Guaranteeing exact max speed
+                self.vel[0] = -max_speed
+            else:
+                self.vel[0] -= acceleration_speed
+
+        # Adjust animation
+        if self.block_below and abs(self.vel[0]) > 1 and not (self.block_right or self.block_left):
+            if self.state == "crouch":
+                self.state = "crawl"
+            elif window.keybind("sprint"):
+                self.state = "sprint"
+            else:
+                self.state = "walk"
+        
+        # Friction
+        acceleration_speed *= window.delta_time * block_fricton * 10
+        if abs(self.vel[0]) <= acceleration_speed:
+            self.vel[0] = 0
+        else:
+            if self.vel[0] > 0:
+                self.vel[0] -= acceleration_speed
+            else:
+                self.vel[0] += acceleration_speed
+        if not (key_right or key_left):
+            self.vel[0] *= 0.99
 
         # Jumping
-        if (self.onGround and window.keybind("jump") or
-        (self.onWallLeft or self.onWallRight) and window.keybind("jump") == 1):
-            if self.state == "crouch" and self.onGround:
+        if window.keybind("jump") and (self.block_below or self.block_right and key_left or self.block_left and key_right):
+            if self.state == "crouch" and self.block_below:
                 # Charge crouch jump
                 self.charge_crouch_jump += window.delta_time
             elif not self.charge_crouch_jump:
                 # Normal jump
                 self.jump(window, 5)
-        elif self.onGround and self.charge_crouch_jump and self.state == "crouch":
-            # 1s to charge max crouch jump
-            self.jump(window, 5 * min(1, self.charge_crouch_jump))
+        elif self.block_below and self.charge_crouch_jump and self.state == "crouch":
+            # Crouch jump
+            self.jump(window, 5 * min(1, self.charge_crouch_jump)) # 1 second to charge max crouch jump
             self.charge_crouch_jump = 0
-            self.onGround = 0
+            self.block_below = 0
         else:
             # Reset crouch jump charge
             self.charge_crouch_jump = 0
@@ -139,7 +145,7 @@ class Player(PhysicsObject):
         """
         if window.keybind("jump") and self.vel[1] < self.swim_speed:
             self.vel[1] += 1
-            if self.onWallLeft or self.onWallRight:
+            if self.block_right or self.block_left:
                 self.vel[1] += 3
         elif window.keybind("crouch") and -self.vel[1] < self.swim_speed:
             self.vel[1] -= 1
@@ -162,7 +168,7 @@ class Player(PhysicsObject):
         on_pole = block_head in world.blocks_climbable or grab_pole
 
         if window.keybind("jump") and (on_pole or grab_pole):
-            self.onPole = True
+            self.on_pole = True
             if (window.keybind("left") or window.keybind("right")) and on_pole:
                 if abs(self.vel[0]) < 1:
                     if window.keybind("right"):
@@ -183,7 +189,7 @@ class Player(PhysicsObject):
                 self.vel[1] = max(0.15, self.vel[1])
                 self.state = "on_pole"
         else:
-            self.onPole = False
+            self.on_pole = False
         
     def animation_normal(self, world, window: Window):
         """
@@ -192,34 +198,40 @@ class Player(PhysicsObject):
         # Block_coords
         wall_block_right = (round(self.rect.x + 0.8), round(self.rect.y + 1))
         wall_block_left = (round(self.rect.x - 0.8), round(self.rect.y + 1))
+        wall_block_top_right = (round(self.rect.x + 0.8), round(self.rect.y + 1.3))
+        wall_block_top_left = (round(self.rect.x - 0.8), round(self.rect.y + 1.3))
+
+        key_right = window.keybind("right")
+        key_left = window.keybind("left")
 
         # Animation states
         if self.vel[1] < -5:
             # Fall
             self.state = "fall"
             self.hit_ground = 0.3
-        elif self.onGround and window.keybind("crouch"):
+        elif self.block_below and window.keybind("crouch"):
             # Crouch
             self.state = "crouch"
-        elif self.onGround:
+        elif self.block_below:
             # Idle
             if self.hit_ground > 0:
                 self.hit_ground -= window.delta_time
                 self.state = "hit_ground"
             else:
                 self.state = "idle"
-        elif ((self.onWallLeft and self.direction == 0 and world.get_block(*wall_block_right)
-              or self.onWallRight and self.direction == 1 and world.get_block(*wall_block_left))
-              and not self.onGround and (window.keybind("right") or window.keybind("left"))):
-            # Climb
+        elif (key_right and self.block_right and world.get_block(*wall_block_right) or
+              key_left and self.block_left and world.get_block(*wall_block_left)) and not self.block_below:
+            # On Wall
             self.state = "climb"
-            if (not PHYSICS_REALISTIC) and self.vel[1] < 0: # friction
-                self.vel[1] = min(self.vel[1] + window.delta_time * 13, 0)
+            self.vel[1] /= 2
+
             if (world.get_block(*wall_block_right) and
-                not world.get_block(wall_block_right[0], round(self.rect.y + 1.3)) or
-                world.get_block(*wall_block_left) and
-                not world.get_block(wall_block_left[0], round(self.rect.y + 1.3))):
-                self.vel[1] = window.delta_time * 10
+               not world.get_block(wall_block_right[0], round(self.rect.y + 1.3)) or
+               world.get_block(*wall_block_left) and
+               not world.get_block(wall_block_left[0], round(self.rect.y + 1.3))):
+                # On upper edge of wall
+                self.vel[1] = max(self.vel[1], 0)
+
                 if window.keybind("jump") == 1:
                     self.vel[1] = 7
                     self.state = "high_jump"
@@ -237,7 +249,11 @@ class Player(PhysicsObject):
                 self.state = "high_jump"
         elif self.vel[1] < 0 and self.state != "crouch_jump":
             # Slow fall
-            self.state = "fall_slow"        
+            self.state = "fall_slow"  
+        #print(f"{round(self.vel[1], 2): 5}", key_right, self.block_right, world.get_block(*wall_block_right))
+        #window.draw_block_highlight(*wall_block_right)
+        #window.draw_block_highlight(*wall_block_top_right, (0, 255, 0, 100))
+        #window.draw_circle(window.camera.map_coord((self.rect.centerx, self.rect.bottom), from_world=True), 0.01, (255, 0, 0, 100))
 
     def animation_under_water(self, world, window: Window):
         """
@@ -283,37 +299,40 @@ class Player(PhysicsObject):
         if speed > 0.5:
             sound.play(window, "player_swim", channel_volume=min(1, speed))
 
-    def jump(self, window, duration: float):
+    def jump(self, window, strength: float):
         """
         Jumping: normal jump, crouch jump and wall jump
         """
-        force = self.jump_force * duration / window.delta_time
+        force = self.jump_force * strength
          
         if self.direction == 1 and self.charge_crouch_jump and not window.keybind("left"):
             # Crouch jump left
-            self.apply_force(force * 7, 160, window.delta_time)
+            self.apply_force(force * 7, 160, 1)
             self.state = "crouch_jump"
+            self.block_below = 0
             sound.play(window, "player_hit_ground")
         elif self.direction == 0 and self.charge_crouch_jump and not window.keybind("right"):
             # Crouch jump right
-            self.apply_force(force * 7, 20, window.delta_time)
+            self.apply_force(force * 7, 20, 1)
             self.state = "crouch_jump"
+            self.block_below = 0
             sound.play(window, "player_hit_ground")
-        elif self.onGround:
+        elif self.block_below:
             # Normal jump
-            self.apply_force(force, 90, window.delta_time)
-        elif self.vel[1] > 1.5:
+            self.apply_force(force * 2.8, 90, 1)
+            self.block_below = 0
+        elif self.vel[1] > 2:
             # Max wall jump velocity
-            return
-        elif self.onWallLeft and window.keybind("left") and window.keybind("jump") == 1:
+            pass
+        elif self.block_right and window.keybind("left"):
             # Wall jump left
-            self.apply_force(force * 2.5, 110, window.delta_time)
-            self.onWallLeft = 0
+            self.apply_force(force * 2.6, 120, 1)
+            self.block_right = 0
             sound.play(window, "player_hit_ground")
-        elif self.onWallRight and window.keybind("right") and window.keybind("jump") == 1:
+        elif self.block_left and window.keybind("right"):
             # Wall jump right
-            self.apply_force(force * 2.5, 70, window.delta_time)
-            self.onWallRight = 0
+            self.apply_force(force * 2.6, 60, 1)
+            self.block_left = 0
             sound.play(window, "player_hit_ground")
 
     def adjust_hitbox(self, world):
@@ -350,12 +369,12 @@ class Player(PhysicsObject):
         Move player and play sounds and set animations.
         """
         # Set player direction
-        if self.vel[0] > 0.5:
+        if self.vel[0] > 0.2:
             self.direction = 0
-        elif self.vel[0] < -0.5:
+        elif self.vel[0] < -0.2:
             self.direction = 1
 
-        if self.underWater and not self.onGround:
+        if self.underWater and not self.block_below:
             # Under water movement
             self.move_under_water(world, window)
             self.animation_under_water(world, window)
@@ -368,7 +387,7 @@ class Player(PhysicsObject):
             # Try to climb
             self.move_climb(world, window)
             
-            if not self.onPole:
+            if not self.on_pole:
                 # Normal movement
                 self.animation_normal(world, window)
                 self.move_normal(world, window)

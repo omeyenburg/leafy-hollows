@@ -7,5 +7,10 @@
     "pool": "vegetation_block_group_floor",
     "frames": [
         "giant_mushroom0.png"
-    ]
+    ],
+    "generation": {
+        "pool": "vegetation",
+        "below": "dirt",
+        "weight": 1
+    }
 }

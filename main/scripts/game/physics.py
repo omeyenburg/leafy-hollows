@@ -16,31 +16,55 @@ class PhysicsObject:
         self.rect: geometry.Rect = geometry.Rect(*position, *size)
         self.vel: [float] = [0.0, 0.0]
 
-        self.onGround: int = 0
-        self.onWallLeft: int = 0
-        self.onWallRight: int = 0
         self.inWater: bool = False
         self.underWater: bool = False
 
-        self.ground_block = 0
+        # Blocks next to object (when object collides with them)
+        self.block_below: int = 0
+        self.block_above: int = 0
+        self.block_left: int = 0
+        self.block_right: int = 0
 
-    def get_ground_friction(self, world):
-        properties = world.block_properties.get(self.ground_block, 0)
-        if properties:
-            return properties["friction"]
-        return 0.1
+    def apply_force_horizontal(self, force: float, delta_time: float):
+        """
+        Applies only horizontal force to the object.
+        Equivalent to apply_force with angle = 0.
+        """
+        acceleration = force / self.mass
+        self.vel[0] += acceleration * delta_time
 
-    def apply_force(self, force: float, angle: float, delta_time: float): # angle in degrees; 0 is right, counterclockwise
+    def apply_force_vertical(self, force: float, delta_time: float):
+        """
+        Applies only vertical force to the object.
+        Equivalent to apply_force with angle = 90.
+        """
+        acceleration = force / self.mass
+        self.vel[1] += acceleration * delta_time
+
+    def apply_force(self, force: float, angle: float, delta_time: float):
         """
         Applies force to the object.
+        Angle in degrees; 0 equals right; counterclockwise
         """
         #ground_friction = self.get_ground_friction(world)
         #force *= ground_friction * 10
         if self.underWater:
             force /= 3
-        r_angle = math.radians(angle)
-        self.vel[0] += math.cos(r_angle) * force / self.mass * delta_time
-        self.vel[1] += math.sin(r_angle) * force / self.mass * delta_time
+
+        # Horizontal and vertical only force to skip sin/cos
+        if angle == 0:
+            return self.apply_force_horizontal(force, delta_time)
+        elif angle == 90:
+            return self.apply_force_vertical(force, delta_time)
+        elif angle == 180:
+            return self.apply_force_horizontal(-force, delta_time)
+        elif angle == 270:
+            return self.apply_force_vertical(-force, delta_time)
+
+        angle_radians = math.radians(angle)
+        acceleration = force / self.mass
+        self.vel[0] += math.cos(angle_radians) * acceleration * delta_time
+        self.vel[1] += math.sin(angle_radians) * acceleration * delta_time
     
     def apply_velocity(self, world, delta_time: float):
         """
@@ -78,72 +102,105 @@ class PhysicsObject:
                     return True
         return False
 
-    def gravity(self, delta_time):
+    def apply_gravity_force(self, delta_time):
         """
-        Applies gravity to the object.
+        Applies gravity force to the object.
         """
         if self.inWater:
             gravity = PHYSICS_GRAVITY_CONSTANT_WATER
         else:
             gravity = PHYSICS_GRAVITY_CONSTANT
-        self.apply_force(gravity * self.mass * delta_time, 270, 1)
+        self.apply_force(gravity * self.mass, 270, delta_time)
+
+    def apply_friction_force(self, delta_time):
+        """
+        Applies friction force against velocity direction to the object.
+        """
+        if not all(self.vel):
+            return
+        velocity_product = -self.vel[0]# * min(1, abs(self.vel[1]))
+
+
+        block_friction = 0.5 * 10
+        
+        # Horizontal friction on ground or ceiling
+        touching = max(self.block_below, self.block_above)
+        if touching:
+            force = velocity_product * block_friction * self.mass
+            #print(1, round(self.vel[0], 2))
+            self.apply_force_horizontal(force, delta_time)
+            #print(2, round(self.vel[0], 2))
+        
+        # Vertical friction on walls
+        touching = max(self.block_left, self.block_right)
+        if touching:
+            force = velocity_product * block_friction * self.mass
+            self.apply_force_vertical(force, delta_time)
+        
     
     def x_collide(self, world, delta_time):
         """
         Resolves collisions on the x-axis.
         """
+        if self.vel[0]:
+            self.block_right = self.block_left = 0
         for x in range(math.floor(round(self.rect.left, 5)), math.ceil(round(self.rect.right, 5))):
             #for y in range(math.floor(round(self.rect.y, 5)), math.ceil(round(self.rect.y + self.rect.h, 5))):
             for y in range(math.floor(round(self.rect.top, 5)), math.ceil(round(self.rect.bottom, 5))):
                 if world.get_block(x, y):
                     if self.vel[0] < 0:
                         self.rect.left = x + 1
-                        self.onWallRight = max(2, int(PHYSICS_WALL_JUMP_THRESHOLD / delta_time))
+                        self.block_left = world.get_block(x, y, generate=False)
 
                     if self.vel[0] > 0:
                         self.rect.right = x
-                        self.onWallLeft = max(2, int(PHYSICS_WALL_JUMP_THRESHOLD / delta_time))
+                        self.block_right = world.get_block(x, y, generate=False)
+                    self.vel[0] = 0
 
-                    self.vel[0] = self.vel[0] // 2
     
     def y_collide(self, world):
         """
         Resolves collisions on the y-axis.
         """
+        if any(self.vel):
+            self.block_above = self.block_below = 0
         for x in range(math.floor(round(self.rect.left, 5)), math.ceil(round(self.rect.right, 5))):
             #for y in range(math.floor(round(self.rect.y, 5)), math.ceil(round(self.rect.y + self.rect.h, 5))):
             for y in range(math.floor(round(self.rect.top, 5)), math.ceil(round(self.rect.bottom, 5))):
                 if world.get_block(x, y):
                     if self.vel[1] > 0:
                         self.rect.bottom = y
-                        self.vel[1] = 0
+                        self.block_above = world.get_block(x, y, generate=False)
 
                     if self.vel[1] < 0:
                         self.rect.top = y + 1
-                        self.vel[1] = 0
+                        self.block_below = world.get_block(x, y, generate=False)
 
-                        self.onGround = PHYSICS_JUMP_THRESHOLD
+                    self.vel[1] = 0#self.vel[1] // 2
+
 
     def update(self, world, delta_time):
         """
         Moves the object.
         """
-        self.gravity(delta_time)
-        if (not hasattr(self, "can_move") and not self.can_move):
-            self.apply_force(delta_time * abs(world.wind) / (self.mass), 90 + 90 * min(1, max(-1, -world.wind)), self.mass)
-        if self.onGround:
-            self.onGround -= 1
-            block_friction = self.get_ground_friction(world)
-            block_friction = 0.1
-            friction = math.copysign(delta_time / block_friction, self.vel[0])
-            if abs(friction) > abs(self.vel[0]):
-                self.vel[0] = 0
-            else:
-                self.vel[0] -= friction
-        if self.onWallLeft:
-            self.onWallLeft -= 1
-        if self.onWallRight:
-            self.onWallRight -= 1
+
+
+        #if (not hasattr(self, "can_move") and not self.can_move):
+        #    self.apply_force(delta_time * abs(world.wind) / (self.mass), 90 + 90 * min(1, max(-1, -world.wind)), self.mass)
+        #if self.block_below:
+        #    self.block_below -= 1
+
+            #block_friction = self.get_ground_friction(world)
+            #block_friction = 0.1
+            #friction = math.copysign(delta_time / block_friction, self.vel[0])
+            #if abs(friction) > abs(self.vel[0]):
+            #    self.vel[0] = 0
+            #else:
+            #    self.vel[0] -= friction
+        #if self.block_left:
+        #    self.block_left -= 1
+        #if self.block_right:
+        #    self.block_right -= 1
 
         block_feet = (math.floor(self.rect.centerx), round(self.rect.top))
         block_head = (math.floor(self.rect.centerx), round(self.rect.bottom))
@@ -159,8 +216,12 @@ class PhysicsObject:
         # Add velocity to position
         self.apply_velocity(world, delta_time)
 
+        # Apply gravity and friction
+        self.apply_gravity_force(delta_time)
+        #self.apply_friction_force(delta_time)
+
         # Save ground block
-        if self.onGround:
-            self.ground_block = world.get_block(math.floor(self.rect.centerx), round(self.rect.y - 1), generate=False)
-        else:
-            self.ground_block = 0
+        #if self.block_below:
+        #    self.ground_block = world.get_block(math.floor(self.rect.centerx), round(self.rect.y - 1), generate=False)
+        #else:
+        #    self.ground_block = 0

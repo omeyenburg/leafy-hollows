@@ -64,15 +64,15 @@ class Camera:
         Update the camera.
         """
         # Move slowly to goal
-        xvel = round((self.dest[0] - self.pos[0]) / 10, 3)
-        yvel = round((self.dest[1] - self.pos[1]) / 10, 3)
+        xvel = round((self.dest[0] - self.pos[0]) * 0.1, 3)
+        yvel = round((self.dest[1] - self.pos[1]) * 0.1, 3)
 
         xvel = math.copysign(max(abs(xvel) - self.threshold, 0), xvel)
         yvel = math.copysign(max(abs(yvel) - self.threshold, 0), yvel)
 
         self.vel[0] = xvel
         self.vel[1] = yvel
-        self.pos[0] += self.vel[0]
+        self.pos[0] += self.vel[0] 
         self.pos[1] += self.vel[1]
         
         # Maximum goal offset

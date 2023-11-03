@@ -395,7 +395,7 @@ class Window:
         self._clock.tick(self.options["max fps"])
         self.fps = self._clock.get_fps()
         if self.fps != 0:
-            self.delta_time = (1 / self.fps)
+            self.delta_time = (self.delta_time + 1 / self.fps) * 0.5
         self.time += self.delta_time
 
         # Reset
@@ -614,6 +614,7 @@ class Window:
         """
         Calculate and draw shadows.
         """
+        #t = time.time()
         # Create view copy
         view = self.world_view.copy()[:, :, 0]
         view[0, :] = 0
@@ -660,11 +661,18 @@ class Window:
         if len(triangle_points) > 2:
             pygame.draw.polygon(surface, (255, 0, 0), triangle_points)
 
+        #print(1, time.time() - t)
+        #t = time.time()
+
         # Convert shadow surface to numpy array
         surface_data = pygame.surfarray.pixels_red(surface).transpose()
 
+        #print(2, time.time() - t)
+        #t = time.time()
+
         # Convert shadow surface array to texture
         if surface_size != self._shadow_texture_size:
+            #print(4)
             self._shadow_texture_size = surface_size
             GL.glActiveTexture(GL.GL_TEXTURE4)
             GL.glBindTexture(GL.GL_TEXTURE_2D, self._texShadow)
@@ -678,6 +686,8 @@ class Window:
             GL.glBindTexture(GL.GL_TEXTURE_2D, self._texShadow)
             GL.glTexSubImage2D(GL.GL_TEXTURE_2D, 0, 0, 0, *surface_data.shape[::-1], GL.GL_RED, GL.GL_UNSIGNED_BYTE, surface_data)
             GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
+
+        #print(3, time.time() - t)
 
     def _centered_text(self, position: [float], text: str, color: [int], size: int=1, spacing: float=1.25, fixed_size: int=1):
         """
