@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 from scripts.utility.const import *
 from scripts.game import structure
+from copy import deepcopy
 import random
+import numpy
 import math
 
 
@@ -131,8 +133,8 @@ def find_edge_blocks(world):
     blocks_wall_right = set() # Air blocks, which have a wall to their left
     blocks_wall_left = set()
 
-    for coord in world:
-        block_type = world[coord][0]
+    for coord in world.iterate():
+        block_type = world.get_block(*coord, layer=0)
 
         if block_type == world.block_name["placeholder_terrain"]: # Generate terrain block
             generate_block(world, *coord)
@@ -145,15 +147,14 @@ def find_edge_blocks(world):
 
         x, y = coord
 
-        if world.get_block(x, y - 1, generate=False) > 0: # On ground
+        if world.get_block(x, y - 1) > 0: # On ground
             blocks_ground.add(coord)
-        elif world.get_block(x, y + 1, generate=False) > 0: # On ceiling
+        elif world.get_block(x, y + 1) > 0: # On ceiling
             blocks_ceiling.add(coord)
-        else:
-            if world.get_block(x + 1, y, generate=False) > 0: # On wall right
-                blocks_wall_right.add(coord)
-            if world.get_block(x - 1, y, generate=False) > 0: # On wall left
-                blocks_wall_left.add(coord)
+        elif world.get_block(x + 1, y) > 0: # On wall right
+            blocks_wall_right.add(coord)
+        elif world.get_block(x - 1, y) > 0: # On wall left
+            blocks_wall_left.add(coord)
 
     return blocks_ground, blocks_ceiling, blocks_wall_right, blocks_wall_left
 
@@ -226,9 +227,9 @@ def generate_foliage_floor(world, block_pools, coord):
 
 
 def get_step(world, block_pools, coord, side):
-    block_left = world.get_block(coord[0] - 1, coord[1], generate=False)
-    block_right = world.get_block(coord[0] + 1, coord[1], generate=False)
-    block_vertical = world.get_block(coord[0], coord[1] - 2 * (side == "ground") + 1, generate=False)
+    block_left = world.get_block(coord[0] - 1, coord[1])
+    block_right = world.get_block(coord[0] + 1, coord[1])
+    block_vertical = world.get_block(coord[0], coord[1] - 2 * (side == "ground") + 1)
     block_pool = []
 
     if block_left and not block_right:
@@ -307,12 +308,12 @@ def generate_poles(world, poles, blocks_ground, blocks_ceiling):
 
 # Called from generate_world
 def flatten_edges(world):
-    s = world.copy()
-    p = 0
-    for (x, y) in s:
-        block_types = [s.get(tuple(pos), (0, 0, 0, 0))[0] for pos in ([x, y], [x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1])]
-        block_type = max(block_types, key=block_types.count)
-        world.set_block(x, y, block_type)
+    world_copy = deepcopy(world)#.copy()
+    for chunk_x, chunk_y in world_copy.chunks:
+        for delta_x, delta_y in numpy.ndindex((WORLD_CHUNK_SIZE, WORLD_CHUNK_SIZE)):
+            block_types = [world_copy.get_block(chunk_x + pos[0], chunk_y + pos[1], layer=0, default=0) for pos in ([delta_x, delta_y], [delta_x + 1, delta_y], [delta_x - 1, delta_y], [delta_x, delta_y + 1], [delta_x, delta_y - 1])]
+            block_type = max(block_types, key=block_types.count)
+            world.set_block(chunk_x + delta_x, chunk_y + delta_y, block_type)
 
 
 def generate_block(world, x, y, repeat=0):
@@ -358,12 +359,12 @@ def line_cave(world, position, length, angle, deviation, radius):
     for (x, y) in points:
         p_radius = int(pnoise1((x + y) / 2 + 100, octaves=3) * 2 + radius)
         #p_radius = int(opensimplex.noise2(1.3, (x + y) / 2 + 100) * 2 + radius)
-        for dx in range(-radius - border_padding, radius + border_padding + 1):
-            for dy in range(-radius - border_padding, radius + border_padding + 1):
-                coord = (int(x + dx), int(y + dy))
-                if dx ** 2 + dy ** 2 <= radius ** 2:
+        for delta_x in range(-radius - border_padding, radius + border_padding + 1):
+            for delta_y in range(-radius - border_padding, radius + border_padding + 1):
+                coord = (int(x + delta_x), int(y + delta_y))
+                if delta_x ** 2 + delta_y ** 2 <= radius ** 2:
                     world.set_block(*coord, 0)
-                elif not coord in world:
+                elif not world.get_block_exists(*coord):
                     world.set_block(*coord, world.block_name["placeholder_terrain"])
 
 
@@ -396,14 +397,14 @@ class Shape:
 
         for (x, y) in points:
             radius = int((pnoise1(y + world.seed, octaves=3, repeat=INTRO_REPEAT) + 2) * 2)
-            for dx in range(-radius - border_padding, radius + border_padding + 1):
-                for dy in range(-radius - border_padding, radius + border_padding + 1):
-                    coord = (int(x + dx), int(y + dy))
-                    if dx ** 2 + (dy * 0.5) ** 2 <= radius ** 2:
+            for delta_x in range(-radius - border_padding, radius + border_padding + 1):
+                for delta_y in range(-radius - border_padding, radius + border_padding + 1):
+                    coord = (int(x + delta_x), int(y + delta_y))
+                    if delta_x ** 2 + (delta_y * 0.5) ** 2 <= radius ** 2:
                         world.set_block(*coord, 0)
-                        if y + dy < lowest:
-                            lowest = y + dy
-                    elif not coord in world:
+                        if y + delta_y < lowest:
+                            lowest = y + delta_y
+                    elif not world.get_block_exists(*coord):
                         world.set_block(*coord, world.block_name["placeholder_intro"])
         position[1] = lowest
         
@@ -432,10 +433,10 @@ class Shape:
     def blob(world, position):
         border_padding = 5
         radius = int((pnoise1(position[0] + world.seed, octaves=3) + 3) * 3)
-        for dx in range(-radius - border_padding, radius + border_padding + 1):
-            for dy in range(-radius - border_padding, radius + border_padding + 1):
-                coord = (int(position[0] + dx), int(position[1] + dy))
-                if dy > 0 and dx ** 2 + (dy * 0.8) ** 2 <= radius ** 2:
+        for delta_x in range(-radius - border_padding, radius + border_padding + 1):
+            for delta_y in range(-radius - border_padding, radius + border_padding + 1):
+                coord = (int(position[0] + delta_x), int(position[1] + delta_y))
+                if delta_y > 0 and delta_x ** 2 + (delta_y * 0.8) ** 2 <= radius ** 2:
                     world.set_block(*coord, 0)
-                elif dx ** 2 + (dy * 2) ** 2 <= radius ** 2:
+                elif delta_x ** 2 + (delta_y * 2) ** 2 <= radius ** 2:
                     world.set_block(*coord, 0)

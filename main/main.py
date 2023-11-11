@@ -59,7 +59,7 @@ def draw_game():
     # Draw foreground blocks & post processing
     window.draw_post_processing()
 
-    # Write fps & debug info
+    # Write fps
     if window.options["show fps"]:
         window.draw_text(
             (-0.98, 0.95),
@@ -70,6 +70,8 @@ def draw_game():
         y_offset = 0.1
     else:
         y_offset = 0
+
+    # Write debug info
     if window.options["show debug"]:
         mouse_pos = window.camera.map_coord(window.mouse_pos[:2], from_pixel=1, world=1)
         window.draw_text(
@@ -100,9 +102,10 @@ def draw_game():
         )
         window.draw_text(
             (-0.98, 0.55 - y_offset),
-            "Mouse Block: " + str(world.get(
-                (math.floor(mouse_pos[0]), math.floor(mouse_pos[1])),
-                0
+            "Mouse Block: " + str(world.get_block(
+                math.floor(mouse_pos[0]),
+                math.floor(mouse_pos[1]),
+                layer=slice(None) 
             )),
             (250, 250, 250, 200),
             size=TEXT_SIZE_DESCRIPTION

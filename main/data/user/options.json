@@ -1,9 +1,9 @@
 {
-    "enable vsync": false,
-    "max fps": 20,
+    "enable vsync": true,
+    "max fps": 1000,
     "text resolution": 40,
     "shadow resolution": 0,
-    "particles": 0,
+    "particles": 5,
     "antialiasing": 0,
     "show fps": true,
     "show debug": true,

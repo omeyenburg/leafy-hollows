@@ -7,7 +7,7 @@ import random
 
 
 class Player(PhysicsObject):
-    def __init__(self, spawn_pos: [float], jump_force: int):
+    def __init__(self, spawn_pos: [float]):
         super().__init__(50, spawn_pos, PLAYER_RECT_SIZE_NORMAL)
 
         # Player rect size (based on state)
@@ -47,8 +47,6 @@ class Player(PhysicsObject):
         rect = window.camera.map_coord((self.rect.x - 1 + self.rect.w / 2, self.rect.y, 2, 2), from_world=True)
         window.draw_image("player_" + self.state, rect[:2], rect[2:], flip=(self.direction, 0))
 
-        window.draw_block_highlight(math.floor(self.rect.centerx), round(self.rect.y - 1))
-
     def move_normal(self, world, window: Window):
         """
         Move player: idle, walk, crouch and jump
@@ -57,8 +55,6 @@ class Player(PhysicsObject):
             return # Movement disabled during intro
 
         # Friction
-        # ice: 0.005
-        # stone: 0.4
         block_fricton = world.get_block_friction(self.block_below)
 
         # Walking
@@ -223,13 +219,15 @@ class Player(PhysicsObject):
               key_left and self.block_left and world.get_block(*wall_block_left)) and not self.block_below:
             # On Wall
             self.state = "climb"
-            self.vel[1] /= 2
+            if self.vel[1] < 0:
+                self.vel[1] /= 2
 
             if (world.get_block(*wall_block_right) and
                not world.get_block(wall_block_right[0], round(self.rect.y + 1.3)) or
                world.get_block(*wall_block_left) and
                not world.get_block(wall_block_left[0], round(self.rect.y + 1.3))):
                 # On upper edge of wall
+                self.rect.bottom = round(self.rect.bottom)
                 self.vel[1] = max(self.vel[1], 0)
 
                 if window.keybind("jump") == 1:
@@ -237,9 +235,10 @@ class Player(PhysicsObject):
                     self.state = "high_jump"
                     self.rect.y = math.ceil(self.rect.y)
                     if self.direction:
-                        self.vel[0] = -0.5
+                        self.vel[0] = -1
                     else:
-                        self.vel[0] = 0.5
+                        self.vel[0] = 1
+
         elif self.vel[1] > 0 and self.state != "crouch_jump":
             # Crouch jump
             if ((abs(self.vel[0]) > 2 or self.state == "jump") and
@@ -251,8 +250,8 @@ class Player(PhysicsObject):
             # Slow fall
             self.state = "fall_slow"  
         #print(f"{round(self.vel[1], 2): 5}", key_right, self.block_right, world.get_block(*wall_block_right))
-        #window.draw_block_highlight(*wall_block_right)
-        #window.draw_block_highlight(*wall_block_top_right, (0, 255, 0, 100))
+        window.draw_block_highlight(*wall_block_right)
+        window.draw_block_highlight(*wall_block_top_right, (0, 255, 0, 100))
         #window.draw_circle(window.camera.map_coord((self.rect.centerx, self.rect.bottom), from_world=True), 0.01, (255, 0, 0, 100))
 
     def animation_under_water(self, world, window: Window):
@@ -407,8 +406,8 @@ class Player(PhysicsObject):
             def mouse_pull(strenght):
                 mouse_pos = window.camera.map_coord(window.mouse_pos[:2], world=True)
             
-                dx, dy = mouse_pos[0] - self.rect.centerx, mouse_pos[1] - self.rect.centery
-                angle_to_mouse = math.degrees(math.atan2(dy, dx))
+                delta_x, delta_y = mouse_pos[0] - self.rect.centerx, mouse_pos[1] - self.rect.centery
+                angle_to_mouse = math.degrees(math.atan2(delta_y, delta_x))
 
                 force = min(math.dist(self.rect.center, mouse_pos), 3) / window.delta_time * strenght
                 self.apply_force(force, angle_to_mouse, window.delta_time)
