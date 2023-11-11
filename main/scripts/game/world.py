@@ -11,13 +11,14 @@ import math
 import time
 
 
-class World(dict):
+class World:
     def __init__(self, block_data, block_pools, block_group_size, block_properties):
-        super().__init__() # {(x, y): (block, plant, background, water_level)}
+        #super().__init__() # {(x, y): (block, plant, background, water_level)}
         self.seed: float = random.randint(-10**6, 10**6) + math.e # Float between -10^6 and 10^6
         self.version_checksum = self.get_version_checksum(block_data)
         self.view: numpy.array = None # Sent to shader to render
         self.view_size: tuple = (0, 0)
+        self.chunks = {} # {(chunk_x, chunk_y): numpy_array(16x16x4)} -> (block, plant, background, water_level)
 
         self.block_pools = block_pools
         self.block_properties = block_properties
@@ -68,6 +69,11 @@ class World(dict):
         particle.setup(self, "big_leaf", time=10, delay=3, size=(0.2, 0.2), gravity=0.5, growth=-1, speed=0.5, direction=3/2*math.pi, divergence=2)
         particle.setup(self, "small_leaf", time=10, delay=3, size=(0.15, 0.15), gravity=0.5, growth=-1, speed=0.5, direction=3/2*math.pi, divergence=2)
 
+    def iterate(self):
+        for chunk_x, chunk_y in self.chunks:
+            for delta_x, delta_y in numpy.ndindex((WORLD_CHUNK_SIZE, WORLD_CHUNK_SIZE)):
+                yield chunk_x * WORLD_CHUNK_SIZE + delta_x, chunk_y * WORLD_CHUNK_SIZE + delta_y
+
     def get_block_friction(self, block_type: int):
         properties = self.block_properties.get(block_type, 0)
         if properties:
@@ -80,31 +86,80 @@ class World(dict):
     def add_particle(self, particle):
         self.particles.add(particle)
 
+    def create_chunk(self, x: int, y: int):
+        self.chunks[(x, y)] = numpy.zeros((32, 32, 4))
+        for delta_x, delta_y in numpy.ndindex((WORLD_CHUNK_SIZE, WORLD_CHUNK_SIZE)):
+            generate_block(self, delta_x + x * WORLD_CHUNK_SIZE, delta_y + y * WORLD_CHUNK_SIZE)
+
+    def get_block_exists(self, x: int, y: int):
+        chunk_x = x >> WORLD_CHUNK_SIZE_POWER
+        chunk_y = y >> WORLD_CHUNK_SIZE_POWER
+        return (chunk_x, chunk_y) in self.chunks
+
+    def get_chunk_exists(self, chunk_x: int, chunk_y: int):
+        return (chunk_x, chunk_y) in self.chunks
+
     def set_block(self, x: int, y: int, data: int, layer=0):
-        if not (x, y) in self:
-            self[(x, y)] = [0, 0, 0, 0]
+        chunk_x = x >> WORLD_CHUNK_SIZE_POWER
+        chunk_y = y >> WORLD_CHUNK_SIZE_POWER
+        mod_x = x & (WORLD_CHUNK_SIZE - 1)
+        mod_y = y & (WORLD_CHUNK_SIZE - 1)
+
+        if not (chunk_x, chunk_y) in self.chunks:
+            self.create_chunk(chunk_x, chunk_y)
         if data:
             layer = self.block_layer[self.block_index[data]]
-        self[(x, y)][layer] = data
+        self.chunks[(chunk_x, chunk_y)][mod_x, mod_y, layer] = data
     
-    def get_block(self, x: int, y: int, layer: int=0, generate=True, default=0):
-        if not (x, y) in self:
+    def get_block(self, x: int, y: int, layer: int=0, generate: bool=False, default: int=0):
+        chunk_x = x >> WORLD_CHUNK_SIZE_POWER
+        chunk_y = y >> WORLD_CHUNK_SIZE_POWER
+        mod_x = x & (WORLD_CHUNK_SIZE - 1)
+        mod_y = y & (WORLD_CHUNK_SIZE - 1)
+
+        if not (chunk_x, chunk_y) in self.chunks:
             if generate:
-                generate_block(self, x, y)
+                self.create_chunk(chunk_x, chunk_y)
+                #generate_block(self, x, y)
             else:
                 return default
-        return self[(x, y)][layer]
+        return self.chunks[(chunk_x, chunk_y)][mod_x, mod_y, layer]
 
     def set_water(self, x, y, level):
-        if not (x, y) in self:
-            generate_block(self, x, y)
-        self[(x, y)][3] = int(level)
+        chunk_x = x >> WORLD_CHUNK_SIZE_POWER
+        chunk_y = y >> WORLD_CHUNK_SIZE_POWER
+        mod_x = x & (WORLD_CHUNK_SIZE - 1)
+        mod_y = y & (WORLD_CHUNK_SIZE - 1)
+
+        if not (chunk_x, chunk_y) in self.chunks:
+            self.create_chunk(chunk_x, chunk_y)
+            #generate_block(self, x, y)
+        self.chunks[(chunk_x, chunk_y)][mod_x, mod_y, 3] = int(level)
 
     def get_water(self, x, y):
-        return abs(self.get((x, y), (0, 0, 0, 0))[3])
+        chunk_x = x >> WORLD_CHUNK_SIZE_POWER
+        chunk_y = y >> WORLD_CHUNK_SIZE_POWER
+
+        if not (chunk_x, chunk_y) in self.chunks:
+            return 0
+
+        mod_x = x & (WORLD_CHUNK_SIZE - 1)
+        mod_y = y & (WORLD_CHUNK_SIZE - 1)
+        return abs(self.chunks[(chunk_x, chunk_y)][mod_x, mod_y, 3])
 
     def get_water_side(self, x, y):
-        return -1 if self.get((x, y), (0, 0, 0, 0))[3] < 0 else 1
+        chunk_x = x >> WORLD_CHUNK_SIZE_POWER
+        chunk_y = y >> WORLD_CHUNK_SIZE_POWER
+
+        if not (chunk_x, chunk_y) in self.chunks:
+            return 1
+
+        mod_x = x & (WORLD_CHUNK_SIZE - 1)
+        mod_y = y & (WORLD_CHUNK_SIZE - 1)
+
+        if abs(self.chunks[(chunk_x, chunk_y)][mod_x, mod_y, 3]) < 0:
+            return -1
+        return 1
 
     def update(self, window):
         self.wind = math.sin(window.time) * WORLD_WIND_STRENGTH + math.cos(window.time * 5) * WORLD_WIND_STRENGTH / 2
@@ -129,6 +184,18 @@ class World(dict):
             entity.draw(window)
 
     def update_block(self, window, x, y):
+        block_array = self.get_block(x, y, layer=slice(None), generate=True)
+
+        # Update water
+        self.update_block_water(window, x, y)
+
+        # Update torches
+        if self.block_index[block_array[1]] in ("torch", "torch_flipped"):
+            particle.spawn(window, self, "spark", x, y)
+            if block_array[3] > 600:
+                self.chunks[(x, y)][1] = self.block_name["unlit_torch"]
+
+    def update_block_water(self, window, x, y):
         water_level = self.get_water(x, y)
         if not water_level:
             return
@@ -200,22 +267,56 @@ class World(dict):
         view_size = (end[0] - start[0], end[1] - start[1])
 
         if self.view_size != view_size:
-            self.view = numpy.zeros((*view_size, 4))
+            self.view = numpy.empty((*view_size, 4))
             self.view_size = view_size
-  
-        for y in range(view_size[1] - 1):
-            for x in range(view_size[0] - 1):
-                if not (start[0] + x, start[1] + y) in self:
-                    generate_block(self, start[0] + x, start[1] + y)
-                block = self[start[0] + x, start[1] + y]
-                self.view[x, y] = block
 
-                if self.block_index[block[1]] in ("torch", "torch_flipped"):
-                    particle.spawn(window, self, "spark", start[0] + x, start[1] + y)
-                    if self.view[x, y, 3] > 600:
-                        self[(start[0] + x, start[1] + y)][1] = self.block_name["unlit_torch"]
-        
-        window.world_view = self.view
+        start_chunk_x = start[0] >> WORLD_CHUNK_SIZE_POWER
+        start_chunk_y = start[1] >> WORLD_CHUNK_SIZE_POWER
+        start_mod_x = start[0] & (WORLD_CHUNK_SIZE - 1)
+        start_mod_y = start[1] & (WORLD_CHUNK_SIZE - 1)
+        chunk_num_x = math.ceil((start_mod_x + view_size[0]) / WORLD_CHUNK_SIZE)
+        chunk_num_y = math.ceil((start_mod_y + view_size[1]) / WORLD_CHUNK_SIZE)
+        uncut_view = numpy.empty((chunk_num_x * WORLD_CHUNK_SIZE, chunk_num_y * WORLD_CHUNK_SIZE, 4))
+
+        #print("view_size", view_size)
+        #print("start", start)
+        #print("end", end)
+        #print("start_chunk", start_chunk_x, start_chunk_y)
+        #print("start_mod", start_mod_x, start_mod_y)
+        #print("chunk_num", chunk_num_x, chunk_num_y)
+
+        for chunk_delta_x, chunk_delta_y in numpy.ndindex((chunk_num_x, chunk_num_y)):
+            chunk_x = start_chunk_x + chunk_delta_x
+            chunk_y = start_chunk_y + chunk_delta_y
+
+            if not (chunk_x, chunk_y) in self.chunks:
+                self.chunks[(chunk_x, chunk_y)] = numpy.zeros((WORLD_CHUNK_SIZE, WORLD_CHUNK_SIZE, 4))
+                self.chunks[(chunk_x, chunk_y)][:, :, 0] = self.block_name["dirt_block"]
+
+            uncut_view[chunk_delta_x * WORLD_CHUNK_SIZE:(chunk_delta_x + 1) * WORLD_CHUNK_SIZE, chunk_delta_y * WORLD_CHUNK_SIZE:(chunk_delta_y + 1) * WORLD_CHUNK_SIZE] = self.chunks[(chunk_x, chunk_y)]
+
+        window.world_view = self.view = uncut_view[start_mod_x:start_mod_x + view_size[0], start_mod_y:start_mod_y + view_size[1]]
+
+            #print("chunk", "[rel]", chunk_delta_x, chunk_delta_y, "[abs]", chunk_x, chunk_y)
+            
+            #copy_start_x = max(start[0], chunk_x * WORLD_CHUNK_SIZE) & (WORLD_CHUNK_SIZE - 1)
+            #copy_start_y = max(start[1], chunk_y * WORLD_CHUNK_SIZE) & (WORLD_CHUNK_SIZE - 1)
+            #copy_end_x = min(end[0], (chunk_x + 1) * WORLD_CHUNK_SIZE - 1) & (WORLD_CHUNK_SIZE - 1)
+            #copy_end_y = min(end[1], (chunk_y + 1) * WORLD_CHUNK_SIZE - 1) & (WORLD_CHUNK_SIZE - 1)
+            #print("copy start", copy_start_x, copy_start_y)
+            #print("copy end", copy_end_x, copy_end_y)
+            #print("copy size", copy_end_x - copy_start_x, copy_end_y - copy_start_y)
+
+            #dest_start_x = max(0, WORLD_CHUNK_SIZE * (chunk_x) - start_mod_x)
+            #dest_start_y = max(0, WORLD_CHUNK_SIZE * (chunk_y) - start_mod_y)
+            #dest_end_x = copy_end_x - copy_start_x + dest_start_x#min(view_size[0], start_mod_x + WORLD_CHUNK_SIZE * (chunk_x - 1))
+            #dest_end_y = copy_end_y - copy_start_y + dest_start_y#min(view_size[1], start_mod_y + WORLD_CHUNK_SIZE * (chunk_y - 1))
+            #print("dest start", dest_start_x, dest_start_y)
+            #print("dest end", dest_end_x, dest_end_y)
+            #print("dest size", dest_end_x - dest_start_x, dest_end_y - dest_start_y)
+
+            #data = self.chunks[(chunk_x, chunk_y)][copy_start_x:copy_end_x, copy_start_y:copy_end_y]
+            #self.view[dest_start_x:dest_end_x, dest_start_y:dest_end_y] = data  
 
     def save(self, window):
         window.loading_progress[:3] = "Saving", 0, 1.1

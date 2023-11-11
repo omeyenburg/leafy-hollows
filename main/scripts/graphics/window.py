@@ -99,7 +99,7 @@ class Window:
         self._window = pygame.display.set_mode((self.width, self.height), flags=flags, vsync=self.options["enable vsync"])
         self._clock = pygame.time.Clock()
         self.camera: Camera = Camera(self)
-        self.world_view: numpy.array = numpy.zeros((0, 0, 4))
+        self.world_view: numpy.array = numpy.empty((0, 0, 4))
         pygame.display.set_caption(caption)
         pygame.key.set_repeat(1000, 10)
         
@@ -125,9 +125,9 @@ class Window:
         self._vbo_instances_length = 0
         self._vbo_instances_index = 0
   
-        self._dest_vbo_array = numpy.zeros(0, dtype=numpy.float32)
-        self._source_or_color_vbo_array = numpy.zeros(0, dtype=numpy.float32)
-        self._shape_transform_vbo_array = numpy.zeros(0, dtype=numpy.float32)
+        self._dest_vbo_array = numpy.empty(0, dtype=numpy.float32)
+        self._source_or_color_vbo_array = numpy.empty(0, dtype=numpy.float32)
+        self._shape_transform_vbo_array = numpy.empty(0, dtype=numpy.float32)
 
         # Vertices & texcoords
         vertices = numpy.array([
@@ -268,19 +268,19 @@ class Window:
         if self._vbo_instances_length == self._vbo_instances_index: # Resize all instanced vbos
             self._vbo_instances_length = int(1 + self._vbo_instances_length * 1.5)
 
-            new_dest_vbo_array = numpy.zeros(self._vbo_instances_length * 4, dtype=numpy.float32)
+            new_dest_vbo_array = numpy.empty(self._vbo_instances_length * 4, dtype=numpy.float32)
             new_dest_vbo_array[:len(self._dest_vbo_array)] = self._dest_vbo_array
             GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._dest_vbo)
             GL.glBufferData(GL.GL_ARRAY_BUFFER, new_dest_vbo_array.nbytes, new_dest_vbo_array, GL.GL_DYNAMIC_DRAW)
             self._dest_vbo_array = new_dest_vbo_array
  
-            new_source_or_color_vbo_array = numpy.zeros(self._vbo_instances_length * 4, dtype=numpy.float32)
+            new_source_or_color_vbo_array = numpy.empty(self._vbo_instances_length * 4, dtype=numpy.float32)
             new_source_or_color_vbo_array[:len(self._source_or_color_vbo_array)] = self._source_or_color_vbo_array
             GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._source_or_color_vbo)
             GL.glBufferData(GL.GL_ARRAY_BUFFER, new_source_or_color_vbo_array.nbytes, new_source_or_color_vbo_array, GL.GL_DYNAMIC_DRAW)
             self._source_or_color_vbo_array = new_source_or_color_vbo_array
 
-            new_shape_transform_vbo_array = numpy.zeros(self._vbo_instances_length * 4, dtype=numpy.float32)
+            new_shape_transform_vbo_array = numpy.empty(self._vbo_instances_length * 4, dtype=numpy.float32)
             new_shape_transform_vbo_array[:len(self._shape_transform_vbo_array)] = self._shape_transform_vbo_array
             GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._shape_transform_vbo)
             GL.glBufferData(GL.GL_ARRAY_BUFFER, new_shape_transform_vbo_array.nbytes, new_shape_transform_vbo_array, GL.GL_DYNAMIC_DRAW)
@@ -516,7 +516,8 @@ class Window:
             self._texWorld,
             self._texShadow,
         ]
-        textures.remove(None)
+        while None in textures:
+            textures.remove(None)
         GL.glDeleteTextures(len(textures), textures)
         self._instance_shader.delete()
 
@@ -531,7 +532,7 @@ class Window:
         """
         Clear the world view.
         """
-        self.world_view = numpy.zeros((0, 0, 4))
+        self.world_view[:, :, :] = 0
     
     def _texture(self, image, blur=False):
         """
