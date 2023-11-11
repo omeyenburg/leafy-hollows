@@ -8,7 +8,7 @@
         "dirt_block.png"
     ],
     "properties": {
-        "friction": 0.7
+        "friction": 0.95
     },
     "generation": {
         "pool": "terrain",

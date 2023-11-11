@@ -10,9 +10,10 @@
 from scripts.graphics.image import load_blocks
 from scripts.utility.thread import threaded
 from scripts.graphics.window import Window
-from scripts.menu.menu import Menu
+from scripts.utility.geometry import *
 from scripts.game.world import World
 from scripts.utility.const import *
+from scripts.menu.menu import Menu
 import math
 
 
@@ -134,6 +135,28 @@ def draw_game():
             (250, 250, 250, 200),
             size=TEXT_SIZE_DESCRIPTION
         )
+        window.draw_text(
+            (-0.98, 0.05 - y_offset),
+            "Entity count: " + str(len(world.entities)),
+            (250, 250, 250, 200),
+            size=TEXT_SIZE_DESCRIPTION
+        )
+        window.draw_text(
+            (-0.98, -0.05 - y_offset),
+            "Loaded entity count: " + str(len(world.loaded_entities)),
+            (250, 250, 250, 200),
+            size=TEXT_SIZE_DESCRIPTION
+        )
+
+    # Draw player health bar
+    health_percentage = world.player.health / world.player.max_health
+    heart_center = Vec(-0.9, -0.9)
+    heart_size = Vec(70 / window.width, 60 / window.height)
+    health_bar_size = Vec(0.5, 0.05)
+
+    window.draw_image("heart", heart_center - heart_size / 2, heart_size)
+    window.draw_rect(heart_center + Vec(heart_size.x * 0.8, -health_bar_size.y / 2), (0.5 * health_percentage, 0.05), (165, 48, 48, 255))
+    window.draw_rect(heart_center + Vec(heart_size.x * 0.8 + 0.5 * health_percentage, -health_bar_size.y / 2), (0.5 * (1 - health_percentage), 0.05), (117, 36, 56, 255))
 
 
 def draw_intro():
@@ -202,7 +225,6 @@ def main():
     menu.save_world = save_world
     window.callback_quit = save_world
     window.camera.set_zoom(CAMERA_RESOLUTION_GAME)
-
 
     while True:
         if menu.game_state == "load_world":
