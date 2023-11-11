@@ -186,22 +186,34 @@ class Vec:
         return self.x == rect.x and self.y == rect.y
 
     def __add__(self, value):
-        return vec(self[0] + value[0], self[1] + value[1])
+        return Vec(self[0] + value[0], self[1] + value[1])
+
+    def __radd__(self, value):
+        return Vec(self[0] + value[0], self[1] + value[1])
 
     def __sub__(self, value):
-        return vec(self[0] - value[0], self[1] - value[1])
+        return Vec(self[0] - value[0], self[1] - value[1])
+
+    def __rsub__(self, value):
+        return Vec(self[0] - value[0], self[1] - value[1])
 
     def __mul__(self, value):
-        return vec(self[0] * value, self[1] * value)
+        return Vec(self[0] * value, self[1] * value)
 
-    def __div__(self, value):
-        return vec(self[0] / value, self[1] / value)
+    def __rmul__(self, value):
+        return Vec(self[0] * value, self[1] * value)
+
+    def __truediv__(self, value):
+        return Vec(self[0] / value, self[1] / value)
+
+    def __rtruediv__(self, value):
+        return Vec(self[0] / value, self[1] / value)
 
     def __floordiv__(self, value):
-        return vec(self[0] // value, self[1] // value)
+        return Vec(self[0] // value, self[1] // value)
 
     def __neg__(self, value):
-        return vec(-self[0], -self[1])
+        return Vec(-self[0], -self[1])
 
     def __abs__(self):
         return math.sqrt(self[0] ** 2 + self[1] ** 2)

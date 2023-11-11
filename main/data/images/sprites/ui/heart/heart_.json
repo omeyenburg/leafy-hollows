@@ -1,0 +1,32 @@
+{
+    "name": "heart",
+    "speed": 0.15,
+    "frames": [
+        "heart_a.png",
+        "heart_a.png",
+        "heart_a.png",
+        "heart_a.png",
+        "heart_a.png",
+        "heart_a.png",
+        "heart_a.png",
+        "heart_a.png",
+        "heart_a.png",
+        "heart_a.png",
+        "heart_a.png",
+        "heart_a.png",
+        "heart_a.png",
+        "heart_a.png",
+        "heart_a.png",
+        "heart_a.png",
+        "heart_a.png",
+        "heart_a.png",
+        "heart_a.png",
+        "heart_a.png",
+        "heart_a.png",
+        "heart_a.png",
+        "heart_a.png",
+        "heart_a.png",
+        "heart_b.png",
+        "heart_c.png"
+    ]
+}

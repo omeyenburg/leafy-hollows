@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
+from scripts.game.baseentity import LivingEntity
 from scripts.graphics.window import Window
 from scripts.utility.const import *
 from scripts.game.physics import *
+from scripts.game.entity import *
 from scripts.graphics import sound
 import random
 
 
-class Player(PhysicsObject):
+class Player(LivingEntity):
     def __init__(self, spawn_pos: [float]):
-        super().__init__(50, spawn_pos, PLAYER_RECT_SIZE_NORMAL)
+        super().__init__(50, spawn_pos, PLAYER_RECT_SIZE_NORMAL, health=10)
 
         # Player rect size (based on state)
         self.rect_size = PLAYER_RECT_SIZE_NORMAL
@@ -250,8 +252,8 @@ class Player(PhysicsObject):
             # Slow fall
             self.state = "fall_slow"  
         #print(f"{round(self.vel[1], 2): 5}", key_right, self.block_right, world.get_block(*wall_block_right))
-        window.draw_block_highlight(*wall_block_right)
-        window.draw_block_highlight(*wall_block_top_right, (0, 255, 0, 100))
+        #window.draw_block_highlight(*wall_block_right)
+        #window.draw_block_highlight(*wall_block_top_right, (0, 255, 0, 100))
         #window.draw_circle(window.camera.map_coord((self.rect.centerx, self.rect.bottom), from_world=True), 0.01, (255, 0, 0, 100))
 
     def animation_under_water(self, world, window: Window):
@@ -422,13 +424,19 @@ class Player(PhysicsObject):
         """
 
         # Place/break block
-        
+        """
         if window.mouse_buttons[2] == 1: # right click: place/break block
             mouse_pos = window.camera.map_coord(window.mouse_pos[:2], world=True)
             if world.get_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1])) > 0:
                 world.set_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), 0)
             else:
                 world.set_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), world.block_name["stone_block"])
+
+
+        """
+        if window.mouse_buttons[2] == 1: # right click: place/break block
+            mouse_pos = window.camera.map_coord(window.mouse_pos[:2], world=True)
+            world.add_entity(Slime(mouse_pos))
         """
 
         # Place water

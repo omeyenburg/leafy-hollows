@@ -52,6 +52,7 @@ class World:
         self.blocks_climbable: set = {self.block_name[name] for name in BLOCKS_CLIMBABLE}
 
         self.entities: set = set()
+        self.loaded_entities: set = set()
         self.particles: list = []
         self.particle_types: dict = {}
         self.wind: float = 0.0 # Wind direction
@@ -68,6 +69,7 @@ class World:
         particle.setup(self, "spark", time=2, delay=1, size=(0.2, 0.2), gravity=-0.7, growth=-1, speed=0, direction=0, divergence=2)
         particle.setup(self, "big_leaf", time=10, delay=3, size=(0.2, 0.2), gravity=0.5, growth=-1, speed=0.5, direction=3/2*math.pi, divergence=2)
         particle.setup(self, "small_leaf", time=10, delay=3, size=(0.15, 0.15), gravity=0.5, growth=-1, speed=0.5, direction=3/2*math.pi, divergence=2)
+        particle.setup(self, "slime_particle", time=1, delay=0.1, size=(0.05, 0.05), gravity=2.0, growth=-1, speed=1, direction=1/2*math.pi, divergence=2)
 
     def iterate(self):
         for chunk_x, chunk_y in self.chunks:
@@ -170,9 +172,10 @@ class World:
             for y in geometry.shuffled_range(self.view_size[1] - 1):
                 for x in geometry.shuffled_range(self.view_size[0] - 1):
                     self.update_block(window, self.loaded_blocks[0][0] + x, self.loaded_blocks[0][1] + y)
-        
-        for entity in self.entities:
+
+        for entity in self.loaded_entities:
             entity.update(self, window)
+
         if window.options["particles"]:
             particle.update(window, self)
 
@@ -180,8 +183,12 @@ class World:
         self.loaded_blocks = window.camera.visible_blocks()
         self.create_view(window)
 
+        (start_x, start_y), (end_x, end_y) = self.loaded_blocks
+        self.loaded_entities.clear()
         for entity in self.entities:
-            entity.draw(window)
+            if start_x < entity.rect.x < end_x and start_y < entity.rect.y < end_y:
+                entity.draw(window)
+                self.loaded_entities.add(entity)
 
     def update_block(self, window, x, y):
         block_array = self.get_block(x, y, layer=slice(None), generate=True)
@@ -237,6 +244,7 @@ class World:
             total_water = max_water
         else:
             emmitable_water = 0
+
         for (_x, _y), old_water_level_target in blocks.items():
             water_level_target = total_water / len(blocks)
             water_side = self.get_water_side(_x, _y)

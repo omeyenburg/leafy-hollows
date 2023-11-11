@@ -99,6 +99,10 @@ ivec2 get_source_pixel() {
 vec4 get_color_block(int block_type, vec2 source_pixel) {
     // Flip source_pixel for flipped blocks
     // (flipped blocks === even block_type && block_type != 0)
+    if (block_type == 0) {
+        return TRANSPARENCY;
+    }
+
     source_pixel.x = mix(15 - source_pixel.x, source_pixel.x, block_type & 1);
     block_type = (block_type - 1) / 2 + 1;
 

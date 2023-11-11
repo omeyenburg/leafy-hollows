@@ -8,7 +8,7 @@
         "stone_block.png"
     ],
     "properties": {
-        "friction": 0.9
+        "friction": 0.95
     },
     "generation": {
         "pool": "terrain",

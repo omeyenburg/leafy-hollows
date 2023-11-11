@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from scripts.utility.const import *
 from scripts.game import structure
+from scripts.game.entity import *
 from copy import deepcopy
 import random
 import numpy
@@ -123,7 +124,11 @@ def generate_world(world, window):
     # Generate poles
     generate_poles(world, poles, blocks_ground, blocks_ceiling)
 
-    window.loading_progress[:2] = "Finishing", 11
+    # Spawn enemies
+    window.loading_progress[:2] = "Spawing enemies", 11
+    spawn_blocks = random.choices(list(blocks_ground), k=int(0.05 * len(blocks_ground)))
+    for coord in spawn_blocks:
+        world.add_entity(Slime(coord))
 
 
 # Called from generate_world
