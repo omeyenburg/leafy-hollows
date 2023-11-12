@@ -1,9 +1,0 @@
-{
-    "name": "player_damage",
-    "speed": 1.0,
-    "volume": 0.4,
-    "category": "player",
-    "sounds": [
-        "player_damage.ogg"
-    ]
-}

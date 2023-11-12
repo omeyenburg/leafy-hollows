@@ -69,7 +69,7 @@ class World:
         particle.setup(self, "spark", time=2, delay=1, size=(0.2, 0.2), gravity=-0.7, growth=-1, speed=0, direction=0, divergence=2)
         particle.setup(self, "big_leaf", time=10, delay=3, size=(0.2, 0.2), gravity=0.5, growth=-1, speed=0.5, direction=3/2*math.pi, divergence=2)
         particle.setup(self, "small_leaf", time=10, delay=3, size=(0.15, 0.15), gravity=0.5, growth=-1, speed=0.5, direction=3/2*math.pi, divergence=2)
-        particle.setup(self, "slime_particle", time=1, delay=0.1, size=(0.05, 0.05), gravity=2.0, growth=-1, speed=1, direction=1/2*math.pi, divergence=2)
+        particle.setup(self, "slime_particle", time=1, delay=0.1, size=(0.05, 0.05), gravity=1, growth=-1, speed=6, direction=1/2*math.pi, divergence=2)
 
     def iterate(self):
         for chunk_x, chunk_y in self.chunks:
@@ -174,6 +174,8 @@ class World:
                     self.update_block(window, self.loaded_blocks[0][0] + x, self.loaded_blocks[0][1] + y)
 
         for entity in self.loaded_entities:
+            if hasattr(entity, "health") and entity.health <= 0:
+                self.entities.discard(entity)
             entity.update(self, window)
 
         if window.options["particles"]:
@@ -185,10 +187,12 @@ class World:
 
         (start_x, start_y), (end_x, end_y) = self.loaded_blocks
         self.loaded_entities.clear()
-        for entity in self.entities:
+        for entity in self.entities.copy():
             if start_x < entity.rect.x < end_x and start_y < entity.rect.y < end_y:
                 entity.draw(window)
                 self.loaded_entities.add(entity)
+            elif entity.destroy_unloaded:
+                self.entities.discard(entity)
 
     def update_block(self, window, x, y):
         block_array = self.get_block(x, y, layer=slice(None), generate=True)
@@ -300,6 +304,7 @@ class World:
             if not (chunk_x, chunk_y) in self.chunks:
                 self.chunks[(chunk_x, chunk_y)] = numpy.zeros((WORLD_CHUNK_SIZE, WORLD_CHUNK_SIZE, 4))
                 self.chunks[(chunk_x, chunk_y)][:, :, 0] = self.block_name["dirt_block"]
+                #print(chunk_x, chunk_y)
 
             uncut_view[chunk_delta_x * WORLD_CHUNK_SIZE:(chunk_delta_x + 1) * WORLD_CHUNK_SIZE, chunk_delta_y * WORLD_CHUNK_SIZE:(chunk_delta_y + 1) * WORLD_CHUNK_SIZE] = self.chunks[(chunk_x, chunk_y)]
 

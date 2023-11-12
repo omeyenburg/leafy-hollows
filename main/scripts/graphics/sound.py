@@ -65,10 +65,10 @@ def play(window, sound: str, x: float=0.0, identifier: str=None, channel_volume:
 
     if x < -0.5:
         volume = 2 ** (-(x + 0.5) ** 2) * volume * channel_volume
-        side = (1, 0)
+        side = (1, 0.3)
     elif x > 0.5:
         volume = 2 ** (-(x - 0.5) ** 2) * volume * channel_volume
-        side = (0, 1)
+        side = (0.3, 1)
     else:
         volume = volume * channel_volume
         side = (1, 1)

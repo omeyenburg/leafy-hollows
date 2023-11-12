@@ -43,6 +43,17 @@ class Menu:
         self.pause_page.layout()
 
 
+        ###---###  Death page  ###---###
+        def button_death_menu_update():
+            self.game_state = "menu"
+            self.main_page.open()
+
+        self.death_page = Page(columns=1, spacing=MENU_SPACING)
+        Label(self.death_page, MENU_HEADING_SIZE, text="You Died", fontsize=TEXT_SIZE_HEADING)
+        button_death_menu = Button(self.death_page, MENU_BUTTON_SIZE, text="Main Menu", callback=button_death_menu_update, fontsize=TEXT_SIZE_BUTTON)
+        self.death_page.layout()
+
+
         ###---###  Loading page  ###---###
         self.loading_page_title: str = ""
         self.loading_page_progress: float = 0.0
@@ -392,8 +403,6 @@ class Menu:
                 window.options[option] = value
                 window.keys: dict = dict.fromkeys([value for key, value in window.options.items() if key.startswith("key.")], 0)
                 buttons[option].text = value.title()
-                print(option, value)
-            print("reset")
 
         for i, key in enumerate(keys):
             Label(scrollbox, MENU_BUTTON_SMALL_SIZE, row=i, column=0, text=key.split(".")[1].title(), fontsize=TEXT_SIZE_TEXT)

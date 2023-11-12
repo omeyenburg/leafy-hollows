@@ -21,11 +21,11 @@ void main() {
         position.y *= -1;
     }
     if (angle != 0.0) {
-        float cosTheta = cos(angle);
-        float sinTheta = sin(angle);
-        mat2 rotationMatrix = mat2(cosTheta, -sinTheta, sinTheta, cosTheta);
-        vec2 rotatedPosition = (position * dest_rect.zw) * rotationMatrix;
-        gl_Position = vec4(rotatedPosition + dest_rect.xy, 0.0, 1.0);
+        float angle_sin = sin(angle);
+        float angle_cos = cos(angle);
+        mat2 rotationMatrix = mat2(angle_cos, -angle_sin, angle_sin, angle_cos);
+        vec2 rotatedPosition = (position * rotationMatrix);
+        gl_Position = vec4(rotatedPosition * dest_rect.zw + dest_rect.xy, 0.0, 1.0);
     } else {
         gl_Position = vec4(position * dest_rect.zw + dest_rect.xy, 0.0, 1.0);
     }

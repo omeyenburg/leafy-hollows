@@ -1,12 +1,4 @@
 # -*- coding: utf-8 -*-
-
-# Apple: signing bundle
-# https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution
-# https://gist.github.com/txoof/0636835d3cc65245c6288b2374799c43
-# https://github.com/pyinstaller/pyinstaller/wiki/Recipe-OSX-Code-Signing
-# https://support.apple.com/en-us/HT204397
-# xattr -d com.apple.quarantine "title.app"
-
 from scripts.graphics.image import load_blocks
 from scripts.utility.thread import threaded
 from scripts.graphics.window import Window
@@ -151,12 +143,13 @@ def draw_game():
     # Draw player health bar
     health_percentage = world.player.health / world.player.max_health
     heart_center = Vec(-0.9, -0.9)
-    heart_size = Vec(70 / window.width, 60 / window.height)
+    heart_width = 0.1
+    heart_size = Vec(heart_width, heart_width / window.height * window.width / 7 * 6)
     health_bar_size = Vec(0.5, 0.05)
 
     window.draw_image("heart", heart_center - heart_size / 2, heart_size)
     window.draw_rect(heart_center + Vec(heart_size.x * 0.8, -health_bar_size.y / 2), (0.5 * health_percentage, 0.05), (165, 48, 48, 255))
-    window.draw_rect(heart_center + Vec(heart_size.x * 0.8 + 0.5 * health_percentage, -health_bar_size.y / 2), (0.5 * (1 - health_percentage), 0.05), (117, 36, 56, 255))
+    window.draw_rect(heart_center + Vec(heart_size.x * 0.8 + 0.5 * health_percentage, -health_bar_size.y / 2), (0.5 * (1 - health_percentage), 0.05), (56, 29, 49, 255))
 
 
 def draw_intro():
@@ -259,7 +252,16 @@ def main():
                 menu.pause_page.open()
                 menu.game_state = "pause"
 
-        elif menu.game_state == "pause":
+            # Death
+            if world.player.health <= 0:
+                try:
+                    file.delete("data/user/world.data")
+                except:
+                    pass
+                menu.death_page.open()
+                menu.game_state = "death"
+
+        elif menu.game_state in ("pause", "death", "inventory"):
             # Draw world
             draw_game()
 
@@ -277,11 +279,15 @@ def main():
 
             # Game
             if window.keybind("return") == 1:
-                if menu.game_intro:
-                    menu.game_state = "intro"
-                    menu.game_intro = False
+                if menu.game_state in ("pause", "inventory"):
+                    if menu.game_intro:
+                        menu.game_state = "intro"
+                        menu.game_intro = False
+                    else:
+                        menu.game_state = "game"
                 else:
-                    menu.game_state = "game"
+                    menu.main_page.open()
+                    menu.game_state = "menu"
 
         else:
             # Update and draw the menu

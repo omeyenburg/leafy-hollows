@@ -251,7 +251,6 @@ class Player(LivingEntity):
         elif self.vel[1] < 0 and self.state != "crouch_jump":
             # Slow fall
             self.state = "fall_slow"  
-        #print(f"{round(self.vel[1], 2): 5}", key_right, self.block_right, world.get_block(*wall_block_right))
         #window.draw_block_highlight(*wall_block_right)
         #window.draw_block_highlight(*wall_block_top_right, (0, 255, 0, 100))
         #window.draw_circle(window.camera.map_coord((self.rect.centerx, self.rect.bottom), from_world=True), 0.01, (255, 0, 0, 100))
@@ -423,8 +422,7 @@ class Player(LivingEntity):
             spawn_particle(mouse_pos)
         """
 
-        # Place/break block
-        """
+        # Place/break block with right click
         if window.mouse_buttons[2] == 1: # right click: place/break block
             mouse_pos = window.camera.map_coord(window.mouse_pos[:2], world=True)
             if world.get_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1])) > 0:
@@ -432,13 +430,13 @@ class Player(LivingEntity):
             else:
                 world.set_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), world.block_name["stone_block"])
 
-
-        """
-        if window.mouse_buttons[2] == 1: # right click: place/break block
+        # Spawn arrow with left
+        if window.mouse_buttons[0] == 1:
             mouse_pos = window.camera.map_coord(window.mouse_pos[:2], world=True)
-            world.add_entity(Slime(mouse_pos))
-        """
+            angle = math.atan2(mouse_pos[1] - self.rect.centery, mouse_pos[0] - self.rect.centerx)
+            world.add_entity(Arrow(self.rect.center, speed=60, angle=angle, owner=self))
 
+        """
         # Place water
         if window.mouse_buttons[2] == 1: # place water
             mouse_pos = window.camera.map_coord(window.mouse_pos[:2], world=True)
