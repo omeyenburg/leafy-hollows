@@ -15,7 +15,7 @@ def setup(world, image: str, time: float, delay: float, size: tuple=(1, 1), grav
     world.particle_types[image] = ([delay], image, time, delay, gravity, growth, speed, direction, divergence, size)
 
 
-def spawn(window, world, name, x: float, y: float, speed: float=None, direction: float=None, divergence: float=None):
+def spawn(window, world, name, x: float, y: float, speed: float=None, direction: float=None, divergence: float=None, amount: float=1.0):
     """
     Spawn a particle.
     """
@@ -32,13 +32,12 @@ def spawn(window, world, name, x: float, y: float, speed: float=None, direction:
     if divergence is None:
         divergence = world.particle_types[name][8]
 
-    for _ in range(particle_multiplier):
+    for _ in range(int(particle_multiplier * amount)):
         if divergence:
-            x += divergence * random.random() / 4
-            y += divergence * random.random() / 4
-            divergence *= random.random()
+            x += divergence * (random.random() - 0.5) / 4
+            y += divergence * (random.random() - 0.5) / 4
 
-        world.particles.append([name, x, y, window.time + world.particle_types[name][2], speed, direction + divergence])
+        world.particles.append([name, x, y, window.time + world.particle_types[name][2], speed, direction + divergence * (random.random() - 0.5)])
 
         if not divergence:
             return
@@ -59,6 +58,7 @@ def update(window, world):
 
         rect = window.camera.map_coord((x, y, world.particle_types[name][9][0] * size, world.particle_types[name][9][1] * size), from_world=True)
         window.draw_image(name, rect[:2], rect[2:])
+        world.particles[i][4] *= 0.9
 
         if not (-1 < rect[0] < 2 and -1 < rect[1] < 2):
             world.particles.pop(i)

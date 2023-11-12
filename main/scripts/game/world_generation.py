@@ -313,21 +313,18 @@ def generate_poles(world, poles, blocks_ground, blocks_ceiling):
 
 # Called from generate_world
 def flatten_edges(world):
-    world_copy = deepcopy(world)#.copy()
-    for chunk_x, chunk_y in world_copy.chunks:
-        for delta_x, delta_y in numpy.ndindex((WORLD_CHUNK_SIZE, WORLD_CHUNK_SIZE)):
-            block_types = [world_copy.get_block(chunk_x + pos[0], chunk_y + pos[1], layer=0, default=0) for pos in ([delta_x, delta_y], [delta_x + 1, delta_y], [delta_x - 1, delta_y], [delta_x, delta_y + 1], [delta_x, delta_y - 1])]
-            block_type = max(block_types, key=block_types.count)
-            world.set_block(chunk_x + delta_x, chunk_y + delta_y, block_type)
+    world_copy = deepcopy(world)
+    for x, y in world_copy.iterate():
+        block_types = [world_copy.get_block(x + dx, y + dy, layer=0, default=0) for dx in range(-1, 2) for dy in range(-1, 2)]
+        block_type = max(block_types, key=block_types.count)
+        world.set_block(x, y, block_type)
 
 
 def generate_block(world, x, y, repeat=0):
     if repeat:
         z = snoise2(x / 16 + world.seed, y / 16, octaves=3, persistence=0.1, lacunarity=5, repeaty=repeat / 16)
-        #z = opensimplex.noise2(x / 16, y / 16)
     else:
         z = snoise2(x / 16 + world.seed, y / 16 + world.seed, octaves=3, persistence=0.1, lacunarity=5)
-        #z = opensimplex.noise2(x / 30 + world.seed, y / 30 + world.seed)
 
     if z < 0.2:
         world.set_block(x, y, world.block_name["grass_block"])
@@ -349,7 +346,6 @@ def generate_points_segment(position: [float], length, start_angle: float, devia
         position[1] = position[1] + math.sin(angle) * step_size
         points.add(tuple(position))
         angle_change = snoise2(i * 20.215 + 0.0142, 1, octaves=3) * max_angle_change
-        #angle_change = opensimplex.noise2(i * 20.215 + 0.0142, 1) * max_angle_change
         angle_change -= (angle - start_angle) / deviation * max_angle_change
         angle += angle_change
 
@@ -363,7 +359,6 @@ def line_cave(world, position, length, angle, deviation, radius):
 
     for (x, y) in points:
         p_radius = int(pnoise1((x + y) / 2 + 100, octaves=3) * 2 + radius)
-        #p_radius = int(opensimplex.noise2(1.3, (x + y) / 2 + 100) * 2 + radius)
         for delta_x in range(-radius - border_padding, radius + border_padding + 1):
             for delta_y in range(-radius - border_padding, radius + border_padding + 1):
                 coord = (int(x + delta_x), int(y + delta_y))
@@ -390,11 +385,11 @@ class Shape:
         start_angle = angle = -math.pi/2
         length = INTRO_LENGTH
         border_padding = 4
-        deviation = 3
+        deviation = 5
         lowest = 0
 
         for i in range(length):
-            position[0] = pnoise1(i * 16 + world.seed, octaves=3, repeat=INTRO_REPEAT * 16) * deviation
+            position[0] = pnoise1(i * 16 + world.seed, octaves=2, repeat=INTRO_REPEAT * 16) * deviation
             position[1] = -i
             points.add(tuple(position))
 
@@ -409,8 +404,8 @@ class Shape:
                         world.set_block(*coord, 0)
                         if y + delta_y < lowest:
                             lowest = y + delta_y
-                    elif not world.get_block_exists(*coord):
-                        world.set_block(*coord, world.block_name["placeholder_intro"])
+                    #elif not world.get_block_exists(*coord):
+                    #    world.set_block(*coord, world.block_name["placeholder_intro"])
         position[1] = lowest
         
     @staticmethod

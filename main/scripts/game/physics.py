@@ -25,6 +25,9 @@ class PhysicsObject:
         self.block_left: int = 0
         self.block_right: int = 0
 
+        # Destroy projectiles
+        self.destroy_unloaded: bool = False
+
     def apply_force_horizontal(self, force: float, delta_time: float):
         """
         Applies only horizontal force to the object.
@@ -41,7 +44,7 @@ class PhysicsObject:
         acceleration = force / self.mass
         self.vel[1] += acceleration * delta_time
 
-    def apply_force(self, force: float, angle: float, delta_time: float):
+    def apply_force(self, force: float, angle: float, delta_time: float, is_radians: bool=False):
         """
         Applies force to the object.
         Angle in degrees; 0 equals right; counterclockwise
@@ -61,10 +64,12 @@ class PhysicsObject:
         elif angle == 270:
             return self.apply_force_vertical(-force, delta_time)
 
-        angle_radians = math.radians(angle)
+        if not is_radians:
+            angle = math.radians(angle)
+            
         acceleration = force / self.mass
-        self.vel[0] += math.cos(angle_radians) * acceleration * delta_time
-        self.vel[1] += math.sin(angle_radians) * acceleration * delta_time
+        self.vel[0] += math.cos(angle) * acceleration * delta_time
+        self.vel[1] += math.sin(angle) * acceleration * delta_time
     
     def apply_velocity(self, world, delta_time: float):
         """

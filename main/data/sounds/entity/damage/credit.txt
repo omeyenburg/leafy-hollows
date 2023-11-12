@@ -1,0 +1,5 @@
+a:
+https://freesound.org/people/thecheeseman/sounds/44429/?page=3
+
+b, c:
+https://www.curseforge.com/minecraft/texture-packs/enhanced-audio
