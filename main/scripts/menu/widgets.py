@@ -67,7 +67,7 @@ class Page:
         mouse_pos = window.camera.map_coord(window.mouse_pos[:2], from_pixel=1, from_centered=1)
         for child in self.children:
             child.update(window)
-            if child.rect.collidepoint(mouse_pos):
+            if child.rect.collide_point(mouse_pos):
                 if child.hover_time > MENU_DESCRIPTION_HOVER_TIME and not child.hover_callback is None:
                     child.hover_callback()
                 else:
@@ -160,7 +160,7 @@ class Button(Widget):
 
     def update(self, window: Window):
         mouse_pos = window.camera.map_coord(window.mouse_pos[:2], from_pixel=1, from_centered=1)
-        if self.rect.collidepoint(mouse_pos):
+        if self.rect.collide_point(mouse_pos):
             if (window.mouse_buttons[0] == 1 or window.mouse_buttons[0] and self.clicked):
                 if self.duration > 0:
                     self.clicked = max(2, int(self.duration / window.delta_time))
@@ -216,7 +216,7 @@ class Slider(Widget):
         self.slider_rect.x = self.rect.x + (self.rect.w - self.slider_rect.w) * self.value
         self.slider_rect.y = self.rect.y
 
-        if self.rect.collidepoint((window.mouse_pos[0] / window.width * 2, window.mouse_pos[1] / window.height * 2)) and window.mouse_buttons[0] == 1:
+        if self.rect.collide_point((window.mouse_pos[0] / window.width * 2, window.mouse_pos[1] / window.height * 2)) and window.mouse_buttons[0] == 1:
             self.selected = True
         elif not window.mouse_buttons[0]:
             if self.selected:
@@ -306,7 +306,7 @@ class ScrollBox(Widget):
         self.slider_rect.x = self.rect.right
         self.slider_rect.y = self.rect.y + self.rect.h - self.slider_y * (self.rect.h - self.slider_rect.h) - self.slider_rect.h
 
-        if self.slider_rect.collidepoint((window.mouse_pos[0] / window.width * 2, window.mouse_pos[1] / window.height * 2)) and window.mouse_buttons[0] == 1:
+        if self.slider_rect.collide_point((window.mouse_pos[0] / window.width * 2, window.mouse_pos[1] / window.height * 2)) and window.mouse_buttons[0] == 1:
             self.slider_selected = True
         elif not window.mouse_buttons[0]:
             if self.slider_selected:
@@ -325,7 +325,7 @@ class ScrollBox(Widget):
         for child in self.children:
             y = child.rect.y
             child.rect.y -= self.offset
-            if geometry.Rect(*self.rect).collidepoint(mouse_pos):
+            if geometry.Rect(*self.rect).collide_point(mouse_pos):
                 child.update(window)
                 self.selected = True
             else:
@@ -338,7 +338,7 @@ class ScrollBox(Widget):
         for child in self.children:
             rect = child.rect.copy()
             rect.y -= self.offset
-            if rect.collidepoint(mouse_pos):
+            if rect.collide_point(mouse_pos):
                 if child.hover_time > MENU_DESCRIPTION_HOVER_TIME and not child.hover_callback is None:
                     child.hover_callback()
                 else:

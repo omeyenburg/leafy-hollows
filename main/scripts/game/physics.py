@@ -49,8 +49,6 @@ class PhysicsObject:
         Applies force to the object.
         Angle in degrees; 0 equals right; counterclockwise
         """
-        #ground_friction = self.get_ground_friction(world)
-        #force *= ground_friction * 10
         if self.underWater:
             force /= 3
 

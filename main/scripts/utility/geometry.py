@@ -127,14 +127,25 @@ class Rect:
     def copy(self):
         return Rect(self.x, self.y, self.w, self.h)
 
-    def collidepoint(self, point):
-        return self.x < point[0] < self.right and self.y < point[1] < self.y + self.h
+    def collide_point(self, point):
+        return self.x < point[0] < self.x + self.w and self.y < point[1] < self.y + self.h
 
-    def intersection(self, other):
-        return not (self.right <= other.left
-                    or self.left >= other.right
-                    or self.y + self.h <= other.y
-                    or self.y >= other.y + other.h)
+    def collide_line(self, start, end):
+        return (
+            self.x < start[0] < self.x + self.w and self.y < start[1] < self.y + self.h or # Start point in rect
+            self.x < end[0] < self.x + self.w and self.y < end[1] < self.y + self.h or # End point in rect
+            min(start[0], end[0]) < self.x < max(start[0], end[0]) and self.y < (self.x - start[0]) / (end[0] - start[0]) * (end[1] - start[1]) + start[1] < self.y + self.h or                    # Line intersects with right edge
+            min(start[0], end[0]) < self.x + self.w < max(start[0], end[0]) and self.y < (self.x + self.w - start[0]) / (end[0] - start[0]) * (end[1] - start[1]) + start[1] < self.y + self.h or  # Line intersects with left edge
+            min(start[1], end[1]) < self.y < max(start[1], end[1]) and self.x < (self.y - start[1]) / (end[1] - start[1]) * (end[0] - start[0]) + start[0] < self.x + self.w                       # Line intersects with top edge
+        )
+
+    def collide_rect(self, other):
+        return not (
+            self.right <= other.left
+            or self.left >= other.right
+            or self.y + self.h <= other.y
+            or self.y >= other.y + other.h
+        )
 
     @staticmethod
     def multi_intersection(rectangles):
@@ -142,7 +153,7 @@ class Rect:
             others = rectangles[:]
             others.remove(rect1)
             for rect2 in others:
-                if Rect.intersection(Rect(*rect1), Rect(*rect2)):
+                if Rect.collide_rect(Rect(*rect1), Rect(*rect2)):
                     return True
         return False
 

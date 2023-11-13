@@ -13,9 +13,9 @@ basename = os.path.basename
 isabs = os.path.isabs
 
 
-def find(folder: str, name: str, sub_folder=False):
+def find(folder: str, name: str, sub_folder=False, first=False):
     """
-    Finds a filename in a folder. If sub_folder is enabled, folders within it are searched recursively.
+    Finds a filename in a folder. If sub_folder is enabled, folders within it are searched recursively. If first is enabled, only the first file is returned.
     In 'name', "*" can be used as a placeholder for any of symbols.
     """
     if not os.path.isabs(folder):
@@ -27,8 +27,13 @@ def find(folder: str, name: str, sub_folder=False):
         prefix = "/"
 
     if sub_folder:
-        return glob.glob(os.path.abspath(prefix + os.path.join(*folder.split("/"), "**", name)), recursive=True)
-    return glob.glob(os.path.abspath(prefix + os.path.join(*folder.split("/"), name)))
+        files = glob.glob(os.path.abspath(prefix + os.path.join(*folder.split("/"), "**", name)), recursive=True)
+    else:
+        files = glob.glob(os.path.abspath(prefix + os.path.join(*folder.split("/"), name)))
+
+    if first and len(files):
+        return files[0]
+    return files
 
 
 def abspath(path: str):
