@@ -35,10 +35,12 @@ class Arrow(PhysicsObject):
         self.angle = math.atan2(*self.vel[::-1]) + math.pi
 
         # Hurt entities
+
         for entity in world.loaded_entities:
-            if (not (entity is self or entity is self.owner)) and isinstance(entity, LivingEntity) and self.rect.intersection(entity.rect):
+            if (not (entity is self or entity is self.owner)) and isinstance(entity, LivingEntity) and self.rect.collide_rect(entity.rect):
                 entity.damage(window, 1, self.vel)
                 world.entities.discard(self)
+                break
 
         super().update(world, window.delta_time)
 
@@ -69,7 +71,7 @@ class Slime(LivingEntity):
         if self.block_below:
             if self.hit_ground == 0:
                 self.hit_ground = 0.2
-                particle.spawn(window, world, "slime_particle", self.rect.centerx, self.rect.top, amount=0.5)
+                particle.spawn(window, "slime_particle", self.rect.centerx, self.rect.top, amount=0.5)
             self.hit_ground -= window.delta_time
             self.vel[0] *= 0.8
             self.attack_cooldown = 0
@@ -95,7 +97,7 @@ class Slime(LivingEntity):
         super().update(world, window.delta_time)
 
         # Attack player
-        if self.attack_cooldown < 0 and self.vel[1] < 0 and self.rect.intersection(world.player.rect):
+        if self.attack_cooldown < 0 and self.vel[1] < 0 and self.rect.collide_rect(world.player.rect):
             world.player.damage(window, 1, self.vel)
             self.attack_cooldown = 5
         self.attack_cooldown -= window.delta_time

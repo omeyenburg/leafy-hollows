@@ -5,9 +5,11 @@ from scripts.utility.language import translate
 from scripts.graphics.shader import Shader
 from scripts.graphics.camera import Camera
 from scripts.graphics.font import Font
+from scripts.graphics import particle
 from scripts.utility import options
 from scripts.graphics import shadow
 from scripts.graphics import sound
+from scripts.utility import file
 from OpenGL import GL
 import pygame
 import ctypes
@@ -259,7 +261,14 @@ class Window:
         self.loading_progress[:2] = "Loading sounds", 1
         self.loaded_sounds, self.played_sounds = sound.load()
     
-        self.loading_progress[:2] = "Finishing", 2
+        # Create particle types
+        self.loading_progress[:2] = "Loading particles", 2
+        self.particles: list = []
+        self.particle_types: dict = {}
+        particle_data = file.read(file.abspath("data/particles/particles.json"), file_format="json")
+        for particle_name, kwargs in particle_data.items():
+            kwargs["angle"] *= math.pi / 180
+            particle.setup(self, particle_name, **kwargs)
 
     def _add_vbo_instance(self, dest, source_or_color, shape_transform):
         """

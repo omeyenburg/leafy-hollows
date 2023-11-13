@@ -53,8 +53,6 @@ class World:
 
         self.entities: set = set()
         self.loaded_entities: set = set()
-        self.particles: list = []
-        self.particle_types: dict = {}
         self.wind: float = 0.0 # Wind direction
         self.loaded_blocks: tuple = ((0, 0), (0, 0)) # (start, end)
         self.water_update_timer: float = 0.0
@@ -64,12 +62,6 @@ class World:
         else:
             self.player: player.Player = player.Player(spawn_pos=[0, 0])
         self.add_entity(self.player)
-
-        # Create particle types
-        particle.setup(self, "spark", time=2, delay=1, size=(0.2, 0.2), gravity=-0.7, growth=-1, speed=0, direction=0, divergence=2)
-        particle.setup(self, "big_leaf", time=10, delay=3, size=(0.2, 0.2), gravity=0.5, growth=-1, speed=0.5, direction=3/2*math.pi, divergence=2)
-        particle.setup(self, "small_leaf", time=10, delay=3, size=(0.15, 0.15), gravity=0.5, growth=-1, speed=0.5, direction=3/2*math.pi, divergence=2)
-        particle.setup(self, "slime_particle", time=1, delay=0.1, size=(0.05, 0.05), gravity=1, growth=-1, speed=6, direction=1/2*math.pi, divergence=2)
 
     def iterate(self):
         for chunk_x, chunk_y in self.chunks:
@@ -84,9 +76,6 @@ class World:
 
     def add_entity(self, entity):
         self.entities.add(entity)
-    
-    def add_particle(self, particle):
-        self.particles.add(particle)
 
     def create_chunk(self, x: int, y: int):
         self.chunks[(x, y)] = numpy.zeros((32, 32, 4))
@@ -179,7 +168,7 @@ class World:
             entity.update(self, window)
 
         if window.options["particles"]:
-            particle.update(window, self)
+            particle.update(window)
 
     def draw(self, window):
         self.loaded_blocks = window.camera.visible_blocks()
@@ -202,7 +191,7 @@ class World:
 
         # Update torches
         if self.block_index[block_array[1]] in ("torch", "torch_flipped"):
-            particle.spawn(window, self, "spark", x, y)
+            particle.spawn(window, "spark", x, y, amount=0.3)
             if block_array[3] > 600:
                 self.chunks[(x, y)][1] = self.block_name["unlit_torch"]
 
@@ -345,9 +334,6 @@ class World:
         try:
             if isinstance(world, World) and World.get_version_checksum(block_data[0]) == world.version_checksum:
                 window.loading_progress[:3] = "Loading world", 2, 2
-                for name in world.particle_types:
-                    world.particle_types[name][0][0] = window.time
-                world.particles = []
                 return world
         except Exception as e:
             print(e)

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-from scripts.game import physics
+from scripts.graphics import particle
 from scripts.graphics import sound
+from scripts.game import physics
 
 
 class LivingEntity(physics.PhysicsObject):
@@ -17,3 +18,7 @@ class LivingEntity(physics.PhysicsObject):
 
         x = (self.rect.centerx - window.camera.pos[0]) * 0.1
         sound.play(window, "damage", x)
+        particle.text(window, "-" + str(amount), *self.rect.center, size=0.2, color=(165, 48, 48, 255), time=0.5, offset_radius=self.rect.h)
+
+        if self.health <= 0:
+            particle.spawn(window, "dust", *self.rect.center)

@@ -109,14 +109,7 @@ class Player(LivingEntity):
                 self.state = "walk"
         
         # Friction
-        acceleration_speed *= window.delta_time * block_fricton * 10
-        if abs(self.vel[0]) <= acceleration_speed:
-            self.vel[0] = 0
-        else:
-            if self.vel[0] > 0:
-                self.vel[0] -= acceleration_speed
-            else:
-                self.vel[0] += acceleration_speed
+        self.apply_force_horizontal(-self.vel[0] * self.mass * block_fricton * 0.1, 1)
         if not (key_right or key_left):
             self.vel[0] *= 0.99
 
@@ -423,14 +416,14 @@ class Player(LivingEntity):
         """
 
         # Place/break block with right click
-        if window.mouse_buttons[2] == 1: # right click: place/break block
+        if window.mouse_buttons[2] == 1:
             mouse_pos = window.camera.map_coord(window.mouse_pos[:2], world=True)
             if world.get_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1])) > 0:
                 world.set_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), 0)
             else:
                 world.set_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), world.block_name["stone_block"])
 
-        # Spawn arrow with left
+        # Shoot arrow with left click (no cooldown)
         if window.mouse_buttons[0] == 1:
             mouse_pos = window.camera.map_coord(window.mouse_pos[:2], world=True)
             angle = math.atan2(mouse_pos[1] - self.rect.centery, mouse_pos[0] - self.rect.centerx)

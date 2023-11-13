@@ -141,15 +141,16 @@ def draw_game():
         )
 
     # Draw player health bar
-    health_percentage = world.player.health / world.player.max_health
-    heart_center = Vec(-0.9, -0.9)
-    heart_width = 0.1
-    heart_size = Vec(heart_width, heart_width / window.height * window.width / 7 * 6)
-    health_bar_size = Vec(0.5, 0.05)
+    if menu.game_state != "intro":
+        health_percentage = world.player.health / world.player.max_health
+        heart_center = Vec(-0.9, -0.9)
+        heart_width = 0.1
+        heart_size = Vec(heart_width, heart_width / window.height * window.width / 7 * 6)
+        health_bar_size = Vec(0.5, 0.05)
 
-    window.draw_image("heart", heart_center - heart_size / 2, heart_size)
-    window.draw_rect(heart_center + Vec(heart_size.x * 0.8, -health_bar_size.y / 2), (0.5 * health_percentage, 0.05), (165, 48, 48, 255))
-    window.draw_rect(heart_center + Vec(heart_size.x * 0.8 + 0.5 * health_percentage, -health_bar_size.y / 2), (0.5 * (1 - health_percentage), 0.05), (56, 29, 49, 255))
+        window.draw_image("heart", heart_center - heart_size / 2, heart_size)
+        window.draw_rect(heart_center + Vec(heart_size.x * 0.8, -health_bar_size.y / 2), (0.5 * health_percentage, 0.05), (165, 48, 48, 255))
+        window.draw_rect(heart_center + Vec(heart_size.x * 0.8 + 0.5 * health_percentage, -health_bar_size.y / 2), (0.5 * (1 - health_percentage), 0.05), (56, 29, 49, 255))
 
 
 def draw_intro():
@@ -192,7 +193,7 @@ def update_intro():
 
     # Skip intro
     intro_text_position = (-world.player.rect.centery / INTRO_LENGTH - 0.01) * 1.12
-    if window.keybind("jump") == 1 and 0.05 < intro_text_position < 0.95:
+    if window.keybind("jump") == 1 and intro_text_position < 0.95:
         original = world.player.rect.y
         world.player.rect.y = min(
             world.player.rect.y,
@@ -232,9 +233,9 @@ def main():
             update_intro()
 
         elif menu.game_state == "game":
-            # Update and draw the game
-            world.update(window)
+            # Draw and update the game
             draw_game()
+            world.update(window)
 
             # Update and draw the menu
             window.update()
