@@ -3,19 +3,23 @@ import random
 import math
 
 
-def setup(window, image: str, time: float, delay: float, size: tuple=(1, 1), gravity: float=None, growth: float=0, speed: float=None, angle: float=None, divergence: float=None):
+def setup(window, image: str, time: float, delay: float, size: tuple=(1, 1), gravity: float=None, growth: float=0, speed: float=None, angle: float=None, divergence: float=None, amount: float=1.0):
     """
     Create a particle type.
     image: image name
     time: time to live
     delay: delay between spawned particles
-    gravity: own gravity
+    gravity: own gravity fractor
     growth: grow or shrink the particle over time (0 = neutral)
+    speed: velocity
+    angle: direction of velocity
+    divergence: random spawn offset and changing angle
+    amount: relative amount of spawned particles (negative values -> absolute amount)
     """
-    window.particle_types[image] = ([delay], image, time, delay, gravity, growth, speed, angle, divergence, size)
+    window.particle_types[image] = ([delay], time, delay, gravity, growth, speed, angle, divergence, size, amount)
 
 
-def spawn(window, name, x: float, y: float, speed: float=None, angle: float=None, divergence: float=None, amount: float=1.0):
+def spawn(window, name, x: float, y: float, speed: float=None, angle: float=None, divergence: float=None):
     """
     Spawn a particle.
     """
@@ -23,24 +27,29 @@ def spawn(window, name, x: float, y: float, speed: float=None, angle: float=None
     if (not particle_multiplier) or window.particle_types[name][0][0] > window.time:
         return
 
-    window.particle_types[name][0][0] = window.time + window.particle_types[name][3]
+    window.particle_types[name][0][0] = window.time + window.particle_types[name][2]
 
     if speed is None:
-        speed = window.particle_types[name][6]
+        speed = window.particle_types[name][5]
     if angle is None:
-        angle = window.particle_types[name][7]
+        angle = window.particle_types[name][6]
     if divergence is None:
-        divergence = window.particle_types[name][8]
+        divergence = window.particle_types[name][7]
 
-    for _ in range(int(particle_multiplier * amount)):
+    amount = window.particle_types[name][9]
+    if divergence == 0:
+        absolute_amount = 1
+    elif amount < 0:
+        absolute_amount = -round(amount)
+    else:
+        absolute_amount = round(particle_multiplier * amount)
+
+    for _ in range(absolute_amount):
         if divergence:
             x += divergence * (random.random() - 0.5) / 4
             y += divergence * (random.random() - 0.5) / 4
 
-        window.particles.append([name, x, y, window.time + window.particle_types[name][2], speed, angle + divergence * (random.random() - 0.5)])
-
-        if not divergence:
-            return
+        window.particles.append([name, x, y, window.time + window.particle_types[name][1], speed, angle + divergence * (random.random() - 0.5)])
 
 
 def text(window, text: str, x: float, y: float, size: float=1.0, color: [float]=(0, 0, 0, 0), time: float=1.0, offset_radius: float=0):
@@ -66,12 +75,13 @@ def update_particle(window, i, particle):
         return
 
     window.particles[i][1] += math.cos(angle) * speed * window.delta_time
-    window.particles[i][2] += (math.sin(angle) * speed - window.particle_types[name][4]) * window.delta_time
-    if window.particle_types[name][8]:
-        window.particles[i][5] += random.random() * window.particle_types[name][8] / 200
-    size = 1 - (time - window.time) / window.particle_types[name][2] * window.particle_types[name][5]
+    window.particles[i][2] += (math.sin(angle) * speed - window.particle_types[name][3]) * window.delta_time
+    if window.particle_types[name][7]:
+        window.particles[i][5] += random.random() * window.particle_types[name][7] / 200
+    size_factor = 1 - (time - window.time) / window.particle_types[name][1] * window.particle_types[name][4]
+    size = (window.particle_types[name][8][0] * size_factor, window.particle_types[name][8][1] * size_factor)
 
-    rect = window.camera.map_coord((x, y, window.particle_types[name][9][0] * size, window.particle_types[name][9][1] * size), from_world=True)
+    rect = window.camera.map_coord((x - size[0] / 2, y - size[1] / 2, *size), from_world=True)
     window.draw_image(name, rect[:2], rect[2:])
     window.particles[i][4] *= 0.9
 

@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from scripts.game.world_noise import pnoise1, snoise2
+from scripts.game import cave
 from scripts.utility.const import *
 from scripts.game import structure
 from scripts.game.entity import *
@@ -6,41 +8,6 @@ from copy import deepcopy
 import random
 import numpy
 import math
-
-
-# Import noise / opensimplex
-try:
-    from noise import *
-except ModuleNotFoundError:
-    import opensimplex
-
-    def pnoise1(x: float, octaves: int=1, persistence: float=0.5, lacunarity: float=2.0, repeat: float=0):
-        z = 0
-        octaves = 1
-
-        if repeat:
-            x = abs(math.sin(x * math.pi / repeat + 2.928) * repeat)
-
-        for i in range(octaves):
-            divisor = 2 ** i
-            z += opensimplex.noise2(x / divisor, math.e) / divisor
-
-        return z
-
-    def snoise2(x: float, y: float, octaves: int=1, persistence: float=0.5, lacunarity: float=2.0, repeatx: float=0, repeaty: float=0):
-        z = 0
-        octaves = 1
-
-        if repeatx:
-            x = abs(math.sin(x * math.pi / repeatx + 0.214) * repeatx)
-        if repeaty:
-            y = abs(math.sin(y * math.pi / repeaty + 1.331) * repeaty)
-
-        for i in range(octaves):
-            divisor = 2 ** i
-            z += opensimplex.noise2(x / divisor, y / divisor) / divisor
-
-        return z
 
 
 # Replace with better names...? Add / Remove?
@@ -66,54 +33,99 @@ def generate_world(world, window):
 
     # Generate intro
     window.loading_progress[:2] = "Generating intro", 1
-    Shape.intro(world, window, position)
+    cave.intro(world, window, position)
 
-    # Line cave segment
+    cave.horizontal(world, position)
+    # PASTE HERE TUTORIAL STRUCTURE
+
+    # Generate cave segments
     window.loading_progress[:2] = "Generating caves", 5
-    last_special = 0
-    for i in range(30):
-        last_special += 1
-        cave_type = random.random()
 
-        if cave_type > 0.6 or last_special < 4:
-            Shape.horizontal(world, position)
+    segments_count = 30
+    min_special_distance = 2
+    special_speading = 2
+    next_special = 2
+
+    structure_names = random.choices(list(structures.keys()), k=len(structures))
+    structure_index = 0
+
+    generated_structures = []
+
+    for i in range(segments_count):
+        next_special -= 1
+
+        if next_special:
+            # Horizontal cave
+            cave.horizontal(world, position)
         else:
-            last_special = 0
+            # Special cave (vertical, blob or random structure)
+            next_special = min_special_distance + random.randint(0, special_speading)
             cave_type = random.random()
 
-            if cave_type > 0.6:
+            if cave_type < 0.3:
+                # Structure
+                structure_name = structure_names[structure_index]
+                structure_data = structures[structure_name]
+
+                structure_index += 1
+                if structure_index == len(structures):
+                    structure_names = random.choices(list(structures.keys()), k=len(structures))
+                    structure_index = 0
+
+                cave.interpolated(world, position, end_angle=structure_data["generation"]["entrance_angle"], end_radius=structure_data["generation"]["entrance_size"] / 2)
+
+                generated_structures.append((
+                    round(position[0] - structure_data["generation"]["entrance_coord"][0]),
+                    round(position[1] - structure_data["generation"]["entrance_coord"][1]),
+                    structure_data["array"]
+                ))
+
+                position[0] += structure_data["generation"]["exit_coord"][0] - structure_data["generation"]["entrance_coord"][0]
+                position[1] += structure_data["generation"]["exit_coord"][1] - structure_data["generation"]["entrance_coord"][1]
+
+                cave.interpolated(world, position, start_angle=structure_data["generation"]["exit_angle"], start_radius=structure_data["generation"]["exit_size"] / 2)
+
+            elif cave_type < 0.6:
+                # Branch
                 if random.randint(0, 1):
-                    Shape.vertical(world, position, True)
+                    cave.vertical(world, position)
                     poles.add(int(position[0]))
                     branches.add((*position, 0))
                 else:
-                    Shape.horizontal(world, position)
+                    cave.horizontal(world, position)
                     branches.add((*position, 1))
-            elif cave_type > 0.3:
-                Shape.vertical(world, position)
+            elif cave_type < 0.8:
+                # Vertical (no branch)
+                cave.vertical(world, position)
                 poles.add(int(position[0]))
             else:
-                Shape.blob(world, position)
+                # Blob
+                cave.blob(world, position)
 
-    window.loading_progress[:2] = "Generating cave branches", 7
     for x, y, direction in branches:
         length = random.randint(2, 3)
         position = [x, y]
 
         if direction:
-            Shape.vertical(world, position, True)
+            cave.vertical(world, position)
             poles.add(int(position[0]))
 
         for i in range(length):
-            Shape.horizontal(world, position)
+            cave.horizontal(world, position)
 
-    # Generate structures between line cave segments
-    ...
 
     # Smoother cave walls
-    window.loading_progress[:2] = "Generating foliage", 9
     flatten_edges(world)
 
+    # Generate structures between line cave segments
+    window.loading_progress[:2] = "Generating structures", 7
+    for x, y, array in generated_structures:
+        for dx, dy in numpy.ndindex(array.shape[:2]):
+            world.set_block(x + dx, y + dy, array[dx, dy], layer=slice(None))
+
+    # Generate foliage
+    window.loading_progress[:2] = "Generating foliage", 9
+    
     # Find block edges with air
     blocks_ground, blocks_ceiling, blocks_wall_right, blocks_wall_left = find_edge_blocks(world)
 
@@ -141,11 +153,8 @@ def find_edge_blocks(world):
     for coord in world.iterate():
         block_type = world.get_block(*coord, layer=0)
 
-        if block_type == world.block_name["placeholder_terrain"]: # Generate terrain block
+        if block_type == world.block_name["dirt_block"]: # Generate terrain block
             generate_block(world, *coord)
-            continue
-        elif block_type == world.block_name["placeholder_intro"]: # Generate intro block
-            generate_block(world, *coord, repeat=INTRO_REPEAT)
             continue
         elif block_type != 0: # Not air
             continue
@@ -321,122 +330,22 @@ def flatten_edges(world):
 
 
 def generate_block(world, x, y, repeat=0):
-    if repeat:
+    if x > 30:
+        z = snoise2(x / 8 + world.seed, y / 8 + world.seed, octaves=3, persistence=0.1, lacunarity=5)
+    if x > 20: # Interpolation (from intro )
+        z1 = snoise2(x / 16 + world.seed, y / 16, octaves=3, persistence=0.1, lacunarity=5, repeaty=repeat / 16)
+        z2 = snoise2(x / 8 + world.seed, y / 8 + world.seed, octaves=3, persistence=0.1, lacunarity=5)
+        i = (x - 20) / 10
+        z = z1 * i + z2 * (1 - i)
+    else: # Repeating (intro)
         z = snoise2(x / 16 + world.seed, y / 16, octaves=3, persistence=0.1, lacunarity=5, repeaty=repeat / 16)
-    else:
-        z = snoise2(x / 16 + world.seed, y / 16 + world.seed, octaves=3, persistence=0.1, lacunarity=5)
 
-    if z < 0.2:
-        world.set_block(x, y, world.block_name["grass_block"])
-    else:
-        world.set_block(x, y, world.block_name["stone_block"])
+    threshold = 0.2 # -1 < z < 1
 
-
-# Called from Shape.*
-def generate_points_segment(position: [float], length, start_angle: float, deviation: float):
-    angle = start_angle
-    points = set()
-
-    angle_change = 0
-    max_angle_change = 0.5
-    step_size = 0.5
-
-    for i in range(length):
-        position[0] = position[0] + math.cos(angle) * step_size
-        position[1] = position[1] + math.sin(angle) * step_size
-        points.add(tuple(position))
-        angle_change = snoise2(i * 20.215 + 0.0142, 1, octaves=3) * max_angle_change
-        angle_change -= (angle - start_angle) / deviation * max_angle_change
-        angle += angle_change
-
-    return points
-
-
-# Called from Shape.*
-def line_cave(world, position, length, angle, deviation, radius):
-    border_padding = 4
-    points = generate_points_segment(position, length, angle, deviation)
-
-    for (x, y) in points:
-        p_radius = int(pnoise1((x + y) / 2 + 100, octaves=3) * 2 + radius)
-        for delta_x in range(-radius - border_padding, radius + border_padding + 1):
-            for delta_y in range(-radius - border_padding, radius + border_padding + 1):
-                coord = (int(x + delta_x), int(y + delta_y))
-                if delta_x ** 2 + delta_y ** 2 <= radius ** 2:
-                    world.set_block(*coord, 0)
-                elif not world.get_block_exists(*coord):
-                    world.set_block(*coord, world.block_name["placeholder_terrain"])
-
-
-# Called from generate_world
-class Shape:
-    @staticmethod
-    def intro(world, window, position):
-        surface_size = (80, 50)
-        for x in range(-surface_size[0], surface_size[0] + 1):
-            surface_level = pnoise1(x / 20 + world.seed, octaves=3) * 9
-            for y in range(-surface_size[0], surface_size[0] + 1):
-                if surface_level < y:
-                    world.set_block(x, y, 0)
-                
-        window.loading_progress[1] = 2
-
-        points = set()
-        start_angle = angle = -math.pi/2
-        length = INTRO_LENGTH
-        border_padding = 4
-        deviation = 5
-        lowest = 0
-
-        for i in range(length):
-            position[0] = pnoise1(i * 16 + world.seed, octaves=2, repeat=INTRO_REPEAT * 16) * deviation
-            position[1] = -i
-            points.add(tuple(position))
-
-        window.loading_progress[1] = 3
-
-        for (x, y) in points:
-            radius = int((pnoise1(y + world.seed, octaves=3, repeat=INTRO_REPEAT) + 2) * 2)
-            for delta_x in range(-radius - border_padding, radius + border_padding + 1):
-                for delta_y in range(-radius - border_padding, radius + border_padding + 1):
-                    coord = (int(x + delta_x), int(y + delta_y))
-                    if delta_x ** 2 + (delta_y * 0.5) ** 2 <= radius ** 2:
-                        world.set_block(*coord, 0)
-                        if y + delta_y < lowest:
-                            lowest = y + delta_y
-                    #elif not world.get_block_exists(*coord):
-                    #    world.set_block(*coord, world.block_name["placeholder_intro"])
-        position[1] = lowest
-        
-    @staticmethod
-    def horizontal(world, position):
-        angle = snoise2(position[0] / 100 + world.seed, world.seed, octaves=4) * 0.6
-        length = random.randint(50, 150)
-        deviation = random.randint(2, 5)
-        radius = 3
-
-        line_cave(world, position, length, angle, deviation, radius)
-
-    @staticmethod
-    def vertical(world, position, high=False):
-        angle = math.pi / 2 * 3 * (random.randint(0, 1) * 2 - 1)
-        if high:
-            length = random.randint(40, 50)
-        else:
-            length = random.randint(10, 30)
-        deviation = 0.5
-        radius = 1
-
-        line_cave(world, position, length, angle, deviation, radius)
-
-    @staticmethod
-    def blob(world, position):
-        border_padding = 5
-        radius = int((pnoise1(position[0] + world.seed, octaves=3) + 3) * 3)
-        for delta_x in range(-radius - border_padding, radius + border_padding + 1):
-            for delta_y in range(-radius - border_padding, radius + border_padding + 1):
-                coord = (int(position[0] + delta_x), int(position[1] + delta_y))
-                if delta_y > 0 and delta_x ** 2 + (delta_y * 0.8) ** 2 <= radius ** 2:
-                    world.set_block(*coord, 0)
-                elif delta_x ** 2 + (delta_y * 2) ** 2 <= radius ** 2:
-                    world.set_block(*coord, 0)
+    block = "dirt_block"
+    if z < threshold and world.get_block(x, y + 1) == 0: # When air is above
+        block = "grass_block"
+    elif z >= threshold:
+        block = "stone_block"
+    
+    world.set_block(x, y, world.block_name[block])

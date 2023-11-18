@@ -2,22 +2,35 @@
     "dust": {
         "time": 0.5,
         "delay": 0.1,
-        "size": [0.2, 0.2],
+        "size": [0.0625, 0.0625],
         "gravity": 1,
         "growth": -2,
         "speed": 3,
         "angle": 90,
-        "divergence": 2
+        "divergence": 2,
+        "amount": 0.8
+    },
+    "blood": {
+        "time": 0.5,
+        "delay": 0.1,
+        "size": [0.0625, 0.0625],
+        "gravity": 1,
+        "growth": -2,
+        "speed": 3,
+        "angle": 90,
+        "divergence": 2,
+        "amount": 0.3
     },
     "spark": {
-        "time": 2,
+        "time": 1,
         "delay": 1,
         "size": [0.2, 0.2],
-        "gravity": -0.7,
+        "gravity": -1,
         "growth": -1,
-        "speed": 0,
-        "angle": 0,
-        "divergence": 1
+        "speed": 1,
+        "angle": 90,
+        "divergence": 2,
+        "amount": -1
     },
     "slime_particle": {
         "time": 1,
@@ -27,7 +40,8 @@
         "growth": -1,
         "speed": 6,
         "angle": 90,
-        "divergence": 2
+        "divergence": 2,
+        "amount": 0.5
     },
     "big_leaf": {
         "time": 10,
@@ -37,7 +51,8 @@
         "growth": -1,
         "speed": 0.5,
         "angle": 270,
-        "divergence": 2
+        "divergence": 2,
+        "amount": -1
     },
     "small_leaf": {
         "time": 10,
@@ -47,6 +62,7 @@
         "growth": -1,
         "speed": 0.5,
         "angle": 270,
-        "divergence": 2
+        "divergence": 2,
+        "amount": -1
     }
 }

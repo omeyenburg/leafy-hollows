@@ -2,7 +2,7 @@
 from scripts.utility import file
 
 
-translate_german = file.read("data/translations/german.json", file_format="json")
+translate_german = file.load("data/translations/german.json", file_format="json")
 special_symbols = {
     "<Ae>": "Ä",
     "<ae>": "ä",

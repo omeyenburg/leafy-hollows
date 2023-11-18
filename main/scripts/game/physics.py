@@ -12,6 +12,7 @@ def _generate_uuid():
 class PhysicsObject:
     def __init__(self, mass: float, position: [float], size: [float]):
         self.uuid = _generate_uuid()
+        self.type = "physics_object"
         self.mass: float = mass
         self.rect: geometry.Rect = geometry.Rect(*position, *size)
         self.vel: [float] = [0.0, 0.0]
@@ -145,12 +146,22 @@ class PhysicsObject:
         """
         Resolves collisions on the x-axis.
         """
+        last_y = self.rect.y
+        collision = False
         if self.vel[0]:
             self.block_right = self.block_left = 0
+
         for x in range(math.floor(round(self.rect.left, 5)), math.ceil(round(self.rect.right, 5))):
             #for y in range(math.floor(round(self.rect.y, 5)), math.ceil(round(self.rect.y + self.rect.h, 5))):
             for y in range(math.floor(round(self.rect.top, 5)), math.ceil(round(self.rect.bottom, 5))):
                 if world.get_block(x, y):
+                    
+                    # Push player up if possible (instead of colliding)
+                    self.rect.y = math.ceil(self.rect.y)
+                    if not (self.type != "player" or abs(self.vel[0]) < 1 or self.rect.y - last_y > 0.5 or collision or self.get_collision(world)):
+                        self.vel[1] *= 0.8
+                        continue
+
                     if self.vel[0] < 0:
                         self.rect.left = x + 1
                         self.block_left = world.get_block(x, y, generate=False)
@@ -158,7 +169,13 @@ class PhysicsObject:
                     if self.vel[0] > 0:
                         self.rect.right = x
                         self.block_right = world.get_block(x, y, generate=False)
-                    self.vel[0] = 0
+                    collision = True
+
+        if collision:
+            self.vel[0] = 0
+            self.rect.y = last_y
+
+        return collision
 
     
     def y_collide(self, world):

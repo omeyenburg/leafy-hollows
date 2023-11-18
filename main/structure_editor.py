@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from tkinter import filedialog
 from pygame.locals import *
 import scripts.utility.file as file
 import random
@@ -15,67 +14,59 @@ def get_file():
     edit_file = input("Gib 'e' ein, um eine Struktur zu bearbeiten\noder nichts, um eine neu Struktur zu erstellen: ").startswith("e")
 
     if edit_file:
-        print("Wähle die Datei")
-        filepath = filedialog.askopenfilename(
-            title="Wähle die Datei",
-            filetypes=(("Structures", "*.struct"),),
-            initialdir=os.path.join(os.path.dirname(__file__), "data", "structures"))
+        filepath = input("Wähle die Datei: ")
         # Read file or exit
         with open(filepath, 'rb') as f:
             structure_data = pickle.load(f)
         print("selected", filepath)
     else:
-        print("Wähle einen Namen und Speicherort")
-        filepath = filedialog.asksaveasfilename(
-            title="Wähle einen Namen und Speicherort",
-            filetypes=(("Structures", "*.struct"),),
-            initialdir=os.path.join(os.path.dirname(__file__), "data", "structures")
-        )
-        if not filepath:
-            raise Exception
-
-        name = os.path.basename(filepath).split(".")[0]
+        name = input("Wähle einen Namen: ")
         width = abs(int(input("Wähle die Breite in Blöcken: ")))
         height = abs(int(input("Wähle die Höhe in Blöcken: ")))
         array = numpy.zeros((width, height, 4), dtype=int)
+        structure_data = {"name": name, "size": (width, height), "array": array}
 
-        generation_data = None
-        structure_type_char = input(f"Wähle den Strukturtyp? ('room': r | 'terrain feature': t | 'village': v): ")
-        structure_type = "terrain feature"
-        if structure_type_char.startswith("r"):
-            structure_type = "room"
-        elif structure_type_char.startswith("v"):
-            structure_type = "village"
-        
-        if structure_type == "terrain feature":
-            generation_side = input("Wähle die Blockseite, wo die Struktur generiert wird ('floor': f | 'ceiling': c | 'right wall': r | 'left wall': l): ")
-            generation_data = "floor"
-            if generation_side.startswith("c"):
-                generation_data = "ceiling"
-            elif generation_side.startswith("r"):
-                generation_data = "right"
-            elif generation_side.startswith("l"):
-                generation_data = "left"
-
-        structure_data = {"name": name, "structure_type": structure_type, "size": (width, height), "array": array}
-
-    return filepath, structure_data
+    return structure_data
 
 
 def save():
     for x, y, z in numpy.ndindex(structure_data["array"].shape):
         if z == 3:
-            # Water layer
+            # Skip water layer
             continue
+
         if structure_string_array[x][y][z] == "air":
             structure_string_array[x][y][z] = 0
         else:
             block_name = structure_string_array[x][y][z]
             structure_string_array[x][y][z] = block_data[block_name][0]
-    structure_data["array"] = numpy.array(structure_string_array, dtype=int)
 
-    with open(filepath, 'wb') as f:
-        pickle.dump(structure_data, f)
+    name = structure_data["name"]
+    array = numpy.flip(numpy.array(structure_string_array, dtype=int), 1)
+
+    entrance_coord = [0, structure_data["size"][1] // 2]
+    exit_coord = [structure_data["size"][0] - 1, structure_data["size"][1] // 2]
+    for y in range(structure_data["size"][1]):
+        if array[0, y, 0] == 0:
+            entrance_coord[1] = y
+        if array[exit_coord[0], y, 0] == 0:
+            exit_coord[1] = y
+
+    properties = {
+        "name": name,
+        "generation": {
+            "weight": 1.0,
+            "entrance_coord": entrance_coord,
+            "entrance_angle": 0,
+            "exit_coord": exit_coord,
+            "exit_angle": 0
+        },
+        "entities": [],
+        "block_indices": structure_data["block_indices"]
+    }
+
+    file.save(f"data/structures/{name}/{name}.json", properties, file_format="json")
+    file.save(f"data/structures/{name}/{name}.npy", array, file_format="numpy")
 
 
 def load_blocks():
@@ -84,7 +75,7 @@ def load_blocks():
     block_indices = {}
 
     for i, path in enumerate(block_paths):
-        data = file.read(path, file_format="json")
+        data = file.load(path, file_format="json")
         block = data["name"]
         image_name = data["frames"][0]
         path = file.find("data/images/blocks", image_name, True)[0]
@@ -95,7 +86,7 @@ def load_blocks():
     return block_data, block_indices
 
 
-filepath, structure_data = get_file()
+structure_data = get_file()
 block_data, block_indices = load_blocks()
 structure_string_array = structure_data["array"].tolist()
 
@@ -115,7 +106,6 @@ for x, y, z in numpy.ndindex(structure_data["array"].shape):
 structure_data["block_indices"] = block_indices
 
 
-del filedialog # Collision with pygame
 pygame.init()
 window = pygame.display.set_mode()
 offset = [0, 0]
@@ -149,17 +139,17 @@ while True:
 
     keys = pygame.key.get_pressed()
     if keys[K_RIGHT]:
-        offset[0] = offset[0] + 0.05 / structure_data["size"][0]
+        offset[0] = offset[0] + 0.1 / structure_data["size"][0]
     if keys[K_LEFT]:
-        offset[0] = offset[0] - 0.05 / structure_data["size"][0]
+        offset[0] = offset[0] - 0.1 / structure_data["size"][0]
     if keys[K_DOWN]:
-        offset[1] = offset[1] + 0.05 / structure_data["size"][1]
+        offset[1] = offset[1] + 0.1 / structure_data["size"][1]
     if keys[K_UP]:
-        offset[1] = offset[1] - 0.05 / structure_data["size"][1]
+        offset[1] = offset[1] - 0.1 / structure_data["size"][1]
 
     mouse_pos = pygame.mouse.get_pos()
     mouse_buttons = pygame.mouse.get_pressed(5)
-    offset_block_list = min(0, max(-1, offset_block_list + scroll / 10))
+    offset_block_list = min(0, max(-1 + window.get_height() / ((len(block_data) + 10) * BLOCK_SIZE), offset_block_list + scroll / 10))
 
     if mouse_buttons[0] and mouse_pos[0] < window.get_width() - 120:
         block_coord = (int((mouse_pos[0] - offset[0] * BLOCK_SIZE) // BLOCK_SIZE), int((mouse_pos[1] - offset[1] * BLOCK_SIZE) // BLOCK_SIZE))
@@ -183,6 +173,9 @@ while True:
                 structure_string_array[block_coord[0]][block_coord[1]][3] = level
 
     for x, y in numpy.ndindex(structure_data["array"].shape[:2]):
+        rect = get_block_rect(x, y)
+        pygame.draw.rect(window, (200, 200, 200), rect)
+
         for z in reversed(range(4)):
             if not options["layer" + str(z)]:
                 continue

@@ -30,7 +30,7 @@ def load():
     Loads the options from the options.txt file.
     """
     options = default.copy()
-    user_options = file.read("data/user/options.json", default=default, file_format="json")
+    user_options = file.load("data/user/options.json", default=default, file_format="json")
 
     for keyword, value in user_options.items():
         if not keyword in default:
@@ -48,4 +48,4 @@ def save(options):
     """
     Save the options in the options.txt file.
     """
-    file.write("data/user/options.json", options, file_format="json")
+    file.save("data/user/options.json", options, file_format="json")

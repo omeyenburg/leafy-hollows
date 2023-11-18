@@ -71,7 +71,7 @@ class Slime(LivingEntity):
         if self.block_below:
             if self.hit_ground == 0:
                 self.hit_ground = 0.2
-                particle.spawn(window, "slime_particle", self.rect.centerx, self.rect.top, amount=0.5)
+                particle.spawn(window, "slime_particle", self.rect.centerx, self.rect.top)
             self.hit_ground -= window.delta_time
             self.vel[0] *= 0.8
             self.attack_cooldown = 0
@@ -101,4 +101,7 @@ class Slime(LivingEntity):
             world.player.damage(window, 1, self.vel)
             self.attack_cooldown = 5
         self.attack_cooldown -= window.delta_time
+
+    def death(self, window):
+        particle.spawn(window, "slime_particle", *self.rect.center)
         
