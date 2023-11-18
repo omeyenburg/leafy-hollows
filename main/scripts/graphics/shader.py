@@ -13,14 +13,14 @@ class Shader:
         
         # Read & compile vertex shader
         constants = sorted(constants.items(), key=lambda n: len(n[0]), reverse=True)
-        content = file.read(vertex)
+        content = file.load(vertex)
         for search, replacement in constants:
             content = content.replace(str(search), str(replacement))
         vertex_shader = compileShader(content, GL.GL_VERTEX_SHADER)
         GL.glAttachShader(self._program, vertex_shader)
 
         # Read & compile fragment shader
-        content = file.read(fragment)
+        content = file.load(fragment)
         for search, replacement in constants:
             content = content.replace(str(search), str(replacement))
         fragment_shader = compileShader(content, GL.GL_FRAGMENT_SHADER)

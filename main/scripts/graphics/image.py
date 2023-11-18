@@ -35,7 +35,7 @@ def load_blocks():
     block_properties = {}
 
     for path in block_paths:
-        blocks.append(file.read(path, file_format="json"))
+        blocks.append(file.load(path, file_format="json"))
 
     for data in sorted(blocks, key=lambda data: data["hardness"]):
         # Large blocks
@@ -114,7 +114,7 @@ def load_sprites():
     sprites = {}
     sprite_rects = []
 
-    images_data = file.read("data/images/layout/sprites.properties", split=True)
+    images_data = file.load("data/images/layout/sprites.properties", split=True)
     images = {}
     paths = {}
 
@@ -129,7 +129,7 @@ def load_sprites():
         
         image_path = file.find("data/images/sprites", image + ".png", True)
         if not len(image_path):
-            raise ValueError("Could not find file " + image + ".png in data/images/sprites")
+            raise ValueError("Could not find file " + image + ".png in data/images/sprites.\nRun\n'python data/images/layout/setup.py'\nor\n'python3 data/images/layout/setup.py'")
 
         paths[str(image_path[0])] = len(sprite_rects)
         images[image] = len(sprite_rects)
@@ -144,7 +144,7 @@ def load_sprites():
     sprite_paths = file.find("data/images/sprites", "*.json", True)
     for path in sprite_paths:
         sprite = file.basename(path)
-        data = file.read(path, file_format="json")
+        data = file.load(path, file_format="json")
         indices = []
         for frame in data["frames"]:
             frame = frame.split(".")[0]

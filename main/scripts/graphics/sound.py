@@ -18,7 +18,7 @@ def load():
     played_sounds = {}
 
     for path in sound_paths:
-        data = file.read(path, file_format="json")
+        data = file.load(path, file_format="json")
         name = data["name"]
         delay = data["speed"]
         volume = data["volume"]

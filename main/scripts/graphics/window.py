@@ -265,7 +265,7 @@ class Window:
         self.loading_progress[:2] = "Loading particles", 2
         self.particles: list = []
         self.particle_types: dict = {}
-        particle_data = file.read(file.abspath("data/particles/particles.json"), file_format="json")
+        particle_data = file.load(file.abspath("data/particles/particles.json"), file_format="json")
         for particle_name, kwargs in particle_data.items():
             kwargs["angle"] *= math.pi / 180
             particle.setup(self, particle_name, **kwargs)

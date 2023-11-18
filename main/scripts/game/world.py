@@ -79,8 +79,9 @@ class World:
 
     def create_chunk(self, x: int, y: int):
         self.chunks[(x, y)] = numpy.zeros((32, 32, 4))
-        for delta_x, delta_y in numpy.ndindex((WORLD_CHUNK_SIZE, WORLD_CHUNK_SIZE)):
-            generate_block(self, delta_x + x * WORLD_CHUNK_SIZE, delta_y + y * WORLD_CHUNK_SIZE)
+        self.chunks[(x, y)][:, :, 0] = self.block_name["dirt_block"]
+        #for delta_x, delta_y in numpy.ndindex((WORLD_CHUNK_SIZE, WORLD_CHUNK_SIZE)):
+        #    generate_block(self, delta_x + x * WORLD_CHUNK_SIZE, delta_y + y * WORLD_CHUNK_SIZE)
 
     def get_block_exists(self, x: int, y: int):
         chunk_x = x >> WORLD_CHUNK_SIZE_POWER
@@ -98,7 +99,7 @@ class World:
 
         if not (chunk_x, chunk_y) in self.chunks:
             self.create_chunk(chunk_x, chunk_y)
-        if data:
+        if isinstance(data, (int, float)) and data:
             layer = self.block_layer[self.block_index[data]]
         self.chunks[(chunk_x, chunk_y)][mod_x, mod_y, layer] = data
     
@@ -191,9 +192,9 @@ class World:
 
         # Update torches
         if self.block_index[block_array[1]] in ("torch", "torch_flipped"):
-            particle.spawn(window, "spark", x, y, amount=0.3)
+            particle.spawn(window, "spark", x + 0.5, y + 0.7)
             if block_array[3] > 600:
-                self.chunks[(x, y)][1] = self.block_name["unlit_torch"]
+                self.set_block(x, y, self.block_name["unlit_torch"])
 
     def update_block_water(self, window, x, y):
         water_level = self.get_water(x, y)
@@ -322,14 +323,14 @@ class World:
 
     def save(self, window):
         window.loading_progress[:3] = "Saving", 0, 1.1
-        file.write("data/user/world.data", self, file_format="pickle")
+        file.save("data/user/world.data", self, file_format="pickle")
         window.loading_progress[1] = 1.1
         time.sleep(0.1)
 
     @staticmethod
     def load(window, block_data):
         window.loading_progress[:3] = "Loading world file", 1, 2
-        world = file.read("data/user/world.data", default=0, file_format="pickle")
+        world = file.load("data/user/world.data", default=0, file_format="pickle")
 
         try:
             if isinstance(world, World) and World.get_version_checksum(block_data[0]) == world.version_checksum:

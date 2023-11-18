@@ -21,4 +21,8 @@ class LivingEntity(physics.PhysicsObject):
         particle.text(window, "-" + str(amount), *self.rect.center, size=0.2, color=(165, 48, 48, 255), time=0.5, offset_radius=self.rect.h)
 
         if self.health <= 0:
-            particle.spawn(window, "dust", *self.rect.center)
+            self.death(window)
+
+    def death(self, window):
+        particle.spawn(window, "dust", *self.rect.center)
+        particle.spawn(window, "blood", *self.rect.center)

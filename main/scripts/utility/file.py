@@ -55,7 +55,7 @@ def relpath(path: str):
     return path[index:]
 
 
-def read(path: str, default=None, file_format="text", split=False):
+def load(path: str, default=None, file_format="text", split=False):
     """
     Reads the content of a file.
     """
@@ -81,12 +81,8 @@ def read(path: str, default=None, file_format="text", split=False):
             except EOFError:
                 return None
 
-        elif file_format == "pickle":
-            try:
-                with open(path, 'rb') as f:
-                    data = numpy.fromfile(f)
-            except EOFError:
-                return None
+        elif file_format == "numpy":
+            data = numpy.load(path)
 
     except (ValueError if default is None else FileNotFoundError):
             data = default
@@ -94,12 +90,15 @@ def read(path: str, default=None, file_format="text", split=False):
     return data
 
 
-def write(path: str, data, file_format="text"):
+def save(path: str, data, file_format="text"):
     """
     Writes into a file.
     """
     if not os.path.isabs(path):
         path = abspath(path)
+
+    # Create folders
+    os.makedirs(os.path.dirname(path), exist_ok=True)
 
     if file_format == "text":
         with open(path, "w") as f:
@@ -114,8 +113,7 @@ def write(path: str, data, file_format="text"):
             pickle.dump(data, f)
 
     elif file_format == "numpy":
-        with open(path, 'wb') as f:
-            data.tofile(f)
+        numpy.save(path, data)
 
     
 def exists(path: str):

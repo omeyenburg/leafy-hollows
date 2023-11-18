@@ -11,6 +11,7 @@ import random
 class Player(LivingEntity):
     def __init__(self, spawn_pos: [float]):
         super().__init__(50, spawn_pos, PLAYER_RECT_SIZE_NORMAL, health=10)
+        self.type = "player"
 
         # Player rect size (based on state)
         self.rect_size = PLAYER_RECT_SIZE_NORMAL
@@ -111,7 +112,7 @@ class Player(LivingEntity):
         # Friction
         self.apply_force_horizontal(-self.vel[0] * self.mass * block_fricton * 0.1, 1)
         if not (key_right or key_left):
-            self.vel[0] *= 0.99
+            self.vel[0] *= 0.999 ** window.delta_time
 
         # Jumping
         if window.keybind("jump") and (self.block_below or self.block_right and key_left or self.block_left and key_right):
