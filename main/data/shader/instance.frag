@@ -242,12 +242,13 @@ vec4 mix_overlay_color(vec4 block_color, vec4 overlay_color_add, vec4 overlay_co
     return out_color;
 }
 
-ivec2 get_source_pixel_wrapped(int block_type, ivec2 source_pixel_wrapped) {
-    int block_family = int(texelFetch(texBlocks, get_block_data_location(block_type), 0).b * 255);
-    int block_family_adjacent_x = int(texelFetch(texBlocks, get_block_data_location(adjacent_x), 0).b * 255);
-    int block_family_adjacent_y = int(texelFetch(texBlocks, get_block_data_location(adjacent_y), 0).b * 255);
 
-    int center = int(block_family <= block_family_adjacent_x && block_family <= block_family_adjacent_y && block_type <= adjacent_x && block_type <= adjacent_y);
+ivec2 get_source_pixel_wrapped(int block_type, ivec2 source_pixel_wrapped) {
+    int block_family = int(texelFetch(texBlocks, get_block_data_location((block_type - 1) / 2 + 1), 0).b * 255.0);
+    int block_family_adjacent_x = int(texelFetch(texBlocks, get_block_data_location((adjacent_x - 1) / 2 + 1), 0).b * 255.0);
+    int block_family_adjacent_y = int(texelFetch(texBlocks, get_block_data_location((adjacent_y - 1) / 2 + 1), 0).b * 255.0);
+
+    int center = int(block_family <= block_family_adjacent_x && block_family <= block_family_adjacent_y && adjacent_x != 0 && adjacent_y != 0);
     int x_edge = int(block_type <= adjacent_x);
     int y_edge = int(block_type <= adjacent_y);
     int left_edge = int(source_pixel_wrapped.x < BLOCK_SIZE_SOURCE / 2);
@@ -269,7 +270,7 @@ ivec2 get_source_pixel_wrapped(int block_type, ivec2 source_pixel_wrapped) {
     );
 
 
-    /*
+    /*    
     if (block_family <= block_family_adjacent_x && block_family <= block_family_adjacent_y && block_type <= adjacent_x && block_type <= adjacent_y) {
         source_pixel_wrapped = ivec2(7, 7);
     } else if (block_type <= adjacent_x) {
@@ -285,6 +286,50 @@ ivec2 get_source_pixel_wrapped(int block_type, ivec2 source_pixel_wrapped) {
             source_pixel_wrapped.y -= 4;
         }
     }*/
+    return source_pixel_wrapped;
+}
+
+ivec2 get_source_pixel_wrapped3(int block_type, ivec2 source_pixel_wrapped) {
+    int block_family = int(texelFetch(texBlocks, get_block_data_location((block_type - 1) / 2 + 1), 0).b * 255.0);
+    int block_family_adjacent_x = int(texelFetch(texBlocks, get_block_data_location((adjacent_x - 1) / 2 + 1), 0).b * 255.0);
+    int block_family_adjacent_y = int(texelFetch(texBlocks, get_block_data_location((adjacent_y - 1) / 2 + 1), 0).b * 255.0);
+
+    if (block_family <= block_family_adjacent_x && block_family <= block_family_adjacent_y && adjacent_x != 0 && adjacent_y != 0) {
+        source_pixel_wrapped = ivec2(7, 7);
+    } else if (block_type <= adjacent_x) {
+        if (source_pixel_wrapped.x < BLOCK_SIZE_SOURCE / 2) {
+            source_pixel_wrapped.x += 4;
+        } else {
+            source_pixel_wrapped.x -= 4;
+        }
+    } else if (block_type <= adjacent_y) {
+        if (source_pixel_wrapped.y < BLOCK_SIZE_SOURCE / 2) {
+            source_pixel_wrapped.y += 4;
+        } else {
+            source_pixel_wrapped.y -= 4;
+        }
+    }
+    return source_pixel_wrapped;
+}
+ivec2 get_source_pixel_wrapped2(int block_type, ivec2 source_pixel_wrapped) {
+    int block_family = int(texelFetch(texBlocks, ivec2(block_type - 1, 0), 0).b * 255);
+    int block_family_adjacent_x = int(texelFetch(texBlocks, ivec2(adjacent_x - 1, 0), 0).b * 255);
+    int block_family_adjacent_y = int(texelFetch(texBlocks, ivec2(adjacent_y - 1, 0), 0).b * 255);
+    if (block_family <= block_family_adjacent_x && block_family <= block_family_adjacent_y) {
+        source_pixel_wrapped = ivec2(8, 8);
+    } else if (block_type <= adjacent_x) {
+        if (source_pixel_wrapped.x < BLOCK_SIZE_SOURCE / 2) {
+            source_pixel_wrapped.x += 4;
+        } else {
+            source_pixel_wrapped.x -= 4;
+        }
+    } else if (block_type <= adjacent_y) {
+        if (source_pixel_wrapped.y < BLOCK_SIZE_SOURCE / 2) {
+            source_pixel_wrapped.y += 4;
+        } else {
+            source_pixel_wrapped.y -= 4;
+        }
+    }
     return source_pixel_wrapped;
 }
 

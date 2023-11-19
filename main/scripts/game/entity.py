@@ -105,3 +105,42 @@ class Slime(LivingEntity):
     def death(self, window):
         particle.spawn(window, "slime_particle", *self.rect.center)
         
+
+class Goblin(LivingEntity):
+    def __init__(self, spawn_pos: [float]):
+        super().__init__(30, spawn_pos, GOBLIN_RECT_SIZE, health=5)
+
+        # Enemy attributes
+        self.level = 1             # Difficulty
+        self.hit_damage = 1        # Damage applied to player on collision
+        self.attack_cooldown = 3
+
+        # Animation states
+        self.state: str = "idle"    # state is used for movement & animations
+        self.direction: int = 0     # 0 -> right; 1 -> left
+        self.hit_ground = 0         # Used for hit ground animation
+
+    def draw(self, window: Window):
+        # Draw hitbox
+        #rect = window.camera.map_coord((self.rect.x, self.rect.y, self.rect.w, self.rect.h), from_world=True)
+        #window.draw_rect(rect[:2], rect[2:], (255, 0, 0, 100))
+
+        rect = window.camera.map_coord((self.rect.x - 1 + self.rect.w / 2, self.rect.y, 2, 2), from_world=True)
+        window.draw_image("goblin_" + self.state, rect[:2], rect[2:], flip=(self.direction, 0))
+
+    def update(self, world, window: Window):
+        speed = min(4, abs(world.player.rect.x - self.rect.x))
+        if world.player.rect.x < self.rect.x:
+            self.vel[0] = -speed
+            self.direction = 1
+        else:
+            self.vel[0] = speed
+            self.direction = 0
+
+        super().update(world, window.delta_time)
+
+        if abs(self.vel[0]) > 1:
+            self.state = "walk"
+        else:
+            self.state = "idle"
+

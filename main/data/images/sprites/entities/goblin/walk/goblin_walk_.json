@@ -1,0 +1,19 @@
+{
+    "name": "goblin_walk",
+    "speed": 0.08,
+    "frames": [
+        "goblin_walk_a.png",
+        "goblin_walk_b.png",
+        "goblin_walk_c.png",
+        "goblin_walk_d.png",
+        "goblin_walk_e.png",
+        "goblin_walk_f.png",
+        "goblin_walk_g.png",
+        "goblin_walk_h.png",
+        "goblin_walk_i.png",
+        "goblin_walk_j.png",
+        "goblin_walk_k.png",
+        "goblin_walk_l.png"
+
+    ]
+}
