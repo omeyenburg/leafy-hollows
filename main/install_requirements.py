@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from pip._internal.cli.main import main
-from scripts.utility.file import read
+from scripts.utility.file import load
 
-for package in read("requirements.txt", split=True):
+for package in load("requirements.txt", split=True):
     try:
         main(['install', package])
     except:

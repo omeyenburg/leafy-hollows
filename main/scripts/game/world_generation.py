@@ -140,7 +140,11 @@ def generate_world(world, window):
     window.loading_progress[:2] = "Spawing enemies", 11
     spawn_blocks = random.choices(list(blocks_ground), k=int(0.05 * len(blocks_ground)))
     for coord in spawn_blocks:
-        world.add_entity(Slime(coord))
+        if random.randint(0, 1):
+            entity = Goblin(coord)
+        else:
+            entity = Slime(coord)
+        world.add_entity(entity)
 
 
 # Called from generate_world

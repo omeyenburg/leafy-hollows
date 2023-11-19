@@ -425,8 +425,6 @@ class Player(LivingEntity):
             else:
                 world.set_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), world.block_name["stone_block"])
             
-            particle.spawn(window, "big_leaf_particle", *mouse_pos)
-
         # Shoot arrow with left click (no cooldown)
         if window.mouse_buttons[0] == 1:
             mouse_pos = window.camera.map_coord(window.mouse_pos[:2], world=True)
