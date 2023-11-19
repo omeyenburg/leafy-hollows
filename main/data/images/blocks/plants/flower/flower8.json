@@ -4,8 +4,12 @@
     "layer": "plant",
     "hardness": 1,
     "speed": 0,
-    "pool": "vegetation_floor_uncommon",
     "frames": [
         "flower8.png"
-    ]
+    ],
+    "generation": {
+        "on": "dirt",
+        "side": "above",
+        "weight": 7
+    }
 }

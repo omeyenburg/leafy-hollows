@@ -4,8 +4,12 @@
     "layer": "plant",
     "hardness": 1,
     "speed": 0,
-    "pool": "vegetation_wall",
     "frames": [
         "plant_wall.png"
-    ]
+    ],
+    "generation": {
+        "on": "dirt",
+        "side": "wall",
+        "weight": 9
+    }
 }

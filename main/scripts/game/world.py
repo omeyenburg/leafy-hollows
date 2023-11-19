@@ -12,15 +12,14 @@ import time
 
 
 class World:
-    def __init__(self, block_data, block_pools, block_group_size, block_properties):
+    def __init__(self, block_data, block_generation_properties, block_group_size, block_properties):
         #super().__init__() # {(x, y): (block, plant, background, water_level)}
         self.seed: float = random.randint(-10**6, 10**6) + math.e # Float between -10^6 and 10^6
-        self.version_checksum = self.get_version_checksum(block_data)
         self.view: numpy.array = None # Sent to shader to render
         self.view_size: tuple = (0, 0)
         self.chunks = {} # {(chunk_x, chunk_y): numpy_array(16x16x4)} -> (block, plant, background, water_level)
 
-        self.block_pools = block_pools
+        self.block_generation_properties = block_generation_properties
         self.block_properties = block_properties
         self.block_family: dict = {
             (name + "_flipped" if flipped else name):
@@ -103,7 +102,7 @@ class World:
             layer = self.block_layer[self.block_index[data]]
         self.chunks[(chunk_x, chunk_y)][mod_x, mod_y, layer] = data
     
-    def get_block(self, x: int, y: int, layer: int=0, generate: bool=False, default: int=0):
+    def get_block(self, x: int, y: int, layer: int=0, generate: bool=False, default: int=(0, 0, 0, 0)):
         chunk_x = x >> WORLD_CHUNK_SIZE_POWER
         chunk_y = y >> WORLD_CHUNK_SIZE_POWER
         mod_x = x & (WORLD_CHUNK_SIZE - 1)
@@ -114,6 +113,8 @@ class World:
                 self.create_chunk(chunk_x, chunk_y)
                 #generate_block(self, x, y)
             else:
+                if isinstance(default, (tuple, list)):
+                    return default[layer]
                 return default
         return self.chunks[(chunk_x, chunk_y)][mod_x, mod_y, layer]
 
@@ -125,7 +126,6 @@ class World:
 
         if not (chunk_x, chunk_y) in self.chunks:
             self.create_chunk(chunk_x, chunk_y)
-            #generate_block(self, x, y)
         self.chunks[(chunk_x, chunk_y)][mod_x, mod_y, 3] = int(level)
 
     def get_water(self, x, y):
@@ -155,6 +155,7 @@ class World:
 
     def update(self, window):
         self.wind = math.sin(window.time) * WORLD_WIND_STRENGTH + math.cos(window.time * 5) * WORLD_WIND_STRENGTH / 2
+        window.particle_wind = self.wind / 50
 
         self.water_update_timer += window.delta_time
         if self.water_update_timer > WORLD_WATER_SPEED:
@@ -170,6 +171,16 @@ class World:
 
         if window.options["particles"]:
             particle.update(window)
+
+            # Spawn ambient particles
+            if particle.spawn_possible(window, "big_leaf_particle"):
+                x = random.randint(self.loaded_blocks[0][0], self.loaded_blocks[1][0])
+                particle.spawn(window, "big_leaf_particle", x, self.loaded_blocks[1][1])
+
+            if particle.spawn_possible(window, "small_leaf_particle"):
+                x = random.randint(self.loaded_blocks[0][0], self.loaded_blocks[1][0])
+                particle.spawn(window, "small_leaf_particle", x, self.loaded_blocks[1][1])
+
 
     def draw(self, window):
         self.loaded_blocks = window.camera.visible_blocks()
@@ -192,7 +203,7 @@ class World:
 
         # Update torches
         if self.block_index[block_array[1]] in ("torch", "torch_flipped"):
-            particle.spawn(window, "spark", x + 0.5, y + 0.7)
+            particle.spawn(window, "fire_particle", x + 0.5, y + 0.7)
             if block_array[3] > 600:
                 self.set_block(x, y, self.block_name["unlit_torch"])
 
@@ -333,7 +344,7 @@ class World:
         world = file.load("data/user/world.data", default=0, file_format="pickle")
 
         try:
-            if isinstance(world, World) and World.get_version_checksum(block_data[0]) == world.version_checksum:
+            if isinstance(world, World):
                 window.loading_progress[:3] = "Loading world", 2, 2
                 return world
         except Exception as e:
@@ -343,10 +354,3 @@ class World:
         world = World(*block_data)
         generate_world(world, window)
         return world
-
-    @staticmethod
-    def get_version_checksum(block_data):
-        return (len(block_data)
-            + sum(bytes(str(block_data), encoding="utf-8"))
-            + sum(bytes(list(block_data)[0], encoding="utf-8"))
-        )

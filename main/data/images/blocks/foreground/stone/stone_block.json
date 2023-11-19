@@ -9,9 +9,5 @@
     ],
     "properties": {
         "friction": 0.95
-    },
-    "generation": {
-        "pool": "terrain",
-        "weight": 3
     }
 }

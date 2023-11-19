@@ -24,5 +24,5 @@ class LivingEntity(physics.PhysicsObject):
             self.death(window)
 
     def death(self, window):
-        particle.spawn(window, "dust", *self.rect.center)
-        particle.spawn(window, "blood", *self.rect.center)
+        particle.spawn(window, "dust_particle", *self.rect.center)
+        particle.spawn(window, "blood_particle", *self.rect.center)

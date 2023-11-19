@@ -4,8 +4,13 @@
     "layer": "background",
     "hardness": 1,
     "speed": 0,
-    "pool": "stone_step_ceiling",
     "frames": [
         "stone_step_ceiling.png"
-    ]
+    ],
+    "generation": {
+        "on": "stone",
+        "side": "below",
+        "corner": true,
+        "weight": 10
+    }
 }

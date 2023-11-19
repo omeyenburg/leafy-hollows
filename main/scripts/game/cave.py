@@ -95,7 +95,6 @@ def interpolated(world, position, start_angle=None, end_angle=None, start_radius
     if end_radius is None:
         end_radius = int(pnoise1((sum(position) + WORLD_GENERATION_INTERPOLATION_LENGTH * WORLD_GENERATION_STEP_SIZE) / 2 + 100, octaves=3) * 2 + WORLD_GENERATION_HORIZONTAL_CAVE_RADIUS)
 
-
     for i in range(WORLD_GENERATION_INTERPOLATION_LENGTH):
         interpolation = i / WORLD_GENERATION_INTERPOLATION_LENGTH
         angle = start_angle * (1 - interpolation) + end_angle * interpolation
@@ -115,9 +114,9 @@ def interpolated(world, position, start_angle=None, end_angle=None, start_radius
 
 def vertical(world, position):
     angle = math.pi / 2 * 3 * (random.randint(0, 1) * 2 - 1)
-    length = random.randint(40, 50)
+    length = random.randint(60, 70)
     deviation = 0.5
-    radius = 1
+    radius = 2
 
     line_cave(world, position, length, angle, deviation, radius)
 

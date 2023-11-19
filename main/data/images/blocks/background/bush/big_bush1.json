@@ -6,5 +6,10 @@
     "speed": 0,
     "frames": [
         "big_bush1.png"
-    ]
+    ],
+    "generation": {
+        "on": "dirt",
+        "side": "above",
+        "weight": 1
+    }
 }

@@ -4,8 +4,12 @@
     "layer": "plant",
     "hardness": 1,
     "speed": 0,
-    "pool": "vegetation_block_group_floor",
     "frames": [
         "big_ruby0.png"
-    ]
+    ],
+    "generation": {
+        "on": "any",
+        "side": "above",
+        "weight": 5
+    }
 }

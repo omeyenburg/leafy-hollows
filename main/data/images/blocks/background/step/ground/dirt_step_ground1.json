@@ -4,8 +4,13 @@
     "layer": "background",
     "hardness": 1,
     "speed": 0,
-    "pool": "dirt_step_ground",
     "frames": [
         "dirt_step_ground1.png"
-    ]
+    ],
+    "generation": {
+        "on": "dirt",
+        "side": "above",
+        "corner": true,
+        "weight": 10
+    }
 }

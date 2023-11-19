@@ -90,6 +90,8 @@ structure_data = get_file()
 block_data, block_indices = load_blocks()
 structure_string_array = structure_data["array"].tolist()
 
+canvas_move_speed = 1
+
 
 for x, y, z in numpy.ndindex(structure_data["array"].shape):
     if z == 3:
@@ -139,13 +141,13 @@ while True:
 
     keys = pygame.key.get_pressed()
     if keys[K_RIGHT]:
-        offset[0] = offset[0] + 0.1 / structure_data["size"][0]
+        offset[0] = offset[0] + canvas_move_speed / structure_data["size"][0]
     if keys[K_LEFT]:
-        offset[0] = offset[0] - 0.1 / structure_data["size"][0]
+        offset[0] = offset[0] - canvas_move_speed / structure_data["size"][0]
     if keys[K_DOWN]:
-        offset[1] = offset[1] + 0.1 / structure_data["size"][1]
+        offset[1] = offset[1] + canvas_move_speed / structure_data["size"][1]
     if keys[K_UP]:
-        offset[1] = offset[1] - 0.1 / structure_data["size"][1]
+        offset[1] = offset[1] - canvas_move_speed / structure_data["size"][1]
 
     mouse_pos = pygame.mouse.get_pos()
     mouse_buttons = pygame.mouse.get_pressed(5)

@@ -4,8 +4,13 @@
     "layer": "background",
     "hardness": 1,
     "speed": 0,
-    "pool": "dirt_step_ceiling",
     "frames": [
         "dirt_step_ceiling.png"
-    ]
+    ],
+    "generation": {
+        "on": "dirt",
+        "side": "below",
+        "corner": true,
+        "weight": 10
+    }
 }

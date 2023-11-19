@@ -4,8 +4,12 @@
     "layer": "background",
     "hardness": 1,
     "speed": 0,
-    "pool": "vegetation_block_group_floor",
     "frames": [
         "tree0.png"
-    ]
+    ],
+    "generation": {
+        "on": "dirt",
+        "side": "above",
+        "weight": 2
+    }
 }

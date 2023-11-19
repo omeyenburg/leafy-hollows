@@ -4,8 +4,13 @@
     "layer": "background",
     "hardness": 1,
     "speed": 0,
-    "pool": "stone_step_ground",
     "frames": [
         "stone_step_ground0.png"
-    ]
+    ],
+    "generation": {
+        "on": "stone",
+        "side": "above",
+        "corner": true,
+        "weight": 10
+    }
 }

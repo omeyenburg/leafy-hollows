@@ -4,9 +4,13 @@
     "layer": "plant",
     "hardness": 1,
     "speed": 0.5,
-    "pool": "vegetation_floor_common",
     "frames": [
         "small_grass_a.png",
         "small_grass_b.png"
-    ]
+    ],
+    "generation": {
+        "on": "dirt",
+        "side": "above",
+        "weight": 9
+    }
 }
