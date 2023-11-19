@@ -6,6 +6,7 @@ from scripts.game.physics import *
 from scripts.game.entity import *
 from scripts.graphics import sound
 import random
+from scripts.graphics import particle
 
 
 class Player(LivingEntity):
@@ -23,6 +24,7 @@ class Player(LivingEntity):
         self.sprint_speed: float = 6
         self.crouch_speed: float = 2
         self.swim_speed: float = 3
+        self.climb_speed: float = 3
 
         # Physics attributes
         self.acceleration_time: float = 0.1
@@ -37,6 +39,8 @@ class Player(LivingEntity):
 
         # Long crouch jump
         self.charge_crouch_jump: float = 0
+        self.crouch_jump_strength: float = 17
+        self.crouch_jump_max_charge: float = 0.25
 
     def draw(self, window: Window):
         """
@@ -124,7 +128,7 @@ class Player(LivingEntity):
                 self.jump(window, 5)
         elif self.block_below and self.charge_crouch_jump and self.state == "crouch":
             # Crouch jump
-            self.jump(window, 5 * min(1, self.charge_crouch_jump)) # 1 second to charge max crouch jump
+            self.jump(window, self.crouch_jump_strength * min(self.crouch_jump_max_charge, self.charge_crouch_jump)) # 1/4 seconds to charge max crouch jump
             self.charge_crouch_jump = 0
             self.block_below = 0
         else:
@@ -154,10 +158,10 @@ class Player(LivingEntity):
         """
         Climb poles and vines.
         """
-        block_feet = world.get_block(round(self.rect.x), round(self.rect.y + 0.8), layer=2)
-        block_head = world.get_block(round(self.rect.x), round(self.rect.y - 0.2), layer=2)
-        grab_pole = block_feet in world.blocks_climbable
-        on_pole = block_head in world.blocks_climbable or grab_pole
+        block_head = world.get_block(round(self.rect.x), round(self.rect.y + 0.8), layer=2)
+        block_feet = world.get_block(round(self.rect.x), round(self.rect.y - 0.2), layer=2)
+        grab_pole = block_head in world.blocks_climbable
+        on_pole = block_feet in world.blocks_climbable and grab_pole
 
         if window.keybind("jump") and (on_pole or grab_pole):
             self.on_pole = True
@@ -173,12 +177,16 @@ class Player(LivingEntity):
             elif grab_pole and not window.keybind("crouch"):
                 self.rect.x = round(self.rect.x)
                 self.vel[0] = 0
-                self.vel[1] = max(2, self.vel[1])
-                self.state = "climb_pole"
+                if world.get_block(round(self.rect.x), round(self.rect.y + 1), layer=2) in world.blocks_climbable:
+                    self.vel[1] = max(self.climb_speed, self.vel[1])
+                    self.state = "climb_pole"
+                else:
+                    self.vel[1] = 0
+                    self.state = "on_pole"
             elif (not grab_pole) or window.keybind("crouch"):
                 self.rect.x = round(self.rect.x)
                 self.vel[0] = 0
-                self.vel[1] = max(0.15, self.vel[1])
+                self.vel[1] = 0
                 self.state = "on_pole"
         else:
             self.on_pole = False
@@ -409,13 +417,6 @@ class Player(LivingEntity):
             mouse_pull(300) # constant activation balances out w/ gravity --> usable as rope
         """
 
-        # Spawn particle
-        """
-        if window.mouse_buttons[1] == 1: # middle click: spawn particle
-            mouse_pos = window.camera.map_coord(window.mouse_pos[:2], world=True)
-            spawn_particle(mouse_pos)
-        """
-
         # Place/break block with right click
         if window.mouse_buttons[2] == 1:
             mouse_pos = window.camera.map_coord(window.mouse_pos[:2], world=True)
@@ -423,6 +424,8 @@ class Player(LivingEntity):
                 world.set_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), 0)
             else:
                 world.set_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), world.block_name["stone_block"])
+            
+            particle.spawn(window, "big_leaf_particle", *mouse_pos)
 
         # Shoot arrow with left click (no cooldown)
         if window.mouse_buttons[0] == 1:
@@ -442,28 +445,3 @@ class Player(LivingEntity):
         self.move(world, window)
         super().update(world, window.delta_time)
         self.mouse_inputs(world, window)
-
-        "Minecraft-like shifting (not working)"
-        #last_position = self.rect.topleft if window.keybind("crouch") and not (world.get_block(math.floor(self.rect.left), int(self.rect.bottom - 1)) or world.get_block(math.ceil(self.rect.right), int(self.rect.bottom - 1))) else None
-        #super().update(world, window.delta_time)
-        #if (not last_position is None) and (self.rect.y < last_position[1] or world.get_block(math.floor(self.rect.left), int(self.rect.bottom - 1)) or world.get_block(math.ceil(self.rect.right), int(self.rect.bottom - 1))):
-        #    self.rect.topleft = last_position
-        # or
-        #last_position = self.rect.topleft if self.state in ("crawl", "crouch") and (world.get_block(math.floor(self.rect.left), int(self.rect.top - 1)) and self.direction == 0 or world.get_block(math.ceil(self.rect.right) - 1, int(self.rect.top - 1)) and self.direction == 1) else None
-        #super().update(world, window.delta_time)
-        #if (not last_position is None) and (world.get_block(math.floor(self.rect.left), int(self.rect.top - 1)) == 0 and self.direction == 0 or world.get_block(math.ceil(self.rect.right) - 1, int(self.rect.top - 1)) == 0 and self.direction == 1):
-        #    self.rect.topleft = last_position
-        
-
-        "Physics particles"
-        #for particle in particle_list:
-        #    particle.update(world, window.delta_time)
-        #    tmp_draw_rect(window, particle.rect.topleft, [particle.rect.w, particle.rect.h], (0, 255, 255))
-
-"Physics particles"
-#def spawn_particle(pos: list[float, float]):
-#    particle_list.append(PhysicsObject(10, pos, [0.5, 0.5]))
-#def tmp_draw_rect(window: Window, pos: [float, float], size: [float, float], color: [int, int, int]):
-#    rect = window.camera.map_coord((pos[0], pos[1], size[0], size[1]), from_world=True)
-#    window.draw_rect(rect[:2], rect[2:], color)
-#particle_list: list = []

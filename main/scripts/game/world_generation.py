@@ -46,7 +46,7 @@ def generate_world(world, window):
     special_speading = 2
     next_special = 2
 
-    structure_names = random.choices(list(structures.keys()), k=len(structures))
+    structure_names = random.sample(list(structures.keys()), k=len(structures))
     structure_index = 0
 
     generated_structures = []
@@ -62,14 +62,14 @@ def generate_world(world, window):
             next_special = min_special_distance + random.randint(0, special_speading)
             cave_type = random.random()
 
-            if cave_type < 0.3:
+            if cave_type < 0.5:
                 # Structure
                 structure_name = structure_names[structure_index]
                 structure_data = structures[structure_name]
 
                 structure_index += 1
                 if structure_index == len(structures):
-                    structure_names = random.choices(list(structures.keys()), k=len(structures))
+                    structure_names = random.sample(list(structures.keys()), k=len(structures))
                     structure_index = 0
 
                 cave.interpolated(world, position, end_angle=structure_data["generation"]["entrance_angle"], end_radius=structure_data["generation"]["entrance_size"] / 2)
@@ -85,7 +85,7 @@ def generate_world(world, window):
 
                 cave.interpolated(world, position, start_angle=structure_data["generation"]["exit_angle"], start_radius=structure_data["generation"]["exit_size"] / 2)
 
-            elif cave_type < 0.6:
+            elif cave_type < 0.7:
                 # Branch
                 if random.randint(0, 1):
                     cave.vertical(world, position)
@@ -94,7 +94,7 @@ def generate_world(world, window):
                 else:
                     cave.horizontal(world, position)
                     branches.add((*position, 1))
-            elif cave_type < 0.8:
+            elif cave_type < 0.9:
                 # Vertical (no branch)
                 cave.vertical(world, position)
                 poles.add(int(position[0]))
@@ -131,7 +131,7 @@ def generate_world(world, window):
 
     # Generate foliage
     window.loading_progress[1] = 7
-    generate_foliage(world, world.block_pools, blocks_ground, blocks_ceiling, blocks_wall_right, blocks_wall_left)
+    generate_foliage(world, world.block_generation_properties, blocks_ground, blocks_ceiling, blocks_wall_right, blocks_wall_left)
 
     # Generate poles
     generate_poles(world, poles, blocks_ground, blocks_ceiling)
@@ -174,24 +174,21 @@ def find_edge_blocks(world):
 
 
 # Called from generate_world
-def generate_foliage(world, block_pools, blocks_ground, blocks_ceiling, blocks_wall_right, blocks_wall_left):
+def generate_foliage(world, block_generation_properties, blocks_ground, blocks_ceiling, blocks_wall_right, blocks_wall_left):
     blocks_ground = random.choices(list(blocks_ground), k=int(WORLD_VEGETATION_FLOOR_DENSITY * len(blocks_ground)))
     blocks_ceiling = random.choices(list(blocks_ceiling), k=int(WORLD_VEGETATION_CEILING_DENSITY * len(blocks_ceiling)))
     blocks_wall_right = random.choices(list(blocks_wall_right), k=int(WORLD_VEGETATION_WALL_DENSITY * len(blocks_wall_right)))
     blocks_wall_left = random.choices(list(blocks_wall_left), k=int(WORLD_VEGETATION_WALL_DENSITY * len(blocks_wall_left)))
 
-    for coord in blocks_ground:
-        generate_foliage_floor(world, block_pools, coord)
-    for coord in blocks_ceiling:
-        generate_foliage_ceiling(world, block_pools, coord)
-    for coord in blocks_wall_right:
-        generate_foliage_wall(world, block_pools, coord, flipped=0)
-    for coord in blocks_wall_left:
-        generate_foliage_wall(world, block_pools, coord, flipped=1)
+    for (x, y) in blocks_ground + blocks_ceiling + blocks_wall_right + blocks_wall_left:
+        args = get_decoration_block_type(world, x, y)
+        if not args[0] is None:
+            generate_decoration_block(world, x, y, *args)
+
 
 
 # Called from generate_foliage
-def generate_foliage_floor(world, block_pools, coord):
+def generate_foliage_floor(world, block_generation_properties, coord):
     group_layout = False
 
     block_pool, flipped = get_step(world, block_pools, coord, "ground")
@@ -261,6 +258,124 @@ def get_step(world, block_pools, coord, side):
     return block_pool, flipped
 
 
+def get_decoration_block_type(world, x, y):
+    block_below = world.get_block(x, y - 1)
+    block_above = world.get_block(x, y + 1)
+    block_left = world.get_block(x - 1, y)
+    block_right = world.get_block(x + 1, y)
+    water_level = world.get_water(x, y)
+
+    # Exit early
+    if (block_below and block_above) or (0 < water_level < 700):
+        return [None]
+    if block_left and block_right:
+        water = random.random()
+        if water > 0.9:
+            world.set_water(x, y, (water - 0.7) * 2000)
+        return [None]
+
+    corner = False
+    flipped = random.randint(0, 1)
+
+    # Define requirements
+    if block_below:
+        side = "above"
+        block_name = world.block_index[block_below]
+        if block_left:
+            corner = random.randint(0, 1)
+            flipped = 1
+        elif block_right:
+            corner = random.randint(0, 1)
+            flipped = 0
+
+    elif block_above:
+        side = "below"
+        block_name = world.block_index[block_above]
+        if block_left:
+            corner = random.randint(0, 1)
+            flipped = 1
+        elif block_right:
+            corner = random.randint(0, 1)
+            flipped = 0
+
+    elif block_left:
+        side = "wall"
+        block_name = world.block_index[block_left]
+        flipped = 1
+
+    elif block_right:
+        side = "wall"
+        block_name = world.block_index[block_right]
+        flipped = 0
+
+    block_comparison = ("any", block_name, world.block_family[block_name])
+    block_generation_properties = world.block_generation_properties
+
+    decoration_list = list(filter(lambda name: (
+        world.block_generation_properties[name].get("on", "any") in block_comparison and
+        side == world.block_generation_properties[name].get("side", "above") and
+        water_level >= world.block_generation_properties[name].get("water", False) and
+        corner == world.block_generation_properties[name].get("corner", False)
+    ), list(world.block_generation_properties)))
+
+    decoration_block = random.choices(decoration_list, weights=[world.block_generation_properties[name].get("weight", 1) for name in decoration_list])
+
+    if len(decoration_block):
+        decoration_block = decoration_block[0]
+    else:
+        decoration_block = None
+
+    return decoration_block, flipped, side
+
+
+def generate_decoration_block(world, x, y, decoration_block, flipped, side):
+    expansion_length = int(math.sqrt(random.random() * (world.block_generation_properties[decoration_block].get("expansion_length", 1) - 1) ** 2) + 1)
+    expansion_direction = {"up": math.pi / 2, "down": -math.pi / 2, "left": math.pi, "right": 0}.get(world.block_generation_properties[decoration_block].get("expansion_direction", "up"), 0)
+
+    size = world.block_group_size.get(decoration_block, (1, 1))
+    if size == (1, 1):
+        if world.get_block(x, y, world.block_layer[decoration_block]):
+            return
+
+        for i in range(expansion_length):
+            dx = round(math.cos(expansion_direction) * i)
+            dy = round(math.sin(expansion_direction) * i)
+            block_type = world.block_name[decoration_block] + flipped
+            world.set_block(x + dx, y + dy, block_type)
+            flipped = random.randint(0, 1)
+
+    else:
+        width, height = world.block_group_size[decoration_block]
+        layer = world.block_layer[decoration_block + "_0_0"]
+
+        if side == "above":
+            coord = (x - size[0] // 2, y + size[1] - 1)
+            for dx in range(width):
+                if not world.get_block(coord[0] + dx, y - 1):
+                    return
+            
+        elif side == "below":
+            coord = (x - size[0] // 2, y)
+            for dx in range(width):
+                if not world.get_block(coord[0] + dx, y + 1):
+                    return
+
+        else:
+            raise Exception("Grouped blocks on walls not implemented yet!")
+
+        # Check for collisions
+        for dx, dy in numpy.ndindex(size):
+            if any(world.get_block(coord[0] + dx, coord[1] - dy, layer=slice(3), default=[1])):
+                return
+
+        # Place blocks
+        for x in range(width):
+            for y in range(height):
+                name = f"{decoration_block}_{abs((width - 1) * flipped - x)}_{y}"
+                block_type = world.block_name[name] + flipped
+                world.set_block(coord[0] + x, coord[1] - y, block_type)
+
+
 # Called from generate_foliage
 def generate_foliage_ceiling(world, block_pools, coord):
     if not world.get_block(coord[0], coord[1] + 1, 0, False, 0):
@@ -298,9 +413,7 @@ def generate_foliage_wall(world, block_pools, coord, flipped=1):
     block = block_pool[index]
     if world.get_block(*coord, world.block_layer[block]):
         return
-    if flipped and block + "_flipped" in world.block_name:
-        block += "_flipped"
-    block_type = world.block_name[block]
+    block_type = world.block_name[block] + flipped
     world.set_block(*coord, block_type)
 
 

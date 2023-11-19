@@ -1,0 +1,7 @@
+{
+    "name": "impact_particle",
+    "speed": 0,
+    "frames": [
+        "impact_particle.png"
+    ]
+}

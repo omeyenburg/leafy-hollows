@@ -19,12 +19,18 @@ def setup(window, image: str, time: float, delay: float, size: tuple=(1, 1), gra
     window.particle_types[image] = ([delay], time, delay, gravity, growth, speed, angle, divergence, size, amount)
 
 
+def spawn_possible(window, name):
+    """
+    Test if particle can be spawned.
+    """
+    return window.options["particles"] and window.particle_types[name][0][0] < window.time
+
+
 def spawn(window, name, x: float, y: float, speed: float=None, angle: float=None, divergence: float=None):
     """
     Spawn a particle.
     """
-    particle_multiplier = window.options["particles"]
-    if (not particle_multiplier) or window.particle_types[name][0][0] > window.time:
+    if not spawn_possible(window, name):
         return
 
     window.particle_types[name][0][0] = window.time + window.particle_types[name][2]
@@ -42,7 +48,7 @@ def spawn(window, name, x: float, y: float, speed: float=None, angle: float=None
     elif amount < 0:
         absolute_amount = -round(amount)
     else:
-        absolute_amount = round(particle_multiplier * amount)
+        absolute_amount = round(window.options["particles"] * amount)
 
     for _ in range(absolute_amount):
         if divergence:
@@ -77,13 +83,14 @@ def update_particle(window, i, particle):
     window.particles[i][1] += math.cos(angle) * speed * window.delta_time
     window.particles[i][2] += (math.sin(angle) * speed - window.particle_types[name][3]) * window.delta_time
     if window.particle_types[name][7]:
-        window.particles[i][5] += random.random() * window.particle_types[name][7] / 200
+        window.particles[i][5] += (random.random() - 0.5 + window.particle_wind) * window.particle_types[name][7] / 200
     size_factor = 1 - (time - window.time) / window.particle_types[name][1] * window.particle_types[name][4]
     size = (window.particle_types[name][8][0] * size_factor, window.particle_types[name][8][1] * size_factor)
 
     rect = window.camera.map_coord((x - size[0] / 2, y - size[1] / 2, *size), from_world=True)
     window.draw_image(name, rect[:2], rect[2:])
-    window.particles[i][4] *= 0.9
+    if window.particle_types[name][3] + speed < window.particle_types[name][3]:
+        window.particles[i][4] *= 0.9
 
     if not (-1 < rect[0] < 2 and -1 < rect[1] < 2):
         window.particles.pop(i)

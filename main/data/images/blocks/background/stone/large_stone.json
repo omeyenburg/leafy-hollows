@@ -4,8 +4,12 @@
     "layer": "background",
     "hardness": 1,
     "speed": 0,
-    "pool": "vegetation_block_group_floor",
     "frames": [
         "large_stone.png"
-    ]
+    ],
+    "generation": {
+        "on": "any",
+        "side": "above",
+        "weight": 1
+    }
 }

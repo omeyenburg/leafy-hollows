@@ -6,5 +6,10 @@
     "speed": 0,
     "frames": [
         "spikes.png"
-    ]
+    ],
+    "generation": {
+        "on": "stone",
+        "side": "above",
+        "weight": 1
+    }
 }

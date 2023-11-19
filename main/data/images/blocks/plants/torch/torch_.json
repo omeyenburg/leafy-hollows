@@ -4,10 +4,14 @@
     "layer": "plant",
     "hardness": 1,
     "speed": 0.1,
-    "pool": "vegetation_floor_uncommon",
     "frames": [
         "torch_a.png",
         "torch_b.png",
         "torch_c.png"
-    ]
+    ],
+    "generation": {
+        "on": "any",
+        "side": "above",
+        "weight": 4
+    }
 }

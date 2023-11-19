@@ -4,9 +4,15 @@
     "layer": "background",
     "hardness": 1,
     "speed": 0.5,
-    "pool": "vegetation_ceiling",
     "frames": [
         "vines0_a.png",
         "vines0_b.png"
-    ]
+    ],
+    "generation": {
+        "on": "any",
+        "side": "below",
+        "weight": 3,
+        "expansion_length": 5,
+        "expansion_direction": "down"
+    }
 }

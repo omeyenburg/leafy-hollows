@@ -6,5 +6,10 @@
     "speed": 0,
     "frames": [
         "jade0.png"
-    ]
+    ],
+    "generation": {
+        "on": "any",
+        "side": "above",
+        "weight": 2
+    }
 }

@@ -1,0 +1,7 @@
+{
+    "name": "swing_particle",
+    "speed": 0,
+    "frames": [
+        "swing_particle.png"
+    ]
+}

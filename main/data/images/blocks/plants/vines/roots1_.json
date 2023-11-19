@@ -4,9 +4,13 @@
     "layer": "plant",
     "hardness": 1,
     "speed": 0.5,
-    "pool": "vegetation_ceiling",
     "frames": [
         "roots1_a.png",
         "roots1_b.png"
-    ]
+    ],
+    "generation": {
+        "on": "any",
+        "side": "below",
+        "weight": 9
+    }
 }
