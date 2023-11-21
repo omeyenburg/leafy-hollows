@@ -13,7 +13,6 @@ import time
 
 class World:
     def __init__(self, block_data, block_generation_properties, block_group_size, block_properties):
-        #super().__init__() # {(x, y): (block, plant, background, water_level)}
         self.seed: float = random.randint(-10**6, 10**6) + math.e # Float between -10^6 and 10^6
         self.view: numpy.array = None # Sent to shader to render
         self.view_size: tuple = (0, 0)
@@ -79,8 +78,6 @@ class World:
     def create_chunk(self, x: int, y: int):
         self.chunks[(x, y)] = numpy.zeros((32, 32, 4))
         self.chunks[(x, y)][:, :, 0] = self.block_name["dirt_block"]
-        #for delta_x, delta_y in numpy.ndindex((WORLD_CHUNK_SIZE, WORLD_CHUNK_SIZE)):
-        #    generate_block(self, delta_x + x * WORLD_CHUNK_SIZE, delta_y + y * WORLD_CHUNK_SIZE)
 
     def get_block_exists(self, x: int, y: int):
         chunk_x = x >> WORLD_CHUNK_SIZE_POWER
@@ -111,7 +108,6 @@ class World:
         if not (chunk_x, chunk_y) in self.chunks:
             if generate:
                 self.create_chunk(chunk_x, chunk_y)
-                #generate_block(self, x, y)
             else:
                 if isinstance(default, (tuple, list)):
                     return default[layer]
@@ -333,6 +329,9 @@ class World:
             #self.view[dest_start_x:dest_end_x, dest_start_y:dest_end_y] = data  
 
     def save(self, window):
+        if not window.options["save world"]:
+            return        
+
         window.loading_progress[:3] = "Saving", 0, 1.1
         file.save("data/user/world.data", self, file_format="pickle")
         window.loading_progress[1] = 1.1

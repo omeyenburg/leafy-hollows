@@ -10,17 +10,32 @@ import os
 
 
 def get_file():
-    print("\n"*5)
-    edit_file = input("Gib 'e' ein, um eine Struktur zu bearbeiten\noder nichts, um eine neu Struktur zu erstellen: ").startswith("e")
+    print("\n"* 5)
+    print("Wenn der Editor geschlossen wird, wird die Struktur gespeichert.")
+    print("Bewege die Leinwand mit den Pfeiltasten oder mit Rechtsklick.")
+    print("Wähle Maloptionen im rechten Menü des Editors. Wähle für \"draw\" ebenfalls einen Block aus.")
+    print()
+    edit_file = input("Gib 'e' ein, um eine existierende Struktur zu bearbeiten\noder nichts, um eine neue Struktur zu erstellen: ").startswith("e")
+    print()
 
     if edit_file:
-        filepath = input("Wähle die Datei: ")
-        # Read file or exit
-        with open(filepath, 'rb') as f:
-            structure_data = pickle.load(f)
-        print("selected", filepath)
+        name = input("Wähle den Namen der existierenden Struktur: ")
+
+        if not file.exists(f"data/structures/{name}/{name}.json") and file.exists(f"data/structures/{name}/{name}.npy"):
+            raise FileNotFoundError("Diese Struktur ist nicht gespeichert.")
+
+        structure_data = file.load(f"data/structures/{name}/{name}.json", file_format="json")
+        
+        array = numpy.flip(file.load(f"data/structures/{name}/{name}.npy", file_format="numpy"), 1)
+        structure_data["size"] = array.shape[:2]
+
+        for index, name in list(structure_data["block_indices"].items()):
+            del structure_data["block_indices"][index]
+            structure_data["block_indices"][int(index)] = name
+
+        structure_data["array"] = array
     else:
-        name = input("Wähle einen Namen: ")
+        name = input("Wähle einen Namen für die Struktur: ")
         width = abs(int(input("Wähle die Breite in Blöcken: ")))
         height = abs(int(input("Wähle die Höhe in Blöcken: ")))
         array = numpy.zeros((width, height, 4), dtype=int)
@@ -74,21 +89,30 @@ def load_blocks():
     block_data = {}
     block_indices = {}
 
-    for i, path in enumerate(block_paths):
+    i = 0
+    for path in block_paths:
         data = file.load(path, file_format="json")
         block = data["name"]
         image_name = data["frames"][0]
         path = file.find("data/images/blocks", image_name, True)[0]
         block_surface = pygame.image.load(path)
 
+        if block_surface.get_size() != (16, 16):
+            continue
+
         block_data[data["name"]] = (i + 1, {"foreground":0, "plant":1, "background":2, "water":3}[data["layer"]], block_surface)
         block_indices[i + 1] = data["name"]
+        i += 1
+
     return block_data, block_indices
 
 
-structure_data = get_file()
 block_data, block_indices = load_blocks()
-structure_string_array = structure_data["array"].tolist()
+structure_data = get_file()
+try:
+    structure_string_array = structure_data["array"].tolist()
+except:
+    structure_string_array = structure_data["array"]
 
 canvas_move_speed = 1
 
@@ -114,8 +138,11 @@ offset = [0, 0]
 offset_block_list = 0
 BLOCK_SIZE = 32
 font = pygame.freetype.SysFont(None, 20)
-options = {"erase": 0, "draw": 0, "draw water": 0, "add water": 0, "sub water": 0, "layer0": 1, "layer1": 1, "layer2": 1, "layer3": 1, "draw layer": 0}
+options = {"erase": 0, "draw": 0, "draw water": 0, "add water": 0, "sub water": 0, "show layer 0": 1, "show layer 1": 1, "show layer 2": 1, "show layer 3": 1, "draw layer": 0}
 selected_block = list(block_data.keys())[0]
+
+right_click_start = (0, 0)
+right_click = False
 
 
 def get_block_rect(x, y):
@@ -133,11 +160,21 @@ while True:
             pygame.quit()
             sys.exit()
         if event.type == MOUSEBUTTONDOWN:
-            if event.button == 1:
+            if event.button == 3:
+                right_click_start = event.pos
+                right_click = True
+            elif event.button == 1:
                 mouse_down = 1
                 can_draw = 1
+        if event.type == MOUSEBUTTONUP:
+            if event.button == 3:
+                right_click = False
         if event.type == pygame.MOUSEWHEEL:
             scroll = event.y
+        if event.type == pygame.MOUSEMOTION:
+            if right_click:
+                offset = (offset[0] + event.rel[0] / structure_data["size"][0], offset[1] + event.rel[1] / structure_data["size"][1])
+        
 
     keys = pygame.key.get_pressed()
     if keys[K_RIGHT]:
@@ -179,7 +216,7 @@ while True:
         pygame.draw.rect(window, (200, 200, 200), rect)
 
         for z in reversed(range(4)):
-            if not options["layer" + str(z)]:
+            if not options["show layer " + str(z)]:
                 continue
             if z == 3:
                 rect = get_block_rect(x, y)
@@ -201,13 +238,45 @@ while True:
             color = (0, 0, 0)
             rect = font.render_to(window, (window.get_width() - 180, i * BLOCK_SIZE * 0.7), option + ": " + str(value), color)
         elif option == "type":
+            i += 1
+            rect = font.render_to(window, (window.get_width() - 180, i * BLOCK_SIZE * 0.7), "Selected block:", (0, 0, 0))
+            i += 1
             rect = font.render_to(window, (window.get_width() - 180, i * BLOCK_SIZE * 0.7), value, (0, 0, 0))
+            i += 1
+            rect = font.render_to(window, (window.get_width() - 180, i * BLOCK_SIZE * 0.7), "Block layer: " + str(block_data[value][1]), (0, 0, 0))
         else:
             color = [(200, 50, 50), (50, 200, 50)][value]
             rect = font.render_to(window, (window.get_width() - 180, i * BLOCK_SIZE * 0.7), option, color)
         
         if mouse_down and rect.collidepoint(mouse_pos) and option != "type":
-            if option == "draw layer":
+            if option == "erase":
+                options[option] = not value
+                if not value:
+                    for other in ("draw", "draw water", "add water", "sub water"):
+                        options[other] = False
+            elif option == "draw":
+                options[option] = not value
+                if not value:
+                    for other in ("erase", "draw water", "add water", "sub water"):
+                        options[other] = False
+            elif option == "draw water":
+                options[option] = not value
+                if not value:
+                    for other in ("erase", "draw"):
+                        options[other] = False
+            elif option == "add water":
+                options[option] = not value
+                if not value:
+                    options["draw water"] = True
+                    for other in ("erase", "draw", "sub water"):
+                        options[other] = False
+            elif option == "sub water":
+                options[option] = not value
+                if not value:
+                    options["draw water"] = True
+                    for other in ("erase", "draw", "add water"):
+                        options[other] = False
+            elif option == "draw layer":
                 options[option] = (value + 1) % 4
             else:
                 options[option] = not value
@@ -221,6 +290,3 @@ while True:
             selected_block = name
 
     pygame.display.flip()
-    
-        
-    

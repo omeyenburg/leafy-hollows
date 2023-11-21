@@ -46,6 +46,7 @@ PLAYER_RECT_SIZE_SWIM: [float] = (0.9, 0.9)
 ARROW_RECT_SIZE: [float] = (0.2, 0.2)
 SLIME_RECT_SIZE: [float] = (0.7, 0.7)
 GOBLIN_RECT_SIZE: [float] = (0.9, 1.8)
+BAT_RECT_SIZE: [float] = (0.7, 0.7)
 
 PHYSICS_REALISTIC: bool = False
 PHYSICS_PREVENT_MOVEMENT_IN_AIR: bool = False

@@ -13,10 +13,19 @@ class Font:
         if CREATE_TEXTURE_ATLAS_FILE:
             pygame.image.save(image, file.abspath("data/font (testing only).png"))
 
+        if ".ttf" in name:
+            file.save("data/fonts/" + name.replace(".ttf", ".json"), instance.char_rects, file_format="json")
+            pygame.image.save(image, file.abspath("data/fonts/" + name.replace(".ttf", ".png")))
+
         return instance, image
 
     def _load(self, name, resolution, bold, antialias):
         # Load font
+        if ".json" in name:
+            self.char_rects = file.load("data/fonts/" + name, file_format="json")
+            image = pygame.image.load(file.abspath("data/fonts/" + name.replace(".json", ".png")))
+            return image
+
         if "." in name:
             font = pygame.font.Font(file.abspath("data/fonts/" + name), resolution)
             font.bold = bold
