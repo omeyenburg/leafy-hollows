@@ -231,7 +231,7 @@ class Menu:
         button_show_fps = Button(settings_video_page, MENU_BUTTON_SMALL_SIZE, callback=button_show_fps_update, text="Show Fps: " + str(window.options["show fps"]), fontsize=TEXT_SIZE_OPTION)
         button_show_fps.hover_callback = lambda: self.info_hover_box(
             button_show_fps.rect.centerx < 0,
-            "Show Fps",
+            "Display Fps",
             "none"
         )
 
@@ -243,7 +243,7 @@ class Menu:
         button_show_debug = Button(settings_video_page, MENU_BUTTON_SMALL_SIZE, callback=button_show_debug_update, text="Show debug: " + str(window.options["show debug"]), fontsize=TEXT_SIZE_OPTION)
         button_show_debug.hover_callback = lambda: self.info_hover_box(
             button_show_debug.rect.centerx < 0,
-            "Show debug",
+            "Display debug",
             "low",
             "Show debug information for developers."
         )
@@ -322,15 +322,41 @@ class Menu:
             "Set the distance of blocks, which are updated around the visible region."
         )
 
+        # Toggle auto jump button
+        def button_auto_jump_update():
+            window.options["auto jump"] = not window.options["auto jump"]
+            button_auto_jump.text = "Auto jump: " + f"{str(window.options['auto jump']):5}"
+
+        button_auto_jump = Button(settings_world_page, MENU_BUTTON_SMALL_SIZE, callback=button_auto_jump_update, text="Auto jump: " + str(window.options["auto jump"]), fontsize=TEXT_SIZE_OPTION)
+        button_auto_jump.hover_callback = lambda: self.info_hover_box(
+            button_auto_jump.rect.centerx < 0,
+            "Auto jump",
+            "none",
+            "When enabled, the player jumps up blocks while walking."
+        )
+
+        # Toggle save world button
+        def button_save_world_update():
+            window.options["save world"] = not window.options["save world"]
+            button_save_world.text = "Save world: " + f"{str(window.options['save world']):5}"
+
+        button_save_world = Button(settings_world_page, MENU_BUTTON_SMALL_SIZE, callback=button_save_world_update, text="Save world: " + str(window.options["save world"]), fontsize=TEXT_SIZE_OPTION)
+        button_save_world.hover_callback = lambda: self.info_hover_box(
+            button_save_world.rect.centerx < 0,
+            "Save World",
+            "none",
+            "When enabled and you quit your game, your world is saved in a file."
+        )
+
         # Delete world
         def button_delete_world_update():
             if file.exists("data/user/world.data"):
                 delete_world_page.open()
 
-        button_delete_world = Button(settings_world_page, MENU_BUTTON_SMALL_SIZE, callback=button_delete_world_update, text="Delete World", fontsize=TEXT_SIZE_BUTTON)
+        button_delete_world = Button(settings_world_page, MENU_BUTTON_SMALL_SIZE, callback=button_delete_world_update, text="Delete World", fontsize=TEXT_SIZE_OPTION)
         button_delete_world.hover_callback = lambda: self.info_hover_box(
             button_delete_world.rect.centerx < 0,
-            "Delete World",
+            "Delete World...",
             description="If you delete your world, a new world will be created."
         )
 

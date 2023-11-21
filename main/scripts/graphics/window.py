@@ -179,7 +179,8 @@ class Window:
         self._texSprites = self._texture(sprite_atlas_image)
 
         # Font texture
-        self._font_options = ("RobotoMono-Bold.ttf", "bold")
+        self._font_options = ("RobotoMono-Bold.json", "bold")
+        #self._font_options = ("Arial", "bold")
         self._font, font_atlas_image = Font(
             self._font_options[0],
             resolution=self.options["text resolution"],
@@ -883,11 +884,11 @@ class Window:
                 rect[3] * 2 - y_offset * rect[3] * 2 * line_height * size * y_factor_fixed
             )
     
-    def draw_image(self, image: str, position: [float], size: [float], angle: float=0.0, flip: [int]=(0, 0)):
+    def draw_image(self, image: str, position: [float], size: [float], angle: float=0.0, flip: [int]=(0, 0), animation_offset: float=0):
         """
         Draw an image on the window.
         """
-        rect = get_sprite_rect(self, image)
+        rect = get_sprite_rect(self, image, offset=animation_offset)
 
         dest_rect = (position[0] + size[0] / 2, position[1] + size[1] / 2, size[0] / 2, size[1] / 2)
         if self.stencil_rect:

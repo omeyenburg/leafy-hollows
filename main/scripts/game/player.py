@@ -103,15 +103,11 @@ class Player(LivingEntity):
                 self.vel[0] = -max_speed
             else:
                 self.vel[0] -= acceleration_speed
-
-        # Adjust animation
-        if self.block_below and abs(self.vel[0]) > 1 and not (self.block_right or self.block_left):
-            if self.state == "crouch":
-                self.state = "crawl"
-            elif window.keybind("sprint"):
-                self.state = "sprint"
-            else:
-                self.state = "walk"
+            
+        # Auto jump
+        if window.options["auto jump"] and self.block_below and (bool(key_right) ^ bool(key_left)) and (not window.keybind("jump")) and world.get_block(math.floor(abs(-self.rect.left * bool(key_left) + self.rect.right * bool(key_right) + 0.6)), round(self.rect.y)) and (not world.get_block(math.floor(abs(-self.rect.left * bool(key_left) + self.rect.right * bool(key_right) + 0.6)), round(self.rect.y + 1))):
+            self.jump(window, 5)
+            self.vel[0] *= 0.7
         
         # Friction
         self.apply_force_horizontal(-self.vel[0] * self.mass * block_fricton * 0.1, 1)
@@ -169,10 +165,10 @@ class Player(LivingEntity):
                 if abs(self.vel[0]) < 1:
                     if window.keybind("right"):
                         self.direction = 0
-                        self.vel[0] += 10 * window.delta_time ** 0.2
+                        self.vel[0] += 10 * window.delta_time ** 0.2 * (1 + 0.5 * (self.vel[1] < 0))
                     else:
                         self.direction = 1
-                        self.vel[0] -= 10 * window.delta_time ** 0.2
+                        self.vel[0] -= 10 * window.delta_time ** 0.2 * (1 + 0.5 * (self.vel[1] < 0))
                     self.vel[1] = 5
             elif grab_pole and not window.keybind("crouch"):
                 self.rect.x = round(self.rect.x)
@@ -252,7 +248,15 @@ class Player(LivingEntity):
                 self.state = "high_jump"
         elif self.vel[1] < 0 and self.state != "crouch_jump":
             # Slow fall
-            self.state = "fall_slow"  
+            self.state = "fall_slow"
+
+        if self.block_below and abs(self.vel[0]) > 1 and not (self.block_right or self.block_left):
+            if self.state == "crouch":
+                self.state = "crawl"
+            elif window.keybind("sprint"):
+                self.state = "sprint"
+            else:
+                self.state = "walk"
         #window.draw_block_highlight(*wall_block_right)
         #window.draw_block_highlight(*wall_block_top_right, (0, 255, 0, 100))
         #window.draw_circle(window.camera.map_coord((self.rect.centerx, self.rect.bottom), from_world=True), 0.01, (255, 0, 0, 100))
@@ -391,8 +395,8 @@ class Player(LivingEntity):
             
             if not self.on_pole:
                 # Normal movement
-                self.animation_normal(world, window)
                 self.move_normal(world, window)
+                self.animation_normal(world, window)
                 self.sounds_normal(world, window)
         
         # Resize hitbox if necessary
@@ -418,12 +422,14 @@ class Player(LivingEntity):
         """
 
         # Place/break block with right click
+        """
         if window.mouse_buttons[2] == 1:
             mouse_pos = window.camera.map_coord(window.mouse_pos[:2], world=True)
             if world.get_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1])) > 0:
                 world.set_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), 0)
             else:
                 world.set_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), world.block_name["stone_block"])
+        """
             
         # Shoot arrow with left click (no cooldown)
         if window.mouse_buttons[0] == 1:

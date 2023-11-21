@@ -89,7 +89,7 @@ def update_particle(window, i, particle):
 
     rect = window.camera.map_coord((x - size[0] / 2, y - size[1] / 2, *size), from_world=True)
     window.draw_image(name, rect[:2], rect[2:])
-    if window.particle_types[name][3] + speed < window.particle_types[name][3]:
+    if -window.particle_types[name][3] + math.sin(angle) > -window.particle_types[name][3]:
         window.particles[i][4] *= 0.9
 
     if not (-1 < rect[0] < 2 and -1 < rect[1] < 2):

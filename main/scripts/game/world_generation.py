@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from scripts.game.world_noise import pnoise1, snoise2
+from scripts.game.noise_functions import pnoise1, snoise2
 from scripts.game import cave
 from scripts.utility.const import *
 from scripts.game import structure
@@ -129,22 +129,19 @@ def generate_world(world, window):
     # Find block edges with air
     blocks_ground, blocks_ceiling, blocks_wall_right, blocks_wall_left = find_edge_blocks(world)
 
-    # Generate foliage
-    window.loading_progress[1] = 7
-    generate_foliage(world, world.block_generation_properties, blocks_ground, blocks_ceiling, blocks_wall_right, blocks_wall_left)
-
-    # Generate poles
+     # Generate poles
     generate_poles(world, poles, blocks_ground, blocks_ceiling)
+
+    # Generate foliage
+    generate_foliage(world, blocks_ground, blocks_ceiling, blocks_wall_right, blocks_wall_left)
 
     # Spawn enemies
     window.loading_progress[:2] = "Spawing enemies", 11
-    spawn_blocks = random.choices(list(blocks_ground), k=int(0.05 * len(blocks_ground)))
+    spawn_blocks = random.sample(list(blocks_ground), k=int(0.05 * len(blocks_ground)))
+
     for coord in spawn_blocks:
-        if random.randint(0, 1):
-            entity = Goblin(coord)
-        else:
-            entity = Slime(coord)
-        world.add_entity(entity)
+        Entity = random.choice((Slime, Goblin, Bat))
+        world.add_entity(Entity(coord))
 
 
 # Called from generate_world
@@ -178,7 +175,7 @@ def find_edge_blocks(world):
 
 
 # Called from generate_world
-def generate_foliage(world, block_generation_properties, blocks_ground, blocks_ceiling, blocks_wall_right, blocks_wall_left):
+def generate_foliage(world, blocks_ground, blocks_ceiling, blocks_wall_right, blocks_wall_left):
     blocks_ground = random.choices(list(blocks_ground), k=int(WORLD_VEGETATION_FLOOR_DENSITY * len(blocks_ground)))
     blocks_ceiling = random.choices(list(blocks_ceiling), k=int(WORLD_VEGETATION_CEILING_DENSITY * len(blocks_ceiling)))
     blocks_wall_right = random.choices(list(blocks_wall_right), k=int(WORLD_VEGETATION_WALL_DENSITY * len(blocks_wall_right)))
@@ -188,78 +185,6 @@ def generate_foliage(world, block_generation_properties, blocks_ground, blocks_c
         args = get_decoration_block_type(world, x, y)
         if not args[0] is None:
             generate_decoration_block(world, x, y, *args)
-
-
-
-# Called from generate_foliage
-def generate_foliage_floor(world, block_generation_properties, coord):
-    group_layout = False
-
-    block_pool, flipped = get_step(world, block_pools, coord, "ground")
-    if not block_pool:
-        flipped: bool = random.randint(0, 1)
-        group: float = random.random()
-
-        if group < 0.15:
-            block_pool = block_pools["vegetation_block_group_floor"]
-            group_layout = True
-        elif group < 0.3:
-            block_pool = block_pools["vegetation_floor_rare"]
-        elif group < 0.6:
-            block_pool = block_pools["vegetation_floor_uncommon"]
-        else:
-            block_pool = block_pools["vegetation_floor_common"]
-
-    index = random.randint(0, len(block_pool) - 1)
-    block = block_pool[index]
-    if not group_layout:
-        if world.get_block(*coord, world.block_layer[block]):
-            return
-        block_type = world.block_name[block] + flipped
-        world.set_block(*coord, block_type)
-    else:
-        width, height = world.block_group_size[block]
-        layer = world.block_layer[block + "_0_0"]
-        coord = (coord[0] - width // 2, coord[1] + height - 1)
-
-        # Check for full blocks below
-        for x in range(width):
-            if not world.get_block(coord[0] + x, coord[1] - height, 0):
-                return
-
-        # Check for collisions
-        for x in range(width):
-            for y in range(height):
-                if world.get_block(coord[0] + x, coord[1] - y, layer):
-                    return
-
-        # Place blocks
-        for x in range(width):
-            for y in range(height):
-                name = f"{block}_{abs((width - 1) * flipped - x)}_{y}"
-                block_type = world.block_name[name] + flipped
-                world.set_block(coord[0] + x, coord[1] - y, block_type)
-
-
-def get_step(world, block_pools, coord, side):
-    block_left = world.get_block(coord[0] - 1, coord[1])
-    block_right = world.get_block(coord[0] + 1, coord[1])
-    block_vertical = world.get_block(coord[0], coord[1] - 2 * (side == "ground") + 1)
-    block_pool = []
-
-    if block_left and not block_right:
-        flipped = 1
-    elif block_right and not block_left:
-        flipped = 0
-    else:
-        return [], 0
-    
-    pool_identifier = world.block_family[world.block_index[block_vertical]]
-    pool_identifier += ("_step_ground" if side == "ground" else "_step_ceiling")
-    if pool_identifier in block_pools:
-        block_pool = block_pools[pool_identifier]
-
-    return block_pool, flipped
 
 
 def get_decoration_block_type(world, x, y):
@@ -338,12 +263,15 @@ def generate_decoration_block(world, x, y, decoration_block, flipped, side):
 
     size = world.block_group_size.get(decoration_block, (1, 1))
     if size == (1, 1):
-        if world.get_block(x, y, world.block_layer[decoration_block]):
-            return
+        layer = world.block_layer[decoration_block]
 
         for i in range(expansion_length):
             dx = round(math.cos(expansion_direction) * i)
             dy = round(math.sin(expansion_direction) * i)
+
+            if world.get_block(x + dx, y + dy, layer):
+                return
+
             block_type = world.block_name[decoration_block] + flipped
             world.set_block(x + dx, y + dy, block_type)
             flipped = random.randint(0, 1)
@@ -380,61 +308,38 @@ def generate_decoration_block(world, x, y, decoration_block, flipped, side):
                 world.set_block(coord[0] + x, coord[1] - y, block_type)
 
 
-# Called from generate_foliage
-def generate_foliage_ceiling(world, block_pools, coord):
-    if not world.get_block(coord[0], coord[1] + 1, 0, False, 0):
-        return
-
-    block_pool, flipped = get_step(world, block_pools, coord, "ceiling")
-    if not block_pool:
-        block_pool = block_pools["vegetation_ceiling"]
-        flipped = random.randint(0, 1)
-
-    index = random.randint(0, len(block_pool) - 1)
-    block = block_pool[index]
-
-    if block.startswith("vines"):
-        length = int(math.sqrt(random.random() * 64) + 1)
-    else:
-        length = 1
-
-    for i in range(length):                
-        block_type = world.block_name[block] + flipped
-        x, y = coord[0], coord[1] - i
-        if world.get_block(x, y, 0, False, 1) or world.get_block(x, y, world.block_layer[block], False, 1):
-            break
-
-        world.set_block(x, y, block_type)
-
-        if i != length - 1:
-            flipped = random.randint(0, 1)
-
-
-# Called from generate_foliage
-def generate_foliage_wall(world, block_pools, coord, flipped=1):
-    block_pool = block_pools["vegetation_wall"]
-    index = random.randint(0, len(block_pool) - 1)
-    block = block_pool[index]
-    if world.get_block(*coord, world.block_layer[block]):
-        return
-    block_type = world.block_name[block] + flipped
-    world.set_block(*coord, block_type)
-
-
 # Called from generate_world
 def generate_poles(world, poles, blocks_ground, blocks_ceiling):
     blocks_ground = dict(blocks_ground)
     blocks_ceiling = dict(blocks_ceiling)
 
     for x in poles:
-        if not (x in blocks_ground and x in blocks_ceiling):
+        pole_x = x
+        pole_y_ground = 0
+        pole_y_ceiling = 0
+        pole_height = 0
+
+        for x_offest in range(-2, 3):
+            if not ((x + x_offest) in blocks_ground and (x + x_offest) in blocks_ceiling):
+                continue
+
+            y_ground = blocks_ground[x]
+            y_ceiling = max(y_ground, blocks_ceiling[x] - 2)
+            height = y_ceiling - y_ground - abs(x_offest)
+
+            if height > pole_height:
+                pole_x = x + x_offest
+                pole_y_ground = y_ground
+                pole_y_ceiling = y_ceiling
+                pole_height = height
+
+        if not pole_height:
+            print("Could not generate a pole at x=" + str(x))
             continue
 
-        y_ground = blocks_ground[x]
-        y_ceiling = max(y_ground, blocks_ceiling[x] - 2)
-
-        for y in range(y_ground, y_ceiling):
-            world.set_block(x, y, world.block_name["pole"])
+        for y in range(pole_y_ground, pole_y_ceiling):
+            world.set_block(pole_x, y, world.block_name["pole"])
+            world.set_block(pole_x, y, 0, 0)
 
 
 # Called from generate_world

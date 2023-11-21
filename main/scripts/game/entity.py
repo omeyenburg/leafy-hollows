@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from scripts.game.noise_functions import pnoise1
 from scripts.game.baseentity import LivingEntity
 from scripts.game.physics import PhysicsObject
 from scripts.graphics.window import Window
@@ -65,7 +66,7 @@ class Slime(LivingEntity):
         #window.draw_rect(rect[:2], rect[2:], (255, 0, 0, 100))
 
         rect = window.camera.map_coord((self.rect.x - 0.5 + self.rect.w / 2, self.rect.y, 1, 1), from_world=True)
-        window.draw_image("slime_" + self.state, rect[:2], rect[2:], flip=(self.direction, 0))
+        window.draw_image("slime_" + self.state, rect[:2], rect[2:], flip=(self.direction, 0), animation_offset=self.uuid)
 
     def update(self, world, window: Window):
         if self.block_below:
@@ -114,6 +115,7 @@ class Goblin(LivingEntity):
         self.level = 1             # Difficulty
         self.hit_damage = 1        # Damage applied to player on collision
         self.attack_cooldown = 3
+        self.max_speed = 3
 
         # Animation states
         self.state: str = "idle"    # state is used for movement & animations
@@ -126,21 +128,76 @@ class Goblin(LivingEntity):
         #window.draw_rect(rect[:2], rect[2:], (255, 0, 0, 100))
 
         rect = window.camera.map_coord((self.rect.x - 1 + self.rect.w / 2, self.rect.y, 2, 2), from_world=True)
-        window.draw_image("goblin_" + self.state, rect[:2], rect[2:], flip=(self.direction, 0))
+        window.draw_image("goblin_" + self.state, rect[:2], rect[2:], flip=(self.direction, 0), animation_offset=self.uuid)
 
     def update(self, world, window: Window):
-        speed = min(4, abs(world.player.rect.x - self.rect.x))
-        if world.player.rect.x < self.rect.x:
+        speed = min(self.max_speed, abs(world.player.rect.centerx - self.rect.centerx))
+        if world.player.rect.centerx < self.rect.centerx:
             self.vel[0] = -speed
             self.direction = 1
+            side_block = world.get_block(math.floor(self.rect.left - 0.6), round(self.rect.y))
         else:
             self.vel[0] = speed
             self.direction = 0
+            side_block = world.get_block(math.floor(self.rect.right + 0.6), round(self.rect.y))
 
-        super().update(world, window.delta_time)
-
-        if abs(self.vel[0]) > 1:
+        # Auto jump
+        if side_block and self.block_below:
+            self.vel[1] += 6.5
+            self.vel[0] *= 0.5
+        
+        if not self.block_below:
+            self.state = "jump"
+            self.hit_ground = 0.2
+        elif self.hit_ground > 0:
+            self.hit_ground = max(0, self.hit_ground - window.delta_time)
+            self.state = "hit_ground"
+            self.vel[0] *= 0.4
+        elif abs(self.vel[0]) > 1:
             self.state = "walk"
         else:
             self.state = "idle"
 
+        super().update(world, window.delta_time)
+
+
+class Bat(LivingEntity):
+    def __init__(self, spawn_pos: [float]):
+        super().__init__(30, spawn_pos, BAT_RECT_SIZE, health=3)
+
+        # Enemy attributes
+        self.level = 1             # Difficulty
+        self.hit_damage = 1        # Damage applied to player on collision
+        self.attack_cooldown = 3
+        self.max_speed = 2.5
+
+        # Animation states
+        self.state: str = "fly"    # state is used for movement & animations
+        self.direction: int = 0     # 0 -> right; 1 -> left
+        self.hit_ground = 0         # Used for hit ground animation
+
+    def draw(self, window: Window):
+        # Draw hitbox
+        #rect = window.camera.map_coord((self.rect.x, self.rect.y, self.rect.w, self.rect.h), from_world=True)
+        #window.draw_rect(rect[:2], rect[2:], (255, 0, 0, 100))
+
+        rect = window.camera.map_coord((self.rect.x - 0.5 + self.rect.w / 2, self.rect.y, 1, 1), from_world=True)
+        window.draw_image("bat_" + self.state, rect[:2], rect[2:], flip=(self.direction, 0), animation_offset=self.uuid)
+
+    def update(self, world, window: Window):
+        speed_x = min(self.max_speed, abs(world.player.rect.centerx - self.rect.centerx))
+        if world.player.rect.centerx < self.rect.centerx:
+            self.vel[0] = -speed_x
+            self.direction = 1
+        else:
+            self.vel[0] = speed_x
+            self.direction = 0
+
+        speed_y = min(self.max_speed, abs(world.player.rect.centery - self.rect.centery))
+        y_offset = pnoise1(window.time / 20 + self.uuid * 10, 5) * 10
+        if world.player.rect.centery + y_offset < self.rect.centery:
+            self.vel[1] = -speed_y
+        else:
+            self.vel[1] = speed_y
+
+        super().update(world, window.delta_time)

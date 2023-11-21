@@ -1,0 +1,10 @@
+{
+    "name": "stone_wall",
+    "family": "stone",
+    "layer": "background",
+    "hardness": 1,
+    "speed": 0,
+    "frames": [
+        "stone_wall.png"
+    ]
+}

@@ -6,13 +6,13 @@ import math
 import os
 
 
-def get_sprite_rect(window, image):
+def get_sprite_rect(window, image, offset=0):
     """
     Returns the rectangle of the current animation frame of an image.
     """
     frames, speed = window.sprites[image]
     if speed != 0 or len(frames) > 1:
-        index = int(window.time // speed % len(frames))
+        index = int((window.time + 10 * offset) // speed % len(frames))
     else:
         index = 0
     return window.sprite_rects[frames[index]]

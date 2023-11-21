@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
 from scripts.utility.const import *
 from scripts.utility import geometry
-import uuid
 import math
+import os
 
 
-def _generate_uuid():
-    return str(uuid.uuid4()) # 2^128 unique ids; low collision chance
+os.environ['entity_count'] = "0"
 
 
 class PhysicsObject:
     def __init__(self, mass: float, position: [float], size: [float]):
-        self.uuid = _generate_uuid()
+        self.uuid = int(os.environ.get("entity_count"))
+        os.environ['entity_count'] = str(self.uuid + 1)
         self.type = "physics_object"
         self.mass: float = mass
         self.rect: geometry.Rect = geometry.Rect(*position, *size)
@@ -158,7 +158,7 @@ class PhysicsObject:
                     
                     # Push player up if possible (instead of colliding)
                     self.rect.y = math.ceil(self.rect.y)
-                    if not (self.type != "player" or abs(self.vel[0]) < 1 or self.rect.y - last_y > 0.5 or collision or self.get_collision(world)):
+                    if not (self.type != "player" or self.vel[1] <= 0 or abs(self.vel[0]) < 1 or self.rect.y - last_y > 0.5 or collision or self.get_collision(world)):
                         self.vel[1] *= 0.8
                         continue
 
@@ -239,9 +239,3 @@ class PhysicsObject:
         # Apply gravity and friction
         self.apply_gravity_force(delta_time)
         #self.apply_friction_force(delta_time)
-
-        # Save ground block
-        #if self.block_below:
-        #    self.ground_block = world.get_block(math.floor(self.rect.centerx), round(self.rect.y - 1), generate=False)
-        #else:
-        #    self.ground_block = 0

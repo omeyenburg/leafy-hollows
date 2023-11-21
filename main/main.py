@@ -6,6 +6,7 @@ from scripts.utility.geometry import *
 from scripts.game.world import World
 from scripts.utility.const import *
 from scripts.menu.menu import Menu
+from scripts.utility import file
 import math
 
 
@@ -141,7 +142,7 @@ def draw_game():
         )
 
     # Draw player health bar
-    if menu.game_state != "intro":
+    if menu.game_state != "intro" and not (world.player.rect.x == 0 and menu.game_state == "pause"):
         health_percentage = world.player.health / world.player.max_health
         heart_center = Vec(-0.9, -0.9)
         heart_width = 0.1
@@ -255,10 +256,7 @@ def main():
 
             # Death
             if world.player.health <= 0:
-                try:
-                    file.delete("data/user/world.data")
-                except:
-                    pass
+                file.delete("data/user/world.data")
                 menu.death_page.open()
                 menu.game_state = "death"
 
