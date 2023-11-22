@@ -1,64 +1,5 @@
-import pygame
-import random
-
-# Constants
-WIDTH, HEIGHT = 800, 600
-CELL_SIZE = 20
-GRID_WIDTH = WIDTH // CELL_SIZE
-GRID_HEIGHT = HEIGHT // CELL_SIZE
-
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
-RED = (255, 0, 0)
-GREEN = (0, 255, 0)
-BLUE = (0, 0, 255)
-YELLOW = (255, 255, 0)
-
-
-class Maze:
-    def __init__(self):
-        self.grid = [[1 for _ in range(GRID_WIDTH)] for _ in range(GRID_HEIGHT)]    # 0=empty, 1=Wall, 2=Open, 3=Closed
-        self.start_tile, self.end_tile = None, None
-        self.generate_maze()
-
-    def generate_maze(self):
-        # Initialize a grid with walls
-        visited = set()
-        stack = [(1, 1)]
-        self.grid[1][1] = 2
-
-        while stack:
-            x, y = stack[-1]
-            visited.add((x, y))
-            neighbors = [(x+2, y), (x-2, y), (x, y+2), (x, y-2)]
-            unvisited_neighbors = [(nx, ny) for nx, ny in neighbors if 0 < nx < GRID_WIDTH - 1 and 0 < ny < GRID_HEIGHT - 1 and (nx, ny) not in visited]
-
-            if unvisited_neighbors:
-                nx, ny = random.choice(unvisited_neighbors)
-                wall_x, wall_y = (nx + x) // 2, (ny + y) // 2
-                self.grid[ny][nx] = 2
-                self.grid[wall_y][wall_x] = 2
-                stack.append((nx, ny))
-            else:
-                stack.pop()
-
-    def draw(self, screen):
-        for y in range(GRID_HEIGHT):
-            for x in range(GRID_WIDTH):
-                if self.start_tile == [x, y]:
-                    pygame.draw.rect(screen, RED, (x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
-                elif self.end_tile == [x, y]:
-                    pygame.draw.rect(screen, GREEN, (x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
-                elif self.grid[y][x] == 1: 
-                    pygame.draw.rect(screen, BLACK, (x*CELL_SIZE, y*CELL_SIZE, CELL_SIZE, CELL_SIZE))
-                elif self.grid[y][x] == 2:
-                    pygame.draw.rect(screen, BLUE, (x*CELL_SIZE, y*CELL_SIZE, CELL_SIZE, CELL_SIZE))
-                elif self.grid[y][x] == 3:
-                    pygame.draw.rect(screen, YELLOW, (x*CELL_SIZE, y*CELL_SIZE, CELL_SIZE, CELL_SIZE))
-
-
 class Node:
-    def __init__(self, position, parent):
+    def __init__(self, position: list[int, int], parent):
         self.pos = position
         self.parent = parent
 
@@ -70,22 +11,74 @@ class Node:
         return self.pos == other.pos
 
 
-def a_star(maze, start_pos, end_pos, screen):
+def print_path(grid: list[list[int]], path: list[list[int, int]]):
+    for y, _ in enumerate(grid):
+        for x, value in enumerate(grid[y]):
+            if [x, y] in path:
+                print("\x1b[42m" + " " + "\x1b[0m", end="")
+
+            else:
+                if value == 0:
+                    print("\x1b[47m" + " " + "\x1b[0m", end="")
+                elif value == 1:
+                    print("\x1b[40m" + " " + "\x1b[0m", end="")
+                else:
+                    print("\x1b[41m" + " " + "\x1b[0m", end="")
+
+        print()
+
+
+def print_grid(grid: list[list[int]], open_list, closed_list):
+    print()
+    print(f"open list: {[n.pos for n in open_list]}")
+    print(f"closed list: {[n.pos for n in closed_list]}")
+
+    print(" ", end="")
+    for x in range(len(grid[0])):
+        print(x, end="")
+    print()
+
+    for y, _ in enumerate(grid):
+        print(y, end="")
+        for x, value in enumerate(grid[y]):
+            written = False
+
+            for node in open_list:
+                if node.pos == [x, y]:
+                    print(f"\x1b[44m{node.f % 10}\x1b[0m", end="")
+                    written = True
+            if written:
+                continue
+
+            for node in closed_list:
+                if node.pos == [x, y]:
+                    print(f"\x1b[43m{node.f % 10}\x1b[0m", end="")
+                    written = True
+            if written:
+                continue
+
+            if value == 0:
+                print("\x1b[47m" + " " + "\x1b[0m", end="")
+            elif value == 1:
+                print("\x1b[40m" + " " + "\x1b[0m", end="")
+            else:
+                print("\x1b[41m" + " " + "\x1b[0m", end="")
+
+        print()
+    print()
+
+
+def a_star(grid, start_pos, end_pos) -> list[list[int, int]]:
     start_node, end_node = Node(start_pos, None), Node(end_pos, None)
 
     open_list, closed_list = [start_node], []
     while open_list:
-        for i in open_list: # draw cells to search
-            pygame.draw.rect(screen, YELLOW, (i.pos[0] * CELL_SIZE, i.pos[1] * CELL_SIZE, CELL_SIZE, CELL_SIZE))
-        pygame.display.flip()
+        print_grid(grid, open_list, closed_list)
+
+        open_list.sort(key=lambda x: x.f)   # sort open list with respect to f value of nodes
 
         current_node = open_list[0]
-        current_index = 0
-        for index, node in enumerate(open_list):    # find next node to search
-            if node.f < current_node.f:
-                current_node = node
-                current_index = index
-        open_list.pop(current_index)
+        open_list.pop(0)
         closed_list.append(current_node)
 
         if current_node == end_node:    # finished
@@ -94,58 +87,66 @@ def a_star(maze, start_pos, end_pos, screen):
             while backtrack_node:
                 path.append(backtrack_node.pos)
                 backtrack_node = backtrack_node.parent
+            path.reverse()
 
-            return path.reverse()
+            return path
 
         for direction in [[1, 0], [-1, 0], [0, 1], [0, -1]]:    # find neighbours
+            def valid_neighbour(pos) -> bool:
+                if not (-1 < neighbour_pos[0] < len(grid[0])) or not (-1 < neighbour_pos[1] < len(grid)):  # neighbour is outside of the grid
+                    return False
+
+                if grid[neighbour_pos[1]][neighbour_pos[0]] == 1:  # check if wall
+                    return False
+
+                for closed_node in closed_list:  # not searching again
+                    if closed_node.pos == neighbour_pos:
+                        return False
+
+                for open_node in open_list:  # already marked for search
+                    if open_node.pos == neighbour_pos:
+                        if open_node.g > current_node.g + 1:    # found a better way
+                            open_list.remove(open_node)
+                            return True
+                        else:
+                            return False
+
+                return True
+
             neighbour_pos = [current_node.pos[0] + direction[0], current_node.pos[1] + direction[1]]
-            if maze.grid[neighbour_pos[0]][neighbour_pos[1]]:   # check if wall
+
+            if not valid_neighbour(neighbour_pos):
                 continue
+
             neighbour_node = Node(neighbour_pos, current_node)
-
-            for closed_node in closed_list: # no duplicates
-                if neighbour_node == closed_node:
-                    continue
-
             neighbour_node.g = current_node.g + 1
-            neighbour_node.h = (abs(neighbour_pos[0]) - abs(end_pos[0])) + (abs(neighbour_pos[1]) - abs(end_pos[1]))    # manhatten distance
+            neighbour_node.h = abs(end_pos[0] - neighbour_pos[0]) + abs(end_pos[1] - neighbour_pos[1])  # manhatten distance
             neighbour_node.f = neighbour_node.g + neighbour_node.h
-
-            for open_node in open_list: # Child is already in the open list
-                if neighbour_node == open_node and neighbour_node.g > open_node.g:
-                    continue
 
             open_list.append(neighbour_node)
 
 
 def main():
-    pygame.init()
-    screen = pygame.display.set_mode((WIDTH, HEIGHT))
-    pygame.display.set_caption("Connected Wall Maze Generator")
+    grid = [[0, 1, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 1, 1, 1, 0],
+            [0, 1, 0, 0, 0],
+            [0, 1, 0, 1, 1],
+            [0, 1, 0, 0, 0]]
+    """
+    grid = [[0, 0, 0],
+            [0, 1, 0],
+            [0, 1, 0]]
+    """
+    start_pos = [0, 0]
+    end_pos = [4, 5]
 
-    maze = Maze()
+    path = a_star(grid, start_pos, end_pos)
+    print()
+    print(f"Path: {path}")
+    if path:
+        print_path(grid, path)
 
-    running = True
-    while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
 
-        mouse_x, mouse_y = [v // CELL_SIZE for v in pygame.mouse.get_pos()]
-        if not maze.grid[mouse_y][mouse_x]:
-            if pygame.mouse.get_pressed()[0]:
-                maze.start_tile = [mouse_x, mouse_y]
-            elif pygame.mouse.get_pressed()[2]:
-                maze.end_tile = [mouse_x, mouse_y]
-        if pygame.mouse.get_pressed()[1]:
-            if maze.start_tile and maze.end_tile:
-                print(a_star(maze, maze.start_tile, maze.end_tile, screen))
-
-        screen.fill(WHITE)
-        maze.draw(screen)
-        pygame.display.flip()
-
-    pygame.quit()
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
