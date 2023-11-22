@@ -24,7 +24,7 @@ def save_world():
     global world
     window.clear_world()
     
-    if menu.game_state in ("game", "intro", "pause") and not world is None:
+    if menu.game_state in ("game", "intro", "pause", "inventory", "fuse") and not world is None:
         menu.load_threaded("Saving world", "save_world", world.save, window)
         del world
 
@@ -141,8 +141,8 @@ def draw_game():
             size=TEXT_SIZE_DESCRIPTION
         )
 
-    # Draw player health bar
     if menu.game_state != "intro" and not (world.player.rect.x == 0 and menu.game_state == "pause"):
+        # Draw player health bar
         health_percentage = world.player.health / world.player.max_health
         heart_center = Vec(-0.9, -0.9)
         heart_width = 0.1
@@ -152,6 +152,15 @@ def draw_game():
         window.draw_image("heart", heart_center - heart_size / 2, heart_size)
         window.draw_rect(heart_center + Vec(heart_size.x * 0.8, -health_bar_size.y / 2), (0.5 * health_percentage, 0.05), (165, 48, 48, 255))
         window.draw_rect(heart_center + Vec(heart_size.x * 0.8 + 0.5 * health_percentage, -health_bar_size.y / 2), (0.5 * (1 - health_percentage), 0.05), (56, 29, 49, 255))
+
+        # Draw weapon
+        weapon = world.player.holding
+        if not weapon is None:
+            weapon = weapon.image
+
+            weapon_pos = (0.8, -0.9)
+            weapon_size = Vec(0.2, 0.2 / window.height * window.width)
+            window.draw_image(weapon, weapon_pos, weapon_size, angle=30)
 
 
 def draw_intro():
@@ -216,6 +225,74 @@ def update_intro():
         world.player.can_move = True
 
 
+def update_inventory():
+    window.draw_text((-0.95, -0.55), "Sort by:\nAge      Level      Type", (255, 255, 255), 0.2)
+    if "\x08" in window.unicode and len(menu.inventory_page.search_text):
+        menu.inventory_page.search_text = menu.inventory_page.search_text[:len(menu.inventory_page.search_text) - 1]
+    else:
+        menu.inventory_page.search_text += window.unicode
+    
+    if menu.inventory_page.search_text:
+        window.draw_text((-0.95, -0.85), menu.inventory_page.search_text, (255, 255, 255), 0.2)
+    else:
+        window.draw_text((-0.95, -0.85), "Search...", (100, 100, 100), 0.2)
+
+
+    inventory = list(filter(
+        lambda i:
+        menu.inventory_page.search_text.lower() in i.image or
+        any([
+            menu.inventory_page.search_text in attribute or
+            menu.inventory_page.search_text in ATTRIBUTE_DESCRIPTIONS[attribute]
+            for attribute in i.attributes
+        ]),
+        world.player.inventory
+    ))
+
+    if not len(inventory):
+        return
+
+    scroll_speed = 20
+    window.mouse_wheel[1] = min(max(window.mouse_wheel[1], 0), len(inventory) * scroll_speed - scroll_speed)
+    scroll_position = window.mouse_wheel[1] / scroll_speed
+    if not window.mouse_wheel[3]:
+        window.mouse_wheel[1] += (round(scroll_position) - scroll_position) * scroll_speed * 0.02
+
+    weapon_y = 0.5
+    weapon_positions = []
+    for i, weapon in enumerate(inventory):
+        weapon_size = Vec(0.4, 0.4 / window.height * window.width) * max(0.5, 1 / ((i - scroll_position) ** 2 + 1))
+        weapon_y -= weapon_size[1]
+        weapon_positions.append(weapon_y)
+
+    distance = abs(math.floor(scroll_position) - scroll_position)
+    weapon_center_y = (1 - distance) * weapon_positions[math.floor(scroll_position)] + distance * weapon_positions[math.ceil(scroll_position)]
+
+    for i, weapon in enumerate(inventory):
+        weapon_size = Vec(0.4, 0.4 / window.height * window.width) * max(0, 1 / ((i - scroll_position) ** 4 + 1))
+        weapon_pos = (-0.2 - weapon_size[0] / 2, weapon_positions[i] - weapon_center_y)
+        window.draw_image(weapon.image, weapon_pos, weapon_size, angle=30)
+
+    weapon = inventory[round(scroll_position)]
+    if not weapon is None:
+
+        description_y = 0.8
+        description_y += window.draw_text((0, description_y), weapon.image.title(), (255, 255, 255), 0.3)[1]
+        
+        for stat in ("damage", "attack_speed", "range", "crit_chance"):
+            stat_name = stat.title().replace("_", " ")
+            description_y -= abs(window.draw_text((0, description_y), f"{stat_name}: {weapon.__dict__[stat]}", (164, 221, 219), 0.17, wrap=1)[1]) * 6
+
+        for i, (attribute, level) in enumerate(weapon.attributes.items()):
+            description_y = -0.6 * i + 0.1
+            description = ATTRIBUTE_DESCRIPTIONS[attribute] % (ATTRIBUTE_BASE_MODIFIERS[attribute] * level)
+            window.draw_text((0, description_y), f"{attribute.title()} {INT_TO_ROMAN[level]}: {description}", (223, 132, 165), 0.17, wrap=1)
+
+        window.draw_text((0.75, 0.85), "Equip", (255, 255, 255), 0.2)
+        window.draw_text((0.75, 0.7), "Fuse", (255, 255, 255), 0.2)
+        window.draw_text((0.75, 0.55), "Destroy", (255, 255, 255), 0.2)
+
+
 def main():
     menu.save_world = save_world
     window.callback_quit = save_world
@@ -244,15 +321,28 @@ def main():
 
             # Move camera
             camera_pos = (
-                world.player.rect.centerx - world.player.vel[0] / 100,
-                world.player.rect.centery - world.player.vel[0] / 100
+                world.player.rect.centerx + world.player.vel[0] * 0.1,
+                world.player.rect.centery + world.player.vel[1] * 0.1
             )
+
+            if not window.options["reduce camera movement"]:
+                mouse_pos = window.camera.map_coord(window.mouse_pos[:2], world=True)
+                camera_pos = (
+                    (camera_pos[0] * 0.8 + mouse_pos[0] * 0.2),
+                    (camera_pos[1] * 0.8 + mouse_pos[1] * 0.2)
+                )
+                window.camera.shift_x((-world.player.direction + 0.5) * 50)
             window.camera.move(camera_pos)
 
             # Pause
             if window.keybind("return") == 1:
                 menu.pause_page.open()
                 menu.game_state = "pause"
+
+            # Inventory
+            if window.keybind("inventory") == 1:
+                menu.inventory_page.open()
+                menu.game_state = "inventory"
 
             # Death
             if world.player.health <= 0:
@@ -267,17 +357,18 @@ def main():
             # Draw menu
             if menu.game_intro:
                 draw_intro()
+            window.draw_rect((-1, -1), (2, 2), (0, 0, 0, 200))
 
             # Update and draw the menu
             menu.update()
+            if menu.game_state == "inventory":
+                update_inventory()
 
             # Update window + shader
-            window.effects["gray_screen"] = 1
             window.update()
-            window.effects["gray_screen"] = 0
 
             # Game
-            if window.keybind("return") == 1:
+            if window.keybind("return") == 1 or window.keybind("inventory") == 1:
                 if menu.game_state in ("pause", "inventory"):
                     if menu.game_intro:
                         menu.game_state = "intro"

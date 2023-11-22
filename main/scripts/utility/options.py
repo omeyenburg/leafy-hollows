@@ -9,6 +9,7 @@ default: dict = {
     "shadow resolution": 0,
     "particles": 10,
     "antialiasing": 16,
+    "reduce camera movement": False,
     "show fps": False,
     "show debug": False,
     "language": "english",
@@ -23,7 +24,8 @@ default: dict = {
     "key.jump": "space",
     "key.sprint": "left shift",
     "key.crouch": "c",
-    "key.return": "escape"
+    "key.return": "escape",
+    "key.inventory": "e"
 }
 
 

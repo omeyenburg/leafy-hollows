@@ -4,7 +4,8 @@
     "text resolution": 40,
     "shadow resolution": 0,
     "particles": 10,
-    "antialiasing": 0,
+    "antialiasing": 16,
+    "reduce camera movement": false,
     "show fps": true,
     "show debug": true,
     "language": "english",
@@ -13,11 +14,12 @@
     "ambient volume": 1,
     "simulation distance": 5,
     "save world": true,
-    "auto jump": false,
+    "auto jump": true,
     "key.left": "a",
     "key.right": "d",
     "key.jump": "space",
     "key.sprint": "left shift",
     "key.crouch": "c",
-    "key.return": "escape"
+    "key.return": "escape",
+    "key.inventory": "e"
 }

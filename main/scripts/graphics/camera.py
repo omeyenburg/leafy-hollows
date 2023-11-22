@@ -11,11 +11,14 @@ class Camera:
         self.resolution_speed: float = 0.0
         self.resolution_index: float = 1.0
         self.pixels_per_meter: float = WORLD_BLOCK_SIZE
-        self.threshold = 0.1
+        self.threshold: float = 0
+        self.speed: float = 1.0
 
         self.pos: [float] = [0, 0]
         self.vel: [float] = [0, 0]
         self.dest: [float] = [0, 0]
+        self.shift_pos: float = 0.0
+        self.shift_dest: float = 0.0
         self.window: Window = window
 
     def reset(self):
@@ -29,6 +32,8 @@ class Camera:
         self.pos: [float] = [0, 0]
         self.vel: [float] = [0, 0]
         self.dest: [float] = [0, 0]
+        self.shift_pos: float = 0.0
+        self.shift_dest: float = 0.0
 
     def set_zoom(self, resolution: float):
         self.resolution = self.resolution_goal = resolution
@@ -48,7 +53,7 @@ class Camera:
         Set the camera position.
         Use move() for slow movement.
         """
-        self.pos = pos
+        self.pos = list(pos)
         self.vel = [0, 0]
         self.dest = pos
 
@@ -59,13 +64,24 @@ class Camera:
         """
         self.dest = pos
 
+    def shift_x(self, x: [float]):
+        """
+        Move the camera slower than self.move() to a x offset.
+        """
+        self.shift_dest = x * 0.1
+
     def update(self):
         """
         Update the camera.
         """
         # Move slowly to goal
-        xvel = round((self.dest[0] - self.pos[0]) * 0.1, 3)
-        yvel = round((self.dest[1] - self.pos[1]) * 0.1, 3)
+        self.pos[0] -= self.shift_pos
+        xvel = round((self.dest[0] - self.pos[0]) * self.window.delta_time * self.speed, 3)
+        yvel = round((self.dest[1] - self.pos[1]) * self.window.delta_time * self.speed, 3)
+        #self.pos[0] += self.shift_pos * self.shift_impact
+
+        #xvel = round((self.dest[0] - self.pos[0]) * 0.1, 3)
+        #yvel = round((self.dest[1] - self.pos[1]) * 0.1, 3)
 
         xvel = math.copysign(max(abs(xvel) - self.threshold, 0), xvel)
         yvel = math.copysign(max(abs(yvel) - self.threshold, 0), yvel)
@@ -74,7 +90,7 @@ class Camera:
         self.vel[1] = yvel
         self.pos[0] += self.vel[0] 
         self.pos[1] += self.vel[1]
-        
+
         # Maximum goal offset
         x_distance = self.pos[0] - self.dest[0]
         y_distance = self.pos[1] - self.dest[1]
@@ -97,6 +113,9 @@ class Camera:
             factor = 1000 ** -((self.resolution_index - 1) ** 2) # f(x) = 1000^[-(x-1)^2]
             self.resolution = self.resolution_start * (1 - factor) + self.resolution_goal * factor
             self.pixels_per_meter = self.resolution * WORLD_BLOCK_SIZE
+
+        self.shift_pos += (self.shift_dest - self.shift_pos) * self.window.delta_time * 0.5
+        self.pos[0] += self.shift_pos
 
     def map_coord(self, coord: [float], from_pixel: bool=True, from_centered: bool=True, from_world: bool=False, pixel: bool=False, centered: bool=True, world: bool=False):
         """

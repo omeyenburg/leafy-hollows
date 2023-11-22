@@ -2,17 +2,21 @@
 from scripts.game.baseentity import LivingEntity
 from scripts.graphics.window import Window
 from scripts.utility.const import *
+from scripts.graphics import sound
 from scripts.game.physics import *
 from scripts.game.entity import *
-from scripts.graphics import sound
+from scripts.game.weapon import *
 import random
-from scripts.graphics import particle
 
 
 class Player(LivingEntity):
     def __init__(self, spawn_pos: [float]):
         super().__init__(50, spawn_pos, PLAYER_RECT_SIZE_NORMAL, health=10)
         self.type = "player"
+
+        self.inventory = [Weapon(3) for Weapon in random.choices((Sword, Axe, Pickaxe, Bow), k=10)]
+        self.holding_index = 0
+        self.holding = self.inventory[self.holding_index]
 
         # Player rect size (based on state)
         self.rect_size = PLAYER_RECT_SIZE_NORMAL
@@ -36,6 +40,7 @@ class Player(LivingEntity):
         self.direction: int = 0     # 0 -> right; 1 -> left
         self.hit_ground = 0         # Used for hit ground animation
         self.can_move: bool = False # Disabled during intro
+        self.damage_time: float = 0.0
 
         # Long crouch jump
         self.charge_crouch_jump: float = 0
@@ -53,6 +58,9 @@ class Player(LivingEntity):
         # Draw player
         rect = window.camera.map_coord((self.rect.x - 1 + self.rect.w / 2, self.rect.y, 2, 2), from_world=True)
         window.draw_image("player_" + self.state, rect[:2], rect[2:], flip=(self.direction, 0))
+
+        # Draw item
+
 
     def move_normal(self, world, window: Window):
         """
@@ -422,20 +430,22 @@ class Player(LivingEntity):
         """
 
         # Place/break block with right click
-        """
+        
         if window.mouse_buttons[2] == 1:
             mouse_pos = window.camera.map_coord(window.mouse_pos[:2], world=True)
             if world.get_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1])) > 0:
                 world.set_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), 0)
             else:
                 world.set_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), world.block_name["stone_block"])
-        """
+        
             
         # Shoot arrow with left click (no cooldown)
         if window.mouse_buttons[0] == 1:
-            mouse_pos = window.camera.map_coord(window.mouse_pos[:2], world=True)
-            angle = math.atan2(mouse_pos[1] - self.rect.centery, mouse_pos[0] - self.rect.centerx)
-            world.add_entity(Arrow(self.rect.center, speed=60, angle=angle, owner=self))
+            if not self.holding is None:
+                mouse_pos = window.camera.map_coord(window.mouse_pos[:2], world=True)
+                angle = math.atan2(mouse_pos[1] - self.rect.centery, mouse_pos[0] - self.rect.centerx)
+                self.holding.attack(window, world, self, angle)
+
 
         """
         # Place water

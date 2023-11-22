@@ -74,3 +74,59 @@ WORLD_GENERATION_CAVE_BORDER_PADDING: int = 4
 WORLD_GENERATION_HORIZONTAL_CAVE_RADIUS: int = 3
 WORLD_GENERATION_STEP_SIZE: float = 0.5
 WORLD_GENERATION_INTERPOLATION_LENGTH: int = 20
+
+INT_TO_ROMAN: dict = {1: "I", 2: "II", 3: "III", 4: "IV", 5: "V", 6: "VI", 7: "VII", 8: "VIII", 9: "IX", 10: "X", 11: "XI", 12: "XII", 13: "XIII", 14: "XIV", 15: "XV", 16: "XVI", 17: "XVII", 18: "XVIII", 19: "XIX", 20: "XX"}
+
+ATTRIBUTES: [str] = (
+    "piercing",
+    "ferocity",
+    "vampire",
+    "ignition",
+    "looting",
+    "disarm",
+    "explosive",
+    "paralysis",
+    "berserker",
+    "agility",
+    "soul drain",
+    "vitality",
+    "critical",
+    "warrior",
+    "assassin"
+)
+
+ATTRIBUTE_BASE_MODIFIERS: dict = {
+    "piercing": 1,
+    "ferocity": 5,
+    "vampire": 5,
+    "ignition": 2,
+    "looting": 10,
+    "disarm": 15,
+    "explosive": 30,
+    "paralysis": 15,
+    "berserker": 15,
+    "agility": 5,
+    "soul drain": 20,
+    "vitality": 10,
+    "critical": 10,
+    "warrior": 5,
+    "assassin": 5
+}
+
+ATTRIBUTE_DESCRIPTIONS: dict = {
+    "piercing": "Allows your weapon to cut through enemies, hitting %s additional targets in its path.",
+    "ferocity": "Enhances the weapon's aggressiveness, increasing damage and attack speed by %s%% each.",
+    "vampire": "Regenerate %s%% health with every successful hit, siphoning life from enemies.",
+    "ignition": "Sets enemies on fire upon impact for %s seconds, causing additional damage over time.",
+    "looting": "Increases the chances of enemies dropping valuable loot by %s%%.",
+    "disarm": "Gives your weapon a %s%% chance to knock weapons out of enemies' hands.",
+    "explosive": "Attacks detonate on impact, dealing %s%% of your weapon's damage to the target and nearby enemies.",
+    "paralysis": "Strikes have a %s%% chance to temporarily stun enemies.",
+    "berserker": "Increases damage by %s%%, but comes at the cost of reduced defense, making you more susceptible to damage.",
+    "agility": "Increases your movement and attack speed by %s%% each, allowing for quicker strikes.",
+    "soul drain": "Absorb your enemies' souls, regenerating %s%% health with each successfull kill.",
+    "vitality": "Reduces damage taken by %s%%.",
+    "critical": "Increases the chance for a critical hit by %s%%.",
+    "warrior": "Increases your weapon's damage by %s%% per enemy around you.",
+    "assassin": "Increases your attack speed and crit chance by %s%% each."
+}

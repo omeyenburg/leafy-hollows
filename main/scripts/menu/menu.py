@@ -43,6 +43,17 @@ class Menu:
         self.pause_page.layout()
 
 
+        ###---###  Inventory page  ###---###
+        self.inventory_page = Page(columns=1, spacing=MENU_SPACING)
+        self.inventory_page.sort_key = "age"
+        self.inventory_page.search_selected = False
+        self.inventory_page.search_text = ""
+        #Label(self.inventory_page, MENU_HEADING_SIZE, text="Inventory", fontsize=TEXT_SIZE_HEADING)
+        #button_pause_play = Button(self.inventory_page, MENU_BUTTON_SIZE, text="Play", callback=button_pause_play_update, fontsize=TEXT_SIZE_BUTTON)
+        #button_pause_menu = Button(self.inventory_page, MENU_BUTTON_SIZE, text="Main Menu", callback=button_pause_menu_update, fontsize=TEXT_SIZE_BUTTON)
+        self.inventory_page.layout()
+
+
         ###---###  Death page  ###---###
         def button_death_menu_update():
             self.game_state = "menu"
@@ -223,10 +234,23 @@ class Menu:
                 "none"
             )
 
-        # Show fps button
+        # Reduce camera movement button
+        def button_reduce_movement_update():
+            window.options["reduce camera movement"] = not window.options["reduce camera movement"]
+            button_reduce_movement.text = "Reduce Movement: " + f"{str(window.options['reduce camera movement']):5}"
+
+        button_reduce_movement = Button(settings_video_page, MENU_BUTTON_SMALL_SIZE, callback=button_reduce_movement_update, text="Reduce Movement: " + str(window.options["reduce camera movement"]), fontsize=TEXT_SIZE_OPTION)
+        button_reduce_movement.hover_callback = lambda: self.info_hover_box(
+            button_reduce_movement.rect.centerx < 0,
+            "Reduce Camera Movement",
+            "none",
+            "When enabled, camera movement is reduced. It will no longer follow your mouse."
+        )
+
+        # Display fps button
         def button_show_fps_update():
             window.options["show fps"] = not window.options["show fps"]
-            button_show_fps.text = "Show Fps: " + f"{str(window.options['show fps']):5}"
+            button_show_fps.text = "Display Fps: " + f"{str(window.options['show fps']):5}"
 
         button_show_fps = Button(settings_video_page, MENU_BUTTON_SMALL_SIZE, callback=button_show_fps_update, text="Show Fps: " + str(window.options["show fps"]), fontsize=TEXT_SIZE_OPTION)
         button_show_fps.hover_callback = lambda: self.info_hover_box(
