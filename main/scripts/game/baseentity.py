@@ -7,8 +7,14 @@ from scripts.game import physics
 class LivingEntity(physics.PhysicsObject):
     def __init__(self, *args, health: int=1, **kwargs):
         super().__init__(*args, *kwargs)
+        self.holding = None
         self.health: int = health
         self.max_health: int = health
+
+    def update(self, world, delta_time):
+        if not self.holding is None:
+            self.holding.cooldown -= delta_time
+        super().update(world, delta_time)
 
     def damage(self, window, amount: float=0, velocity: [float]=(0, 0)):
         self.health -= amount
@@ -22,6 +28,11 @@ class LivingEntity(physics.PhysicsObject):
 
         if self.health <= 0:
             self.death(window)
+            return
+
+        if self.type == "player":
+            window.effects["damage_screen"] = 1
+            window.damage_time = 0.3
 
     def death(self, window):
         particle.spawn(window, "dust_particle", *self.rect.center)

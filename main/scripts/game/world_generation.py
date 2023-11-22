@@ -20,6 +20,7 @@ def generate_world(world, window):
     """
     Main world generation function
     """
+    world.seed: float = random.randint(-10**6, 10**6) + math.e # Float between -10^6 and 10^6
     window.loading_progress[2] = 11
 
     # Load structures
@@ -130,7 +131,9 @@ def generate_world(world, window):
     blocks_ground, blocks_ceiling, blocks_wall_right, blocks_wall_left = find_edge_blocks(world)
 
      # Generate poles
-    generate_poles(world, poles, blocks_ground, blocks_ceiling)
+    poles_successful = generate_poles(world, poles, blocks_ground, blocks_ceiling)
+    if not poles_successful:
+        return 0
 
     # Generate foliage
     generate_foliage(world, blocks_ground, blocks_ceiling, blocks_wall_right, blocks_wall_left)
@@ -140,8 +143,12 @@ def generate_world(world, window):
     spawn_blocks = random.sample(list(blocks_ground), k=int(0.05 * len(blocks_ground)))
 
     for coord in spawn_blocks:
+        if coord[1] > -1000:
+            continue
         Entity = random.choice((Slime, Goblin, Bat))
         world.add_entity(Entity(coord))
+
+    return 1
 
 
 # Called from generate_world
@@ -236,6 +243,9 @@ def get_decoration_block_type(world, x, y):
         side = "wall"
         block_name = world.block_index[block_right]
         flipped = 0
+
+    else:
+        return [None]
 
     block_comparison = ("any", block_name, world.block_family[block_name])
     block_generation_properties = world.block_generation_properties
@@ -335,11 +345,13 @@ def generate_poles(world, poles, blocks_ground, blocks_ceiling):
 
         if not pole_height:
             print("Could not generate a pole at x=" + str(x))
-            continue
+            return False
 
         for y in range(pole_y_ground, pole_y_ceiling):
             world.set_block(pole_x, y, world.block_name["pole"])
             world.set_block(pole_x, y, 0, 0)
+
+    return True
 
 
 # Called from generate_world

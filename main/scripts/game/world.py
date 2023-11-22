@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from scripts.game.world_generation import generate_world, generate_block
-from scripts.utility.const import *
 from scripts.graphics import particle
 from scripts.utility import geometry
+from scripts.utility.const import *
 from scripts.game import player
 from scripts.utility import file
 import random
@@ -13,7 +13,6 @@ import time
 
 class World:
     def __init__(self, block_data, block_generation_properties, block_group_size, block_properties):
-        self.seed: float = random.randint(-10**6, 10**6) + math.e # Float between -10^6 and 10^6
         self.view: numpy.array = None # Sent to shader to render
         self.view_size: tuple = (0, 0)
         self.chunks = {} # {(chunk_x, chunk_y): numpy_array(16x16x4)} -> (block, plant, background, water_level)
@@ -351,5 +350,8 @@ class World:
             pass
 
         world = World(*block_data)
-        generate_world(world, window)
+        generated = False
+        while not generated:
+            generated = generate_world(world, window)
+
         return world

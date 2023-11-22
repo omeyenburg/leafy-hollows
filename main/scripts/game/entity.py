@@ -5,6 +5,7 @@ from scripts.game.physics import PhysicsObject
 from scripts.graphics.window import Window
 from scripts.graphics import particle
 from scripts.utility.const import *
+from scripts.game.weapon import *
 import math
 
 
@@ -116,6 +117,7 @@ class Goblin(LivingEntity):
         self.hit_damage = 1        # Damage applied to player on collision
         self.attack_cooldown = 3
         self.max_speed = 3
+        self.holding = Sword()
 
         # Animation states
         self.state: str = "idle"    # state is used for movement & animations

@@ -64,6 +64,7 @@ class Window:
         self.delta_time: float = 1.0
         self.time: float = 0.0
         self.resolution: float = 1.0
+        self.damage_time: float = 0.0
 
         # Key press states
         if PLATFORM == "Darwin":
@@ -220,7 +221,8 @@ class Window:
                 "resolution": "float",
                 "shadow_resolution": "float",
                 "time": "float",
-                "gray_screen": "int"
+                "gray_screen": "int",
+                "damage_screen": "float"
             },
             constants={
                 "block." + key: value for key, (value, *_) in block_data.items()
@@ -408,6 +410,12 @@ class Window:
         if self.fps != 0:
             self.delta_time = (self.delta_time + 1 / self.fps) * 0.5
         self.time += self.delta_time
+        if self.damage_time:
+            self.damage_time -= self.delta_time
+            self._instance_shader.setvar("damage_screen", self.damage_time / 0.3)
+            if self.damage_time < 0:
+                self.damage_time = 0
+                self._instance_shader.setvar("damage_screen", 0)
 
         # Reset
         GL.glClear(GL.GL_COLOR_BUFFER_BIT)

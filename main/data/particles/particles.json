@@ -64,5 +64,27 @@
         "angle": 270,
         "divergence": 2,
         "amount": -1
+    },
+    "impact_right_particle": {
+        "time": 0.5,
+        "delay": 1,
+        "size": [1.0, 1.0],
+        "gravity": 0,
+        "growth": 0,
+        "speed": 3.0,
+        "angle": 0,
+        "divergence": 0,
+        "amount": -1
+    },
+    "impact_left_particle": {
+        "time": 0.5,
+        "delay": 1,
+        "size": [1.0, 1.0],
+        "gravity": 0,
+        "growth": 0,
+        "speed": 3.0,
+        "angle": 180,
+        "divergence": 0,
+        "amount": -1
     }
 }
