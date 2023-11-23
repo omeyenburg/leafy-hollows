@@ -1,12 +1,21 @@
 # -*- coding: utf-8 -*-
+from scripts.game.baseentity import LivingEntity
+from scripts.game.projectile import Arrow
 from scripts.graphics import particle
 from scripts.utility.const import *
 import random
 import math
+import os
+
+
+os.environ["item_count"] = "0"
 
 
 class BaseItem:
     def __init__(self, damage: float=0.0, attack_speed: float=0.0, range: float=0.0, crit_chance: float=0.0, luck: int=1):
+        self.uuid = int(os.environ.get("item_count"))
+        os.environ["item_count"] = str(self.uuid + 1)
+
         attributes = random.sample(ATTRIBUTES, k=2)
         self.attributes: dict = {
             attributes[0]: random.randint(1, luck),
@@ -32,7 +41,7 @@ class MeleeWeapon(BaseItem):
 
         targets = set()
         for entity in world.loaded_entities:
-            if entity is attacker:
+            if entity is attacker or not isinstance(entity, LivingEntity):
                 continue
             entity_distance = math.sqrt((attacker.rect.centerx - entity.rect.centerx) ** 2 + (attacker.rect.centery - entity.rect.centery) ** 2)
             if entity_distance > self.range:
@@ -77,7 +86,7 @@ class RangedWeapon(BaseItem):
             return
         self.cooldown = 1 / self.attack_speed
 
-        world.add_entity(Arrow(self.rect.center, speed=60, angle=angle, owner=attacker))
+        world.add_entity(Arrow(attacker.rect.center, speed=60, angle=angle, owner=attacker))
 
 # Magic Wands
 class MagicWeapon(BaseItem):

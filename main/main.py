@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from scripts.utility.noise_functions import pnoise1, snoise2
 from scripts.graphics.image import load_blocks
 from scripts.utility.thread import threaded
 from scripts.graphics.window import Window
@@ -226,38 +227,79 @@ def update_intro():
 
 
 def update_inventory():
-    window.draw_text((-0.95, -0.55), "Sort by:\nAge      Level      Type", (255, 255, 255), 0.2)
-    if "\x08" in window.unicode and len(menu.inventory_page.search_text):
-        menu.inventory_page.search_text = menu.inventory_page.search_text[:len(menu.inventory_page.search_text) - 1]
-    else:
-        menu.inventory_page.search_text += window.unicode
+    window.draw_text((-0.95, 0), "Sort by:", (255, 255, 255), 0.2)
+
+    for i, key in enumerate(("Level", "Type", "Age")):
+        if key == menu.inventory_page.sort_key:
+            sort_image = "button_dark"
+        else:
+            sort_image = "button_dark_unselected"
+
+        rect = Rect(-0.95, -i * 0.2 - 0.05 / window.height * window.width - 0.2, 0.4, 0.1 / window.height * window.width)
+        if 1 in window.mouse_buttons and rect.collide_point((window.mouse_pos[0] / window.width * 2, window.mouse_pos[1] / window.height * 2)):
+            menu.inventory_page.sort_key = key
+
+        window.draw_image(sort_image, rect[:2], rect[2:])
+        window.draw_text((-0.9, -i * 0.2 - 0.2), key, (255, 255, 255), 0.2)
     
+    # Search bar
+    window.draw_rect((-0.88, -0.98), (0.8, 0.16), (27, 21, 39))
+    window.draw_image("search_icon", (-0.98, -0.98), (0.09, 0.09 / window.height * window.width))
+
+    if 1 in window.mouse_buttons:
+        menu.inventory_page.search_selected = window.mouse_pos[0] < 0 and window.mouse_pos[1] / window.height * 2 < -0.8
+
+    if menu.inventory_page.search_selected:
+        search_text_length = len(menu.inventory_page.search_text)
+        if "\x08" in window.unicode:
+            if search_text_length:
+                menu.inventory_page.search_text = menu.inventory_page.search_text[:search_text_length - 1]
+        elif search_text_length < 20:
+            menu.inventory_page.search_text += window.unicode
+
     if menu.inventory_page.search_text:
-        window.draw_text((-0.95, -0.85), menu.inventory_page.search_text, (255, 255, 255), 0.2)
+        search_text_width = window.draw_text((-0.85, -0.9), menu.inventory_page.search_text, (255, 255, 255), 0.2)[0]
     else:
-        window.draw_text((-0.95, -0.85), "Search...", (100, 100, 100), 0.2)
+        window.draw_text((-0.85, -0.9), "Search...", (100, 100, 100), 0.2)
+        search_text_width = -0.025
 
+    if menu.inventory_page.search_selected and window.time % 1 < 0.5:
+        window.draw_rect((-0.85 + search_text_width, -0.97), (0.005, 0.14), (255, 255, 255))
 
-    inventory = list(filter(
-        lambda i:
-        menu.inventory_page.search_text.lower() in i.image or
-        any([
-            menu.inventory_page.search_text in attribute or
-            menu.inventory_page.search_text in ATTRIBUTE_DESCRIPTIONS[attribute]
-            for attribute in i.attributes
-        ]),
-        world.player.inventory
-    ))
+    # Filter weapon list with search parameters
+    if menu.inventory_page.sort_key == "Level":
+        weapon_sort_function = lambda i: -max(i.attributes.values()) - 0.1 * min(i.attributes.values())
+    elif menu.inventory_page.sort_key == "Type":
+        weapon_sort_function = lambda i: i.image
+    elif menu.inventory_page.sort_key == "Age":
+        weapon_sort_function = lambda i: i.uuid
+
+    search_text = menu.inventory_page.search_text.lower()
+    inventory = sorted(
+        filter(
+            lambda i:
+            search_text in i.image or
+            any([
+                search_text in attribute.lower() or
+                search_text in ATTRIBUTE_DESCRIPTIONS[attribute].lower()
+                for attribute in i.attributes
+            ]),
+            world.player.inventory.weapons
+        ),
+        key=weapon_sort_function
+    )
 
     if not len(inventory):
         return
 
+    # Get mouse scroll
     scroll_speed = 20
     window.mouse_wheel[1] = min(max(window.mouse_wheel[1], 0), len(inventory) * scroll_speed - scroll_speed)
     scroll_position = window.mouse_wheel[1] / scroll_speed
     if not window.mouse_wheel[3]:
         window.mouse_wheel[1] += (round(scroll_position) - scroll_position) * scroll_speed * 0.02
 
+    # Get weapon positions
     weapon_y = 0.5
     weapon_positions = []
     for i, weapon in enumerate(inventory):
@@ -268,29 +310,72 @@ def update_inventory():
     distance = abs(math.floor(scroll_position) - scroll_position)
     weapon_center_y = (1 - distance) * weapon_positions[math.floor(scroll_position)] + distance * weapon_positions[math.ceil(scroll_position)]
 
+    # Draw weapon list
     for i, weapon in enumerate(inventory):
         weapon_size = Vec(0.4, 0.4 / window.height * window.width) * max(0, 1 / ((i - scroll_position) ** 4 + 1))
-        weapon_pos = (-0.2 - weapon_size[0] / 2, weapon_positions[i] - weapon_center_y)
+        weapon_pos = Vec(-0.2 - weapon_size[0] / 2, weapon_positions[i] - weapon_center_y)
+
+        if weapon_pos[1] < -0.8:
+            continue
+
+        # Draw highlight circle
+        if i == round(scroll_position):
+            radius = weapon_size[0] * 0.5 + pnoise1(window.time * 0.1, octaves=2) * 0.1
+            if weapon is world.player.holding:
+                color = (168, 202, 88, 50)
+            else:
+                color = (162, 62, 140, 50)
+            window.draw_circle(weapon_pos + weapon_size / 2, radius, color)
+
+        window.draw_image("star_marked_icon", (-0.2 -weapon_size[0] * 0.7, weapon_positions[i] - weapon_center_y + weapon_size[1] * 0.4), weapon_size * 0.2)
         window.draw_image(weapon.image, weapon_pos, weapon_size, angle=30)
 
+    # Write weapons stats/attributes
     weapon = inventory[round(scroll_position)]
-    if not weapon is None:
+    if weapon is None:
+        return
 
-        description_y = 0.8
-        description_y += window.draw_text((0, description_y), weapon.image.title(), (255, 255, 255), 0.3)[1]
-        
-        for stat in ("damage", "attack_speed", "range", "crit_chance"):
-            stat_name = stat.title().replace("_", " ")
-            description_y -= abs(window.draw_text((0, description_y), f"{stat_name}: {weapon.__dict__[stat]}", (164, 221, 219), 0.17, wrap=1)[1]) * 6
+    name = weapon.image.title()
+    if weapon is world.player.holding:
+        name += " (equipped)"
+    window.draw_text((0, 0.8), name, (255, 255, 255), 0.3)
+    
+    for i, stat in enumerate(("damage", "attack_speed", "range", "crit_chance")):
+        stat_name = stat.title().replace("_", " ")
+        window.draw_text((0, -i * 0.1 + 0.6), f"{stat_name}: {weapon.__dict__[stat]}", (164, 221, 219), 0.17, wrap=1)
 
-        for i, (attribute, level) in enumerate(weapon.attributes.items()):
-            description_y = -0.6 * i + 0.1
-            description = ATTRIBUTE_DESCRIPTIONS[attribute] % (ATTRIBUTE_BASE_MODIFIERS[attribute] * level)
-            window.draw_text((0, description_y), f"{attribute.title()} {INT_TO_ROMAN[level]}: {description}", (223, 132, 165), 0.17, wrap=1)
+    for i, (attribute, level) in enumerate(weapon.attributes.items()):
+        description_y = -0.6 * i + 0.1
+        description = ATTRIBUTE_DESCRIPTIONS[attribute] % (ATTRIBUTE_BASE_MODIFIERS[attribute] * level)
+        window.draw_text((0, description_y), f"{attribute.title()} {INT_TO_ROMAN[level]}: {description}", (223, 132, 165), 0.17, wrap=1)
 
-        window.draw_text((0.75, 0.85), "Equip", (255, 255, 255), 0.2)
-        window.draw_text((0.75, 0.7), "Fuse", (255, 255, 255), 0.2)
-        window.draw_text((0.75, 0.55), "Destroy", (255, 255, 255), 0.2)
+
+    window.draw_text((-0.95, 0.9), "Action:", (255, 255, 255), 0.2)
+    for i, key in enumerate(("Equip", "Fuse", "Destroy")):
+        rect = Rect(-0.95, -i * 0.2 - 0.05 / window.height * window.width + 0.7, 0.4, 0.1 / window.height * window.width)
+        sort_image = "button_dark_unselected"
+
+        if rect.collide_point((window.mouse_pos[0] / window.width * 2, window.mouse_pos[1] / window.height * 2)):
+            if 1 in window.mouse_buttons:
+                if key == "Equip":
+                    world.player.holding = weapon
+                elif key == "Fuse":
+                    print("Fuse")
+                elif key == "Destroy":
+                    world.player.inventory.weapons.remove(weapon)
+                    inventory.remove(weapon)
+                    if world.player.holding is weapon:
+                        if len(inventory):
+                            world.player.holding = inventory[0]
+                        else:
+                            world.player.holding = None
+                    world.player.health = min(world.player.health + 1, world.player.max_health)
+
+            if any(window.mouse_buttons):
+                sort_image = "button_dark"
+
+        window.draw_image(sort_image, rect[:2], rect[2:])
+        window.draw_text((-0.9, -i * 0.2 + 0.7), key, (255, 255, 255), 0.2)
 
 
 def main():
@@ -354,6 +439,9 @@ def main():
             # Draw world
             draw_game()
 
+            if menu.game_state == "inventory":
+                world.update(window)
+
             # Draw menu
             if menu.game_intro:
                 draw_intro()
@@ -368,8 +456,9 @@ def main():
             window.update()
 
             # Game
-            if window.keybind("return") == 1 or window.keybind("inventory") == 1:
+            if window.keybind("return") == 1 or (window.keybind("inventory") == 1 and not menu.inventory_page.search_selected):
                 if menu.game_state in ("pause", "inventory"):
+                    menu.inventory_page.search_selected = False
                     if menu.game_intro:
                         menu.game_state = "intro"
                         menu.game_intro = False

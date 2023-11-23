@@ -1,0 +1,7 @@
+{
+    "name": "star_unmarked_icon",
+    "speed": 0,
+    "frames": [
+        "star_unmarked_icon.png"
+    ]
+}

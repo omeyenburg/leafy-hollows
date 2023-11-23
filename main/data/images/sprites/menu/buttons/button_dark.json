@@ -1,0 +1,7 @@
+{
+    "name": "button_dark",
+    "speed": 0,
+    "frames": [
+        "button_dark.png"
+    ]
+}
