@@ -1,0 +1,7 @@
+{
+    "name": "search_icon",
+    "speed": 0,
+    "frames": [
+        "search_icon.png"
+    ]
+}

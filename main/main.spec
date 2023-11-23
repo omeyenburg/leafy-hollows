@@ -1,7 +1,14 @@
 # -*- mode: python ; coding: utf-8 -*-
 import platform
+import os
+
 
 name = "HelloWorld"
+
+if platform.system() == "Darwin":
+    icon = "icon/icon.icns"
+else:
+    icon = os.path.join("icon", "icon.ico")
 
 a = Analysis(
     ['main.py'],
@@ -24,6 +31,9 @@ pyz = PYZ(a.pure, a.zipped_data, cipher=None)
 exe = EXE(
     pyz,
     a.scripts,
+    a.binaries,
+    a.zipfiles,
+    a.datas,
     [],
     exclude_binaries=True,
     name="main",
@@ -31,13 +41,13 @@ exe = EXE(
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    console=platform.system() == "Darwin",
+    console=True,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['icon/icon.icns'],
+    icon=[icon],
 )
 
 coll = COLLECT(
@@ -55,13 +65,13 @@ if platform.system() == "Darwin":
     app = BUNDLE(
         coll,
         name=name + '.app',
-        icon='./icon/icon.icns',
+        icon='./' + icon,
         bundle_identifier=None,
     )
 else:
     app = BUNDLE(
         coll,
         name=name + '.exe',
-        icon='./icon/icon/ico',
+        icon=icon,
         bundle_identifier=None,
     )

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from scripts.game.noise_functions import pnoise1, snoise2
+from scripts.utility.noise_functions import pnoise1, snoise2
 from scripts.utility.const import *
 import random
 import numpy

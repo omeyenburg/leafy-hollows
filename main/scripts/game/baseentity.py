@@ -11,6 +11,21 @@ class LivingEntity(physics.PhysicsObject):
         self.health: int = health
         self.max_health: int = health
 
+    def draw(self, window):
+        # Draw hitbox
+        #rect = window.camera.map_coord((self.rect.x, self.rect.y, self.rect.w, self.rect.h), from_world=True)
+        #window.draw_rect(rect[:2], rect[2:], (255, 0, 0, 100))
+
+        # Health bar
+        unmapped_rect = (self.rect.x - 0.5 + self.rect.w / 2, self.rect.y + self.rect.h + 0.5, 1, 4/16)
+        length = self.health / self.max_health
+
+        rect = window.camera.map_coord(unmapped_rect, from_world=True)
+        window.draw_image("health_bar", rect[:2], rect[2:])
+
+        rect = window.camera.map_coord((unmapped_rect[0] + 1/16 + 14/16 * length, unmapped_rect[1] + 1/16, 14/16 * (1 - length), 2/16), from_world=True)
+        window.draw_rect(rect[:2], rect[2:], (30, 29, 57))
+
     def update(self, world, delta_time):
         if not self.holding is None:
             self.holding.cooldown -= delta_time

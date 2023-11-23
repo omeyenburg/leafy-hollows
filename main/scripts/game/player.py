@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from scripts.game.baseentity import LivingEntity
+from scripts.game.inventory import Inventory
 from scripts.graphics.window import Window
 from scripts.utility.const import *
 from scripts.graphics import sound
@@ -14,9 +15,8 @@ class Player(LivingEntity):
         super().__init__(50, spawn_pos, PLAYER_RECT_SIZE_NORMAL, health=10)
         self.type = "player"
 
-        self.inventory = [Weapon(3) for Weapon in random.choices((Sword, Axe, Pickaxe, Bow), k=10)]
-        self.holding_index = 0
-        self.holding = self.inventory[self.holding_index]
+        self.inventory = Inventory()
+        self.holding = self.inventory.weapons[0]
 
         # Player rect size (based on state)
         self.rect_size = PLAYER_RECT_SIZE_NORMAL
@@ -430,22 +430,21 @@ class Player(LivingEntity):
         """
 
         # Place/break block with right click
-        
+        """
         if window.mouse_buttons[2] == 1:
             mouse_pos = window.camera.map_coord(window.mouse_pos[:2], world=True)
             if world.get_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1])) > 0:
                 world.set_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), 0)
             else:
                 world.set_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), world.block_name["stone_block"])
-        
+        """
             
-        # Shoot arrow with left click (no cooldown)
+        # Attack
         if window.mouse_buttons[0] == 1:
             if not self.holding is None:
                 mouse_pos = window.camera.map_coord(window.mouse_pos[:2], world=True)
                 angle = math.atan2(mouse_pos[1] - self.rect.centery, mouse_pos[0] - self.rect.centerx)
                 self.holding.attack(window, world, self, angle)
-
 
         """
         # Place water

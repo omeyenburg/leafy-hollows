@@ -5,13 +5,14 @@ import math
 import os
 
 
-os.environ['entity_count'] = "0"
+os.environ["entity_count"] = "0"
 
 
 class PhysicsObject:
     def __init__(self, mass: float, position: [float], size: [float]):
         self.uuid = int(os.environ.get("entity_count"))
-        os.environ['entity_count'] = str(self.uuid + 1)
+        os.environ["entity_count"] = str(self.uuid + 1)
+
         self.type = "physics_object"
         self.mass: float = mass
         self.rect: geometry.Rect = geometry.Rect(*position, *size)

@@ -48,6 +48,7 @@ class Menu:
         self.inventory_page.sort_key = "age"
         self.inventory_page.search_selected = False
         self.inventory_page.search_text = ""
+        self.inventory_page.sort_key = "Level"
         #Label(self.inventory_page, MENU_HEADING_SIZE, text="Inventory", fontsize=TEXT_SIZE_HEADING)
         #button_pause_play = Button(self.inventory_page, MENU_BUTTON_SIZE, text="Play", callback=button_pause_play_update, fontsize=TEXT_SIZE_BUTTON)
         #button_pause_menu = Button(self.inventory_page, MENU_BUTTON_SIZE, text="Main Menu", callback=button_pause_menu_update, fontsize=TEXT_SIZE_BUTTON)

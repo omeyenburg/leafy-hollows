@@ -1,11 +1,16 @@
 # -*- coding: utf-8 -*-
 from scripts.utility.const import *
 import pickle
-import numpy
 import json
 import glob
 import sys
 import os
+
+
+try:
+    import numpy
+except:
+    pass
 
 
 dirpath = os.path.dirname
