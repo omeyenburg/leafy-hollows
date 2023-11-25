@@ -1,7 +1,7 @@
 {
-    "name": "axe",
+    "name": "banana",
     "speed": 0,
     "frames": [
-        "axe.png"
+        "banana.png"
     ]
 }

@@ -1,0 +1,7 @@
+{
+    "name": "equip_icon",
+    "speed": 0,
+    "frames": [
+        "equip_icon.png"
+    ]
+}

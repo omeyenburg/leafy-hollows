@@ -5,9 +5,6 @@ from scripts.utility import options
 from scripts.utility.const import *
 from scripts.graphics import sound
 from scripts.utility import file
-import math
-import sys
-import os
 
 
 class Page:
@@ -314,7 +311,7 @@ class ScrollBox(Widget):
             self.slider_selected = False
 
         if self.slider_selected and self.offset_length != 0:
-            self.slider_y = -(window.mouse_pos[1] / window.height * 2 - self.rect.y + self.rect.h) / self.rect.h
+            self.slider_y = -(window.mouse_pos[1] / window.height * 2 - self.rect.y) / self.rect.h + self.rect.h
             self.offset = self.slider_y * self.offset_length + self.start_offset
 
         # Draw & Update children

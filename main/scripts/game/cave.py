@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 from scripts.utility.noise_functions import pnoise1, snoise2
 from scripts.utility.const import *
-import random
-import numpy
-import math
 
 
 def generate_points_segment(position: [float], length, start_angle: float, deviation: float):

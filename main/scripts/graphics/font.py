@@ -2,7 +2,6 @@
 from scripts.utility.const import *
 from scripts.utility import file
 import pygame
-import math
 
 
 class Font:

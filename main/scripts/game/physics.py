@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
-from scripts.utility.const import *
 from scripts.utility import geometry
-import math
-import os
+from scripts.utility.const import *
 
 
 os.environ["entity_count"] = "0"

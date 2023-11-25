@@ -5,9 +5,6 @@ from scripts.utility import geometry
 from scripts.utility.const import *
 from scripts.game import player
 from scripts.utility import file
-import random
-import numpy
-import math
 import time
 
 
@@ -161,6 +158,8 @@ class World:
 
         for entity in self.loaded_entities:
             if hasattr(entity, "health") and entity.health <= 0:
+                if not entity is self.player:
+                    self.player.obtain_weapon_drop(window, entity)
                 self.entities.discard(entity)
             entity.update(self, window)
 
