@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from scripts.graphics import particle
+from scripts.utility.const import *
 from scripts.graphics import sound
 from scripts.game import physics
 
@@ -27,6 +28,23 @@ class LivingEntity(physics.PhysicsObject):
         rect = window.camera.map_coord((unmapped_rect[0] + 1/16 + 14/16 * length, unmapped_rect[1] + 1/16, 14/16 * (1 - length), 2/16), from_world=True)
         window.draw_rect(rect[:2], rect[2:], (30, 29, 57))
 
+        # Holding Item
+        if not self.holding is None:
+            self.draw_holding_item(window)
+
+    def draw_holding_item(self, window):
+        flip = (not self.direction, 0)
+        if self.direction:
+            center = (self.rect.left - 0.2, self.rect.centery - 0.1)
+            angle = 40
+        else:
+            center = (self.rect.right + 0.2, self.rect.centery - 0.1)
+            angle = -40
+
+        weapon_size = 0.6
+        rect = window.camera.map_coord((center[0] - weapon_size / 2, center[1] - weapon_size / 2, weapon_size, weapon_size), from_world=True)
+        window.draw_image(self.holding.image, rect[:2], rect[2:], angle, flip)
+
     def update(self, world, delta_time):
         if not self.holding is None:
             self.holding.cooldown -= delta_time
@@ -35,6 +53,20 @@ class LivingEntity(physics.PhysicsObject):
         super().update(world, delta_time)
 
     def damage(self, window, amount: float=0, velocity: [float]=(0, 0)):
+        if not self.holding is None:
+            damage_multiplier = 1
+
+            shielding_level = self.holding.attributes.get("shielding", 0)
+            if shielding_level:
+                damage_multiplier -= shielding_level * ATTRIBUTE_BASE_MODIFIERS["shielding"] * 0.01
+
+            berserker_level = self.holding.attributes.get("berserker", 0)
+            if berserker_level:
+                damage_multiplier += berserker_level * ATTRIBUTE_BASE_MODIFIERS["berserker"] * 0.01
+
+            amount *= damage_multiplier
+        amount = round(amount, 1)
+
         self.stunned += 0.2
         self.health -= amount
 

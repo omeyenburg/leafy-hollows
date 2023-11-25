@@ -201,7 +201,7 @@ def get_decoration_block_type(world, x, y):
     # Exit early
     if (block_below and block_above) or (0 < water_level < 700):
         return [None]
-    if block_left and block_right:
+    if block_left and block_right and block_below:
         water = random.random()
         if water > 0.9:
             world.set_water(x, y, (water - 0.7) * 2000)

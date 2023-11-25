@@ -60,21 +60,19 @@ class Player(LivingEntity):
         window.draw_image("player_" + self.state, rect[:2], rect[2:], flip=(self.direction, 0))
 
         # Draw item
-
+        self.draw_holding_item(window)
 
     def move_normal(self, world, window: Window):
         """
         Move player: idle, walk, crouch and jump
         """
         if not self.can_move:
-            return # Movement disabled during intro
+            return # Movement disabled during intro and opened inventory
 
-        # Friction
-        block_fricton = world.get_block_friction(self.block_below)
-
-        # Walking
+        # Walk keys
         key_right = window.keybind("right")
         key_left = window.keybind("left")
+        block_fricton = world.get_block_friction(self.block_below)
 
         # Set max speed
         max_speed = self.walk_speed
@@ -86,6 +84,11 @@ class Player(LivingEntity):
             max_speed *= 0.7
         if self.underWater:
             max_speed /= 2
+        
+        agility_level = self.holding.attributes.get("agility", 0)
+        if agility_level:
+            agility = agility_level * ATTRIBUTE_BASE_MODIFIERS["agility"] * 0.01
+            max_speed *= 1 + agility
 
         # Set current speed
         acceleration_speed = max_speed * block_fricton * self.acceleration_time * (1 + block_fricton)
@@ -116,11 +119,6 @@ class Player(LivingEntity):
         if window.options["auto jump"] and self.block_below and (bool(key_right) ^ bool(key_left)) and (not window.keybind("jump")) and world.get_block(math.floor(abs(-self.rect.left * bool(key_left) + self.rect.right * bool(key_right) + 0.6)), round(self.rect.y)) and (not world.get_block(math.floor(abs(-self.rect.left * bool(key_left) + self.rect.right * bool(key_right) + 0.6)), round(self.rect.y + 1))):
             self.jump(window, 5)
             self.vel[0] *= 0.7
-        
-        # Friction
-        self.apply_force_horizontal(-self.vel[0] * self.mass * block_fricton * 0.1, 1)
-        if not (key_right or key_left):
-            self.vel[0] *= 0.999 ** window.delta_time
 
         # Jumping
         if window.keybind("jump") and (self.block_below or self.block_right and key_left or self.block_left and key_right):
@@ -457,13 +455,13 @@ class Player(LivingEntity):
     def update(self, world, window: Window):
         self.move(world, window)
         super().update(world, window.delta_time)
-        self.mouse_inputs(world, window)
+        if self.can_move:
+            self.mouse_inputs(world, window)
 
     def obtain_weapon_drop(self, window, entity):
         soul_drain_level = self.holding.attributes.get("soul drain", 0)
         if soul_drain_level:
             weapon_heal = soul_drain_level * ATTRIBUTE_BASE_MODIFIERS["soul drain"] * 0.01 * self.max_health
-            print(weapon_heal)
             self.heal(window, weapon_heal)
 
         weapon_luck = self.holding.attributes.get("looting", 1)

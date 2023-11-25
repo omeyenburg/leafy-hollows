@@ -86,5 +86,27 @@
         "angle": 180,
         "divergence": 0,
         "amount": -1
+    },
+    "swing_right_particle": {
+        "time": 0.3,
+        "delay": 1,
+        "size": [1.0, 1.0],
+        "gravity": 0,
+        "growth": 0,
+        "speed": 2.0,
+        "angle": 0,
+        "divergence": 1,
+        "amount": -1
+    },
+    "swing_left_particle": {
+        "time": 0.3,
+        "delay": 1,
+        "size": [1.0, 1.0],
+        "gravity": 0,
+        "growth": 0,
+        "speed": 2.0,
+        "angle": 180,
+        "divergence": 1,
+        "amount": -1
     }
 }

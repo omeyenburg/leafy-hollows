@@ -202,8 +202,6 @@ class PhysicsObject:
         """
         Moves the object.
         """
-
-
         #if (not hasattr(self, "can_move") and not self.can_move):
         #    self.apply_force(delta_time * abs(world.wind) / (self.mass), 90 + 90 * min(1, max(-1, -world.wind)), self.mass)
         #if self.block_below:
@@ -237,4 +235,8 @@ class PhysicsObject:
 
         # Apply gravity and friction
         self.apply_gravity_force(delta_time)
-        #self.apply_friction_force(delta_time)
+
+        # Friction
+        block_fricton = world.get_block_friction(self.block_below)
+        self.apply_force_horizontal(-self.vel[0] * self.mass * block_fricton * 0.1, 1)
+        self.vel[0] *= 0.999 ** delta_time

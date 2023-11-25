@@ -38,14 +38,14 @@ class Pickaxe(MeleeWeapon):
 
 class Bow(RangedWeapon):
     def __init__(self, luck: int=1):
-        super().__init__(damage=3, attack_speed=2, range=20, crit_chance=0.1, luck=luck)
+        super().__init__(damage=3, attack_speed=2, range=5, crit_chance=0.1, luck=luck)
         self.image = "bow"
         self.angle = -30
 
 
 class Banana(RangedWeapon):
     def __init__(self, luck: int=1):
-        super().__init__(damage=2, attack_speed=4, range=17, crit_chance=0.2, luck=luck)
+        super().__init__(damage=2, attack_speed=4, range=10, crit_chance=0.2, luck=luck)
         self.image = "banana"
         self.angle = 0
 

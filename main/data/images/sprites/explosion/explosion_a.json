@@ -1,0 +1,7 @@
+{
+    "name": "explosion_a",
+    "speed": 0,
+    "frames": [
+        "explosion_a.png"
+    ]
+}
