@@ -11,6 +11,7 @@ from scripts.game.weapon import *
 class Slime(LivingEntity):
     def __init__(self, spawn_pos: [float]):
         super().__init__(30, spawn_pos, SLIME_RECT_SIZE, health=5)
+        self.type = "enemy"
 
         # Enemy attributes
         self.item_drop_chance = 0.3
@@ -72,6 +73,7 @@ class Slime(LivingEntity):
 class Goblin(LivingEntity):
     def __init__(self, spawn_pos: [float]):
         super().__init__(30, spawn_pos, GOBLIN_RECT_SIZE, health=5)
+        self.type = "enemy"
 
         # Enemy attributes
         self.item_drop_chance = 0.5
@@ -95,6 +97,7 @@ class Goblin(LivingEntity):
         super().update(world, window.delta_time)
 
         if self.stunned:
+            self.state = "hit_ground"
             return
 
         speed = min(self.max_speed, abs(world.player.rect.centerx - self.rect.centerx))
@@ -139,6 +142,7 @@ class Goblin(LivingEntity):
 class Bat(LivingEntity):
     def __init__(self, spawn_pos: [float]):
         super().__init__(30, spawn_pos, BAT_RECT_SIZE, health=3)
+        self.type = "enemy"
 
         # Enemy attributes
         self.item_drop_chance = 0.2

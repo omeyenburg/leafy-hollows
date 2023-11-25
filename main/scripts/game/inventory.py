@@ -9,7 +9,7 @@ import copy
 class Inventory:
     def __init__(self):
         #[Weapon(5) for Weapon in random.choices((Sword, Axe, Pickaxe, Bow), k=10)]
-        self.weapons = [Stick(1)]
+        self.weapons = [Weapon(5) for Weapon in random.choices((Sword, Axe, Pickaxe, Bow), k=10)]#[Stick(1)]
         self.marked_weapons = set()
 
     def update(self, window, menu, world):
@@ -161,10 +161,17 @@ class Inventory:
         if weapon is world.player.holding:
             name += " (equipped)"
         window.draw_text((0, 0.8), name, (255, 255, 255), 0.3)
+
+        weapon_base_stats = (weapon.damage, weapon.attack_speed, weapon.range, weapon.crit_chance)
+        attribute_stat_increase = weapon.get_weapon_stat_increase(world)
         
         for i, stat in enumerate(("damage", "attack_speed", "range", "crit_chance")):
             stat_name = stat.title().replace("_", " ")
-            window.draw_text((0, -i * 0.1 + 0.6), f"{stat_name}: {weapon.__dict__[stat]}", (164, 221, 219), 0.17, wrap=1)
+            stat_size = window.draw_text((0, -i * 0.1 + 0.6), f"{stat_name}: {weapon_base_stats[i]}", (164, 221, 219), 0.17)
+
+            stat_increase = round(attribute_stat_increase[i] - weapon_base_stats[i], 2)
+            if stat_increase:
+                window.draw_text((stat_size[0] + 0.05, -i * 0.1 + 0.6), f"(+{stat_increase})", (223, 132, 165), 0.17)
 
         for i, (attribute, level) in enumerate(weapon.attributes.items()):
             description_y = -0.6 * i + 0.1

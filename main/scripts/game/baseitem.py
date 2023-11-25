@@ -34,10 +34,54 @@ class BaseItem:
         paralysis_level = self.attributes.get("paralysis", 0)
         if paralysis_level:
             weapon_paralysis = paralysis_level * ATTRIBUTE_BASE_MODIFIERS["paralysis"] * 0.01
-            print(weapon_paralysis)
             if weapon_paralysis > random.random():
                 target.stunned += 1.5
-                print("stunned")
+
+    def get_weapon_stat_increase(self, world):
+        damage = self.damage
+        attack_speed = self.attack_speed
+        weapon_range = self.range
+        crit_chance = self.crit_chance
+
+        ferocity_level = self.attributes.get("ferocity", 0)
+        if ferocity_level:
+            ferocity = ferocity_level * ATTRIBUTE_BASE_MODIFIERS["ferocity"] * 0.01
+            damage *= 1 + ferocity
+            attack_speed *= 1 + ferocity
+
+        berserker_level = self.attributes.get("berserker", 0)
+        if berserker_level:
+            berserker = berserker_level * ATTRIBUTE_BASE_MODIFIERS["berserker"] * 0.01
+            damage *= 1 + berserker
+
+        agility_level = self.attributes.get("agility", 0)
+        if agility_level:
+            agility = agility_level * ATTRIBUTE_BASE_MODIFIERS["agility"] * 0.01
+            attack_speed *= 1 + agility
+        
+        critical_level = self.attributes.get("critical", 0)
+        if critical_level:
+            critical = critical_level * ATTRIBUTE_BASE_MODIFIERS["critical"] * 0.01
+            crit_chance += critical
+
+        warrior_level = self.attributes.get("warrior", 0)
+        if warrior_level:
+            number_enemies = len(list(filter(lambda i: i.type == "enemy", world.loaded_entities)))
+            warrior = warrior_level * ATTRIBUTE_BASE_MODIFIERS["warrior"] * 0.01 * number_enemies
+            damage *= 1 + warrior
+
+        assassin_level = self.attributes.get("assassin", 0)
+        if assassin_level:
+            assassin = assassin_level * ATTRIBUTE_BASE_MODIFIERS["assassin"] * 0.01
+            attack_speed *= 1 + assassin
+            crit_chance += assassin
+
+        longshot_level = self.attributes.get("longshot", 0)
+        if longshot_level:
+            longshot = longshot_level * ATTRIBUTE_BASE_MODIFIERS["longshot"] * 0.01
+            weapon_range *= 1 + longshot
+
+        return damage, attack_speed, weapon_range, min(crit_chance, 1)
 
 
 # Sword, Axe, Pickaxe
@@ -48,14 +92,16 @@ class MeleeWeapon(BaseItem):
     def attack(self, window, world, attacker, angle):
         if self.cooldown > 0:
             return
-        self.cooldown = 1 / self.attack_speed
+
+        damage, attack_speed, weapon_range, crit_chance = self.get_weapon_stat_increase(world)
+        self.cooldown = 1 / attack_speed
 
         targets = set()
         for entity in world.loaded_entities:
             if entity is attacker or not isinstance(entity, LivingEntity):
                 continue
             entity_distance = math.sqrt((attacker.rect.centerx - entity.rect.centerx) ** 2 + (attacker.rect.centery - entity.rect.centery) ** 2)
-            if entity_distance > self.range:
+            if entity_distance > weapon_range:
                 continue
             if entity_distance < 1:
                 targets.add((1, entity))
@@ -64,7 +110,7 @@ class MeleeWeapon(BaseItem):
             angle_distance = abs(entity_angle - angle)
             if angle_distance < self.max_angle_offset:
                 targets.add((angle_distance, entity))
-        
+
         if not targets:
             return
 
@@ -74,21 +120,35 @@ class MeleeWeapon(BaseItem):
             attacker.vel[1] * 0.5 + math.sin(angle)
         )
 
+        critical_multiplier = 1 + 0.5 * (crit_chance > random.random())
+
         if max_target_count == 1:
             target = min(targets, key=lambda i: i[0])[1]
-            target.damage(window, self.damage, attacker.vel)
+            target.damage(window, damage * critical_multiplier, attacker.vel)
         else:
             targets = sorted(targets, key=lambda i: i[0])[:max_target_count]
             for target in targets:
-                target[1].damage(window, self.damage, attacker.vel)
+                target[1].damage(window, damage * critical_multiplier, attacker.vel)
             target = targets[0]
 
         super().apply_attributes(window, attacker, target)
-
+    
+        attack_particle = random.choice(("impact", "swing"))
         if -math.pi < angle * 2 < math.pi:
-            particle.spawn(window, "impact_right_particle", *attacker.rect.center)
+            attack_particle += "_right"
         else:
-            particle.spawn(window, "impact_left_particle", *attacker.rect.center)
+            attack_particle += "_left"
+        particle.spawn(window, attack_particle + "_particle", *attacker.rect.center)
+
+        explosive = self.attributes.get("explosive", 0)
+        if explosive:
+            explosion_damage = damage * ATTRIBUTE_BASE_MODIFIERS["explosive"] * 0.01
+            particle.explosion(window, *target.rect.center, size=2.0, time=0.5)
+            for entity in world.loaded_entities:
+                if entity.type in ("enemy", "player"):
+                    distance = math.sqrt((entity.rect.centerx - target.rect.centerx) ** 2 + (entity.rect.centery - target.rect.centery) ** 2)
+                    entity.stunned += 0.5
+                    entity.damage(window, explosion_damage * min(1, max(0, 4 - distance)), (0, 0))
 
 # Bow, Banana
 class RangedWeapon(BaseItem):
@@ -98,15 +158,13 @@ class RangedWeapon(BaseItem):
     def attack(self, window, world, attacker, angle):
         if self.cooldown > 0:
             return
-        self.cooldown = 1 / self.attack_speed
 
-        world.add_entity(Arrow(attacker.rect.center, speed=50, angle=angle, owner=attacker))
+        damage, attack_speed, weapon_range, crit_chance = self.get_weapon_stat_increase(world)
+        world.add_entity(Arrow(attacker.rect.center, speed=weapon_range * 10, angle=angle, owner=attacker))
+        self.cooldown = 1 / attack_speed
 
 # Magic Wands
 class MagicWeapon(BaseItem):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-
-def generate_attribute(luck: float):
-    ...

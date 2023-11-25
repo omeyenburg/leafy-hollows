@@ -66,12 +66,18 @@ def text(window, text: str, x: float, y: float, size: float=1.0, color: [float]=
     window.particles.append(["text", text, x, y, size, window.time + time, *color])
 
 
+def explosion(window, x: float, y: float, size: float=1.0, time: float=1.0):
+    window.particles.append(["explosion", x, y, size, window.time + time, time])
+
+
 def update(window):
     for i, particle in enumerate(window.particles):
-        if particle[0] != "text":
-            update_particle(window, i, particle)
-        else:
+        if particle[0] == "text":
             update_text(window, i, particle)
+        elif particle[0] == "explosion":
+            update_explosion(window, i, particle)
+        else:
+            update_particle(window, i, particle)
 
 
 def update_particle(window, i, particle):
@@ -107,3 +113,19 @@ def update_text(window, i, particle):
 
     if not (-1 < pos[0] < 2 and -1 < pos[1] < 2):
         window.particles.pop(i)
+
+
+def update_explosion(window, i, particle):
+    _, x, y, size, time, total_time = particle
+    if window.time > time:
+        window.particles.pop(i)
+        return
+
+    image = "explosion_" + chr(ord("a") + round(6 - (time - window.time) / total_time * 6))
+
+    rect = window.camera.map_coord((x - size/2, y - size/2, size, size), from_world=True)
+    window.draw_image(image, rect[:2], rect[2:])
+
+    if not (-1 < rect[0] < 2 and -1 < rect[1] < 2):
+        window.particles.pop(i)
+    
