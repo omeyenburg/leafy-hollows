@@ -4,10 +4,7 @@ from scripts.game import cave
 from scripts.utility.const import *
 from scripts.game import structure
 from scripts.game.entity import *
-from copy import deepcopy
-import random
-import numpy
-import math
+import copy
 
 
 # Replace with better names...? Add / Remove?
@@ -143,7 +140,7 @@ def generate_world(world, window):
     spawn_blocks = random.sample(list(blocks_ground), k=int(0.05 * len(blocks_ground)))
 
     for coord in spawn_blocks:
-        if coord[1] > -1000:
+        if coord[0] < 30 or coord[1] > -500:
             continue
         Entity = random.choice((Slime, Goblin, Bat))
         world.add_entity(Entity(coord))
@@ -356,7 +353,7 @@ def generate_poles(world, poles, blocks_ground, blocks_ceiling):
 
 # Called from generate_world
 def flatten_edges(world):
-    world_copy = deepcopy(world)
+    world_copy = copy.deepcopy(world)
     for x, y in world_copy.iterate():
         block_types = [world_copy.get_block(x + dx, y + dy, layer=0, default=0) for dx in range(-1, 2) for dy in range(-1, 2)]
         block_type = max(block_types, key=block_types.count)

@@ -7,7 +7,6 @@ from scripts.graphics import sound
 from scripts.game.physics import *
 from scripts.game.entity import *
 from scripts.game.weapon import *
-import random
 
 
 class Player(LivingEntity):
@@ -17,6 +16,7 @@ class Player(LivingEntity):
 
         self.inventory = Inventory()
         self.holding = self.inventory.weapons[0]
+        self.recent_drop = [0, None]
 
         # Player rect size (based on state)
         self.rect_size = PLAYER_RECT_SIZE_NORMAL
@@ -458,3 +458,17 @@ class Player(LivingEntity):
         self.move(world, window)
         super().update(world, window.delta_time)
         self.mouse_inputs(world, window)
+
+    def obtain_weapon_drop(self, window, entity):
+        soul_drain_level = self.holding.attributes.get("soul drain", 0)
+        if soul_drain_level:
+            weapon_heal = soul_drain_level * ATTRIBUTE_BASE_MODIFIERS["soul drain"] * 0.01 * self.max_health
+            print(weapon_heal)
+            self.heal(window, weapon_heal)
+
+        weapon_luck = self.holding.attributes.get("looting", 1)
+        if random.random() < entity.item_drop_chance:
+            weapon_luck = self.holding.attributes.get("looting", 1)
+            weapon = random.choice((Stick, Sword, Axe, Pickaxe, Bow))(weapon_luck)
+            self.inventory.weapons.append(weapon)
+            self.recent_drop = [2, weapon]

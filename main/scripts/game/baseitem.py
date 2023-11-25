@@ -3,9 +3,6 @@ from scripts.game.baseentity import LivingEntity
 from scripts.game.projectile import Arrow
 from scripts.graphics import particle
 from scripts.utility.const import *
-import random
-import math
-import os
 
 
 os.environ["item_count"] = "0"
@@ -27,6 +24,20 @@ class BaseItem:
         self.range: float = range
         self.crit_chance: float = crit_chance
         self.cooldown: float = 0.0
+
+    def apply_attributes(self, window, attacker, target):
+        vampire_level = self.attributes.get("vampire", 0)
+        if vampire_level:
+            weapon_heal = vampire_level * ATTRIBUTE_BASE_MODIFIERS["vampire"] * 0.01 * attacker.max_health
+            attacker.heal(window, weapon_heal)
+
+        paralysis_level = self.attributes.get("paralysis", 0)
+        if paralysis_level:
+            weapon_paralysis = paralysis_level * ATTRIBUTE_BASE_MODIFIERS["paralysis"] * 0.01
+            print(weapon_paralysis)
+            if weapon_paralysis > random.random():
+                target.stunned += 1.5
+                print("stunned")
 
 
 # Sword, Axe, Pickaxe
@@ -70,6 +81,9 @@ class MeleeWeapon(BaseItem):
             targets = sorted(targets, key=lambda i: i[0])[:max_target_count]
             for target in targets:
                 target[1].damage(window, self.damage, attacker.vel)
+            target = targets[0]
+
+        super().apply_attributes(window, attacker, target)
 
         if -math.pi < angle * 2 < math.pi:
             particle.spawn(window, "impact_right_particle", *attacker.rect.center)
@@ -86,7 +100,7 @@ class RangedWeapon(BaseItem):
             return
         self.cooldown = 1 / self.attack_speed
 
-        world.add_entity(Arrow(attacker.rect.center, speed=60, angle=angle, owner=attacker))
+        world.add_entity(Arrow(attacker.rect.center, speed=50, angle=angle, owner=attacker))
 
 # Magic Wands
 class MagicWeapon(BaseItem):

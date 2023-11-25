@@ -3,8 +3,6 @@ from scripts.utility.const import *
 import pickle
 import json
 import glob
-import sys
-import os
 
 
 try:

@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
+import opensimplex
 import math
 
 
 try:
     from noise import *
 except ModuleNotFoundError:
-    import opensimplex
-
     def pnoise1(x: float, octaves: int=1, persistence: float=0.5, lacunarity: float=2.0, repeat: float=0):
         z = 0
         octaves = min(octaves, 3)

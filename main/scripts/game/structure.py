@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 from scripts.utility.const import *
 from scripts.utility import file
-import numpy
-import math
 
 
 def load(block_name):

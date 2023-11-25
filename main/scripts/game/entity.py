@@ -6,7 +6,6 @@ from scripts.graphics.window import Window
 from scripts.graphics import particle
 from scripts.utility.const import *
 from scripts.game.weapon import *
-import math
 
 
 class Slime(LivingEntity):
@@ -14,9 +13,9 @@ class Slime(LivingEntity):
         super().__init__(30, spawn_pos, SLIME_RECT_SIZE, health=5)
 
         # Enemy attributes
-        self.level = 1             # Difficulty
-        self.hit_damage = 1        # Damage applied to player on collision
-        self.attack_cooldown = 3
+        self.item_drop_chance = 0.3
+        self.hit_damage = 1 # Damage applied to player on collision
+        self.attack_cooldown: float = 3
 
         # Animation states
         self.state: str = "idle"    # state is used for movement & animations
@@ -29,7 +28,12 @@ class Slime(LivingEntity):
         window.draw_image("slime_" + self.state, rect[:2], rect[2:], flip=(self.direction, 0), animation_offset=self.uuid)
 
     def update(self, world, window: Window):
-        if self.block_below:
+        super().update(world, window.delta_time)
+
+        if self.stunned:
+            return
+
+        if self.block_below and not self.stunned:
             if self.hit_ground == 0:
                 self.hit_ground = 0.2
                 particle.spawn(window, "slime_particle", self.rect.centerx, self.rect.top)
@@ -55,8 +59,6 @@ class Slime(LivingEntity):
         if self.hit_ground > 0:
             self.state = "hit_ground"
 
-        super().update(world, window.delta_time)
-
         # Attack player
         if self.attack_cooldown < 0 and self.vel[1] < 0 and self.rect.collide_rect(world.player.rect):
             world.player.damage(window, 1, self.vel)
@@ -72,11 +74,12 @@ class Goblin(LivingEntity):
         super().__init__(30, spawn_pos, GOBLIN_RECT_SIZE, health=5)
 
         # Enemy attributes
-        self.level = 1             # Difficulty
-        self.hit_damage = 1        # Damage applied to player on collision
-        self.attack_cooldown = 3
+        self.item_drop_chance = 0.5
         self.max_speed = 3
-        self.holding = Sword()
+        self.prepare_attack_length: float = 0.5
+        self.prepare_attack: float = self.prepare_attack_length
+
+        self.holding = random.choice((Sword, Axe, Pickaxe, Bow))(1)
 
         # Animation states
         self.state: str = "idle"    # state is used for movement & animations
@@ -89,6 +92,11 @@ class Goblin(LivingEntity):
         window.draw_image("goblin_" + self.state, rect[:2], rect[2:], flip=(self.direction, 0), animation_offset=self.uuid)
 
     def update(self, world, window: Window):
+        super().update(world, window.delta_time)
+
+        if self.stunned:
+            return
+
         speed = min(self.max_speed, abs(world.player.rect.centerx - self.rect.centerx))
         if world.player.rect.centerx < self.rect.centerx:
             self.vel[0] = -speed
@@ -116,7 +124,16 @@ class Goblin(LivingEntity):
         else:
             self.state = "idle"
 
-        super().update(world, window.delta_time)
+        #player_distance = math.sqrt((self.rect.centerx - world.player.rect.centerx) ** 2 + (self.rect.centery - world.player.rect.centery) ** 2)
+        if self.rect.collide_rect(world.player.rect) or self.holding is Bow:
+            self.prepare_attack -= window.delta_time
+
+            if self.prepare_attack < 0:
+                angle = math.atan2(world.player.rect.centery - self.rect.centery, world.player.rect.centerx - self.rect.centerx)
+                self.holding.attack(window, world, self, angle)
+                self.prepare_attack = self.prepare_attack_length
+        else:
+            self.prepare_attack_time = self.prepare_attack_length
 
 
 class Bat(LivingEntity):
@@ -124,10 +141,11 @@ class Bat(LivingEntity):
         super().__init__(30, spawn_pos, BAT_RECT_SIZE, health=3)
 
         # Enemy attributes
-        self.level = 1             # Difficulty
-        self.hit_damage = 1        # Damage applied to player on collision
-        self.attack_cooldown = 3
+        self.item_drop_chance = 0.2
+        self.hit_damage = 1 # Damage applied to player on collision
         self.max_speed = 2.5
+        self.prepare_attack_length: float = 4.0
+        self.prepare_attack: float = self.prepare_attack_length
 
         # Animation states
         self.state: str = "fly"    # state is used for movement & animations
@@ -140,6 +158,11 @@ class Bat(LivingEntity):
         window.draw_image("bat_" + self.state, rect[:2], rect[2:], flip=(self.direction, 0), animation_offset=self.uuid)
 
     def update(self, world, window: Window):
+        super().update(world, window.delta_time)
+
+        if self.stunned:
+            return
+
         speed_x = min(self.max_speed, abs(world.player.rect.centerx - self.rect.centerx))
         if world.player.rect.centerx < self.rect.centerx:
             self.vel[0] = -speed_x
@@ -148,11 +171,17 @@ class Bat(LivingEntity):
             self.vel[0] = speed_x
             self.direction = 0
 
-        speed_y = min(self.max_speed, abs(world.player.rect.centery - self.rect.centery))
-        y_offset = pnoise1(window.time / 20 + self.uuid * 10, 5) * 10
+        y_offset = self.prepare_attack#pnoise1(window.time / 20 + self.uuid * 10, 5) * 4
+
+        speed_y = min(self.max_speed, abs(world.player.rect.centery + y_offset - self.rect.centery))
         if world.player.rect.centery + y_offset < self.rect.centery:
             self.vel[1] = -speed_y
         else:
             self.vel[1] = speed_y
 
-        super().update(world, window.delta_time)
+        # Attack
+        if self.rect.collide_rect(world.player.rect) and self.prepare_attack < 0:
+            world.player.damage(window, 1, self.vel)
+            self.prepare_attack = self.prepare_attack_length
+        elif self.prepare_attack >= 0:
+            self.prepare_attack -= window.delta_time

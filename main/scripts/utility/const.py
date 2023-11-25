@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 import platform
+import random
+import numpy
+import math
+import os
 
 
 OPENGL_VERSION: str = "3.3 core"
@@ -81,15 +85,14 @@ ATTRIBUTES: [str] = (
     "piercing",
     "ferocity",
     "vampire",
-    "ignition",
+    #"ignition",
     "looting",
-    "disarm",
     "explosive",
     "paralysis",
     "berserker",
     "agility",
     "soul drain",
-    "vitality",
+    "shielding",
     "critical",
     "warrior",
     "assassin"
@@ -99,15 +102,14 @@ ATTRIBUTE_BASE_MODIFIERS: dict = {
     "piercing": 1,
     "ferocity": 5,
     "vampire": 5,
-    "ignition": 2,
-    "looting": 10,
-    "disarm": 15,
+    #"ignition": 2,
+    "looting": 1,
     "explosive": 30,
     "paralysis": 15,
     "berserker": 15,
     "agility": 5,
     "soul drain": 20,
-    "vitality": 10,
+    "shielding": 10,
     "critical": 10,
     "warrior": 5,
     "assassin": 5
@@ -117,15 +119,14 @@ ATTRIBUTE_DESCRIPTIONS: dict = {
     "piercing": "Allows your weapon to cut through enemies, hitting %s additional targets in its path.",
     "ferocity": "Enhances the weapon's aggressiveness, increasing damage and attack speed by %s%% each.",
     "vampire": "Regenerate %s%% health with every successful hit, siphoning life from enemies.",
-    "ignition": "Sets enemies on fire upon impact for %s seconds, causing additional damage over time.",
-    "looting": "Increases the chances of enemies dropping valuable loot by %s%%.",
-    "disarm": "Gives your weapon a %s%% chance to knock weapons out of enemies' hands.",
+    #"ignition": "Sets enemies on fire upon impact for %s seconds, causing additional damage over time.",
+    "looting": "Increases the possible level of a attribute on dropped weapons by %s.",
     "explosive": "Attacks detonate on impact, dealing %s%% of your weapon's damage to the target and nearby enemies.",
     "paralysis": "Strikes have a %s%% chance to temporarily stun enemies.",
-    "berserker": "Increases damage by %s%%, but comes at the cost of reduced defense, making you more susceptible to damage.",
+    "berserker": "Increases damage by %s%%, but at the cost of reduced defense.",
     "agility": "Increases your movement and attack speed by %s%% each, allowing for quicker strikes.",
     "soul drain": "Absorb your enemies' souls, regenerating %s%% health with each successfull kill.",
-    "vitality": "Reduces damage taken by %s%%.",
+    "shielding": "Reduces damage taken by %s%%.",
     "critical": "Increases the chance for a critical hit by %s%%.",
     "warrior": "Increases your weapon's damage by %s%% per enemy around you.",
     "assassin": "Increases your attack speed and crit chance by %s%% each."

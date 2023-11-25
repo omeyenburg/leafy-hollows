@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*- 
 from scripts.utility.const import *
-import math
 
 
 class Camera:

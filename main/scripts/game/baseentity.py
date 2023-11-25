@@ -10,6 +10,7 @@ class LivingEntity(physics.PhysicsObject):
         self.holding = None
         self.health: int = health
         self.max_health: int = health
+        self.stunned: float = 0
 
     def draw(self, window):
         # Draw hitbox
@@ -29,9 +30,12 @@ class LivingEntity(physics.PhysicsObject):
     def update(self, world, delta_time):
         if not self.holding is None:
             self.holding.cooldown -= delta_time
+        if self.stunned:
+            self.stunned = max(0, self.stunned - delta_time)
         super().update(world, delta_time)
 
     def damage(self, window, amount: float=0, velocity: [float]=(0, 0)):
+        self.stunned += 0.2
         self.health -= amount
 
         self.vel[0] += velocity[0] * 0.5
@@ -48,6 +52,10 @@ class LivingEntity(physics.PhysicsObject):
         if self.type == "player":
             window.effects["damage_screen"] = 1
             window.damage_time = 0.3
+
+    def heal(self, window, amount: float=0):
+        particle.text(window, "+", *self.rect.center, size=0.2, color=(165, 48, 48, 255), time=0.5, offset_radius=self.rect.h)
+        self.health = min(self.health + amount, self.max_health)
 
     def death(self, window):
         particle.spawn(window, "dust_particle", *self.rect.center)

@@ -3,7 +3,6 @@ from scripts.game.baseentity import LivingEntity
 from scripts.game.physics import PhysicsObject
 from scripts.graphics.window import Window
 from scripts.utility.const import *
-import math
 
 
 class Arrow(PhysicsObject):
@@ -34,10 +33,10 @@ class Arrow(PhysicsObject):
         self.angle = math.atan2(*self.vel[::-1]) + math.pi
 
         # Hurt entities
-
         for entity in world.loaded_entities:
             if (not (entity is self or entity is self.owner)) and isinstance(entity, LivingEntity) and self.rect.collide_rect(entity.rect):
                 entity.damage(window, 1, self.vel)
+                self.owner.holding.apply_attributes(window, self.owner, entity)
                 world.entities.discard(self)
                 break
 

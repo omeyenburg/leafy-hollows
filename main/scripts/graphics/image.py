@@ -2,8 +2,6 @@
 from scripts.utility.const import *
 from scripts.utility import file
 import pygame
-import math
-import os
 
 
 def get_sprite_rect(window, image, offset=0):
