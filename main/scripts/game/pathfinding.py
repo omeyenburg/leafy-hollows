@@ -45,14 +45,14 @@ def print_grid(grid: list[list[int]], open_list, closed_list):
 
             for node in open_list:
                 if node.pos == [x, y]:
-                    print(f"\x1b[44m{node.f % 10}\x1b[0m", end="")
+                    print(f"\x1b[44m{hex(node.f % 16)[2:]}\x1b[0m", end="")
                     written = True
             if written:
                 continue
 
             for node in closed_list:
                 if node.pos == [x, y]:
-                    print(f"\x1b[43m{node.f % 10}\x1b[0m", end="")
+                    print(f"\x1b[43m{hex(node.f % 16)[2:]}\x1b[0m", end="")
                     written = True
             if written:
                 continue
@@ -68,7 +68,7 @@ def print_grid(grid: list[list[int]], open_list, closed_list):
     print()
 
 
-def a_star(grid, start_pos, end_pos) -> list[list[int, int]]:
+def a_star(grid, start_pos: list[int, int], end_pos: list[int, int], full_path: bool) -> list[list[int, int]] | list[int, int]:
     start_node, end_node = Node(start_pos, None), Node(end_pos, None)
 
     open_list, closed_list = [start_node], []
@@ -87,20 +87,26 @@ def a_star(grid, start_pos, end_pos) -> list[list[int, int]]:
             while backtrack_node:
                 path.append(backtrack_node.pos)
                 backtrack_node = backtrack_node.parent
-            path.reverse()
 
-            return path
+            if full_path:
+                path.reverse()
+                return path
+            else:
+                return path[-1]
 
         for direction in [[1, 0], [-1, 0], [0, 1], [0, -1]]:    # find neighbours
             def valid_neighbour(pos) -> bool:
-                if not (-1 < neighbour_pos[0] < len(grid[0])) or not (-1 < neighbour_pos[1] < len(grid)):  # neighbour is outside of the grid
+                if not (-1 < neighbour_pos[1] < len(grid)) or not (-1 < neighbour_pos[0] < len(grid[neighbour_pos[1]])):  # neighbour is outside of the grid
+                    print(f"rejected oor: {neighbour_pos}")
                     return False
 
-                if grid[neighbour_pos[1]][neighbour_pos[0]] == 1:  # check if wall
+                if grid[neighbour_pos[1]][neighbour_pos[0]] != 0:  # check if walkable
+                    print(f"rejected wall: {neighbour_pos}")
                     return False
 
                 for closed_node in closed_list:  # not searching again
                     if closed_node.pos == neighbour_pos:
+                        print(f"rejected closed: {neighbour_pos}")
                         return False
 
                 for open_node in open_list:  # already marked for search
@@ -109,6 +115,7 @@ def a_star(grid, start_pos, end_pos) -> list[list[int, int]]:
                             open_list.remove(open_node)
                             return True
                         else:
+                            print(f"rejected searched: {neighbour_pos}")
                             return False
 
                 return True
@@ -117,6 +124,7 @@ def a_star(grid, start_pos, end_pos) -> list[list[int, int]]:
 
             if not valid_neighbour(neighbour_pos):
                 continue
+            print(f"neighbour: {neighbour_pos}")
 
             neighbour_node = Node(neighbour_pos, current_node)
             neighbour_node.g = current_node.g + 1
@@ -127,21 +135,26 @@ def a_star(grid, start_pos, end_pos) -> list[list[int, int]]:
 
 
 def main():
+    """
     grid = [[0, 1, 0, 0, 0],
             [0, 0, 0, 0, 0],
             [0, 1, 1, 1, 0],
             [0, 1, 0, 0, 0],
             [0, 1, 0, 1, 1],
             [0, 1, 0, 0, 0]]
+            """
+    grid = [[0, 0, 0],
+            [None, 0],
+            [1, 0, 0]]
     """
     grid = [[0, 0, 0],
             [0, 1, 0],
             [0, 1, 0]]
     """
     start_pos = [0, 0]
-    end_pos = [4, 5]
+    end_pos = [2, 2]
 
-    path = a_star(grid, start_pos, end_pos)
+    path = a_star(grid, start_pos, end_pos, True)
     print()
     print(f"Path: {path}")
     if path:
