@@ -68,7 +68,7 @@ def print_grid(grid: list[list[int]], open_list, closed_list):
     print()
 
 
-def a_star(grid, start_pos: list[int, int], end_pos: list[int, int], full_path: bool) -> list[list[int, int]] | list[int, int]:
+def a_star(grid, start_pos: list[int, int], end_pos: list[int, int], allow_diagonals: bool, full_path: bool) -> list[list[int, int]] | list[int, int]:
     start_node, end_node = Node(start_pos, None), Node(end_pos, None)
 
     open_list, closed_list = [start_node], []
@@ -93,8 +93,12 @@ def a_star(grid, start_pos: list[int, int], end_pos: list[int, int], full_path: 
                 return path
             else:
                 return path[-1]
+            
+        valid_directions = [[1, 0], [0, -1], [-1, 0], [0, 1]]
+        if allow_diagonals:
+            valid_directions = [[1, 0], [0, -1], [-1, 0], [0, 1], [1, 1], [1, -1], [-1, -1], [-1, 1]]
 
-        for direction in [[1, 0], [-1, 0], [0, 1], [0, -1]]:    # find neighbours
+        for direction in valid_directions:    # find neighbours
             def valid_neighbour(pos) -> bool:
                 if not (-1 < neighbour_pos[1] < len(grid)) or not (-1 < neighbour_pos[0] < len(grid[neighbour_pos[1]])):  # neighbour is outside of the grid
                     print(f"rejected oor: {neighbour_pos}")
@@ -154,7 +158,7 @@ def main():
     start_pos = [0, 0]
     end_pos = [2, 2]
 
-    path = a_star(grid, start_pos, end_pos, True)
+    path = a_star(grid, start_pos, end_pos, True, True)
     print()
     print(f"Path: {path}")
     if path:

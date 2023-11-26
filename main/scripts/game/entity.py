@@ -186,7 +186,7 @@ class Bat(LivingEntity):
             print(grid)
 
             
-            next_pos = a_star(grid=world, start_pos=self.rect.center, end_pos=world.player.rect.center, full_path=False)
+            next_pos = a_star(grid=world, start_pos=self.rect.center, end_pos=world.player.rect.center, allow_diagonals=True, full_path=False)
             print(next_pos)
             return next_pos
         
