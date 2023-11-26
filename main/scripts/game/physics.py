@@ -239,4 +239,4 @@ class PhysicsObject:
         # Friction
         block_fricton = world.get_block_friction(self.block_below)
         self.apply_force_horizontal(-self.vel[0] * self.mass * block_fricton * 0.1, 1)
-        self.vel[0] *= 0.999 ** delta_time
+        self.vel[0] *= 0.9 ** delta_time

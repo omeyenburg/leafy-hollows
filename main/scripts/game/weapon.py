@@ -33,7 +33,7 @@ class Pickaxe(MeleeWeapon):
         super().__init__(damage=6, attack_speed=0.5, range=1.5, crit_chance=0.3, luck=luck)
         self.image = "pickaxe"
         self.angle = 30
-        self.max_angle_offset = math.pi / 8
+        self.max_angle_offset = math.pi / 6
 
 
 class Bow(RangedWeapon):
@@ -41,6 +41,7 @@ class Bow(RangedWeapon):
         super().__init__(damage=2, attack_speed=2, range=6, crit_chance=0.1, luck=luck)
         self.image = "bow"
         self.angle = -30
+        self.max_angle_offset = math.pi / 4
 
 
 class Banana(RangedWeapon):
@@ -48,6 +49,7 @@ class Banana(RangedWeapon):
         super().__init__(damage=2, attack_speed=4, range=10, crit_chance=0.2, luck=luck)
         self.image = "banana"
         self.angle = 0
+        self.max_angle_offset = math.pi / 4
 
 
 class ArcaneStaff(MagicWeapon):
