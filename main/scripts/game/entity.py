@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from scripts.utility.noise_functions import pnoise1
 from scripts.game.baseentity import LivingEntity
 from scripts.game.physics import PhysicsObject
 from scripts.graphics.window import Window
@@ -8,15 +7,19 @@ from scripts.utility.const import *
 from scripts.game.weapon import *
 
 
-class Slime(LivingEntity):
-    def __init__(self, spawn_pos: [float]):
-        super().__init__(30, spawn_pos, SLIME_RECT_SIZE, health=5)
+class GreenSlime(LivingEntity):
+    def __init__(self, spawn_pos: [float], health=5, hit_damage=1):
+        health = round(health * (1 + spawn_pos[0] / 200 / health))
+        super().__init__(30, spawn_pos, SLIME_RECT_SIZE, health=health)
         self.type = "enemy"
+        self.image = "slime"
+        self.slime_variant = "green"
 
         # Enemy attributes
         self.item_drop_chance = 0.3
-        self.hit_damage = 1 # Damage applied to player on collision
+        self.hit_damage = min(5, round(hit_damage * (1 + spawn_pos[0] / 100 / hit_damage)))
         self.attack_cooldown: float = 3
+        self.jump_strength = 1
 
         # Animation states
         self.state: str = "idle"    # state is used for movement & animations
@@ -26,7 +29,7 @@ class Slime(LivingEntity):
     def draw(self, window: Window):
         super().draw(window)
         rect = window.camera.map_coord((self.rect.x - 0.5 + self.rect.w / 2, self.rect.y, 1, 1), from_world=True)
-        window.draw_image("slime_" + self.state, rect[:2], rect[2:], flip=(self.direction, 0), animation_offset=self.uuid)
+        window.draw_image("_".join((self.slime_variant, self.image, self.state)), rect[:2], rect[2:], flip=(self.direction, 0), animation_offset=self.uuid)
 
     def update(self, world, window: Window):
         super().update(world, window.delta_time)
@@ -37,17 +40,17 @@ class Slime(LivingEntity):
         if self.block_below and not self.stunned:
             if self.hit_ground == 0:
                 self.hit_ground = 0.2
-                particle.spawn(window, "slime_particle", self.rect.centerx, self.rect.top)
+                particle.spawn(window, self.slime_variant + "_slime_particle", self.rect.centerx, self.rect.top)
             self.hit_ground -= window.delta_time
             self.vel[0] *= 0.8
             self.attack_cooldown = 0
 
             if self.hit_ground < -0.5:
                 self.direction = int(world.player.rect.x < self.rect.x)
-                self.vel[1] += 6
+                self.vel[1] += 6 * self.jump_strength
         else:
             self.hit_ground = 0
-            self.vel[0] += 0.1 * (-self.direction + 0.5)
+            self.vel[0] += 0.1 * (-self.direction + 0.5) * self.jump_strength
 
         vel_y = abs(self.vel[1])
         if vel_y > 3:
@@ -62,26 +65,51 @@ class Slime(LivingEntity):
 
         # Attack player
         if self.attack_cooldown < 0 and self.vel[1] < 0 and self.rect.collide_rect(world.player.rect):
-            world.player.damage(window, 1, self.vel)
+            world.player.damage(window, self.hit_damage, self.vel)
             self.attack_cooldown = 5
         self.attack_cooldown -= window.delta_time
 
     def death(self, window):
-        particle.spawn(window, "slime_particle", *self.rect.center)
+        particle.spawn(window, self.slime_variant + "_slime_particle", *self.rect.center)
+
+
+class YellowSlime(GreenSlime):
+    def __init__(self, spawn_pos: [float]):
+        super().__init__(spawn_pos, health=15, hit_damage=3)
+        self.slime_variant = "yellow"
+
+        # Enemy attributes
+        self.item_drop_chance = 0.4
+        self.attack_cooldown: float = 3
+        self.jump_strength = 1.5
+
+
+class BlueSlime(GreenSlime):
+    def __init__(self, spawn_pos: [float]):
+        super().__init__(spawn_pos, health=30, hit_damage=4)
+        self.slime_variant = "blue"
+
+        # Enemy attributes
+        self.item_drop_chance = 0.4
+        self.attack_cooldown: float = 2
+        self.jump_strength = 2
         
 
 class Goblin(LivingEntity):
     def __init__(self, spawn_pos: [float]):
-        super().__init__(30, spawn_pos, GOBLIN_RECT_SIZE, health=5)
+        base_health = 10
+        health = round(base_health * (1 + spawn_pos[0] / 100 / base_health))
+        super().__init__(30, spawn_pos, GOBLIN_RECT_SIZE, health=health)
         self.type = "enemy"
+        self.image = "goblin"
 
         # Enemy attributes
-        self.item_drop_chance = 0.5
+        self.item_drop_chance = 0.4
         self.max_speed = 3
         self.prepare_attack_length: float = 0.5
         self.prepare_attack: float = self.prepare_attack_length
 
-        self.holding = random.choice((Sword, Axe, Pickaxe, Bow))(1)
+        self.holding = random.choice((Stick, Sword, Axe, Pickaxe, Bow))(1)
 
         # Animation states
         self.state: str = "idle"    # state is used for movement & animations
@@ -89,9 +117,9 @@ class Goblin(LivingEntity):
         self.hit_ground = 0         # Used for hit ground animation
 
     def draw(self, window: Window):
-        super().draw(window)
         rect = window.camera.map_coord((self.rect.x - 1 + self.rect.w / 2, self.rect.y, 2, 2), from_world=True)
         window.draw_image("goblin_" + self.state, rect[:2], rect[2:], flip=(self.direction, 0), animation_offset=self.uuid)
+        super().draw(window)
 
     def update(self, world, window: Window):
         super().update(world, window.delta_time)
@@ -100,15 +128,16 @@ class Goblin(LivingEntity):
             self.state = "hit_ground"
             return
 
+        moving = abs(self.vel[0]) > 1
         speed = min(self.max_speed, abs(world.player.rect.centerx - self.rect.centerx))
         if world.player.rect.centerx < self.rect.centerx:
             self.vel[0] = -speed
             self.direction = 1
-            side_block = world.get_block(math.floor(self.rect.left - 0.6), round(self.rect.y))
+            side_block = world.get_block(math.floor(self.rect.left - 0.6), round(self.rect.y)) and not world.get_block(math.floor(self.rect.left - 0.6), round(self.rect.y + 1))
         else:
             self.vel[0] = speed
             self.direction = 0
-            side_block = world.get_block(math.floor(self.rect.right + 0.6), round(self.rect.y))
+            side_block = world.get_block(math.floor(self.rect.right + 0.6), round(self.rect.y)) and not world.get_block(math.floor(self.rect.right + 0.6), round(self.rect.y + 1))
 
         # Auto jump
         if side_block and self.block_below:
@@ -122,7 +151,7 @@ class Goblin(LivingEntity):
             self.hit_ground = max(0, self.hit_ground - window.delta_time)
             self.state = "hit_ground"
             self.vel[0] *= 0.4
-        elif abs(self.vel[0]) > 1:
+        elif moving:
             self.state = "walk"
         else:
             self.state = "idle"
@@ -141,12 +170,15 @@ class Goblin(LivingEntity):
 
 class Bat(LivingEntity):
     def __init__(self, spawn_pos: [float]):
-        super().__init__(30, spawn_pos, BAT_RECT_SIZE, health=3)
+        base_health = 5
+        health = round(base_health * (1 + spawn_pos[0] / 200 / base_health))
+        super().__init__(30, spawn_pos, BAT_RECT_SIZE, health=health)
         self.type = "enemy"
+        self.image = "bat"
 
         # Enemy attributes
         self.item_drop_chance = 0.2
-        self.hit_damage = 1 # Damage applied to player on collision
+        self.hit_damage = round(1 * (1 + spawn_pos[0] / 200))
         self.max_speed = 2.5
         self.prepare_attack_length: float = 4.0
         self.prepare_attack: float = self.prepare_attack_length
@@ -175,8 +207,7 @@ class Bat(LivingEntity):
             self.vel[0] = speed_x
             self.direction = 0
 
-        y_offset = self.prepare_attack#pnoise1(window.time / 20 + self.uuid * 10, 5) * 4
-
+        y_offset = self.prepare_attack * 2
         speed_y = min(self.max_speed, abs(world.player.rect.centery + y_offset - self.rect.centery))
         if world.player.rect.centery + y_offset < self.rect.centery:
             self.vel[1] = -speed_y
@@ -185,7 +216,7 @@ class Bat(LivingEntity):
 
         # Attack
         if self.rect.collide_rect(world.player.rect) and self.prepare_attack < 0:
-            world.player.damage(window, 1, self.vel)
+            world.player.damage(window, self.hit_damage, self.vel)
             self.prepare_attack = self.prepare_attack_length
         elif self.prepare_attack >= 0:
             self.prepare_attack -= window.delta_time

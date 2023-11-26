@@ -3,5 +3,8 @@
     "speed": 0,
     "frames": [
         "player_hit_ground.png"
+    ],
+    "hand": [
+        [0.7188, -0.2188, 310.0]
     ]
 }

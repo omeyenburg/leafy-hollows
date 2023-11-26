@@ -3,8 +3,8 @@ from scripts.game.world_generation import generate_world, generate_block
 from scripts.graphics import particle
 from scripts.utility import geometry
 from scripts.utility.const import *
-from scripts.game import player
 from scripts.utility import file
+from scripts.game import player
 import time
 
 
@@ -327,12 +327,14 @@ class World:
             #self.view[dest_start_x:dest_end_x, dest_start_y:dest_end_y] = data  
 
     def save(self, window):
+        window.loading_progress[:3] = "Saving inventory", 0, 2
+        self.player.inventory.save()
         if not window.options["save world"]:
             return        
 
-        window.loading_progress[:3] = "Saving", 0, 1.1
+        window.loading_progress[:2] = "Saving world", 1
         file.save("data/user/world.data", self, file_format="pickle")
-        window.loading_progress[1] = 1.1
+        window.loading_progress[1] = 2
         time.sleep(0.1)
 
     @staticmethod

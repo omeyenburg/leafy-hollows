@@ -8,7 +8,7 @@ from scripts.game.world import World
 from scripts.utility.const import *
 from scripts.menu.menu import Menu
 from scripts.utility import file
-import math
+import pprint
 
 
 # Setup
@@ -58,7 +58,7 @@ def draw_game():
     if window.options["show fps"]:
         window.draw_text(
             (-0.98, 0.95),
-            "FPS: " + str(round(window.fps, 3)),
+            "FPS: " + str(round(window.average_fps, 3)),
             (250, 250, 250, 200),
             size=TEXT_SIZE_DESCRIPTION
         )
@@ -160,13 +160,23 @@ def draw_game():
             weapon_pos = (0.8, -0.9)
             weapon_size = Vec(0.2, 0.2 / window.height * window.width)
             window.draw_image(weapon.image, weapon_pos, weapon_size, angle=weapon.angle)
+            
+            if weapon.image == "bow":
+                arrow_text = f"{world.player.inventory.arrows}/{world.player.inventory.max_arrows}"
+                window.draw_text((0.8, -0.4), arrow_text, (255, 255, 255), 0.17)
+                window.draw_image("arrow_item", (0.9, -0.5), (0.1, 0.1 / window.height * window.width), angle=0)
+                
 
         if world.player.recent_drop[0] > 0:
             world.player.recent_drop[0] -= window.delta_time
             drop_y = max(0.8, 1 - world.player.recent_drop[0])
-            window.draw_text((0.85, drop_y + 0.05 / window.height * window.width), "+", (255, 255, 255), 0.25)
-            window.draw_image(world.player.recent_drop[1].image, (0.9, drop_y), (0.1, 0.1 / window.height * window.width), angle=world.player.recent_drop[1].angle)
-
+            if world.player.recent_drop[1] == "arrows":
+                window.draw_text((0.8, drop_y + 0.05 / window.height * window.width), "+" + str(world.player.recent_drop[2]), (255, 255, 255), 0.25)
+                window.draw_image("arrow_item", (0.9, drop_y), (0.1, 0.1 / window.height * window.width), angle=0)
+            else:
+                window.draw_text((0.85, drop_y + 0.05 / window.height * window.width), "+", (255, 255, 255), 0.25)
+                window.draw_image(world.player.recent_drop[1].image, (0.9, drop_y), (0.1, 0.1 / window.height * window.width), angle=world.player.recent_drop[1].angle)
+                
 
 def draw_intro():
     # Draw intro text
@@ -203,7 +213,7 @@ def update_intro():
     window.camera.move(camera_move_pos)
 
     # Update window + shader
-    window.update()
+    window.update(world.player.rect.center)
     window.camera.update()
 
     # Skip intro
@@ -251,9 +261,113 @@ def main():
     menu.save_world = save_world
     window.callback_quit = save_world
     window.camera.set_zoom(CAMERA_RESOLUTION_GAME)
+    #menu.game_state = "testing"
+
+    if menu.game_state == "testing":
+        time_paused = False
+        flip_direction = False
+        unique_stepping = False
+        entity = "goblin"
+        state = "walk"
+        image = entity + "_" + state
+        frames, speed = window.sprites[image]
+
+        animation_path = file.find("data/images/sprites", image + "_.json", True, True)
+        animation_data = file.load(animation_path, file_format="json")
+        frame_names = animation_data["frames"]
+        unique_frames = sorted(set(frame_names), key=lambda i: (len(i), i))
+        unique_frame_indices = [frame_names.index(f) for f in unique_frames]
+        current_unique_frame_index = 0
+
+        item_positions = [[0, 0, 0] for _ in unique_frames]
+        item_selected = False
+        item_image = "sword"
+        item_shown = False
 
     while True:
-        if menu.game_state == "load_world":
+        if menu.game_state == "testing":
+            if "p" in window.unicode:
+                time_paused = not time_paused
+                unique_stepping = False
+            if "d" in window.unicode:
+                flip_direction = not flip_direction
+            if "0" in window.unicode:
+                window.time = 0
+            if "u" in window.unicode:
+                unique_stepping = not unique_stepping
+                time_paused = False
+            if "+" in window.unicode:
+                current_unique_frame_index = (current_unique_frame_index + 1) % len(unique_frames)
+            if "-" in window.unicode:
+                current_unique_frame_index = (current_unique_frame_index - 1) % len(unique_frames)
+            if "i" in window.unicode:
+                item_shown = not item_shown
+            if "o" in window.unicode:
+                print_positions = []
+                pre_print_positions = []
+
+                for p_frame_name in frame_names:
+                    p_unique_index = unique_frames.index(p_frame_name)
+                    pre_print_positions.append(item_positions[p_unique_index])
+
+                last_position = pre_print_positions[-1]
+
+                for i, current_position in enumerate(pre_print_positions):
+                    previous_position = pre_print_positions[i - 1]
+                    next_position = pre_print_positions[(i + 1) % len(pre_print_positions)]
+
+                    interpolated_x = round((previous_position[0] + current_position[0] * 10 + next_position[0]) / 12, 4)
+                    interpolated_y = round((previous_position[1] + current_position[1] * 10 + next_position[1]) / 12, 4)
+                    interpolated_a = round((previous_position[2] + current_position[2] * 10 + next_position[2]) / 12, 4)
+
+                    last_position = [interpolated_x, interpolated_y, interpolated_a]
+                    print_positions.append([interpolated_x, interpolated_y, interpolated_a])
+                
+                pprint.pprint(print_positions)
+
+            if unique_stepping:
+                window.time = (unique_frame_indices[current_unique_frame_index] + 0.01) * speed
+
+            rect = window.camera.map_coord((-1, -1, 2, 2), from_world=True)
+            window.draw_image(image, rect[:2], rect[2:], flip=(flip_direction, 0))
+
+            if item_shown:
+                rect = Rect(*window.camera.map_coord((item_positions[current_unique_frame_index][0] - 0.3, item_positions[current_unique_frame_index][1] - 0.3, 0.6, 0.6), from_world=True))
+                if unique_stepping and rect.collide_point(Vec(window.mouse_pos[0] / window.width, window.mouse_pos[1] / window.height) * 2) and (2 in window.mouse_buttons or any(window.mouse_buttons) and item_selected):
+                    item_selected = True
+                    item_positions[current_unique_frame_index][0] += window.mouse_pos[2] / WORLD_BLOCK_SIZE / 2
+                    item_positions[current_unique_frame_index][1] += window.mouse_pos[3] / WORLD_BLOCK_SIZE / 2
+                else:
+                    item_selected = False
+                window.draw_image(item_image, rect[:2], rect[2:], flip=(not flip_direction, 0), angle=item_positions[current_unique_frame_index][2])
+                if "q" in window.unicode:
+                    item_positions[current_unique_frame_index][2] = (item_positions[current_unique_frame_index][2] + 1) % 360
+                if "e" in window.unicode:
+                    item_positions[current_unique_frame_index][2] = (item_positions[current_unique_frame_index][2] - 1) % 360
+                if "Q" in window.unicode:
+                    item_positions[current_unique_frame_index][2] = (item_positions[current_unique_frame_index][2] + 10) % 360
+                if "E" in window.unicode:
+                    item_positions[current_unique_frame_index][2] = (item_positions[current_unique_frame_index][2] - 10) % 360
+
+            if unique_stepping:
+                window.draw_text((-0.98, 0.9), str(current_unique_frame_index), (255, 255, 255), 0.2)
+                window.draw_text((-0.98, 0.75), str(unique_frames[current_unique_frame_index]), (255, 255, 255), 0.2)
+            else:
+                if speed != 0 and len(frames) >= 0:
+                    index = int(window.time // speed % len(frames))
+                else:
+                    index = 0
+                window.draw_text((-0.98, 0.9), str(index), (255, 255, 255), 0.2)
+                window.draw_text((-0.98, 0.75), str(frames[index]), (255, 255, 255), 0.2)
+                window.draw_text((-0.98, 0.6), frame_names[index], (255, 255, 255), 0.2)
+
+            last_time = window.time
+            window.mouse_pos = (*window.mouse_pos[:2], 0, 0)
+            window.update()
+            if time_paused:
+                window.time = last_time
+
+        elif menu.game_state == "load_world":
             window.camera.reset()
             load_world()
 
@@ -270,7 +384,7 @@ def main():
             world.update(window)
 
             # Update and draw the menu
-            window.update()
+            window.update(world.player.rect.center)
 
             # Move camera
             update_game_camera()
@@ -287,6 +401,7 @@ def main():
 
             # Death
             if world.player.health <= 0:
+                world.player.inventory.save()
                 file.delete("data/user/world.data")
                 menu.death_page.open()
                 menu.game_state = "death"
@@ -339,7 +454,7 @@ def main():
             if window.options["show fps"]:
                 window.draw_text(
                     (-0.98, 0.95),
-                    str(round(window.fps, 3)),
+                    str(round(window.average_fps, 3)),
                     (250, 250, 250, 200),
                     size=TEXT_SIZE_DESCRIPTION
                 )

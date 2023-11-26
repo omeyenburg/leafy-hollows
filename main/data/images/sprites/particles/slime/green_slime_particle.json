@@ -1,0 +1,7 @@
+{
+    "name": "green_slime_particle",
+    "speed": 0,
+    "frames": [
+        "green_slime_particle.png"
+    ]
+}
