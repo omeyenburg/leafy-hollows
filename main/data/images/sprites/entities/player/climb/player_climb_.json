@@ -4,5 +4,9 @@
     "frames": [
         "player_climb_a.png",
         "player_climb_b.png"
+    ],
+    "hand": [
+        [0.4062, 0.8594, 9.3333],
+        [0.4062, 0.7969, 6.6667]
     ]
 }

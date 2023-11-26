@@ -61,6 +61,9 @@ class Window:
         self.mouse_pos: [int] = (0, 0, 0, 0)      # x, y, relx, rely
         self.mouse_wheel: [int] = [0, 0, 0, 0]    # x, y, relx, rely
         self.fps: int = 0
+        self.average_fps: int = 0
+        self.average_fps_delay: float = 0
+        self.previous_fps: set = set()
         self.delta_time: float = 1.0
         self.time: float = 0.0
         self.resolution: float = 1.0
@@ -159,24 +162,24 @@ class Window:
         # Create vertex buffer objects (VBOs) for draw data
         GL.glEnableVertexAttribArray(2)
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._dest_vbo)
-        GL.glBufferData(GL.GL_ARRAY_BUFFER, 0, self._dest_vbo_array, GL.GL_DYNAMIC_DRAW)
+        GL.glBufferData(GL.GL_ARRAY_BUFFER, 0, self._dest_vbo_array, GL.GL_STREAM_COPY)
         GL.glVertexAttribPointer(2, 4, GL.GL_FLOAT, GL.GL_FALSE, 0, ctypes.c_void_p(0))
         GL.glVertexAttribDivisor(2, 1)
 
         GL.glEnableVertexAttribArray(3)
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._source_or_color_vbo)
-        GL.glBufferData(GL.GL_ARRAY_BUFFER, 0, self._source_or_color_vbo_array, GL.GL_DYNAMIC_DRAW)
+        GL.glBufferData(GL.GL_ARRAY_BUFFER, 0, self._source_or_color_vbo_array, GL.GL_STREAM_COPY)
         GL.glVertexAttribPointer(3, 4, GL.GL_FLOAT, GL.GL_FALSE, 0, ctypes.c_void_p(0))
         GL.glVertexAttribDivisor(3, 1)
 
         GL.glEnableVertexAttribArray(4)
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._shape_transform_vbo)
-        GL.glBufferData(GL.GL_ARRAY_BUFFER, 0, self._shape_transform_vbo_array, GL.GL_DYNAMIC_DRAW)
+        GL.glBufferData(GL.GL_ARRAY_BUFFER, 0, self._shape_transform_vbo_array, GL.GL_STREAM_COPY)
         GL.glVertexAttribPointer(4, 4, GL.GL_FLOAT, GL.GL_FALSE, 0, ctypes.c_void_p(0))
         GL.glVertexAttribDivisor(4, 1)
 
         # Create sprite texture
-        self.sprites, self.sprite_rects, sprite_atlas_image = load_sprites()
+        self.sprites, self.sprite_rects, self.hand_positions, sprite_atlas_image = load_sprites()
         self._texSprites = self._texture(sprite_atlas_image)
 
         # Font texture
@@ -284,19 +287,19 @@ class Window:
             new_dest_vbo_array = numpy.empty(self._vbo_instances_length * 4, dtype=numpy.float32)
             new_dest_vbo_array[:len(self._dest_vbo_array)] = self._dest_vbo_array
             GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._dest_vbo)
-            GL.glBufferData(GL.GL_ARRAY_BUFFER, new_dest_vbo_array.nbytes, new_dest_vbo_array, GL.GL_DYNAMIC_DRAW)
+            GL.glBufferData(GL.GL_ARRAY_BUFFER, new_dest_vbo_array.nbytes, new_dest_vbo_array, GL.GL_STREAM_COPY)
             self._dest_vbo_array = new_dest_vbo_array
  
             new_source_or_color_vbo_array = numpy.empty(self._vbo_instances_length * 4, dtype=numpy.float32)
             new_source_or_color_vbo_array[:len(self._source_or_color_vbo_array)] = self._source_or_color_vbo_array
             GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._source_or_color_vbo)
-            GL.glBufferData(GL.GL_ARRAY_BUFFER, new_source_or_color_vbo_array.nbytes, new_source_or_color_vbo_array, GL.GL_DYNAMIC_DRAW)
+            GL.glBufferData(GL.GL_ARRAY_BUFFER, new_source_or_color_vbo_array.nbytes, new_source_or_color_vbo_array, GL.GL_STREAM_COPY)
             self._source_or_color_vbo_array = new_source_or_color_vbo_array
 
             new_shape_transform_vbo_array = numpy.empty(self._vbo_instances_length * 4, dtype=numpy.float32)
             new_shape_transform_vbo_array[:len(self._shape_transform_vbo_array)] = self._shape_transform_vbo_array
             GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._shape_transform_vbo)
-            GL.glBufferData(GL.GL_ARRAY_BUFFER, new_shape_transform_vbo_array.nbytes, new_shape_transform_vbo_array, GL.GL_DYNAMIC_DRAW)
+            GL.glBufferData(GL.GL_ARRAY_BUFFER, new_shape_transform_vbo_array.nbytes, new_shape_transform_vbo_array, GL.GL_STREAM_COPY)
             self._shape_transform_vbo_array = new_shape_transform_vbo_array
 
         # Write drawing data into buffers
@@ -399,7 +402,7 @@ class Window:
             elif event.type == pygame.MOUSEWHEEL:
                 self.mouse_wheel = [self.mouse_wheel[0] + event.x, self.mouse_wheel[1] + event.y, event.x, event.y]
 
-    def update(self):
+    def update(self, player_position=(0, 0)):
         """
         Update the window and inputs.
         """
@@ -409,6 +412,15 @@ class Window:
         self.fps = self._clock.get_fps()
         if self.fps != 0:
             self.delta_time = (self.delta_time + 1 / self.fps) * 0.5
+            if self.average_fps_delay <= 0:
+                self.average_fps_delay = 0.5
+                if len(self.previous_fps):
+                    self.average_fps = sum(self.previous_fps) / len(self.previous_fps)
+                    self.previous_fps = set()
+            else:
+                self.average_fps_delay -= self.delta_time
+                self.previous_fps.add(self.fps)
+
         self.time += self.delta_time
         if self.damage_time:
             self.damage_time -= self.delta_time
@@ -423,7 +435,7 @@ class Window:
         # Send variables to shader
         for effect, value in self.effects.items():
             self._instance_shader.setvar(effect, value)
-        self._update_world()
+        self._update_world(player_position)
         self._instance_shader.update()
 
         # Rebind textures
@@ -443,6 +455,9 @@ class Window:
 
         # Draw
         GL.glDrawElementsInstanced(GL.GL_TRIANGLES, 6, GL.GL_UNSIGNED_INT, None, self._vbo_instances_index)
+        #for i in range(self._vbo_instances_index):
+        #    GL.glDrawElements(GL.GL_TRIANGLES, 6, GL.GL_UNSIGNED_INT, ctypes.c_void_p(i * self._dest_vbo_array.nbytes / self._vbo_instances_index))
+
         pygame.display.flip()
 
         # Reset instance index
@@ -574,7 +589,7 @@ class Window:
         GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
         return texture
 
-    def _update_world(self, blur=0):
+    def _update_world(self, player_position=(0, 0)):
         """
         Update the world texture.
         """
@@ -592,8 +607,8 @@ class Window:
             return
 
         # Draw shadows
-        if self.options["shadow resolution"]:
-            self._draw_shadows(offset)
+        if self.options["shadow resolution"] and player_position != (0, 0):
+            self._draw_shadows(offset, player_position)
 
         # Send variables to shader
         self._instance_shader.setvar("offset", *offset)
@@ -627,10 +642,12 @@ class Window:
         else:
             # Write world data into texture
             GL.glBindTexture(GL.GL_TEXTURE_2D, self._texWorld)
-            #GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA32I, *self._world_size, 0, GL.GL_RGBA_INTEGER, GL.GL_INT, data)
-            GL.glTexSubImage2D(GL.GL_TEXTURE_2D, 0, 0, 0, *self._world_size, GL.GL_RGBA_INTEGER, GL.GL_INT, data)
+            GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA32I, *self._world_size, 0, GL.GL_RGBA_INTEGER, GL.GL_INT, data)
+            #print("a")
+            #GL.glTexSubImage2D(GL.GL_TEXTURE_2D, 0, 0, 0, *self._world_size, GL.GL_RGBA_INTEGER, GL.GL_INT, data)
+            #GL.glBufferData(GL.GL_TEXTURE_2D, data.nbytes, data, GL.GL_STREAM_COPY)
 
-    def _draw_shadows(self, offset):
+    def _draw_shadows(self, offset, player_position):
         """
         Calculate and draw shadows.
         """
@@ -660,10 +677,10 @@ class Window:
 
         # Use player as light source
         center = (math.floor(self.camera.pos[0]),
-                  math.floor(self.camera.pos[1]))
+                    math.floor(self.camera.pos[1]))
         start = (center[0] - math.floor(self.width / 2 / self.camera.pixels_per_meter) - self.options["simulation distance"],
-                 center[1] - math.floor(self.height / 2 / self.camera.pixels_per_meter) - self.options["simulation distance"])
-        player_position = (self.camera.dest[0] - start[0] - 1.0, self.camera.dest[1] - start[1] - 1.0)
+                    center[1] - math.floor(self.height / 2 / self.camera.pixels_per_meter) - self.options["simulation distance"])
+        player_position = (player_position[0] - start[0] - 1.0, player_position[1] - start[1] - 1.0)
 
         # Find corners
         corners, additional_corners = shadow.find_corners(view)
@@ -704,7 +721,9 @@ class Window:
             GL.glBindTexture(GL.GL_TEXTURE_2D, self._texShadow)
         else:
             GL.glBindTexture(GL.GL_TEXTURE_2D, self._texShadow)
-            GL.glTexSubImage2D(GL.GL_TEXTURE_2D, 0, 0, 0, *surface_data.shape[::-1], GL.GL_RED, GL.GL_UNSIGNED_BYTE, surface_data)
+            #GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, 0, 0, *surface_data.shape[::-1], GL.GL_RED, GL.GL_UNSIGNED_BYTE, surface_data)
+            #GL.glTexSubImage2D(GL.GL_TEXTURE_2D, 0, 0, 0, *surface_data.shape[::-1], GL.GL_RED, GL.GL_UNSIGNED_BYTE, surface_data)
+            GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RED, *surface_data.shape[::-1], 0, GL.GL_RED, GL.GL_UNSIGNED_BYTE, surface_data)
             GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
 
         #print(3, time.time() - t)

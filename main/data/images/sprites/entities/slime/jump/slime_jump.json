@@ -1,7 +1,0 @@
-{
-    "name": "slime_jump",
-    "speed": 0,
-    "frames": [
-        "slime_jump.png"
-    ]
-}

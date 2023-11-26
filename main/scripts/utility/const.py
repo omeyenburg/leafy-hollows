@@ -112,7 +112,7 @@ ATTRIBUTE_BASE_MODIFIERS: dict = {
     "critical": 10,
     "warrior": 5,
     "assassin": 5,
-    "longshot": 20
+    "longshot": 10
 }
 
 ATTRIBUTE_DESCRIPTIONS: dict = {

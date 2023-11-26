@@ -3,14 +3,30 @@ from scripts.utility.noise_functions import pnoise1, snoise2
 from scripts.utility.geometry import *
 from scripts.utility.const import *
 from scripts.game.weapon import *
+from scripts.utility import file
 import copy
 
 
 class Inventory:
     def __init__(self):
-        #[Weapon(5) for Weapon in random.choices((Sword, Axe, Pickaxe, Bow), k=10)]
-        self.weapons = [Weapon(5) for Weapon in random.choices((Sword, Axe, Pickaxe, Bow), k=10)]#[Stick(1)]
+        #self.weapons = [Weapon(5) for Weapon in random.choices((Sword, Axe, Pickaxe, Bow), k=10)]
+        self.weapons = [Stick(1)]
+        op_bow = Bow(1)
+        op_bow.attributes = {"vampire": 20, "paralysis": 20}
+        self.weapons = [op_bow]
         self.marked_weapons = set()
+        self.arrows = 32
+        self.max_arrows = 32
+
+    def save(self):
+        file.save("data/user/inventory.data", self, file_format="pickle")
+
+    @staticmethod
+    def load():
+        if file.exists("data/user/inventory.data"):
+            return file.load("data/user/inventory.data", file_format="pickle")
+        else:
+            return Inventory()
 
     def update(self, window, menu, world):
         if menu.inventory_page.fusing != 0:
@@ -63,11 +79,11 @@ class Inventory:
 
         # Filter weapon list with search parameters
         if menu.inventory_page.sort_key == "Level":
-            weapon_sort_function = lambda i: (not i.uuid in world.player.inventory.marked_weapons) * 9999999 - max(i.attributes.values()) - 0.1 * min(i.attributes.values())
+            weapon_sort_function = lambda i: (not i is world.player.holding) * 99999999 + (not i.uuid in world.player.inventory.marked_weapons) * 9999999 - max(i.attributes.values()) - 0.1 * min(i.attributes.values())
         elif menu.inventory_page.sort_key == "Type":
             weapon_sort_function = lambda i: (not i.uuid in world.player.inventory.marked_weapons) * 9999999 + sum(map(lambda j: ord(j), i.image))
         elif menu.inventory_page.sort_key == "Age":
-            weapon_sort_function = lambda i: (not i.uuid in world.player.inventory.marked_weapons) * 9999999 + i.uuid
+            weapon_sort_function = lambda i: (not i is world.player.holding) * 99999999 + (not i.uuid in world.player.inventory.marked_weapons) * 9999999 + i.uuid
 
         search_text = menu.inventory_page.search_text.lower()
         inventory = sorted(

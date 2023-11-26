@@ -156,6 +156,12 @@ class RangedWeapon(BaseItem):
         super().__init__(*args, **kwargs)
 
     def attack(self, window, world, attacker, angle):
+        if attacker.type == "player":
+            if attacker.inventory.arrows:
+                attacker.inventory.arrows -= 1
+            else:
+                return
+
         if self.cooldown > 0:
             return
 

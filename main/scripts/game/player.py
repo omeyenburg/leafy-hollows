@@ -13,8 +13,9 @@ class Player(LivingEntity):
     def __init__(self, spawn_pos: [float]):
         super().__init__(50, spawn_pos, PLAYER_RECT_SIZE_NORMAL, health=10)
         self.type = "player"
+        self.image = "player"
 
-        self.inventory = Inventory()
+        self.inventory = Inventory.load()
         self.holding = self.inventory.weapons[0]
         self.recent_drop = [0, None]
 
@@ -57,7 +58,7 @@ class Player(LivingEntity):
 
         # Draw player
         rect = window.camera.map_coord((self.rect.x - 1 + self.rect.w / 2, self.rect.y, 2, 2), from_world=True)
-        window.draw_image("player_" + self.state, rect[:2], rect[2:], flip=(self.direction, 0))
+        window.draw_image("player_" + self.state, rect[:2], rect[2:], flip=(self.direction, 0), animation_offset=self.uuid)
 
         # Draw item
         self.draw_holding_item(window)
@@ -228,9 +229,9 @@ class Player(LivingEntity):
             if self.vel[1] < 0:
                 self.vel[1] /= 2
 
-            if (world.get_block(*wall_block_right) and
+            if (key_right and world.get_block(*wall_block_right) and
                not world.get_block(wall_block_right[0], round(self.rect.y + 1.3)) or
-               world.get_block(*wall_block_left) and
+               key_left and world.get_block(*wall_block_left) and
                not world.get_block(wall_block_left[0], round(self.rect.y + 1.3))):
                 # On upper edge of wall
                 self.rect.bottom = round(self.rect.bottom)
@@ -428,14 +429,14 @@ class Player(LivingEntity):
         """
 
         # Place/break block with right click
-        """
+        
         if window.mouse_buttons[2] == 1:
             mouse_pos = window.camera.map_coord(window.mouse_pos[:2], world=True)
             if world.get_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1])) > 0:
                 world.set_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), 0)
             else:
                 world.set_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), world.block_name["stone_block"])
-        """
+        
             
         # Attack
         if window.mouse_buttons[0] == 1:
@@ -464,9 +465,17 @@ class Player(LivingEntity):
             weapon_heal = soul_drain_level * ATTRIBUTE_BASE_MODIFIERS["soul drain"] * 0.01 * self.max_health
             self.heal(window, weapon_heal)
 
-        weapon_luck = self.holding.attributes.get("looting", 1)
-        if random.random() < entity.item_drop_chance:
-            weapon_luck = self.holding.attributes.get("looting", 1)
+        if random.random() < entity.item_drop_chance or len(self.inventory.weapons) <= 3:
+            if self.inventory.arrows < self.inventory.max_arrows:
+                arrow_drop = random.random()
+                if arrow_drop < 0.1 or arrow_drop < 0.4 and len(self.inventory.weapons) <= 5:
+                    arrow_num = random.randint(1, 2) * 8
+                    previous_arrows = self.inventory.arrows
+                    self.inventory.arrows = min(self.inventory.arrows + arrow_num, self.inventory.max_arrows)
+                    self.recent_drop = [2, "arrows", self.inventory.arrows - previous_arrows]
+                    return
+
+            weapon_luck = self.holding.attributes.get("looting", 0) + 1
             weapon = random.choice((Stick, Sword, Axe, Pickaxe, Bow))(weapon_luck)
             self.inventory.weapons.append(weapon)
             self.recent_drop = [2, weapon]
