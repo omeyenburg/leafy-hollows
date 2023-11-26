@@ -164,7 +164,28 @@ class Bat(LivingEntity):
 
     def move(self, world): # pathfinding implementation
         def pathfind() -> list[int, int]:
-            print(world.chunks)
+            self_pos = [round(_) for _ in self.rect.center]
+            target_pos = [round(_) for _ in world.player.rect.center]
+            print(self_pos, target_pos)
+            print(world.get_block(x= 0, y= 0))
+            grid = [[None] * abs(self_pos[0] - target_pos[0])] * abs(self_pos[1] - target_pos[1])
+
+            max_x, max_y = len(grid[0]) - 1, len(grid) - 1
+            start_pos = [0 if self_pos[0] < target_pos[0] else max_x, 0 if self_pos[1] < target_pos[1] else max_y]  # translate to relative positions
+            end_pos = [max_x if self_pos[0] < target_pos[0] else 0, max_y if self_pos[1] < target_pos[1] else 0]
+
+            x_offset = self_pos[0] - start_pos[0]
+            y_offset = self_pos[1] - start_pos[1]
+
+
+            for y, _ in enumerate(grid):
+                for x, _ in enumerate(grid[y]):
+                    grid[y][x] = world.get_block(x=x + x_offset, y=y + y_offset)
+
+            print(len(grid), len(grid[0]))
+            print(grid)
+
+            
             next_pos = a_star(grid=world, start_pos=self.rect.center, end_pos=world.player.rect.center, full_path=False)
             print(next_pos)
             return next_pos
