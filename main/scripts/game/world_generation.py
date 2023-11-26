@@ -147,7 +147,7 @@ def generate_world(world, window):
         if coord[0] < 30 or coord[1] > -500:
             continue
         if coord[0] < 200:
-            Entity = Goblin
+            Entity = GreenSlime
         elif coord[0] < 400:
             Entity = random.choice((GreenSlime, Bat))
         elif coord[0] < 600:

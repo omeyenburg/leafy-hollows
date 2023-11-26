@@ -429,14 +429,14 @@ class Player(LivingEntity):
         """
 
         # Place/break block with right click
-        
+        """
         if window.mouse_buttons[2] == 1:
             mouse_pos = window.camera.map_coord(window.mouse_pos[:2], world=True)
             if world.get_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1])) > 0:
                 world.set_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), 0)
             else:
                 world.set_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), world.block_name["stone_block"])
-        
+        """
             
         # Attack
         if window.mouse_buttons[0] == 1:

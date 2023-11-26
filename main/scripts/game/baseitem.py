@@ -89,11 +89,13 @@ class MeleeWeapon(BaseItem):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def attack(self, window, world, attacker, angle):
+    def attack(self, window, world, attacker, angle, arg_range=None):
         if self.cooldown > 0:
             return
 
         damage, attack_speed, weapon_range, crit_chance = self.get_weapon_stat_increase(world)
+        if not arg_range is None:
+            weapon_range = arg_range
         self.cooldown = 1 / attack_speed
 
         targets = set()
@@ -131,7 +133,7 @@ class MeleeWeapon(BaseItem):
                 target[1].damage(window, damage * critical_multiplier, attacker.vel)
             target = targets[0]
 
-        super().apply_attributes(window, attacker, target)
+        BaseItem.apply_attributes(self, window, attacker, target)
     
         attack_particle = random.choice(("impact", "swing"))
         if -math.pi < angle * 2 < math.pi:
@@ -156,14 +158,15 @@ class RangedWeapon(BaseItem):
         super().__init__(*args, **kwargs)
 
     def attack(self, window, world, attacker, angle):
+        if self.cooldown > 0:
+            return
+
         if attacker.type == "player":
             if attacker.inventory.arrows:
                 attacker.inventory.arrows -= 1
             else:
+                MeleeWeapon.attack(self, window, world, attacker, angle, arg_range=2)
                 return
-
-        if self.cooldown > 0:
-            return
 
         damage, attack_speed, weapon_range, crit_chance = self.get_weapon_stat_increase(world)
         world.add_entity(Arrow(attacker.rect.center, speed=weapon_range * 10, angle=angle, owner=attacker))

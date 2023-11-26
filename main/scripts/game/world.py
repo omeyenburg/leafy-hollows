@@ -148,7 +148,7 @@ class World:
     def update(self, window):
         self.wind = math.sin(window.time) * WORLD_WIND_STRENGTH + math.cos(window.time * 5) * WORLD_WIND_STRENGTH / 2
         window.particle_wind = self.wind / 50
-
+        
         self.water_update_timer += window.delta_time
         if self.water_update_timer > WORLD_WATER_SPEED:
             self.water_update_timer = 0.0

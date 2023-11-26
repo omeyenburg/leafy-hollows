@@ -163,7 +163,7 @@ def draw_game():
             
             if weapon.image == "bow":
                 arrow_text = f"{world.player.inventory.arrows}/{world.player.inventory.max_arrows}"
-                window.draw_text((0.8, -0.4), arrow_text, (255, 255, 255), 0.17)
+                window.draw_text((0.75, -0.42), arrow_text, (255, 255, 255), 0.17)
                 window.draw_image("arrow_item", (0.9, -0.5), (0.1, 0.1 / window.height * window.width), angle=0)
                 
 
