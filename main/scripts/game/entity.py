@@ -6,6 +6,7 @@ from scripts.graphics.window import Window
 from scripts.graphics import particle
 from scripts.utility.const import *
 from scripts.game.weapon import *
+from scripts.game.pathfinding import a_star
 
 
 class Slime(LivingEntity):
@@ -161,27 +162,53 @@ class Bat(LivingEntity):
         rect = window.camera.map_coord((self.rect.x - 0.5 + self.rect.w / 2, self.rect.y, 1, 1), from_world=True)
         window.draw_image("bat_" + self.state, rect[:2], rect[2:], flip=(self.direction, 0), animation_offset=self.uuid)
 
+    def move(self, world): # pathfinding implementation
+        def pathfind() -> list[int, int]:
+            print(world.chunks)
+            next_pos = a_star(grid=world, start_pos=self.rect.center, end_pos=world.player.rect.center, full_path=False)
+            print(next_pos)
+            return next_pos
+        
+        if math.dist(self.rect.center, world.player.rect.center) > 3:   # find path for longer distances
+            next_pos = pathfind()
+
+            if next_pos[0] < self.rect.centerx:
+                self.vel[0] = -self.max_speed
+                self.direction = 1
+            else:
+                self.vel[0] = -self.max_speed
+                self.direction = 0
+            
+            if next_pos[1] < self.rect.centery:
+                self.vel[1] = -speed_y
+            else:
+                self.vel[1] = speed_y
+
+        
+        else:
+            speed_x = min(self.max_speed, abs(world.player.rect.centerx - self.rect.centerx))
+            if world.player.rect.centerx < self.rect.centerx:
+                self.vel[0] = -speed_x
+                self.direction = 1
+            else:
+                self.vel[0] = speed_x
+                self.direction = 0
+
+            y_offset = self.prepare_attack#pnoise1(window.time / 20 + self.uuid * 10, 5) * 4
+
+            speed_y = min(self.max_speed, abs(world.player.rect.centery + y_offset - self.rect.centery))
+            if world.player.rect.centery + y_offset < self.rect.centery:
+                self.vel[1] = -speed_y
+            else:
+                self.vel[1] = speed_y
+
     def update(self, world, window: Window):
         super().update(world, window.delta_time)
 
         if self.stunned:
             return
 
-        speed_x = min(self.max_speed, abs(world.player.rect.centerx - self.rect.centerx))
-        if world.player.rect.centerx < self.rect.centerx:
-            self.vel[0] = -speed_x
-            self.direction = 1
-        else:
-            self.vel[0] = speed_x
-            self.direction = 0
-
-        y_offset = self.prepare_attack#pnoise1(window.time / 20 + self.uuid * 10, 5) * 4
-
-        speed_y = min(self.max_speed, abs(world.player.rect.centery + y_offset - self.rect.centery))
-        if world.player.rect.centery + y_offset < self.rect.centery:
-            self.vel[1] = -speed_y
-        else:
-            self.vel[1] = speed_y
+        self.move(world)
 
         # Attack
         if self.rect.collide_rect(world.player.rect) and self.prepare_attack < 0:
