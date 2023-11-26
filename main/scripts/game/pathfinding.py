@@ -28,7 +28,7 @@ def print_path(grid: list[list[int]], path: list[list[int, int]]):
         print()
 
 
-def print_grid(grid: list[list[int]], open_list, closed_list):
+def print_grid(grid: list[list[int]], open_list, closed_list, current_node):
     print()
     print(f"open list: {[n.pos for n in open_list]}")
     print(f"closed list: {[n.pos for n in closed_list]}")
@@ -42,6 +42,12 @@ def print_grid(grid: list[list[int]], open_list, closed_list):
         print(y, end="")
         for x, value in enumerate(grid[y]):
             written = False
+
+            if current_node.pos == [x, y]:
+                print(f"\x1b[42m{hex(node.f % 16)[2:]}\x1b[0m", end="")
+                written = True
+            if written:
+                continue
 
             for node in open_list:
                 if node.pos == [x, y]:
@@ -73,13 +79,12 @@ def a_star(grid, start_pos: list[int, int], end_pos: list[int, int], allow_diago
 
     open_list, closed_list = [start_node], []
     while open_list:
-        print_grid(grid, open_list, closed_list)
-
         open_list.sort(key=lambda x: x.f)   # sort open list with respect to f value of nodes
-
         current_node = open_list[0]
         open_list.pop(0)
         closed_list.append(current_node)
+
+        print(f"current: {current_node.pos}")
 
         if current_node == end_node:    # finished
             path = []
@@ -110,12 +115,17 @@ def a_star(grid, start_pos: list[int, int], end_pos: list[int, int], allow_diago
 
                 for closed_node in closed_list:  # not searching again
                     if closed_node.pos == neighbour_pos:
+                        if closed_node.g > current_node.g:    # found a better way
+                            print(f"better way to closed: {neighbour_pos}")
+                            closed_list.remove(closed_node)
+                            return True
                         print(f"rejected closed: {neighbour_pos}")
                         return False
 
                 for open_node in open_list:  # already marked for search
                     if open_node.pos == neighbour_pos:
-                        if open_node.g > current_node.g + 1:    # found a better way
+                        if open_node.g > current_node.g:    # found a better way
+                            print(f"better way to open: {neighbour_pos}")
                             open_list.remove(open_node)
                             return True
                         else:
@@ -136,7 +146,7 @@ def a_star(grid, start_pos: list[int, int], end_pos: list[int, int], allow_diago
             neighbour_node.f = neighbour_node.g + neighbour_node.h
 
             open_list.append(neighbour_node)
-
+        print_grid(grid, open_list, closed_list, current_node)
 
 def main():
     """
@@ -146,17 +156,31 @@ def main():
             [0, 1, 0, 0, 0],
             [0, 1, 0, 1, 1],
             [0, 1, 0, 0, 0]]
-            """
+    """
+    """
     grid = [[0, 0, 0],
             [None, 0],
             [1, 0, 0]]
+    """
     """
     grid = [[0, 0, 0],
             [0, 1, 0],
             [0, 1, 0]]
     """
-    start_pos = [0, 0]
-    end_pos = [2, 2]
+    #"""
+    grid = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 1, 1, 1, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],]
+    #"""
+    start_pos = [1, 8]
+    end_pos = [9, 0]
 
     path = a_star(grid, start_pos, end_pos, True, True)
     print()
