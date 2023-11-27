@@ -4,7 +4,7 @@
     "volume": 0.4,
     "category": "player",
     "sounds": [
-        "damage_b.ogg",
-		"damage_c.ogg"
+        "damage_a.ogg",
+		"damage_b.ogg"
     ]
 }

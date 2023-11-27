@@ -2,6 +2,7 @@
 from scripts.utility.noise_functions import pnoise1, snoise2
 from scripts.utility.geometry import *
 from scripts.utility.const import *
+from scripts.graphics import sound
 from scripts.game.weapon import *
 from scripts.utility import file
 import copy
@@ -9,14 +10,10 @@ import copy
 
 class Inventory:
     def __init__(self):
-        #self.weapons = [Weapon(5) for Weapon in random.choices((Sword, Axe, Pickaxe, Bow), k=10)]
         self.weapons = [Stick(1)]
-        op_bow = Bow(1)
-        op_bow.attributes = {"vampire": 20, "paralysis": 20}
-        self.weapons = [op_bow]
         self.marked_weapons = set()
-        self.arrows = 32
-        self.max_arrows = 32
+        self.arrows = 0
+        self.max_arrows = 64
 
     def save(self):
         file.save("data/user/inventory.data", self, file_format="pickle")
@@ -49,6 +46,7 @@ class Inventory:
             rect = Rect(-0.95, -i * 0.2 - 0.05 / window.height * window.width - 0.2, 0.5, 0.1 / window.height * window.width)
             if 1 in window.mouse_buttons and rect.collide_point((window.mouse_pos[0] / window.width * 2, window.mouse_pos[1] / window.height * 2)):
                 menu.inventory_page.sort_key = key
+                sound.play(window, "click")
 
             window.draw_image(sort_image, rect[:2], rect[2:])
             window.draw_text((-0.9, -i * 0.2 - 0.2), key, (255, 255, 255), 0.17)
@@ -59,6 +57,7 @@ class Inventory:
 
         if 1 in window.mouse_buttons:
             menu.inventory_page.search_selected = window.mouse_pos[0] < 0 and window.mouse_pos[1] / window.height * 2 < -0.8
+            sound.play(window, "click")
 
         if menu.inventory_page.search_selected:
             search_text_length = len(menu.inventory_page.search_text)
@@ -140,6 +139,7 @@ class Inventory:
                     window.mouse_wheel[1] = (math.ceil(round(window.mouse_wheel[1] / scroll_speed) + 0.1) - 0.3) * scroll_speed
                 else:
                     window.mouse_wheel[1] = (math.floor(round(window.mouse_wheel[1] / scroll_speed) - 0.1) + 0.3) * scroll_speed
+                sound.play(window, "click")
 
             if (1 in window.mouse_buttons and
             star_rect.collide_point((window.mouse_pos[0] / window.width * 2, window.mouse_pos[1] / window.height * 2)) and
@@ -150,6 +150,7 @@ class Inventory:
                     world.player.inventory.marked_weapons.add(weapon.uuid)
                 sorted_inventory = sorted(inventory, key=weapon_sort_function)
                 window.mouse_wheel[1] = scroll_speed * sorted_inventory.index(weapon)
+                sound.play(window, "click")
 
             # Draw highlight circle
             if i == round(scroll_position):
@@ -192,7 +193,7 @@ class Inventory:
         for i, (attribute, level) in enumerate(weapon.attributes.items()):
             description_y = -0.6 * i + 0.1
             description = ATTRIBUTE_DESCRIPTIONS[attribute] % (ATTRIBUTE_BASE_MODIFIERS[attribute] * level)
-            window.draw_text((0, description_y), f"{attribute.title()} {INT_TO_ROMAN[level]}: {description}", (223, 132, 165), 0.17, wrap=1)
+            window.draw_text((0, description_y), f"{attribute.title()} {INT_TO_ROMAN.get(level, level)}: {description}", (223, 132, 165), 0.17, wrap=1)
 
         if len(inventory) == 1:
             return
@@ -222,6 +223,7 @@ class Inventory:
                             else:
                                 world.player.holding = None
                         world.player.heal(window, destroy_health_gain)
+                    sound.play(window, "click")
 
                 if any(window.mouse_buttons):
                     sort_image = "button_dark_selected"
@@ -403,12 +405,13 @@ class Inventory:
         fuse_button_image = "button_dark_unselected"
         if rect.collide_point((window.mouse_pos[0] / window.width * 2, window.mouse_pos[1] / window.height * 2)):
             if 1 in window.mouse_buttons and menu.inventory_page.fusing > 0:
-                menu.inventory_page.fusing = -3
+                menu.inventory_page.fusing = -1.5
                 previous_fuse_item = copy.deepcopy(menu.inventory_page.fuse_item)
                 menu.inventory_page.fuse_item.attributes = fusion_attributes
                 menu.inventory_page.fuse_item = previous_fuse_item
                 menu.inventory_page.secondary_fuse_item = secondary_weapon
                 world.player.inventory.weapons.remove(secondary_weapon)
+                sound.play(window, "fuse")
             if any(window.mouse_buttons):
                 fuse_button_image = "button_dark_selected"
             
@@ -419,7 +422,7 @@ class Inventory:
         if menu.inventory_page.fusing > 0:
             fuse_bar_image = "fuse_bar_a"
         else:
-            fuse_bar_image = "fuse_bar_" + chr(ord("a") + round(6 + menu.inventory_page.fusing * 2))
+            fuse_bar_image = "fuse_bar_" + chr(ord("a") + round(6 + menu.inventory_page.fusing * 4))
         
         window.draw_image(fuse_bar_image, (-0.5, -0.4), (0.3, 0.3 / window.height * window.width))
         window.draw_image(fuse_bar_image, (0.2, -0.4), (0.3, 0.3 / window.height * window.width), flip=(1, 0))

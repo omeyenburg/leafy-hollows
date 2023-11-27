@@ -38,7 +38,7 @@ class Pickaxe(MeleeWeapon):
 
 class Bow(RangedWeapon):
     def __init__(self, luck: int=1):
-        super().__init__(damage=2, attack_speed=2, range=6, crit_chance=0.1, luck=luck)
+        super().__init__(damage=2, attack_speed=2, range=8, crit_chance=0.1, luck=luck)
         self.image = "bow"
         self.angle = -30
         self.max_angle_offset = math.pi / 4

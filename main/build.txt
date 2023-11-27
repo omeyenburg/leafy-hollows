@@ -1,6 +1,10 @@
 # Windows
 pip install pyinstaller
 pyinstaller main.spec
+# or
+python -m PyInstaller --onefile --noconsole --add-data "data;data" --add-data "icon/icon.ico;." main.py
+
+
 
 # MacOS
 pip install pyinstaller
