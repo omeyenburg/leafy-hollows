@@ -4,6 +4,7 @@ from scripts.game.physics import PhysicsObject
 from scripts.graphics.window import Window
 from scripts.graphics import particle
 from scripts.utility.const import *
+from scripts.graphics import sound
 
 
 class Arrow(PhysicsObject):
@@ -45,11 +46,11 @@ class Arrow(PhysicsObject):
                 damage = self.bow.damage
                 damage *= 1 + 0.5 * (self.bow.crit_chance > random.random())
                 entity.damage(window, damage, self.vel)
+
                 self.bow.apply_attributes(window, self.owner, entity)
                 self.explode(window, world)
                 world.entities.discard(self)
                 break
-        
 
     def explode(self, window, world):
         explosive = self.bow.attributes.get("explosive", 0)
@@ -57,6 +58,7 @@ class Arrow(PhysicsObject):
             explosion_damage = self.bow.damage * explosive * ATTRIBUTE_BASE_MODIFIERS["explosive"] * 0.01
             particle.explosion(window, *self.rect.center, size=2.0, time=0.5)
             world.entities.discard(self)
+            sound.play(window, "explosion", (self.rect.x - world.player.rect.x) / 10)
 
             for entity in world.loaded_entities:
                 if entity.type in ("enemy", "player"):

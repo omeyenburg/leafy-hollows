@@ -97,8 +97,10 @@ class LivingEntity(physics.PhysicsObject):
             window.damage_time = 0.3
 
     def heal(self, window, amount: float=0):
-        particle.text(window, "+", *self.rect.center, size=0.2, color=(165, 48, 48, 255), time=0.5, offset_radius=self.rect.h)
-        self.health = min(self.health + amount, self.max_health)
+        if self.health < self.max_health:
+            sound.play(window, "heal")
+            particle.text(window, "+", *self.rect.center, size=0.2, color=(165, 48, 48, 255), time=0.5, offset_radius=self.rect.h)
+            self.health = min(self.health + amount, self.max_health)
 
     def death(self, window):
         particle.spawn(window, "dust_particle", *self.rect.center)

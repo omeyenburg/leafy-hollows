@@ -1,0 +1,9 @@
+{
+    "name": "explosion",
+    "speed": 0.5,
+    "volume": 0.5,
+    "category": "ambient",
+    "sounds": [
+        "explosion.ogg"
+    ]
+}

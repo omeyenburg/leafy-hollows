@@ -6,6 +6,7 @@ from scripts.graphics.window import Window
 from scripts.utility.geometry import *
 from scripts.game.world import World
 from scripts.utility.const import *
+from scripts.graphics import sound
 from scripts.menu.menu import Menu
 from scripts.utility import file
 import pprint
@@ -154,18 +155,25 @@ def draw_game():
         window.draw_rect(heart_center + Vec(heart_size.x * 0.8, -health_bar_size.y / 2), (0.5 * health_percentage, 0.05), (165, 48, 48, 255))
         window.draw_rect(heart_center + Vec(heart_size.x * 0.8 + 0.5 * health_percentage, -health_bar_size.y / 2), (0.5 * (1 - health_percentage), 0.05), (56, 29, 49, 255))
 
-        # Draw weapon
         weapon = world.player.holding
         if not weapon is None:
+            # Weapon image
             weapon_pos = (0.8, -0.9)
             weapon_size = Vec(0.2, 0.2 / window.height * window.width)
             window.draw_image(weapon.image, weapon_pos, weapon_size, angle=weapon.angle)
             
+            # Arrow count
             if weapon.image == "bow":
                 arrow_text = f"{world.player.inventory.arrows}/{world.player.inventory.max_arrows}"
                 window.draw_text((0.75, -0.42), arrow_text, (255, 255, 255), 0.17)
                 window.draw_image("arrow_item", (0.9, -0.5), (0.1, 0.1 / window.height * window.width), angle=0)
-                
+
+            # Weapon cooldown
+            attack_speed = weapon.get_weapon_stat_increase(world)[1]
+            cooldown_index = max(0, round(weapon.cooldown * attack_speed * 16))
+            if 0 < cooldown_index:
+                cooldown_image = "cooldown_" + chr(ord("a") + 16 - cooldown_index)
+                window.draw_image(cooldown_image, weapon_pos, weapon_size)
 
         if world.player.recent_drop[0] > 0:
             world.player.recent_drop[0] -= window.delta_time
@@ -405,6 +413,7 @@ def main():
                 file.delete("data/user/world.data")
                 menu.death_page.open()
                 menu.game_state = "death"
+                sound.play(window, "damage", channel_volume=2)
 
         elif menu.game_state in ("pause", "death", "inventory"):
             # Draw world

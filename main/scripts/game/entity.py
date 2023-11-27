@@ -4,12 +4,13 @@ from scripts.game.physics import PhysicsObject
 from scripts.graphics.window import Window
 from scripts.graphics import particle
 from scripts.utility.const import *
+from scripts.graphics import sound
 from scripts.game.weapon import *
 
 
 class GreenSlime(LivingEntity):
     def __init__(self, spawn_pos: [float], health=5, hit_damage=1):
-        health = round(health * (1 + spawn_pos[0] / 200 / health))
+        health = min(round(health * (1 + spawn_pos[0] / 200 / health)), 40)
         super().__init__(30, spawn_pos, SLIME_RECT_SIZE, health=health)
         self.type = "enemy"
         self.image = "slime"
@@ -41,6 +42,8 @@ class GreenSlime(LivingEntity):
             if self.hit_ground == 0:
                 self.hit_ground = 0.2
                 particle.spawn(window, self.slime_variant + "_slime_particle", self.rect.centerx, self.rect.top)
+                sound.play(window, "slime", x=(self.rect.x - world.player.rect.x) / 5)
+
             self.hit_ground -= window.delta_time
             self.vel[0] *= 0.8
             self.attack_cooldown = 0
@@ -98,7 +101,7 @@ class BlueSlime(GreenSlime):
 class Goblin(LivingEntity):
     def __init__(self, spawn_pos: [float]):
         base_health = 10
-        health = round(base_health * (1 + spawn_pos[0] / 100 / base_health))
+        health = min(round(base_health * (1 + spawn_pos[0] / 100 / base_health)), 30)
         super().__init__(30, spawn_pos, GOBLIN_RECT_SIZE, health=health)
         self.type = "enemy"
         self.image = "goblin"
@@ -110,6 +113,9 @@ class Goblin(LivingEntity):
         self.prepare_attack: float = self.prepare_attack_length
 
         self.holding = random.choice((Stick, Sword, Axe, Pickaxe, Bow))(1)
+        if isinstance(self.holding, Bow):
+            self.holding.attributes["longshot"] = 3
+            self.prepare_attack_length *= 8
 
         # Animation states
         self.state: str = "idle"    # state is used for movement & animations
@@ -128,8 +134,15 @@ class Goblin(LivingEntity):
             self.state = "hit_ground"
             return
 
+        holding_bow = isinstance(self.holding, Bow)
+        distance_player = abs(world.player.rect.centerx - self.rect.centerx)
+
+        if holding_bow and distance_player < 10:
+            speed = 0
+        else:
+            speed = min(self.max_speed, distance_player)
+
         moving = abs(self.vel[0]) > 1
-        speed = min(self.max_speed, abs(world.player.rect.centerx - self.rect.centerx))
         if world.player.rect.centerx < self.rect.centerx:
             self.vel[0] = -speed
             self.direction = 1
@@ -156,29 +169,32 @@ class Goblin(LivingEntity):
         else:
             self.state = "idle"
 
-        #player_distance = math.sqrt((self.rect.centerx - world.player.rect.centerx) ** 2 + (self.rect.centery - world.player.rect.centery) ** 2)
-        if self.rect.collide_rect(world.player.rect) or self.holding is Bow:
+        sound.play(window, "goblin", identifier=str(self.uuid), x=(self.rect.x - world.player.rect.x) / 5)
+
+        if self.rect.collide_rect(world.player.rect) or holding_bow:
             self.prepare_attack -= window.delta_time
 
             if self.prepare_attack < 0:
                 angle = math.atan2(world.player.rect.centery - self.rect.centery, world.player.rect.centerx - self.rect.centerx)
+                if holding_bow:
+                    angle += math.cos(angle) * 0.015 * distance_player
                 self.holding.attack(window, world, self, angle)
                 self.prepare_attack = self.prepare_attack_length
-        else:
-            self.prepare_attack_time = self.prepare_attack_length
+        elif not holding_bow:
+            self.prepare_attack = self.prepare_attack_length
 
 
 class Bat(LivingEntity):
     def __init__(self, spawn_pos: [float]):
         base_health = 5
-        health = round(base_health * (1 + spawn_pos[0] / 200 / base_health))
+        health = min(round(base_health * (1 + spawn_pos[0] / 200 / base_health)), 20)
         super().__init__(30, spawn_pos, BAT_RECT_SIZE, health=health)
         self.type = "enemy"
         self.image = "bat"
 
         # Enemy attributes
         self.item_drop_chance = 0.2
-        self.hit_damage = round(1 * (1 + spawn_pos[0] / 200))
+        self.hit_damage = min(round(1 * (1 + spawn_pos[0] / 200)), 4)
         self.max_speed = 2.5
         self.prepare_attack_length: float = 4.0
         self.prepare_attack: float = self.prepare_attack_length
@@ -220,3 +236,8 @@ class Bat(LivingEntity):
             self.prepare_attack = self.prepare_attack_length
         elif self.prepare_attack >= 0:
             self.prepare_attack -= window.delta_time
+
+        if not random.randint(0, int(window.fps * 10)):
+            sound.play(window, "bat_fly", identifier=str(self.uuid), x=(self.rect.x - world.player.rect.x) / 5)
+        elif not random.randint(0, int(window.fps * 10)):
+            sound.play(window, "bat_scream", identifier=str(self.uuid), x=(self.rect.x - world.player.rect.x) / 5)

@@ -1,0 +1,10 @@
+{
+    "name": "slime",
+    "speed": 0.2,
+    "volume": 0.3,
+    "category": "enemy",
+    "sounds": [
+        "slime_a.ogg",
+        "slime_b.ogg"
+    ]
+}

@@ -146,13 +146,13 @@ def generate_world(world, window):
     for coord in spawn_blocks:
         if coord[0] < 30 or coord[1] > -500:
             continue
-        if coord[0] < 200:
+        if coord[0] < 100:
             Entity = GreenSlime
-        elif coord[0] < 400:
+        elif coord[0] < 200:
             Entity = random.choice((GreenSlime, Bat))
-        elif coord[0] < 600:
+        elif coord[0] < 300:
             Entity = random.choice((GreenSlime, Bat, Goblin))
-        elif coord[0] < 800:
+        elif coord[0] < 400:
             Entity = random.choice((GreenSlime, YellowSlime, Bat, Goblin))
         else:
             Entity = random.choice((GreenSlime, YellowSlime, BlueSlime, Bat, Goblin))

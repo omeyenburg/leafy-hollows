@@ -1,0 +1,9 @@
+{
+    "name": "heal",
+    "speed": 0.2,
+    "volume": 0.2,
+    "category": "player",
+    "sounds": [
+        "heal.ogg"
+    ]
+}

@@ -1,0 +1,10 @@
+{
+    "name": "bat_scream",
+    "speed": 13,
+    "volume": 0.5,
+    "category": "enemy",
+    "sounds": [
+        "bat_scream_a.ogg",
+        "bat_scream_b.ogg"
+    ]
+}

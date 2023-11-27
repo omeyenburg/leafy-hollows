@@ -3,6 +3,7 @@ from scripts.game.world_generation import generate_world, generate_block
 from scripts.graphics import particle
 from scripts.utility import geometry
 from scripts.utility.const import *
+from scripts.graphics import sound
 from scripts.utility import file
 from scripts.game import player
 import time
@@ -148,6 +149,12 @@ class World:
     def update(self, window):
         self.wind = math.sin(window.time) * WORLD_WIND_STRENGTH + math.cos(window.time * 5) * WORLD_WIND_STRENGTH / 2
         window.particle_wind = self.wind / 50
+
+        if not random.randint(0, int(window.fps * 10)):
+            sound.play(window, "water_drop", x=random.random() * 2 - 1)
+        elif not random.randint(0, int(window.fps * 60)):
+            sound.play(window, "cave_ambient", x=random.random() * 2 - 1)
+
         
         self.water_update_timer += window.delta_time
         if self.water_update_timer > WORLD_WATER_SPEED:
