@@ -213,8 +213,6 @@ class Bat(LivingEntity):
 
         self.last_position = spawn_pos
 
-        
-
     def draw(self, window: Window):
         super().draw(window)
         rect = window.camera.map_coord((self.rect.x - 0.5 + self.rect.w / 2, self.rect.y, 1, 1), from_world=True)
