@@ -16,7 +16,7 @@
     "menu volume": 1,
     "simulation distance": 5,
     "save world": true,
-    "auto jump": true,
+    "auto jump": false,
     "key.left": "a",
     "key.right": "d",
     "key.jump": "space",
