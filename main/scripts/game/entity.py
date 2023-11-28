@@ -157,53 +157,72 @@ class Bat(LivingEntity):
         self.direction: int = 0     # 0 -> right; 1 -> left
         self.hit_ground = 0         # Used for hit ground animation
 
+        self.last_position = spawn_pos
+
+        
+
     def draw(self, window: Window):
         super().draw(window)
         rect = window.camera.map_coord((self.rect.x - 0.5 + self.rect.w / 2, self.rect.y, 1, 1), from_world=True)
         window.draw_image("bat_" + self.state, rect[:2], rect[2:], flip=(self.direction, 0), animation_offset=self.uuid)
 
-    def move(self, world): # pathfinding implementation
+    def move(self, world, window: Window): # pathfinding implementation
         def pathfind() -> list[int, int]:
-            self_pos = [round(_) for _ in self.rect.center]
-            target_pos = [round(_) for _ in world.player.rect.center]
-            print(self_pos, target_pos)
-            print(world.get_block(x= 0, y= 0))
-            grid = [[None] * abs(self_pos[0] - target_pos[0])] * abs(self_pos[1] - target_pos[1])
-
-            max_x, max_y = len(grid[0]) - 1, len(grid) - 1
-            start_pos = [0 if self_pos[0] < target_pos[0] else max_x, 0 if self_pos[1] < target_pos[1] else max_y]  # translate to relative positions
-            end_pos = [max_x if self_pos[0] < target_pos[0] else 0, max_y if self_pos[1] < target_pos[1] else 0]
-
-            x_offset = self_pos[0] - start_pos[0]
-            y_offset = self_pos[1] - start_pos[1]
+            grid: list[list[int, int]] = []
+            for y in range(world.view.shape[1]):
+                grid.append([])
+                for x in range(world.view.shape[0]):
+                    value = world.view[x, y, 0]
+                    grid[y].append(0 if value == 0 else 1)
+            grid.reverse()
 
 
+            """
+            print(window.camera.pos, len(grid[0]), len(grid), str())
+            offset = [window.camera.pos[0] - ((len(grid[0]) - 1) / 2), window.camera.pos[1] - ((len(grid) - 1) / 2)]  # offset between center of grid (relative) and camera_pos (absolute)
+            start_pos: list[int, int] = [round(self.rect.center[i] - offset[i]) for i in range(2)]
+            end_pos: list[int, int] = [round(world.player.rect.center[i] - offset[i]) for i in range(2)]
+            print(start_pos, end_pos, offset, self.rect.center, world.player.rect.center)
+            """
+            relative_camera_pos = [round((len(grid[0]) - 1) / 2), round((len(grid) - 1) / 2)]
+            start_pos = [round((self.rect.center[0] - window.camera.pos[0]) + relative_camera_pos[0]), -(round((self.rect.center[1] - window.camera.pos[1]) - relative_camera_pos[1]))]
+            end_pos = [round((world.player.rect.center[i] - window.camera.pos[i]) + relative_camera_pos[i]) for i in range(2)]
+            """
             for y, _ in enumerate(grid):
                 for x, _ in enumerate(grid[y]):
-                    grid[y][x] = world.get_block(x=x + x_offset, y=y + y_offset)
+                    print("\x1b[47m" + " " + "\x1b[0m" if int(grid[y][x]) == 0 else "\x1b[40m" + " " + "\x1b[0m", end="")
+                print()
+            """
 
-            print(len(grid), len(grid[0]))
-            print(grid)
+            result = a_star(grid=grid, start_pos=start_pos, end_pos=end_pos, full_path=True)
+            if result:
+                #next_pos = [e + offset[i] for i, e in enumerate(result[1])]
+                #print(f"next_pos: {result, next_pos}")
+                next_pos = [(result[1][i] - relative_camera_pos[i]) + window.camera.pos[i] for i in range(2)]   # vector approach
+                return next_pos
+            return None
 
-            
-            next_pos = a_star(grid=world, start_pos=self.rect.center, end_pos=world.player.rect.center, allow_diagonals=True, full_path=False)
-            print(next_pos)
-            return next_pos
-        
         if math.dist(self.rect.center, world.player.rect.center) > 3:   # find path for longer distances
+            """
+            if not [round(_) for _ in self.rect.center] == self.last_position:
+                self.last_position = [round(_) for _ in self.rect.center]
+            """
             next_pos = pathfind()
+
+            if not next_pos:
+                return
 
             if next_pos[0] < self.rect.centerx:
                 self.vel[0] = -self.max_speed
                 self.direction = 1
             else:
-                self.vel[0] = -self.max_speed
+                self.vel[0] = self.max_speed
                 self.direction = 0
             
             if next_pos[1] < self.rect.centery:
-                self.vel[1] = -speed_y
+                self.vel[1] = -self.max_speed
             else:
-                self.vel[1] = speed_y
+                self.vel[1] = self.max_speed
 
         
         else:
@@ -228,8 +247,9 @@ class Bat(LivingEntity):
 
         if self.stunned:
             return
-
-        self.move(world)
+        
+        self.move(world, window)
+            
 
         # Attack
         if self.rect.collide_rect(world.player.rect) and self.prepare_attack < 0:
