@@ -100,18 +100,18 @@ ATTRIBUTES: [str] = (
 
 ATTRIBUTE_BASE_MODIFIERS: dict = {
     "piercing": 1,
-    "ferocity": 5,
+    "ferocity": 15,
     "vampire": 5,
     "looting": 1,
     "explosive": 20,
     "paralysis": 15,
-    "berserker": 15,
-    "agility": 5,
+    "berserker": 25,
+    "agility": 15,
     "soul drain": 20,
     "shielding": 10,
-    "critical": 10,
+    "critical": 30,
     "warrior": 5,
-    "assassin": 5,
+    "assassin": 20,
     "longshot": 10
 }
 
@@ -119,7 +119,7 @@ ATTRIBUTE_DESCRIPTIONS: dict = {
     "piercing": "Allows your weapon to cut through enemies, hitting %s additional targets in its path.",
     "ferocity": "Enhances the weapon's aggressiveness, increasing damage and attack speed by %s%% each.",
     "vampire": "Regenerate %s%% health with every successful hit, siphoning life from enemies.",
-    "looting": "Increases the possible level of a attribute on dropped weapons by %s.",
+    "looting": "Increases the possible level of an attribute on dropped weapons by %s.",
     "explosive": "Attacks detonate on impact, dealing %s%% of your weapon's damage to the target and nearby enemies.",
     "paralysis": "Strikes have a %s%% chance to temporarily stun enemies.",
     "berserker": "Increases damage by %s%%, but at the cost of a corresponding reduction in defense.",
@@ -130,4 +130,25 @@ ATTRIBUTE_DESCRIPTIONS: dict = {
     "warrior": "Increases your weapon's damage by %s%% per enemy around you.",
     "assassin": "Increases your attack speed and crit chance by %s%% each.",
     "longshot": "Expands your weapon's range by by %s%%, allowing you to hit enemies from a greater distance."
+}
+
+ATTRIBUTE_BESCHREIBUNGEN: dict = {
+    
+}
+
+{
+    "piercing": "Durchschlag",
+    "ferocity": "Wildheit",
+    "vampire": "Vampier",
+    "looting": "Pl<ue>nderer",
+    "explosive": "Explosiv",
+    "paralysis": "L<ae>hmung",
+    "berserker": "Berserker",
+    "agility": "Beweglichkeit",
+    "soul drain": "Seelenraub",
+    "shielding": "Schutz",
+    "critical": "Kritisch",
+    "warrior": "Krieger",
+    "assassin": "Attent<ae>ter",
+    "longshot": "Fernschuss"
 }

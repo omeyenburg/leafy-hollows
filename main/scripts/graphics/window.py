@@ -261,10 +261,8 @@ class Window:
         """
         Threaded function called after __init__().
         """
-        self.loading_progress[:3] = "Loading textures", 0.1, 2
-
         # Load sounds
-        self.loading_progress[:2] = "Loading sounds", 1
+        self.loading_progress[:3] = "Loading sounds", 1, 2
         self.loaded_sounds, self.played_sounds = sound.load()
     
         # Create particle types

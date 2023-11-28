@@ -10,7 +10,7 @@ from scripts.game.weapon import *
 
 class GreenSlime(LivingEntity):
     def __init__(self, spawn_pos: [float], health=5, hit_damage=1):
-        health = min(round(health * (1 + spawn_pos[0] / 200 / health)), 40)
+        health = min(round(health * (1 + spawn_pos[0] / 400 / health)), 40)
         super().__init__(30, spawn_pos, SLIME_RECT_SIZE, health=health)
         self.type = "enemy"
         self.image = "slime"
@@ -18,7 +18,7 @@ class GreenSlime(LivingEntity):
 
         # Enemy attributes
         self.item_drop_chance = 0.3
-        self.hit_damage = min(5, round(hit_damage * (1 + spawn_pos[0] / 100 / hit_damage)))
+        self.hit_damage = min(hit_damage + 2, round(hit_damage * (1 + spawn_pos[0] / 400 / hit_damage)))
         self.attack_cooldown: float = 3
         self.jump_strength = 1
 

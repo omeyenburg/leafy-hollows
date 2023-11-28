@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from scripts.utility.noise_functions import pnoise1, snoise2
+from scripts.utility.language import translate
 from scripts.utility.geometry import *
 from scripts.utility.const import *
 from scripts.graphics import sound
@@ -11,8 +12,10 @@ import copy
 class Inventory:
     def __init__(self):
         self.weapons = [Stick(1)]
+        self.weapons = [Bow(1), Bow(1)]
+        self.weapons[0].attributes = {"ferocity": 10, "critical": 13}
         self.marked_weapons = set()
-        self.arrows = 0
+        self.arrows = 64
         self.max_arrows = 64
 
     def save(self):
@@ -88,10 +91,10 @@ class Inventory:
         inventory = sorted(
             filter(
                 lambda i:
-                search_text in i.image or
+                search_text in translate(window.options["language"], i.image) or
                 any([
-                    search_text in attribute.lower() or
-                    search_text in ATTRIBUTE_DESCRIPTIONS[attribute].lower()
+                    search_text in translate(window.options["language"], attribute).lower() or
+                    search_text in translate(window.options["language"], ATTRIBUTE_DESCRIPTIONS[attribute]).lower()
                     for attribute in i.attributes
                 ]),
                 world.player.inventory.weapons
@@ -175,9 +178,9 @@ class Inventory:
             return
 
         name = weapon.image.title()
+        name_width = window.draw_text((0, 0.8), name, (255, 255, 255), 0.3)[0]
         if weapon is world.player.holding:
-            name += " (equipped)"
-        window.draw_text((0, 0.8), name, (255, 255, 255), 0.3)
+            window.draw_text((name_width + name_width / len(name), 0.8), "(equipped)", (255, 255, 255), 0.3)[0]
 
         weapon_base_stats = (weapon.damage, weapon.attack_speed, weapon.range, weapon.crit_chance)
         attribute_stat_increase = weapon.get_weapon_stat_increase(world)
@@ -192,10 +195,15 @@ class Inventory:
 
         for i, (attribute, level) in enumerate(weapon.attributes.items()):
             description_y = -0.6 * i + 0.1
-            description = ATTRIBUTE_DESCRIPTIONS[attribute] % (ATTRIBUTE_BASE_MODIFIERS[attribute] * level)
-            window.draw_text((0, description_y), f"{attribute.title()} {INT_TO_ROMAN.get(level, level)}: {description}", (223, 132, 165), 0.17, wrap=1)
+            modifier = ATTRIBUTE_BASE_MODIFIERS[attribute] * level
+            if attribute == "paralysis":
+                modifier = min(100, modifier)
 
-        if len(inventory) == 1:
+            name = translate(window.options["language"], attribute).title()
+            description = translate(window.options["language"], ATTRIBUTE_DESCRIPTIONS[attribute]) % modifier
+            window.draw_text((0, description_y), f"{name} {INT_TO_ROMAN.get(level, level)}: {description}", (223, 132, 165), 0.17, wrap=1)
+
+        if len(world.player.inventory.weapons) == 1:
             return
         
         # Weapon actions
@@ -210,6 +218,7 @@ class Inventory:
                 if 1 in window.mouse_buttons:
                     if key == "Equip":
                         world.player.holding = weapon
+                        window.mouse_wheel[1] = 0
                     elif key == "Fuse":
                         menu.inventory_page.fuse_item = weapon
                         menu.inventory_page.fusing = window.delta_time
@@ -237,14 +246,16 @@ class Inventory:
             elif key == "Fuse":
                 button_image = "fuse_icon"
             else:
-                button_text = key + "  +" + str(destroy_health_gain)
+                #button_text = key + "  +" + str(destroy_health_gain)
                 button_image = "heart"
                 button_image_size = 0.1
                 #window.draw_text((-0.9, -i * 0.2 + 0.7), destroy_text, (255, 255, 255), 0.17)
                 #window.draw_image("heart", (-0.9 + destroy_text_size[0], -i * 0.2 + 0.65), (0.1 * window.height / window.width, 0.1))
 
-            window.draw_text((-0.9, -i * 0.2 + 0.7), button_text, (255, 255, 255), 0.17)
-            window.draw_image(button_image, (-0.53 - button_image_size * 0.2, -i * 0.2 + 0.7 - button_image_size / 2), (button_image_size * window.height / window.width, button_image_size))
+            action_width = window.draw_text((-0.9, -i * 0.2 + 0.7), button_text, (255, 255, 255), 0.17)[0]
+            if key == "Destroy":
+                window.draw_text((-0.85 + action_width, -i * 0.2 + 0.7), "+" + str(destroy_health_gain), (255, 255, 255), 0.17)
+            window.draw_image(button_image, (-0.53 - button_image_size * 0.2, -i * 0.2 + 0.7  - button_image_size / 2), (button_image_size * window.height / window.width, button_image_size))
 
     def update_fuse(self, window, menu, world):
         # Main fusion weapon
