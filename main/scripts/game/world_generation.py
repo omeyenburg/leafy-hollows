@@ -23,9 +23,10 @@ def generate_world(world, window):
     # Load structures
     window.loading_progress[:2] = "Loading structures", 0
     structures = structure.load(world.block_name)
+    goal_structure = structures["goal"]
+    del structures["goal"]
 
     # Starting point
-    #branches = set()
     position = [0, 0]
     poles = set() # List of x coords of poles
 
@@ -34,12 +35,11 @@ def generate_world(world, window):
     cave.intro(world, window, position)
 
     cave.horizontal(world, position)
-    # PASTE HERE TUTORIAL STRUCTURE
 
     # Generate cave segments
     window.loading_progress[:2] = "Generating caves", 5
 
-    segments_count = 100
+    segments_count = 50
     min_special_distance = 2
     special_speading = 2
     next_special = 2
@@ -58,6 +58,7 @@ def generate_world(world, window):
             # Special cave (vertical, blob or random structure)
             next_special = min_special_distance + random.randint(0, special_speading)
             cave_type = random.random()
+            cave_type = 0
 
             if cave_type < 0.6:
                 # Structure
@@ -71,28 +72,21 @@ def generate_world(world, window):
 
                 cave.interpolated(world, position, end_angle=structure_data["generation"]["entrance_angle"], end_radius=structure_data["generation"]["entrance_size"] / 2)
 
-                generated_structures.append((
+                generated_structure = (
                     round(position[0] - structure_data["generation"]["entrance_coord"][0]),
                     round(position[1] - structure_data["generation"]["entrance_coord"][1]),
                     structure_data["array"]
-                ))
+                )
+
+                generated_structures.append(generated_structure)
+
+                for dx, dy in numpy.ndindex(generated_structure[2].shape[:2]):
+                    world.set_block(generated_structure[0] + dx, generated_structure[1] + dy, world.block_name["dirt_block"])
 
                 position[0] += structure_data["generation"]["exit_coord"][0] - structure_data["generation"]["entrance_coord"][0]
                 position[1] += structure_data["generation"]["exit_coord"][1] - structure_data["generation"]["entrance_coord"][1]
 
                 cave.interpolated(world, position, start_angle=structure_data["generation"]["exit_angle"], start_radius=structure_data["generation"]["exit_size"] / 2)
-
-                """
-                elif cave_type < 0.7:
-                    # Branch
-                    if random.randint(0, 1):
-                        cave.vertical(world, position)
-                        poles.add(int(position[0]))
-                        branches.add((*position, 0))
-                    else:
-                        cave.horizontal(world, position)
-                        branches.add((*position, 1))
-                """
 
             elif cave_type < 0.9:
                 # Vertical (no branch)
@@ -103,18 +97,16 @@ def generate_world(world, window):
                 # Blob
                 cave.blob(world, position)
 
-    """
-    for x, y, direction in branches:
-        length = random.randint(2, 3)
-        position = [x, y]
 
-        if direction:
-            cave.vertical(world, position)
-            poles.add(int(position[0]))
-
-        for i in range(length):
-            cave.horizontal(world, position)
-    """
+    structure_data = goal_structure
+    cave.interpolated(world, position, end_angle=structure_data["generation"]["entrance_angle"], end_radius=structure_data["generation"]["entrance_size"] / 2)
+    last_enemy_x = position[0]
+    world.camera_stop = position[0] + 40
+    generated_structures.append((
+        round(position[0] - structure_data["generation"]["entrance_coord"][0]),
+        round(position[1] - structure_data["generation"]["entrance_coord"][1]),
+        structure_data["array"]
+    ))
 
     # Smoother cave walls
     flatten_edges(world)
@@ -144,15 +136,15 @@ def generate_world(world, window):
     spawn_blocks = random.sample(list(blocks_ground), k=int(0.1 * len(blocks_ground)))
 
     for coord in spawn_blocks:
-        if coord[0] < 30 or coord[1] > -500:
+        if coord[0] < 30 or coord[1] > -500 or world.get_block(coord[0], coord[1] + 1) or coord[0] > last_enemy_x or world.get_water(coord[0], coord[1]):
             continue
         if coord[0] < 100:
             Entity = GreenSlime
-        elif coord[0] < 200:
-            Entity = random.choice((GreenSlime, Bat))
         elif coord[0] < 300:
-            Entity = random.choice((GreenSlime, Bat, Goblin))
+            Entity = random.choice((GreenSlime, Bat))
         elif coord[0] < 400:
+            Entity = random.choice((GreenSlime, Bat, Goblin))
+        elif coord[0] < 600:
             Entity = random.choice((GreenSlime, YellowSlime, Bat, Goblin))
         else:
             Entity = random.choice((GreenSlime, YellowSlime, BlueSlime, Bat, Goblin))
@@ -193,7 +185,7 @@ def find_edge_blocks(world):
 
 # Called from generate_world
 def generate_foliage(world, blocks_ground, blocks_ceiling, blocks_wall_right, blocks_wall_left):
-    blocks_ground = random.choices(list(blocks_ground), k=int(WORLD_VEGETATION_FLOOR_DENSITY * len(blocks_ground)))
+    blocks_ground = random.sample(list(blocks_ground), k=int(WORLD_VEGETATION_FLOOR_DENSITY * len(blocks_ground)))
     blocks_ceiling = random.choices(list(blocks_ceiling), k=int(WORLD_VEGETATION_CEILING_DENSITY * len(blocks_ceiling)))
     blocks_wall_right = random.choices(list(blocks_wall_right), k=int(WORLD_VEGETATION_WALL_DENSITY * len(blocks_wall_right)))
     blocks_wall_left = random.choices(list(blocks_wall_left), k=int(WORLD_VEGETATION_WALL_DENSITY * len(blocks_wall_left)))
@@ -261,11 +253,14 @@ def get_decoration_block_type(world, x, y):
     block_generation_properties = world.block_generation_properties
 
     decoration_list = list(filter(lambda name: (
-        world.block_generation_properties[name].get("on", "any") in block_comparison and
+        any([selected in block_comparison for selected in world.block_generation_properties[name].get("on", "any").split("|")]) and
         side == world.block_generation_properties[name].get("side", "above") and
         water_level >= world.block_generation_properties[name].get("water", False) and
         corner == world.block_generation_properties[name].get("corner", False)
     ), list(world.block_generation_properties)))
+
+    if not len(decoration_list):
+        return [None]
 
     decoration_block = random.choices(decoration_list, weights=[world.block_generation_properties[name].get("weight", 1) for name in decoration_list])
 

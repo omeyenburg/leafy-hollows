@@ -8,7 +8,7 @@
         "diamond0.png"
     ],
     "generation": {
-        "on": "any",
+        "on": "dirt|stone|snow",
         "side": "above",
         "weight": 4
     }

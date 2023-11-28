@@ -13,12 +13,12 @@ import pprint
 
 
 # Setup
-caption = "Title"
+caption = "Leafy Hollows"
 *block_data, block_atlas_image = load_blocks()
 window: Window = Window(caption, block_data[0], block_atlas_image)
 menu: Menu = Menu(window)
 world: World = None
-menu.load_threaded("Title", "menu", window.setup)
+menu.load_threaded("Leafy Hollows", "menu", window.setup)
 menu.main_page.open()
 
 
@@ -142,7 +142,7 @@ def draw_game():
             (250, 250, 250, 200),
             size=TEXT_SIZE_DESCRIPTION
         )
-
+    return
     if menu.game_state != "intro" and not (world.player.rect.x == 0 and menu.game_state == "pause"):
         # Draw player health bar
         health_percentage = world.player.health / world.player.max_health
@@ -263,6 +263,9 @@ def update_game_camera():
         window.camera.shift_x((-world.player.direction + 0.5) * 50)
     window.camera.move(camera_pos)
     window.camera.update()
+    if window.camera.pos[0] >= world.camera_stop:
+        window.camera.pos[0] = world.camera_stop
+        window.camera.dest = [world.camera_stop, window.camera.dest[1]]
 
 
 def main():
@@ -391,6 +394,9 @@ def main():
             draw_game()
             world.update(window)
 
+            if window.camera.pos[0] >= world.camera_stop:
+                window.draw_text((0, 0.8), "You escaped from the caves!", (255, 255, 255), 0.3, centered=True)
+
             # Update and draw the menu
             window.update(world.player.rect.center)
 
@@ -409,7 +415,7 @@ def main():
 
             # Death
             if world.player.health <= 0:
-                world.player.inventory.save()
+                world.player.inventory.save(world)
                 file.delete("data/user/world.data")
                 menu.death_page.open()
                 menu.game_state = "death"

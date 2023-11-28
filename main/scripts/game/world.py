@@ -14,6 +14,7 @@ class World:
         self.view: numpy.array = None # Sent to shader to render
         self.view_size: tuple = (0, 0)
         self.chunks = {} # {(chunk_x, chunk_y): numpy_array(16x16x4)} -> (block, plant, background, water_level)
+        self.camera_stop: int = 0 # maximum camera x
 
         self.block_generation_properties = block_generation_properties
         self.block_properties = block_properties
@@ -168,7 +169,8 @@ class World:
                 if not entity is self.player:
                     self.player.obtain_weapon_drop(window, entity)
                 self.entities.discard(entity)
-            entity.update(self, window)
+            if entity == self.player:
+                entity.update(self, window)
 
         if window.options["particles"]:
             particle.update(window)
@@ -335,7 +337,7 @@ class World:
 
     def save(self, window):
         window.loading_progress[:3] = "Saving inventory", 0, 2
-        self.player.inventory.save()
+        self.player.inventory.save(self)
         if not window.options["save world"]:
             return        
 

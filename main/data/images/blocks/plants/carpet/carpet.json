@@ -1,0 +1,10 @@
+{
+    "name": "carpet",
+    "family": "carpet",
+    "layer": "plant",
+    "hardness": 1,
+    "speed": 0,
+    "frames": [
+        "carpet.png"
+    ]
+}

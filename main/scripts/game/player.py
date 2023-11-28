@@ -11,12 +11,12 @@ from scripts.game.weapon import *
 
 class Player(LivingEntity):
     def __init__(self, spawn_pos: [float]):
-        super().__init__(50, spawn_pos, PLAYER_RECT_SIZE_NORMAL, health=10)
+        super().__init__(50, spawn_pos, PLAYER_RECT_SIZE_NORMAL, health=20)
         self.type = "player"
         self.image = "player"
 
         self.inventory = Inventory.load()
-        self.holding = self.inventory.weapons[0]
+        self.holding = self.inventory.selected
         self.recent_drop = [0, None]
 
         # Player rect size (based on state)
@@ -82,7 +82,7 @@ class Player(LivingEntity):
         if self.state == "crouch":
             max_speed = self.crouch_speed
         if self.inWater:
-            max_speed *= 0.7
+            max_speed *= 0.8
         if self.underWater:
             max_speed /= 2
         
@@ -122,7 +122,7 @@ class Player(LivingEntity):
             self.vel[0] *= 0.7
 
         # Jumping
-        if window.keybind("jump") and (self.block_below or self.block_right and key_left or self.block_left and key_right):
+        if window.keybind("jump") and (not self.state in ("crouch", "crawl", "crouch_jump")) and (self.block_below or self.block_right and key_left or self.block_left and key_right):
             if self.state == "crouch" and self.block_below:
                 # Charge crouch jump
                 self.charge_crouch_jump += window.delta_time
@@ -154,8 +154,8 @@ class Player(LivingEntity):
             self.vel[0] -= 1
 
         # Water resistance
-        self.vel[0] *= 0.6
-        self.vel[1] *= 0.7
+        self.vel[0] *= 0.8
+        self.vel[1] *= 0.8
 
     def move_climb(self, world, window: Window):
         """
@@ -289,16 +289,21 @@ class Player(LivingEntity):
         ground_block = world.get_block(*ground_block_coord)
         sound_file = ""
 
+        ground_block_family = world.block_family[world.block_index[ground_block]]
         if self.state == "sprint":
-            if ground_block == world.block_name["grass_block"]:
+            if ground_block_family == "dirt":
                 sound_file = "player_run_grass"
-            elif ground_block == world.block_name["stone_block"]:
+            elif ground_block_family in ("stone", "ice", "brick"):
                 sound_file = "player_run_stone"
+            elif ground_block_family == "snow":
+                sound_file = "player_walk_snow"
         else:
-            if ground_block in (world.block_name["grass_block"], world.block_name["dirt_block"]):
+            if ground_block_family == "dirt":
                 sound_file = "player_walk_grass"
-            elif ground_block == world.block_name["stone_block"]:
+            elif ground_block_family in ("stone", "ice", "brick"):
                 sound_file = "player_walk_stone"
+            elif ground_block_family == "snow":
+                sound_file = "player_walk_snow"
 
         if sound_file:
             volume = min(1, (abs(self.vel[0]) + abs(self.vel[1])) / 8)
