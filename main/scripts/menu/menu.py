@@ -15,7 +15,7 @@ class Menu:
 
         ###---###  Main page  ###---###
         self.main_page = Page(columns=2, spacing=MENU_SPACING)
-        Label(self.main_page, MENU_TITLE_SIZE, columnspan=2, text="Title", fontsize=TEXT_SIZE_HEADING)
+        Label(self.main_page, MENU_TITLE_SIZE, columnspan=2, text="Leafy Hollows", fontsize=TEXT_SIZE_HEADING)
         button_main_play = Button(self.main_page, MENU_BUTTON_SIZE, columnspan=2, text="Play", fontsize=TEXT_SIZE_BUTTON, callback=lambda: self.set_state("load_world"))
         button_main_settings = Button(self.main_page, MENU_BUTTON_SMALL_SIZE, text="Settings", fontsize=TEXT_SIZE_BUTTON)
         Button(self.main_page, MENU_BUTTON_SMALL_SIZE, callback=window.quit, text="Quit", fontsize=TEXT_SIZE_BUTTON)
@@ -512,7 +512,7 @@ class Menu:
 
     def get_intro_texts(self):
         intro_texts = [
-            "Title",
+            "Leafy Hollows",
             "Move with [%s] and [%s]",
             "Jump with [%s]",
             "Crouch with [%s]",
