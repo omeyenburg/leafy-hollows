@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from scripts.graphics.image import get_hand_position
 from scripts.graphics import particle
 from scripts.utility.const import *
 from scripts.graphics import sound
@@ -33,13 +34,23 @@ class LivingEntity(physics.PhysicsObject):
             self.draw_holding_item(window)
 
     def draw_holding_item(self, window):
+        hand_position = get_hand_position(window, self.image + "_" + self.state, offset=self.uuid)
+
         flip = (not self.direction, 0)
         if self.direction:
-            center = (self.rect.left - 0.2, self.rect.centery - 0.1)
-            angle = 40
+            center = (
+                self.rect.centerx - hand_position[0],
+                self.rect.centery + hand_position[1]
+            )
+            angle = -hand_position[2]
         else:
-            center = (self.rect.right + 0.2, self.rect.centery - 0.1)
-            angle = -40
+            #center = (self.rect.right + 0.2, self.rect.centery - 0.1)
+            #angle = -40
+            center = (
+                self.rect.centerx + hand_position[0],
+                self.rect.centery + hand_position[1]
+            )
+            angle = hand_position[2]
 
         weapon_size = 0.6
         rect = window.camera.map_coord((center[0] - weapon_size / 2, center[1] - weapon_size / 2, weapon_size, weapon_size), from_world=True)
@@ -86,8 +97,10 @@ class LivingEntity(physics.PhysicsObject):
             window.damage_time = 0.3
 
     def heal(self, window, amount: float=0):
-        particle.text(window, "+", *self.rect.center, size=0.2, color=(165, 48, 48, 255), time=0.5, offset_radius=self.rect.h)
-        self.health = min(self.health + amount, self.max_health)
+        if self.health < self.max_health:
+            sound.play(window, "heal")
+            particle.text(window, "+", *self.rect.center, size=0.2, color=(165, 48, 48, 255), time=0.5, offset_radius=self.rect.h)
+            self.health = min(self.health + amount, self.max_health)
 
     def death(self, window):
         particle.spawn(window, "dust_particle", *self.rect.center)

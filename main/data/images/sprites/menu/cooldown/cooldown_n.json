@@ -1,0 +1,7 @@
+{
+    "name": "cooldown_n",
+    "speed": 0,
+    "frames": [
+        "cooldown_n.png"
+    ]
+}

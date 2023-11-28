@@ -16,6 +16,21 @@ def get_sprite_rect(window, image, offset=0):
     return window.sprite_rects[frames[index]]
 
 
+def get_hand_position(window, image, offset=0):
+    """
+    Returns the hand_position of the current animation frame of an image.
+    """
+    if not image in window.hand_positions:
+        return (0, 0, 0)
+
+    frames, speed = window.sprites[image]
+    if speed != 0 or len(frames) > 1:
+        index = int((window.time + 10 * offset) // speed % len(frames))
+    else:
+        index = 0
+    return window.hand_positions[image][index]
+
+
 def load_blocks():
     """
     Load block texture atlas from files in a folder.
@@ -107,6 +122,7 @@ def load_sprites():
     """
     sprites = {}
     sprite_rects = []
+    hand_positions = {}
 
     images_data = file.load("data/images/layout/sprites.properties", split=True)
     images = {}
@@ -121,11 +137,11 @@ def load_sprites():
         width = max(width, rect[0] + rect[2])
         height = max(height, rect[1] + rect[3])
         
-        image_path = file.find("data/images/sprites", image + ".png", True)
+        image_path = file.find("data/images/sprites", image + ".png", True, first=True)
         if not len(image_path):
             raise ValueError("Could not find file " + image + ".png in data/images/sprites.\nRun\n'python data/images/layout/setup.py'\nor\n'python3 data/images/layout/setup.py'")
 
-        paths[str(image_path[0])] = len(sprite_rects)
+        paths[str(image_path)] = len(sprite_rects)
         images[image] = len(sprite_rects)
         sprite_rects.append(rect)
 
@@ -148,7 +164,10 @@ def load_sprites():
                 raise Exception(f"Could not find any data of '{frame}'.\nRun\n'python data/images/layout/setup.py'\nor\n'python3 data/images/layout/setup.py'")
         sprites[data["name"]] = (tuple(indices), data["speed"])
 
+        if "hand" in data:
+            hand_positions[data["name"]] = data["hand"]
+
     if CREATE_TEXTURE_ATLAS_FILE:
         pygame.image.save(image, file.abspath("data/sprites (testing only).png"))
 
-    return sprites, sprite_rects, image
+    return sprites, sprite_rects, hand_positions, image

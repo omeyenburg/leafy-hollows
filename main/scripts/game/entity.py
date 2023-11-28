@@ -1,23 +1,27 @@
 # -*- coding: utf-8 -*-
-from scripts.utility.noise_functions import pnoise1
 from scripts.game.baseentity import LivingEntity
 from scripts.game.physics import PhysicsObject
 from scripts.graphics.window import Window
 from scripts.graphics import particle
 from scripts.utility.const import *
+from scripts.graphics import sound
 from scripts.game.weapon import *
 from scripts.game.pathfinding import a_star
 
 
-class Slime(LivingEntity):
-    def __init__(self, spawn_pos: [float]):
-        super().__init__(30, spawn_pos, SLIME_RECT_SIZE, health=5)
+class GreenSlime(LivingEntity):
+    def __init__(self, spawn_pos: [float], health=5, hit_damage=1):
+        health = min(round(health * (1 + spawn_pos[0] / 400 / health)), 40)
+        super().__init__(30, spawn_pos, SLIME_RECT_SIZE, health=health)
         self.type = "enemy"
+        self.image = "slime"
+        self.slime_variant = "green"
 
         # Enemy attributes
         self.item_drop_chance = 0.3
-        self.hit_damage = 1 # Damage applied to player on collision
+        self.hit_damage = min(hit_damage + 2, round(hit_damage * (1 + spawn_pos[0] / 400 / hit_damage)))
         self.attack_cooldown: float = 3
+        self.jump_strength = 1
 
         # Animation states
         self.state: str = "idle"    # state is used for movement & animations
@@ -27,7 +31,7 @@ class Slime(LivingEntity):
     def draw(self, window: Window):
         super().draw(window)
         rect = window.camera.map_coord((self.rect.x - 0.5 + self.rect.w / 2, self.rect.y, 1, 1), from_world=True)
-        window.draw_image("slime_" + self.state, rect[:2], rect[2:], flip=(self.direction, 0), animation_offset=self.uuid)
+        window.draw_image("_".join((self.slime_variant, self.image, self.state)), rect[:2], rect[2:], flip=(self.direction, 0), animation_offset=self.uuid)
 
     def update(self, world, window: Window):
         super().update(world, window.delta_time)
@@ -38,17 +42,19 @@ class Slime(LivingEntity):
         if self.block_below and not self.stunned:
             if self.hit_ground == 0:
                 self.hit_ground = 0.2
-                particle.spawn(window, "slime_particle", self.rect.centerx, self.rect.top)
+                particle.spawn(window, self.slime_variant + "_slime_particle", self.rect.centerx, self.rect.top)
+                sound.play(window, "slime", x=(self.rect.x - world.player.rect.x) / 5)
+
             self.hit_ground -= window.delta_time
             self.vel[0] *= 0.8
             self.attack_cooldown = 0
 
             if self.hit_ground < -0.5:
                 self.direction = int(world.player.rect.x < self.rect.x)
-                self.vel[1] += 6
+                self.vel[1] += 6 * self.jump_strength
         else:
             self.hit_ground = 0
-            self.vel[0] += 0.1 * (-self.direction + 0.5)
+            self.vel[0] += 0.1 * (-self.direction + 0.5) * self.jump_strength
 
         vel_y = abs(self.vel[1])
         if vel_y > 3:
@@ -63,26 +69,54 @@ class Slime(LivingEntity):
 
         # Attack player
         if self.attack_cooldown < 0 and self.vel[1] < 0 and self.rect.collide_rect(world.player.rect):
-            world.player.damage(window, 1, self.vel)
+            world.player.damage(window, self.hit_damage, self.vel)
             self.attack_cooldown = 5
         self.attack_cooldown -= window.delta_time
 
     def death(self, window):
-        particle.spawn(window, "slime_particle", *self.rect.center)
+        particle.spawn(window, self.slime_variant + "_slime_particle", *self.rect.center)
+
+
+class YellowSlime(GreenSlime):
+    def __init__(self, spawn_pos: [float]):
+        super().__init__(spawn_pos, health=15, hit_damage=3)
+        self.slime_variant = "yellow"
+
+        # Enemy attributes
+        self.item_drop_chance = 0.4
+        self.attack_cooldown: float = 3
+        self.jump_strength = 1.5
+
+
+class BlueSlime(GreenSlime):
+    def __init__(self, spawn_pos: [float]):
+        super().__init__(spawn_pos, health=30, hit_damage=4)
+        self.slime_variant = "blue"
+
+        # Enemy attributes
+        self.item_drop_chance = 0.4
+        self.attack_cooldown: float = 2
+        self.jump_strength = 2
         
 
 class Goblin(LivingEntity):
     def __init__(self, spawn_pos: [float]):
-        super().__init__(30, spawn_pos, GOBLIN_RECT_SIZE, health=5)
+        base_health = 10
+        health = min(round(base_health * (1 + spawn_pos[0] / 100 / base_health)), 30)
+        super().__init__(30, spawn_pos, GOBLIN_RECT_SIZE, health=health)
         self.type = "enemy"
+        self.image = "goblin"
 
         # Enemy attributes
-        self.item_drop_chance = 0.5
+        self.item_drop_chance = 0.4
         self.max_speed = 3
         self.prepare_attack_length: float = 0.5
         self.prepare_attack: float = self.prepare_attack_length
 
-        self.holding = random.choice((Sword, Axe, Pickaxe, Bow))(1)
+        self.holding = random.choice((Stick, Sword, Axe, Pickaxe, Bow))(1)
+        if isinstance(self.holding, Bow):
+            self.holding.attributes["longshot"] = 3
+            self.prepare_attack_length *= 8
 
         # Animation states
         self.state: str = "idle"    # state is used for movement & animations
@@ -90,9 +124,9 @@ class Goblin(LivingEntity):
         self.hit_ground = 0         # Used for hit ground animation
 
     def draw(self, window: Window):
-        super().draw(window)
         rect = window.camera.map_coord((self.rect.x - 1 + self.rect.w / 2, self.rect.y, 2, 2), from_world=True)
         window.draw_image("goblin_" + self.state, rect[:2], rect[2:], flip=(self.direction, 0), animation_offset=self.uuid)
+        super().draw(window)
 
     def update(self, world, window: Window):
         super().update(world, window.delta_time)
@@ -101,15 +135,23 @@ class Goblin(LivingEntity):
             self.state = "hit_ground"
             return
 
-        speed = min(self.max_speed, abs(world.player.rect.centerx - self.rect.centerx))
+        holding_bow = isinstance(self.holding, Bow)
+        distance_player = abs(world.player.rect.centerx - self.rect.centerx)
+
+        if holding_bow and distance_player < 10:
+            speed = 0
+        else:
+            speed = min(self.max_speed, distance_player)
+
+        moving = abs(self.vel[0]) > 1
         if world.player.rect.centerx < self.rect.centerx:
             self.vel[0] = -speed
             self.direction = 1
-            side_block = world.get_block(math.floor(self.rect.left - 0.6), round(self.rect.y))
+            side_block = world.get_block(math.floor(self.rect.left - 0.6), round(self.rect.y)) and not world.get_block(math.floor(self.rect.left - 0.6), round(self.rect.y + 1))
         else:
             self.vel[0] = speed
             self.direction = 0
-            side_block = world.get_block(math.floor(self.rect.right + 0.6), round(self.rect.y))
+            side_block = world.get_block(math.floor(self.rect.right + 0.6), round(self.rect.y)) and not world.get_block(math.floor(self.rect.right + 0.6), round(self.rect.y + 1))
 
         # Auto jump
         if side_block and self.block_below:
@@ -123,31 +165,37 @@ class Goblin(LivingEntity):
             self.hit_ground = max(0, self.hit_ground - window.delta_time)
             self.state = "hit_ground"
             self.vel[0] *= 0.4
-        elif abs(self.vel[0]) > 1:
+        elif moving:
             self.state = "walk"
         else:
             self.state = "idle"
 
-        #player_distance = math.sqrt((self.rect.centerx - world.player.rect.centerx) ** 2 + (self.rect.centery - world.player.rect.centery) ** 2)
-        if self.rect.collide_rect(world.player.rect) or self.holding is Bow:
+        sound.play(window, "goblin", identifier=str(self.uuid), x=(self.rect.x - world.player.rect.x) / 5)
+
+        if self.rect.collide_rect(world.player.rect) or holding_bow:
             self.prepare_attack -= window.delta_time
 
             if self.prepare_attack < 0:
                 angle = math.atan2(world.player.rect.centery - self.rect.centery, world.player.rect.centerx - self.rect.centerx)
+                if holding_bow:
+                    angle += math.cos(angle) * 0.015 * distance_player
                 self.holding.attack(window, world, self, angle)
                 self.prepare_attack = self.prepare_attack_length
-        else:
-            self.prepare_attack_time = self.prepare_attack_length
+        elif not holding_bow:
+            self.prepare_attack = self.prepare_attack_length
 
 
 class Bat(LivingEntity):
     def __init__(self, spawn_pos: [float]):
-        super().__init__(30, spawn_pos, BAT_RECT_SIZE, health=3)
+        base_health = 5
+        health = min(round(base_health * (1 + spawn_pos[0] / 200 / base_health)), 20)
+        super().__init__(30, spawn_pos, BAT_RECT_SIZE, health=health)
         self.type = "enemy"
+        self.image = "bat"
 
         # Enemy attributes
         self.item_drop_chance = 0.2
-        self.hit_damage = 1 # Damage applied to player on collision
+        self.hit_damage = min(round(1 * (1 + spawn_pos[0] / 200)), 4)
         self.max_speed = 2.5
         self.prepare_attack_length: float = 4.0
         self.prepare_attack: float = self.prepare_attack_length
@@ -260,12 +308,17 @@ class Bat(LivingEntity):
 
         if self.stunned:
             return
-        
+          
         self.move(world, window)
 
         # Attack
         if self.rect.collide_rect(world.player.rect) and self.prepare_attack < 0:
-            world.player.damage(window, 1, self.vel)
+            world.player.damage(window, self.hit_damage, self.vel)
             self.prepare_attack = self.prepare_attack_length
         elif self.prepare_attack >= 0:
             self.prepare_attack -= window.delta_time
+
+        if not random.randint(0, int(window.fps * 10)):
+            sound.play(window, "bat_fly", identifier=str(self.uuid), x=(self.rect.x - world.player.rect.x) / 5)
+        elif not random.randint(0, int(window.fps * 10)):
+            sound.play(window, "bat_scream", identifier=str(self.uuid), x=(self.rect.x - world.player.rect.x) / 5)

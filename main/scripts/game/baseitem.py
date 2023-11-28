@@ -3,6 +3,7 @@ from scripts.game.baseentity import LivingEntity
 from scripts.game.projectile import Arrow
 from scripts.graphics import particle
 from scripts.utility.const import *
+from scripts.graphics import sound
 
 
 os.environ["item_count"] = "0"
@@ -89,11 +90,13 @@ class MeleeWeapon(BaseItem):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def attack(self, window, world, attacker, angle):
+    def attack(self, window, world, attacker, angle, arg_range=None):
         if self.cooldown > 0:
             return
 
         damage, attack_speed, weapon_range, crit_chance = self.get_weapon_stat_increase(world)
+        if not arg_range is None:
+            weapon_range = arg_range
         self.cooldown = 1 / attack_speed
 
         targets = set()
@@ -112,7 +115,9 @@ class MeleeWeapon(BaseItem):
                 targets.add((angle_distance, entity))
 
         if not targets:
+            sound.play(window, "sword_swing", x=(world.player.rect.x - attacker.rect.x) / 5)
             return
+        sound.play(window, "sword_hit", x=(world.player.rect.x - attacker.rect.x) / 5)
 
         max_target_count = self.attributes.get("piercing", 0) + 1
         velocity = (
@@ -131,7 +136,7 @@ class MeleeWeapon(BaseItem):
                 target[1].damage(window, damage * critical_multiplier, attacker.vel)
             target = targets[0]
 
-        super().apply_attributes(window, attacker, target)
+        BaseItem.apply_attributes(self, window, attacker, target)
     
         attack_particle = random.choice(("impact", "swing"))
         if -math.pi < angle * 2 < math.pi:
@@ -144,6 +149,8 @@ class MeleeWeapon(BaseItem):
         if explosive:
             explosion_damage = damage * ATTRIBUTE_BASE_MODIFIERS["explosive"] * 0.01
             particle.explosion(window, *target.rect.center, size=2.0, time=0.5)
+            sound.play(window, "explosion", x=(world.player.rect.x - target.rect.x) / 5)
+
             for entity in world.loaded_entities:
                 if entity.type in ("enemy", "player"):
                     distance = math.sqrt((entity.rect.centerx - target.rect.centerx) ** 2 + (entity.rect.centery - target.rect.centery) ** 2)
@@ -158,6 +165,14 @@ class RangedWeapon(BaseItem):
     def attack(self, window, world, attacker, angle):
         if self.cooldown > 0:
             return
+
+        if attacker.type == "player":
+            if attacker.inventory.arrows:
+                attacker.inventory.arrows -= 1
+            else:
+                MeleeWeapon.attack(self, window, world, attacker, angle, arg_range=2)
+                return
+        sound.play(window, "bow_fling", x=(world.player.rect.x - attacker.rect.x) / 5)
 
         damage, attack_speed, weapon_range, crit_chance = self.get_weapon_stat_increase(world)
         world.add_entity(Arrow(attacker.rect.center, speed=weapon_range * 10, angle=angle, owner=attacker))

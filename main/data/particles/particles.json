@@ -32,7 +32,29 @@
         "divergence": 2,
         "amount": -1
     },
-    "slime_particle": {
+    "green_slime_particle": {
+        "time": 1,
+        "delay": 0.1,
+        "size": [0.05, 0.05],
+        "gravity": 1,
+        "growth": -1,
+        "speed": 6,
+        "angle": 90,
+        "divergence": 2,
+        "amount": 0.5
+    },
+    "yellow_slime_particle": {
+        "time": 1,
+        "delay": 0.1,
+        "size": [0.05, 0.05],
+        "gravity": 1,
+        "growth": -1,
+        "speed": 6,
+        "angle": 90,
+        "divergence": 2,
+        "amount": 0.5
+    },
+    "blue_slime_particle": {
         "time": 1,
         "delay": 0.1,
         "size": [0.05, 0.05],
