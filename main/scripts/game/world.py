@@ -156,7 +156,6 @@ class World:
         elif not random.randint(0, int(window.fps * 60)):
             sound.play(window, "cave_ambient", x=random.random() * 2 - 1)
 
-        
         self.water_update_timer += window.delta_time
         if self.water_update_timer > WORLD_WATER_SPEED:
             self.water_update_timer = 0.0
@@ -169,8 +168,7 @@ class World:
                 if not entity is self.player:
                     self.player.obtain_weapon_drop(window, entity)
                 self.entities.discard(entity)
-            if entity == self.player:
-                entity.update(self, window)
+            entity.update(self, window)
 
         if window.options["particles"]:
             particle.update(window)

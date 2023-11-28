@@ -142,7 +142,7 @@ def draw_game():
             (250, 250, 250, 200),
             size=TEXT_SIZE_DESCRIPTION
         )
-    return
+    
     if menu.game_state != "intro" and not (world.player.rect.x == 0 and menu.game_state == "pause"):
         # Draw player health bar
         health_percentage = world.player.health / world.player.max_health
