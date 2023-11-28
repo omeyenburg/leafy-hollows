@@ -267,7 +267,7 @@ class Bat(LivingEntity):
                 return next_pos
             return None
 
-        if math.dist(self.rect.center, world.player.rect.center) > 3:   # find path for longer distances
+        if window.average_fps < 60 or math.dist(self.rect.center, world.player.rect.center) > 3:   # find path for longer distances and performance killswitch
             """
             if not [round(_) for _ in self.rect.center] == self.last_position:
                 self.last_position = [round(_) for _ in self.rect.center]
