@@ -172,10 +172,8 @@ class Bat(LivingEntity):
             for y in range(world.view.shape[1]):
                 grid.append([])
                 for x in range(world.view.shape[0]):
-                    value = world.view[x, y, 0]
-                    grid[y].append(0 if value == 0 else 1)
+                    grid[y].append(0 if world.view[x, y, 0] == 0 else 1)
             grid.reverse()
-
 
             """
             print(window.camera.pos, len(grid[0]), len(grid), str())
@@ -184,21 +182,36 @@ class Bat(LivingEntity):
             end_pos: list[int, int] = [round(world.player.rect.center[i] - offset[i]) for i in range(2)]
             print(start_pos, end_pos, offset, self.rect.center, world.player.rect.center)
             """
-            relative_camera_pos = [round((len(grid[0]) - 1) / 2), round((len(grid) - 1) / 2)]
-            start_pos = [round((self.rect.center[0] - window.camera.pos[0]) + relative_camera_pos[0]), -(round((self.rect.center[1] - window.camera.pos[1]) - relative_camera_pos[1]))]
-            end_pos = [round((world.player.rect.center[i] - window.camera.pos[i]) + relative_camera_pos[i]) for i in range(2)]
-            """
-            for y, _ in enumerate(grid):
-                for x, _ in enumerate(grid[y]):
-                    print("\x1b[47m" + " " + "\x1b[0m" if int(grid[y][x]) == 0 else "\x1b[40m" + " " + "\x1b[0m", end="")
-                print()
-            """
+            # vector approach; flipped vector directions, now it works, don't know why
+            relative_camera_pos = [len(grid[0]) // 2, len(grid) // 2]
+            start_pos = [round((self.rect.center[0] - window.camera.pos[0]) + relative_camera_pos[0]), round((window.camera.pos[1] - self.rect.center[1]) + relative_camera_pos[1])]
+            end_pos = [round((world.player.rect.center[0] - window.camera.pos[0]) + relative_camera_pos[0]), round((window.camera.pos[1] - world.player.rect.center[1]) + relative_camera_pos[1])]
+            
+            
+            
 
             result = a_star(grid=grid, start_pos=start_pos, end_pos=end_pos, full_path=True)
+
             if result:
-                #next_pos = [e + offset[i] for i, e in enumerate(result[1])]
-                #print(f"next_pos: {result, next_pos}")
-                next_pos = [(result[1][i] - relative_camera_pos[i]) + window.camera.pos[i] for i in range(2)]   # vector approach
+                next_pos = [(result[2][0] - relative_camera_pos[0]) + window.camera.pos[0], (relative_camera_pos[1] - result[2][1]) + window.camera.pos[1]]   # vector approach
+
+                """
+                print(relative_camera_pos, start_pos, end_pos, result[2])
+                for y, _ in enumerate(grid):
+                    for x, _ in enumerate(grid[y]):
+                        if [x, y] == start_pos:
+                            print("\x1b[41m" + " " + "\x1b[0m", end="")
+                        elif [x, y] == end_pos:
+                            print("\x1b[42m" + " " + "\x1b[0m", end="")
+                        elif [x, y] == relative_camera_pos:
+                            print("\x1b[43m" + " " + "\x1b[0m", end="")
+                        elif [x, y] == result[2]:
+                            print("\x1b[44m" + " " + "\x1b[0m", end="")
+                        else:
+                            print("\x1b[47m" + " " + "\x1b[0m" if int(grid[y][x]) == 0 else "\x1b[40m" + " " + "\x1b[0m", end="")
+                    print()
+                """
+
                 return next_pos
             return None
 
@@ -249,7 +262,6 @@ class Bat(LivingEntity):
             return
         
         self.move(world, window)
-            
 
         # Attack
         if self.rect.collide_rect(world.player.rect) and self.prepare_attack < 0:

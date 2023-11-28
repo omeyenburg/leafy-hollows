@@ -41,12 +41,8 @@ def print_grid(grid: list[list[int]], open_list, closed_list, current_node):
     for y, _ in enumerate(grid):
         print(str(y).zfill(len(str(len(grid)))), end="")
         for x, value in enumerate(grid[y]):
-            written = False
-
             if current_node.pos == [x, y]:
                 print(f"\x1b[42m{hex(node.f % 16)[2:]}\x1b[0m", end="")
-                written = True
-            if written:
                 continue
 
             for node in open_list:
@@ -146,9 +142,7 @@ def a_star(grid, start_pos: list[int, int], end_pos: list[int, int], path_requir
             neighbour_node.f = neighbour_node.g + neighbour_node.h
 
             open_list.append(neighbour_node)
-        if grid[start_pos[1]][start_pos[0]] != 0:
-            pass
-            #print_grid(grid, open_list, closed_list, current_node)
+        #print_grid(grid, open_list, closed_list, current_node)
 
 def main():
     """
