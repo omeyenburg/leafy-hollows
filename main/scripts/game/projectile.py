@@ -43,8 +43,8 @@ class Arrow(PhysicsObject):
         # Hurt entities
         for entity in world.loaded_entities:
             if (not (entity is self or entity is self.owner)) and isinstance(entity, LivingEntity) and entity.rect.collide_line(self.rect.center, last_center):
-                damage = self.bow.damage
-                damage *= 1 + 0.5 * (self.bow.crit_chance > random.random())
+                damage, attack_speed, weapon_range, crit_chance = self.bow.get_weapon_stat_increase(world)
+                damage *= 1 + 0.5 * (crit_chance > random.random())
                 entity.damage(window, damage, self.vel)
 
                 self.bow.apply_attributes(window, self.owner, entity)
