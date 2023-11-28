@@ -8,7 +8,7 @@
         "stone1.png"
     ],
     "generation": {
-        "on": "any",
+        "on": "dirt|stone",
         "side": "above",
         "weight": 3
     }

@@ -8,7 +8,7 @@
         "bones0.png"
     ],
     "generation": {
-        "on": "any",
+        "on": "dirt|stone",
         "side": "above",
         "weight": 4
     }

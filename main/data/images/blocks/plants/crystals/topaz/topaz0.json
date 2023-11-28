@@ -8,7 +8,7 @@
         "topaz0.png"
     ],
     "generation": {
-        "on": "any",
+        "on": "dirt|stone",
         "side": "wall",
         "weight": 3
     }

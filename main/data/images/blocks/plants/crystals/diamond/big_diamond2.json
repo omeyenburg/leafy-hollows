@@ -8,7 +8,7 @@
         "big_diamond2.png"
     ],
     "generation": {
-        "on": "any",
+        "on": "dirt|stone",
         "side": "above",
         "weight": 3
     }

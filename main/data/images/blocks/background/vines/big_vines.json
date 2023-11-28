@@ -8,7 +8,7 @@
         "big_vines.png"
     ],
     "generation": {
-        "on": "any",
+        "on": "dirt",
         "side": "below",
         "weight": 1
     }

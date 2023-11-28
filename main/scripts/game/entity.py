@@ -56,6 +56,9 @@ class GreenSlime(LivingEntity):
             self.hit_ground = 0
             self.vel[0] += 0.1 * (-self.direction + 0.5) * self.jump_strength
 
+        if self.underWater:
+            self.vel[1] *= 0.8
+
         vel_y = abs(self.vel[1])
         if vel_y > 3:
             self.state = "high_jump"
@@ -134,6 +137,9 @@ class Goblin(LivingEntity):
         if self.stunned:
             self.state = "hit_ground"
             return
+
+        if self.underWater:
+            self.vel[0] *= 0.9
 
         holding_bow = isinstance(self.holding, Bow)
         distance_player = abs(world.player.rect.centerx - self.rect.centerx)
@@ -295,13 +301,12 @@ class Bat(LivingEntity):
                 self.vel[0] = speed_x
                 self.direction = 0
 
-            y_offset = self.prepare_attack#pnoise1(window.time / 20 + self.uuid * 10, 5) * 4
-
-            speed_y = min(self.max_speed, abs(world.player.rect.centery + y_offset - self.rect.centery))
-            if world.player.rect.centery + y_offset < self.rect.centery:
-                self.vel[1] = -speed_y
-            else:
-                self.vel[1] = speed_y
+        y_offset = self.prepare_attack * 2
+        speed_y = min(self.max_speed, abs(world.player.rect.centery + y_offset - self.rect.centery))
+        if world.player.rect.centery + y_offset < self.rect.centery and not self.underWater:
+            self.vel[1] = -speed_y
+        else:
+            self.vel[1] = speed_y
 
     def update(self, world, window: Window):
         super().update(world, window.delta_time)

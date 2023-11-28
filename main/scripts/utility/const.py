@@ -61,7 +61,7 @@ PHYSICS_JUMP_THRESHOLD: int = 3 # Time to jump after leaving the ground in ticks
 PHYSICS_WALL_JUMP_THRESHOLD: float = 0.3 # Time to jump after leaving a wall in seconds
 PHYSICS_MAX_MOVE_DISTANCE: float = 1.0 # Maximum distance in blocks, which an object can travel each tick
 
-BLOCKS_CLIMBABLE: tuple = ("pole", "vines0", "vines0_flipped")
+BLOCKS_CLIMBABLE: tuple = ("pole", "vines0", "vines0_flipped", "ladder")
 
 WORLD_CHUNK_SIZE_POWER = 5
 WORLD_CHUNK_SIZE = 2 ** WORLD_CHUNK_SIZE_POWER
@@ -70,7 +70,7 @@ WORLD_WATER_SPEED: float = 0.1 # Water update interval
 WORLD_WIND_STRENGTH: int = 20
 WORLD_BLOCK_SIZE: int = 16
 
-WORLD_VEGETATION_FLOOR_DENSITY: float = 1.0
+WORLD_VEGETATION_FLOOR_DENSITY: float = 0.9
 WORLD_VEGETATION_CEILING_DENSITY: float = 0.4
 WORLD_VEGETATION_WALL_DENSITY: float = 0.05
 
@@ -130,25 +130,4 @@ ATTRIBUTE_DESCRIPTIONS: dict = {
     "warrior": "Increases your weapon's damage by %s%% per enemy around you.",
     "assassin": "Increases your attack speed and crit chance by %s%% each.",
     "longshot": "Expands your weapon's range by by %s%%, allowing you to hit enemies from a greater distance."
-}
-
-ATTRIBUTE_BESCHREIBUNGEN: dict = {
-    
-}
-
-{
-    "piercing": "Durchschlag",
-    "ferocity": "Wildheit",
-    "vampire": "Vampier",
-    "looting": "Pl<ue>nderer",
-    "explosive": "Explosiv",
-    "paralysis": "L<ae>hmung",
-    "berserker": "Berserker",
-    "agility": "Beweglichkeit",
-    "soul drain": "Seelenraub",
-    "shielding": "Schutz",
-    "critical": "Kritisch",
-    "warrior": "Krieger",
-    "assassin": "Attent<ae>ter",
-    "longshot": "Fernschuss"
 }

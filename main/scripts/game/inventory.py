@@ -12,13 +12,15 @@ import copy
 class Inventory:
     def __init__(self):
         self.weapons = [Stick(1)]
-        self.weapons = [Bow(1), Bow(1)]
-        self.weapons[0].attributes = {"ferocity": 10, "critical": 13}
+        #self.weapons = [Bow(1), Bow(1)]
+        #self.weapons[0].attributes = {"ferocity": 10, "critical": 13}
+        self.selected = self.weapons[0]
         self.marked_weapons = set()
-        self.arrows = 64
+        self.arrows = 0
         self.max_arrows = 64
 
-    def save(self):
+    def save(self, world):
+        self.selected = world.player.holding
         file.save("data/user/inventory.data", self, file_format="pickle")
 
     @staticmethod

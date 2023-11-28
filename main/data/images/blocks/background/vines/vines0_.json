@@ -9,10 +9,10 @@
         "vines0_b.png"
     ],
     "generation": {
-        "on": "any",
+        "on": "dirt",
         "side": "below",
-        "weight": 3,
-        "expansion_length": 5,
+        "weight": 7,
+        "expansion_length": 8,
         "expansion_direction": "down"
     }
 }

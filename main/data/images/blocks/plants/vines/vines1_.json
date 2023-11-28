@@ -9,7 +9,7 @@
         "vines1_b.png"
     ],
     "generation": {
-        "on": "any",
+        "on": "dirt|stone",
         "side": "below",
         "weight": 7,
         "expansion_length": 4,

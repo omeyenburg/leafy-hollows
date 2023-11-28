@@ -9,7 +9,7 @@
         "roots1_b.png"
     ],
     "generation": {
-        "on": "any",
+        "on": "dirt|stone",
         "side": "below",
         "weight": 9
     }

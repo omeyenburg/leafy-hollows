@@ -8,7 +8,7 @@
         "jade0.png"
     ],
     "generation": {
-        "on": "any",
+        "on": "dirt|stone",
         "side": "above",
         "weight": 2
     }
