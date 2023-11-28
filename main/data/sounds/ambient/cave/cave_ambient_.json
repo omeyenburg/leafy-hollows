@@ -1,0 +1,12 @@
+{
+    "name": "cave_ambient",
+    "speed": 50,
+    "volume": 0.5,
+    "category": "ambient",
+    "sounds": [
+        "cave_ambient_a.ogg",
+        "cave_ambient_b.ogg",
+        "cave_ambient_c.ogg",
+        "cave_ambient_d.ogg"
+    ]
+}

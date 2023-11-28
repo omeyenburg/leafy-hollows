@@ -4,5 +4,9 @@
     "frames": [
         "player_crouch_jump_a.png",
         "player_crouch_jump_b.png"
+    ],
+    "hand": [
+        [0.9323, -0.7812, 262.0],
+        [0.9115, -0.7812, 262.0]
     ]
 }

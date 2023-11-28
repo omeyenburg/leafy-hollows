@@ -25,7 +25,7 @@ def generate_world(world, window):
     structures = structure.load(world.block_name)
 
     # Starting point
-    branches = set()
+    #branches = set()
     position = [0, 0]
     poles = set() # List of x coords of poles
 
@@ -39,14 +39,13 @@ def generate_world(world, window):
     # Generate cave segments
     window.loading_progress[:2] = "Generating caves", 5
 
-    segments_count = 30
+    segments_count = 100
     min_special_distance = 2
     special_speading = 2
     next_special = 2
 
     structure_names = random.sample(list(structures.keys()), k=len(structures))
     structure_index = 0
-
     generated_structures = []
 
     for i in range(segments_count):
@@ -60,7 +59,7 @@ def generate_world(world, window):
             next_special = min_special_distance + random.randint(0, special_speading)
             cave_type = random.random()
 
-            if cave_type < 0.5:
+            if cave_type < 0.6:
                 # Structure
                 structure_name = structure_names[structure_index]
                 structure_data = structures[structure_name]
@@ -83,23 +82,28 @@ def generate_world(world, window):
 
                 cave.interpolated(world, position, start_angle=structure_data["generation"]["exit_angle"], start_radius=structure_data["generation"]["exit_size"] / 2)
 
-            elif cave_type < 0.7:
-                # Branch
-                if random.randint(0, 1):
-                    cave.vertical(world, position)
-                    poles.add(int(position[0]))
-                    branches.add((*position, 0))
-                else:
-                    cave.horizontal(world, position)
-                    branches.add((*position, 1))
+                """
+                elif cave_type < 0.7:
+                    # Branch
+                    if random.randint(0, 1):
+                        cave.vertical(world, position)
+                        poles.add(int(position[0]))
+                        branches.add((*position, 0))
+                    else:
+                        cave.horizontal(world, position)
+                        branches.add((*position, 1))
+                """
+
             elif cave_type < 0.9:
                 # Vertical (no branch)
                 cave.vertical(world, position)
                 poles.add(int(position[0]))
+
             else:
                 # Blob
                 cave.blob(world, position)
 
+    """
     for x, y, direction in branches:
         length = random.randint(2, 3)
         position = [x, y]
@@ -110,7 +114,7 @@ def generate_world(world, window):
 
         for i in range(length):
             cave.horizontal(world, position)
-
+    """
 
     # Smoother cave walls
     flatten_edges(world)
@@ -137,12 +141,21 @@ def generate_world(world, window):
 
     # Spawn enemies
     window.loading_progress[:2] = "Spawing enemies", 11
-    spawn_blocks = random.sample(list(blocks_ground), k=int(0.05 * len(blocks_ground)))
+    spawn_blocks = random.sample(list(blocks_ground), k=int(0.1 * len(blocks_ground)))
 
     for coord in spawn_blocks:
         if coord[0] < 30 or coord[1] > -500:
             continue
-        Entity = random.choice((Slime, Goblin, Bat))
+        if coord[0] < 100:
+            Entity = GreenSlime
+        elif coord[0] < 200:
+            Entity = random.choice((GreenSlime, Bat))
+        elif coord[0] < 300:
+            Entity = random.choice((GreenSlime, Bat, Goblin))
+        elif coord[0] < 400:
+            Entity = random.choice((GreenSlime, YellowSlime, Bat, Goblin))
+        else:
+            Entity = random.choice((GreenSlime, YellowSlime, BlueSlime, Bat, Goblin))
         world.add_entity(Entity(coord))
 
     return 1
@@ -152,7 +165,7 @@ def generate_world(world, window):
 def find_edge_blocks(world):
     blocks_ground = set()
     blocks_ceiling = set()
-    blocks_wall_right = set() # Air blocks, which have a wall to their left
+    blocks_wall_right = set()
     blocks_wall_left = set()
 
     for coord in world.iterate():
@@ -199,7 +212,7 @@ def get_decoration_block_type(world, x, y):
     water_level = world.get_water(x, y)
 
     # Exit early
-    if (block_below and block_above) or (0 < water_level < 700):
+    if (block_below and block_above) or (0 < water_level < 700) or (block_below != world.block_name["grass_block"] and random.random() > 0.4):
         return [None]
     if block_left and block_right and block_below:
         water = random.random()
@@ -330,8 +343,8 @@ def generate_poles(world, poles, blocks_ground, blocks_ceiling):
             if not ((x + x_offest) in blocks_ground and (x + x_offest) in blocks_ceiling):
                 continue
 
-            y_ground = blocks_ground[x]
-            y_ceiling = max(y_ground, blocks_ceiling[x] - 2)
+            y_ground = blocks_ground[x + x_offest]
+            y_ceiling = max(y_ground, blocks_ceiling[x + x_offest] - 2)
             height = y_ceiling - y_ground - abs(x_offest)
 
             if height > pole_height:

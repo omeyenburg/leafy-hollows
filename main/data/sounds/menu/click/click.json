@@ -1,0 +1,9 @@
+{
+    "name": "click",
+    "speed": 0.1,
+    "volume": 1.0,
+    "category": "menu",
+    "sounds": [
+        "click.ogg"
+    ]
+}

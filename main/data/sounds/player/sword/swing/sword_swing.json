@@ -1,0 +1,9 @@
+{
+    "name": "sword_swing",
+    "speed": 0.1,
+    "volume": 0.5,
+    "category": "player",
+    "sounds": [
+        "sword_swing.ogg"
+    ]
+}

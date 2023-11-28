@@ -253,7 +253,7 @@ class Menu:
             window.options["show fps"] = not window.options["show fps"]
             button_show_fps.text = "Display Fps: " + f"{str(window.options['show fps']):5}"
 
-        button_show_fps = Button(settings_video_page, MENU_BUTTON_SMALL_SIZE, callback=button_show_fps_update, text="Show Fps: " + str(window.options["show fps"]), fontsize=TEXT_SIZE_OPTION)
+        button_show_fps = Button(settings_video_page, MENU_BUTTON_SMALL_SIZE, callback=button_show_fps_update, text="Display Fps: " + str(window.options["show fps"]), fontsize=TEXT_SIZE_OPTION)
         button_show_fps.hover_callback = lambda: self.info_hover_box(
             button_show_fps.rect.centerx < 0,
             "Display Fps",
@@ -263,14 +263,14 @@ class Menu:
         # Show debug button
         def button_show_debug_update():
             window.options["show debug"] = not window.options["show debug"]
-            button_show_debug.text = "Show debug: " + f"{str(window.options['show debug']):5}"
+            button_show_debug.text = "Display debug: " + f"{str(window.options['show debug']):5}"
 
-        button_show_debug = Button(settings_video_page, MENU_BUTTON_SMALL_SIZE, callback=button_show_debug_update, text="Show debug: " + str(window.options["show debug"]), fontsize=TEXT_SIZE_OPTION)
+        button_show_debug = Button(settings_video_page, MENU_BUTTON_SMALL_SIZE, callback=button_show_debug_update, text="Display debug: " + str(window.options["show debug"]), fontsize=TEXT_SIZE_OPTION)
         button_show_debug.hover_callback = lambda: self.info_hover_box(
             button_show_debug.rect.centerx < 0,
             "Display debug",
             "low",
-            "Show debug information for developers."
+            "Display debug information."
         )
 
         # Language button
@@ -357,7 +357,7 @@ class Menu:
             button_auto_jump.rect.centerx < 0,
             "Auto jump",
             "none",
-            "When enabled, the player jumps up blocks while walking."
+            "The player jumps up blocks while walking."
         )
 
         # Toggle save world button
@@ -370,7 +370,7 @@ class Menu:
             button_save_world.rect.centerx < 0,
             "Save World",
             "none",
-            "When enabled and you quit your game, your world is saved in a file."
+            "When you quit your game, your world is saved in a file."
         )
 
         # Delete world
@@ -378,11 +378,23 @@ class Menu:
             if file.exists("data/user/world.data"):
                 delete_world_page.open()
 
-        button_delete_world = Button(settings_world_page, MENU_BUTTON_SMALL_SIZE, callback=button_delete_world_update, text="Delete World", fontsize=TEXT_SIZE_OPTION)
+        button_delete_world = Button(settings_world_page, MENU_BUTTON_SMALL_SIZE, callback=button_delete_world_update, text="Delete World...", fontsize=TEXT_SIZE_OPTION)
         button_delete_world.hover_callback = lambda: self.info_hover_box(
             button_delete_world.rect.centerx < 0,
             "Delete World...",
-            description="If you delete your world, a new world will be created."
+            description="A new world will be generated. You will keep all acquired weapons."
+        )
+
+        # Delete inventory
+        def button_delete_inventory_update():
+            if file.exists("data/user/world.data") or file.exists("data/user/inventory.data"):
+                delete_inventory_page.open()
+
+        button_inventory_world = Button(settings_world_page, MENU_BUTTON_SMALL_SIZE, callback=button_delete_inventory_update, text="Delete Inventory...", fontsize=TEXT_SIZE_OPTION)
+        button_inventory_world.hover_callback = lambda: self.info_hover_box(
+            button_inventory_world.rect.centerx < 0,
+            "Delete Inventory...",
+            description="This will reset your inventory and generate a new world."
         )
 
         settings_world_page.layout()
@@ -399,12 +411,29 @@ class Menu:
             settings_world_page.open()
 
         delete_world_page = Page(parent=settings_world_page, columns=1, spacing=MENU_SPACING)
-        Label(delete_world_page, MENU_HEADING_SIZE, text="If you delete your world, a new world will be created.", fontsize=TEXT_SIZE_BUTTON)
-        button_delete_world_confirm = Button(delete_world_page, MENU_BUTTON_SIZE, callback=button_delete_world_confirm_update, text="Delete my world!", fontsize=TEXT_SIZE_BUTTON)
+        Label(delete_world_page, MENU_HEADING_SIZE, text="A new world will be generated. You will keep all aquired weapons.", fontsize=TEXT_SIZE_BUTTON)
+        Button(delete_world_page, MENU_BUTTON_SIZE, callback=button_delete_world_confirm_update, text="Delete my world", fontsize=TEXT_SIZE_BUTTON)
         Button(delete_world_page, MENU_BUTTON_SIZE, callback=settings_world_page.open, text="Cancel", fontsize=TEXT_SIZE_BUTTON)
         delete_world_page.layout()
         Label(delete_world_page, MENU_HEADING_SIZE, text="World Settings", fontsize=TEXT_SIZE_HEADING)
         delete_world_page.layout_prepend()
+
+
+        ###---###  Delete inventory page  ###---###
+        def button_delete_inventory_confirm_update():
+            if file.exists("data/user/world.data"):
+                file.delete("data/user/world.data")
+            if file.exists("data/user/inventory.data"):
+                file.delete("data/user/inventory.data")
+            settings_world_page.open()
+
+        delete_inventory_page = Page(parent=settings_world_page, columns=1, spacing=MENU_SPACING)
+        Label(delete_inventory_page, MENU_HEADING_SIZE, text="This will reset your inventory and generate a new world.", fontsize=TEXT_SIZE_BUTTON)
+        Button(delete_inventory_page, MENU_BUTTON_SIZE, callback=button_delete_inventory_confirm_update, text="Reset progress", fontsize=TEXT_SIZE_BUTTON)
+        Button(delete_inventory_page, MENU_BUTTON_SIZE, callback=settings_world_page.open, text="Cancel", fontsize=TEXT_SIZE_BUTTON)
+        delete_inventory_page.layout()
+        Label(delete_inventory_page, MENU_HEADING_SIZE, text="World Settings", fontsize=TEXT_SIZE_HEADING)
+        delete_inventory_page.layout_prepend()
 
         
         ###---###  Controls settings page  ###---###

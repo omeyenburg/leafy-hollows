@@ -1,16 +1,32 @@
 # -*- coding: utf-8 -*-
 from scripts.utility.noise_functions import pnoise1, snoise2
+from scripts.utility.language import translate
 from scripts.utility.geometry import *
 from scripts.utility.const import *
+from scripts.graphics import sound
 from scripts.game.weapon import *
+from scripts.utility import file
 import copy
 
 
 class Inventory:
     def __init__(self):
-        #[Weapon(5) for Weapon in random.choices((Sword, Axe, Pickaxe, Bow), k=10)]
-        self.weapons = [Weapon(5) for Weapon in random.choices((Sword, Axe, Pickaxe, Bow), k=10)]#[Stick(1)]
+        self.weapons = [Stick(1)]
+        self.weapons = [Bow(1), Bow(1)]
+        self.weapons[0].attributes = {"ferocity": 10, "critical": 13}
         self.marked_weapons = set()
+        self.arrows = 64
+        self.max_arrows = 64
+
+    def save(self):
+        file.save("data/user/inventory.data", self, file_format="pickle")
+
+    @staticmethod
+    def load():
+        if file.exists("data/user/inventory.data"):
+            return file.load("data/user/inventory.data", file_format="pickle")
+        else:
+            return Inventory()
 
     def update(self, window, menu, world):
         if menu.inventory_page.fusing != 0:
@@ -33,6 +49,7 @@ class Inventory:
             rect = Rect(-0.95, -i * 0.2 - 0.05 / window.height * window.width - 0.2, 0.5, 0.1 / window.height * window.width)
             if 1 in window.mouse_buttons and rect.collide_point((window.mouse_pos[0] / window.width * 2, window.mouse_pos[1] / window.height * 2)):
                 menu.inventory_page.sort_key = key
+                sound.play(window, "click")
 
             window.draw_image(sort_image, rect[:2], rect[2:])
             window.draw_text((-0.9, -i * 0.2 - 0.2), key, (255, 255, 255), 0.17)
@@ -43,6 +60,7 @@ class Inventory:
 
         if 1 in window.mouse_buttons:
             menu.inventory_page.search_selected = window.mouse_pos[0] < 0 and window.mouse_pos[1] / window.height * 2 < -0.8
+            sound.play(window, "click")
 
         if menu.inventory_page.search_selected:
             search_text_length = len(menu.inventory_page.search_text)
@@ -63,20 +81,20 @@ class Inventory:
 
         # Filter weapon list with search parameters
         if menu.inventory_page.sort_key == "Level":
-            weapon_sort_function = lambda i: (not i.uuid in world.player.inventory.marked_weapons) * 9999999 - max(i.attributes.values()) - 0.1 * min(i.attributes.values())
+            weapon_sort_function = lambda i: (not i is world.player.holding) * 99999999 + (not i.uuid in world.player.inventory.marked_weapons) * 9999999 - max(i.attributes.values()) - 0.1 * min(i.attributes.values())
         elif menu.inventory_page.sort_key == "Type":
             weapon_sort_function = lambda i: (not i.uuid in world.player.inventory.marked_weapons) * 9999999 + sum(map(lambda j: ord(j), i.image))
         elif menu.inventory_page.sort_key == "Age":
-            weapon_sort_function = lambda i: (not i.uuid in world.player.inventory.marked_weapons) * 9999999 + i.uuid
+            weapon_sort_function = lambda i: (not i is world.player.holding) * 99999999 + (not i.uuid in world.player.inventory.marked_weapons) * 9999999 + i.uuid
 
         search_text = menu.inventory_page.search_text.lower()
         inventory = sorted(
             filter(
                 lambda i:
-                search_text in i.image or
+                search_text in translate(window.options["language"], i.image) or
                 any([
-                    search_text in attribute.lower() or
-                    search_text in ATTRIBUTE_DESCRIPTIONS[attribute].lower()
+                    search_text in translate(window.options["language"], attribute).lower() or
+                    search_text in translate(window.options["language"], ATTRIBUTE_DESCRIPTIONS[attribute]).lower()
                     for attribute in i.attributes
                 ]),
                 world.player.inventory.weapons
@@ -124,6 +142,7 @@ class Inventory:
                     window.mouse_wheel[1] = (math.ceil(round(window.mouse_wheel[1] / scroll_speed) + 0.1) - 0.3) * scroll_speed
                 else:
                     window.mouse_wheel[1] = (math.floor(round(window.mouse_wheel[1] / scroll_speed) - 0.1) + 0.3) * scroll_speed
+                sound.play(window, "click")
 
             if (1 in window.mouse_buttons and
             star_rect.collide_point((window.mouse_pos[0] / window.width * 2, window.mouse_pos[1] / window.height * 2)) and
@@ -134,6 +153,7 @@ class Inventory:
                     world.player.inventory.marked_weapons.add(weapon.uuid)
                 sorted_inventory = sorted(inventory, key=weapon_sort_function)
                 window.mouse_wheel[1] = scroll_speed * sorted_inventory.index(weapon)
+                sound.play(window, "click")
 
             # Draw highlight circle
             if i == round(scroll_position):
@@ -158,9 +178,9 @@ class Inventory:
             return
 
         name = weapon.image.title()
+        name_width = window.draw_text((0, 0.8), name, (255, 255, 255), 0.3)[0]
         if weapon is world.player.holding:
-            name += " (equipped)"
-        window.draw_text((0, 0.8), name, (255, 255, 255), 0.3)
+            window.draw_text((name_width + name_width / len(name), 0.8), "(equipped)", (255, 255, 255), 0.3)[0]
 
         weapon_base_stats = (weapon.damage, weapon.attack_speed, weapon.range, weapon.crit_chance)
         attribute_stat_increase = weapon.get_weapon_stat_increase(world)
@@ -175,10 +195,15 @@ class Inventory:
 
         for i, (attribute, level) in enumerate(weapon.attributes.items()):
             description_y = -0.6 * i + 0.1
-            description = ATTRIBUTE_DESCRIPTIONS[attribute] % (ATTRIBUTE_BASE_MODIFIERS[attribute] * level)
-            window.draw_text((0, description_y), f"{attribute.title()} {INT_TO_ROMAN[level]}: {description}", (223, 132, 165), 0.17, wrap=1)
+            modifier = ATTRIBUTE_BASE_MODIFIERS[attribute] * level
+            if attribute == "paralysis":
+                modifier = min(100, modifier)
 
-        if len(inventory) == 1:
+            name = translate(window.options["language"], attribute).title()
+            description = translate(window.options["language"], ATTRIBUTE_DESCRIPTIONS[attribute]) % modifier
+            window.draw_text((0, description_y), f"{name} {INT_TO_ROMAN.get(level, level)}: {description}", (223, 132, 165), 0.17, wrap=1)
+
+        if len(world.player.inventory.weapons) == 1:
             return
         
         # Weapon actions
@@ -193,6 +218,7 @@ class Inventory:
                 if 1 in window.mouse_buttons:
                     if key == "Equip":
                         world.player.holding = weapon
+                        window.mouse_wheel[1] = 0
                     elif key == "Fuse":
                         menu.inventory_page.fuse_item = weapon
                         menu.inventory_page.fusing = window.delta_time
@@ -206,6 +232,7 @@ class Inventory:
                             else:
                                 world.player.holding = None
                         world.player.heal(window, destroy_health_gain)
+                    sound.play(window, "click")
 
                 if any(window.mouse_buttons):
                     sort_image = "button_dark_selected"
@@ -219,14 +246,16 @@ class Inventory:
             elif key == "Fuse":
                 button_image = "fuse_icon"
             else:
-                button_text = key + "  +" + str(destroy_health_gain)
+                #button_text = key + "  +" + str(destroy_health_gain)
                 button_image = "heart"
                 button_image_size = 0.1
                 #window.draw_text((-0.9, -i * 0.2 + 0.7), destroy_text, (255, 255, 255), 0.17)
                 #window.draw_image("heart", (-0.9 + destroy_text_size[0], -i * 0.2 + 0.65), (0.1 * window.height / window.width, 0.1))
 
-            window.draw_text((-0.9, -i * 0.2 + 0.7), button_text, (255, 255, 255), 0.17)
-            window.draw_image(button_image, (-0.53 - button_image_size * 0.2, -i * 0.2 + 0.7 - button_image_size / 2), (button_image_size * window.height / window.width, button_image_size))
+            action_width = window.draw_text((-0.9, -i * 0.2 + 0.7), button_text, (255, 255, 255), 0.17)[0]
+            if key == "Destroy":
+                window.draw_text((-0.85 + action_width, -i * 0.2 + 0.7), "+" + str(destroy_health_gain), (255, 255, 255), 0.17)
+            window.draw_image(button_image, (-0.53 - button_image_size * 0.2, -i * 0.2 + 0.7  - button_image_size / 2), (button_image_size * window.height / window.width, button_image_size))
 
     def update_fuse(self, window, menu, world):
         # Main fusion weapon
@@ -387,12 +416,13 @@ class Inventory:
         fuse_button_image = "button_dark_unselected"
         if rect.collide_point((window.mouse_pos[0] / window.width * 2, window.mouse_pos[1] / window.height * 2)):
             if 1 in window.mouse_buttons and menu.inventory_page.fusing > 0:
-                menu.inventory_page.fusing = -3
+                menu.inventory_page.fusing = -1.5
                 previous_fuse_item = copy.deepcopy(menu.inventory_page.fuse_item)
                 menu.inventory_page.fuse_item.attributes = fusion_attributes
                 menu.inventory_page.fuse_item = previous_fuse_item
                 menu.inventory_page.secondary_fuse_item = secondary_weapon
                 world.player.inventory.weapons.remove(secondary_weapon)
+                sound.play(window, "fuse")
             if any(window.mouse_buttons):
                 fuse_button_image = "button_dark_selected"
             
@@ -403,7 +433,7 @@ class Inventory:
         if menu.inventory_page.fusing > 0:
             fuse_bar_image = "fuse_bar_a"
         else:
-            fuse_bar_image = "fuse_bar_" + chr(ord("a") + round(6 + menu.inventory_page.fusing * 2))
+            fuse_bar_image = "fuse_bar_" + chr(ord("a") + round(6 + menu.inventory_page.fusing * 4))
         
         window.draw_image(fuse_bar_image, (-0.5, -0.4), (0.3, 0.3 / window.height * window.width))
         window.draw_image(fuse_bar_image, (0.2, -0.4), (0.3, 0.3 / window.height * window.width), flip=(1, 0))

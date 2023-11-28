@@ -1,0 +1,8 @@
+{
+    "name": "blue_slime_idle",
+    "speed": 0.15,
+    "frames": [
+        "blue_slime_idle_a.png",
+        "blue_slime_idle_b.png"
+    ]
+}

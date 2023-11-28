@@ -1,0 +1,7 @@
+{
+    "name": "blue_slime_jump",
+    "speed": 0,
+    "frames": [
+        "blue_slime_jump.png"
+    ]
+}

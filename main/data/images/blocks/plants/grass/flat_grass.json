@@ -10,6 +10,6 @@
     "generation": {
         "on": "dirt",
         "side": "above",
-        "weight": 10
+        "weight": 15
     }
 }

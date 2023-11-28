@@ -124,7 +124,7 @@ def get_triangle_points(view=numpy.array([[]]), light_source=List, corners=numpy
 
         angle = math.atan2(corner[1] - light_source[1], corner[0] - light_source[0])
         corner_angles.append([angle, *corner])
-
+        
         for variation in (-0.0001, 0.0001):
             v_angle = angle + variation
             v_corner = (math.cos(v_angle) * 100 + light_source[0], math.sin(v_angle) * 100 + light_source[1])
