@@ -122,11 +122,11 @@ class Player(LivingEntity):
             self.vel[0] *= 0.7
 
         # Jumping
-        if window.keybind("jump") and (not self.state in ("crouch", "crawl", "crouch_jump")) and (self.block_below or self.block_right and key_left or self.block_left and key_right):
+        if window.keybind("jump") and (self.block_below or self.block_right and key_left or self.block_left and key_right):
             if self.state == "crouch" and self.block_below:
                 # Charge crouch jump
                 self.charge_crouch_jump += window.delta_time
-            elif not self.charge_crouch_jump:
+            elif (not self.charge_crouch_jump) and (not self.state in ("crouch", "crawl", "crouch_jump")):
                 # Normal jump
                 self.jump(window, 5)
         elif self.block_below and self.charge_crouch_jump and self.state == "crouch":
@@ -264,20 +264,17 @@ class Player(LivingEntity):
                 self.state = "sprint"
             else:
                 self.state = "walk"
-        #window.draw_block_highlight(*wall_block_right)
-        #window.draw_block_highlight(*wall_block_top_right, (0, 255, 0, 100))
-        #window.draw_circle(window.camera.map_coord((self.rect.centerx, self.rect.bottom), from_world=True), 0.01, (255, 0, 0, 100))
 
     def animation_under_water(self, world, window: Window):
         """
         Player animation under water.
         """
-        if abs(self.vel[1]) < abs(self.vel[0]) > 0.5:
-            self.state = "swim"
-        elif self.vel[1] > 0.5:
-            self.state = "dive_up"
-        elif window.keybind("crouch"):
+        if window.keybind("crouch"):
             self.state = "dive_down"
+        elif window.keybind("jump"):
+            self.state = "dive_up"
+        elif abs(self.vel[1]) < abs(self.vel[0]) > 0.5:
+            self.state = "swim"
         else:
             self.state = "float"
 
