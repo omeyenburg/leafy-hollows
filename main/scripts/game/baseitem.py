@@ -6,9 +6,6 @@ from scripts.utility.const import *
 from scripts.graphics import sound
 
 
-os.environ["item_count"] = "0"
-
-
 class BaseItem:
     def __init__(self, damage: float=0.0, attack_speed: float=0.0, range: float=0.0, crit_chance: float=0.0, luck: int=1):
         self.uuid = int(os.environ.get("item_count"))

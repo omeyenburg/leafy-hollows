@@ -438,7 +438,7 @@ class Player(LivingEntity):
                 world.set_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), 0)
             else:
                 world.set_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), world.block_name["stone_block"])
-        """
+        """    
             
         # Attack
         if window.mouse_buttons[0] == 1:
@@ -467,17 +467,23 @@ class Player(LivingEntity):
             weapon_heal = soul_drain_level * ATTRIBUTE_BASE_MODIFIERS["soul drain"] * 0.01 * self.max_health
             self.heal(window, weapon_heal)
 
-        if random.random() < entity.item_drop_chance or len(self.inventory.weapons) <= 3:
+        weapon_looting = self.holding.attributes.get("looting", 0)
+        drop_chance = entity.item_drop_chance * (weapon_looting + 1)
+
+        if random.random() < drop_chance or len(self.inventory.weapons) <= 3:
             if self.inventory.arrows < self.inventory.max_arrows:
                 arrow_drop = random.random()
-                if arrow_drop < 0.1 or arrow_drop < 0.4 and len(self.inventory.weapons) <= 5:
+                if arrow_drop < 0.15 or arrow_drop < 0.3 and len(self.inventory.weapons) <= 5:
                     arrow_num = random.randint(1, 2) * 8
                     previous_arrows = self.inventory.arrows
                     self.inventory.arrows = min(self.inventory.arrows + arrow_num, self.inventory.max_arrows)
                     self.recent_drop = [2, "arrows", self.inventory.arrows - previous_arrows]
                     return
 
-            weapon_luck = self.holding.attributes.get("looting", 0) + 1
-            weapon = random.choice((Stick, Sword, Axe, Pickaxe, Bow))(weapon_luck)
+            if random.random() < 0.01:
+                weapon = Banana(1 + weapon_looting // 3)
+            else:
+                weapon = random.choice((Stick, Sword, Axe, Pickaxe, Bow))(1 + weapon_looting // 3)
+
             self.inventory.weapons.append(weapon)
             self.recent_drop = [2, weapon]

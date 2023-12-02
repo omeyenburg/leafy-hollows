@@ -21,6 +21,7 @@ default: dict = {
     "simulation distance": 5,
     "save world": True,
     "auto jump": False,
+    "draw_pathfinding": False,
     "key.left": "a",
     "key.right": "d",
     "key.jump": "space",

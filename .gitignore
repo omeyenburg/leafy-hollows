@@ -1,5 +1,3 @@
-experimental/android_test/.buildozer
-main/data/user/*
 main/main.pyc
 **/__pycache__
 **/.DS_Store

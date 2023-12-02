@@ -2,6 +2,7 @@
 from scripts.graphics.image import load_sprites, get_sprite_rect
 from scripts.utility.const import OPENGL_VERSION, PLATFORM
 from scripts.utility.language import translate
+from scripts.utility.thread import threaded
 from scripts.graphics.shader import Shader
 from scripts.graphics.camera import Camera
 from scripts.graphics.font import Font
@@ -201,10 +202,10 @@ class Window:
         self._texBlocks = self._texture(block_atlas_image)
 
         # Create shadow texture
-        self._shadow_texture_size = (self.width / 2, self.height / 2)
+        self._shadow_texture_size = (self.width // 2, self.height // 2)
         self._texShadow = GL.glGenTextures(1)
         GL.glBindTexture(GL.GL_TEXTURE_2D, self._texShadow)
-        GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RED, *self._shadow_texture_size, 0, GL.GL_RED, GL.GL_UNSIGNED_BYTE, None)
+        GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RED, *self._shadow_texture_size, 0, GL.GL_RED, GL.GL_UNSIGNED_BYTE, numpy.zeros(self._shadow_texture_size))
         GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_NEAREST)
         GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_NEAREST)
         GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
@@ -427,9 +428,6 @@ class Window:
                 self.damage_time = 0
                 self._instance_shader.setvar("damage_screen", 0)
 
-        # Reset
-        GL.glClear(GL.GL_COLOR_BUFFER_BIT)
-
         # Send variables to shader
         for effect, value in self.effects.items():
             self._instance_shader.setvar(effect, value)
@@ -452,10 +450,8 @@ class Window:
         GL.glBufferSubData(GL.GL_ARRAY_BUFFER, 0, self._shape_transform_vbo_array.nbytes, self._shape_transform_vbo_array)
 
         # Draw
+        GL.glClear(GL.GL_COLOR_BUFFER_BIT)
         GL.glDrawElementsInstanced(GL.GL_TRIANGLES, 6, GL.GL_UNSIGNED_INT, None, self._vbo_instances_index)
-        #for i in range(self._vbo_instances_index):
-        #    GL.glDrawElements(GL.GL_TRIANGLES, 6, GL.GL_UNSIGNED_INT, ctypes.c_void_p(i * self._dest_vbo_array.nbytes / self._vbo_instances_index))
-
         pygame.display.flip()
 
         # Reset instance index

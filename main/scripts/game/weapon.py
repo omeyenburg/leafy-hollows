@@ -46,7 +46,7 @@ class Bow(RangedWeapon):
 
 class Banana(RangedWeapon):
     def __init__(self, luck: int=1):
-        super().__init__(damage=2, attack_speed=4, range=10, crit_chance=0.2, luck=luck)
+        super().__init__(damage=1, attack_speed=4, range=10, crit_chance=0.2, luck=luck)
         self.image = "banana"
         self.angle = 0
         self.max_angle_offset = math.pi / 4

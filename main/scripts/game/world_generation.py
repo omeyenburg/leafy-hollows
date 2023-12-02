@@ -133,7 +133,8 @@ def generate_world(world, window):
 
     # Spawn enemies
     window.loading_progress[:2] = "Spawing enemies", 11
-    spawn_blocks = random.sample(list(blocks_ground), k=int(0.1 * len(blocks_ground)))
+    spawn_blocks = sorted(random.sample(list(blocks_ground), k=int(0.1 * len(blocks_ground))))
+    last_bat = 0
 
     for coord in spawn_blocks:
         if coord[0] < 30 or coord[1] > -500 or world.get_block(coord[0], coord[1] + 1) or coord[0] > last_enemy_x or world.get_water(coord[0], coord[1]):
@@ -148,6 +149,10 @@ def generate_world(world, window):
             Entity = random.choice((GreenSlime, YellowSlime, Bat, Goblin))
         else:
             Entity = random.choice((GreenSlime, YellowSlime, BlueSlime, Bat, Goblin))
+        if Entity == Bat:
+            if coord[0] < last_bat + 30:
+                continue
+            last_bat = coord[0]
         world.add_entity(Entity(coord))
 
     return 1

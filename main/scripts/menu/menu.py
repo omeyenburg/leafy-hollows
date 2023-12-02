@@ -512,7 +512,7 @@ class Menu:
 
     def get_intro_texts(self):
         intro_texts = [
-            "Leafy Hollows",
+            "Leafy\n\n\nHollows",
             "Move with [%s] and [%s]",
             "Jump with [%s]",
             "Crouch with [%s]",

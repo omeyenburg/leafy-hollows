@@ -18,7 +18,7 @@ class GreenSlime(LivingEntity):
         self.slime_variant = "green"
 
         # Enemy attributes
-        self.item_drop_chance = 0.3
+        self.item_drop_chance = 0.2
         self.hit_damage = min(hit_damage + 2, round(hit_damage * (1 + spawn_pos[0] / 400 / hit_damage)))
         self.attack_cooldown: float = 3
         self.jump_strength = 1
@@ -86,7 +86,7 @@ class YellowSlime(GreenSlime):
         self.slime_variant = "yellow"
 
         # Enemy attributes
-        self.item_drop_chance = 0.4
+        self.item_drop_chance = 0.3
         self.attack_cooldown: float = 3
         self.jump_strength = 1.5
 
@@ -111,9 +111,9 @@ class Goblin(LivingEntity):
         self.image = "goblin"
 
         # Enemy attributes
-        self.item_drop_chance = 0.4
+        self.item_drop_chance = 0.3
         self.max_speed = 3
-        self.prepare_attack_length: float = 0.5
+        self.prepare_attack_length: float = 0.4
         self.prepare_attack: float = self.prepare_attack_length
 
         self.holding = random.choice((Stick, Sword, Axe, Pickaxe, Bow))(1)
@@ -200,7 +200,7 @@ class Bat(LivingEntity):
         self.image = "bat"
 
         # Enemy attributes
-        self.item_drop_chance = 0.2
+        self.item_drop_chance = 0.1
         self.hit_damage = min(round(1 * (1 + spawn_pos[0] / 200)), 4)
         self.max_speed = 2.5
         self.prepare_attack_length: float = 4.0
@@ -220,13 +220,17 @@ class Bat(LivingEntity):
 
     def move(self, world, window: Window): # pathfinding implementation
         def pathfind() -> list[int, int]:
+            """
             grid: list[list[int, int]] = []
             for y in range(world.view.shape[1]):
                 grid.append([])
                 for x in range(world.view.shape[0]):
                     grid[y].append(0 if world.view[x, y, 0] == 0 else 1)
+            
             grid.reverse()
-
+            """
+            grid = numpy.swapaxes(world.view[:, :, 0], 0, 1)
+        
             """
             print(window.camera.pos, len(grid[0]), len(grid), str())
             offset = [window.camera.pos[0] - ((len(grid[0]) - 1) / 2), window.camera.pos[1] - ((len(grid) - 1) / 2)]  # offset between center of grid (relative) and camera_pos (absolute)
@@ -235,17 +239,19 @@ class Bat(LivingEntity):
             print(start_pos, end_pos, offset, self.rect.center, world.player.rect.center)
             """
             # vector approach; flipped vector directions, now it works, don't know why
-            relative_camera_pos = [len(grid[0]) // 2, len(grid) // 2]
-            start_pos = [round((self.rect.center[0] - window.camera.pos[0]) + relative_camera_pos[0]), round((window.camera.pos[1] - self.rect.center[1]) + relative_camera_pos[1])]
-            end_pos = [round((world.player.rect.center[0] - window.camera.pos[0]) + relative_camera_pos[0]), round((window.camera.pos[1] - world.player.rect.center[1]) + relative_camera_pos[1])]
-            
-            
-            
+            start_pos = [int(self.rect.center[0] - world.loaded_blocks[0][0]), int(self.rect.center[1] - world.loaded_blocks[0][1])]
+            end_pos = [int(world.player.rect.center[0] - world.loaded_blocks[0][0]), int(world.player.rect.center[1] - world.loaded_blocks[0][1])]
 
             result = a_star(grid=grid, start_pos=start_pos, end_pos=end_pos, full_path=True)
 
             if result:
-                next_pos = [(result[2][0] - relative_camera_pos[0]) + window.camera.pos[0], (relative_camera_pos[1] - result[2][1]) + window.camera.pos[1]]   # vector approach
+                #next_pos = [(result[2][0] - relative_camera_pos[0]) + window.camera.pos[0], (relative_camera_pos[1] - result[2][1]) + window.camera.pos[1]]   # vector approach
+                next_pos = [result[2][0] + world.loaded_blocks[0][0], result[2][1] + world.loaded_blocks[0][1]]
+                if window.options["draw_pathfinding"]:
+                    window.draw_block_highlight(start_pos[0] + world.loaded_blocks[0][0], start_pos[1] + world.loaded_blocks[0][1], (255, 0, 255, 100))
+                    window.draw_block_highlight(end_pos[0] + world.loaded_blocks[0][0], end_pos[1] + world.loaded_blocks[0][1], (0, 255, 0, 100))
+                    for i in range(len(result)):
+                        window.draw_block_highlight(result[i][0] + world.loaded_blocks[0][0], result[i][1] + world.loaded_blocks[0][1])
 
                 """
                 print(relative_camera_pos, start_pos, end_pos, result[2])
@@ -267,44 +273,40 @@ class Bat(LivingEntity):
                 return next_pos
             return None
 
-        if window.average_fps > 60 and math.dist(self.rect.center, world.player.rect.center) > 3:   # find path for longer distances and performance killswitch
-            """
-            if not [round(_) for _ in self.rect.center] == self.last_position:
-                self.last_position = [round(_) for _ in self.rect.center]
-            """
+        if window.average_fps > 40 and math.dist(self.rect.center, world.player.rect.center) > 3:
+            # Find path for longer distances and performance killswitch
             next_pos = pathfind()
 
             if not next_pos:
                 return
 
-            if next_pos[0] < self.rect.centerx:
+            if next_pos[0] + 0.5 < self.rect.centerx:
                 self.vel[0] = -self.max_speed
                 self.direction = 1
-            else:
+            elif next_pos[0] + 0.5 > self.rect.centerx:
                 self.vel[0] = self.max_speed
                 self.direction = 0
             
-            if next_pos[1] < self.rect.centery:
+            if next_pos[1] + 0.5 < self.rect.centery:
                 self.vel[1] = -self.max_speed
-            else:
+            elif next_pos[1] + 0.5 > self.rect.centery:
                 self.vel[1] = self.max_speed
 
-        
         else:
             speed_x = min(self.max_speed, abs(world.player.rect.centerx - self.rect.centerx))
             if world.player.rect.centerx < self.rect.centerx:
                 self.vel[0] = -speed_x
                 self.direction = 1
-            else:
+            elif world.player.rect.centerx > self.rect.centerx:
                 self.vel[0] = speed_x
                 self.direction = 0
 
-        y_offset = self.prepare_attack * 2
-        speed_y = min(self.max_speed, abs(world.player.rect.centery + y_offset - self.rect.centery))
-        if world.player.rect.centery + y_offset < self.rect.centery and not self.underWater:
-            self.vel[1] = -speed_y
-        else:
-            self.vel[1] = speed_y
+            y_offset = self.prepare_attack * 2
+            speed_y = min(self.max_speed, abs(world.player.rect.centery + y_offset - self.rect.centery))
+            if world.player.rect.centery + y_offset < self.rect.centery and not self.underWater:
+                self.vel[1] = -speed_y
+            elif world.player.rect.centery + y_offset > self.rect.centery:
+                self.vel[1] = speed_y
 
     def update(self, world, window: Window):
         super().update(world, window.delta_time)
@@ -317,6 +319,7 @@ class Bat(LivingEntity):
         # Attack
         if self.rect.collide_rect(world.player.rect) and self.prepare_attack < 0:
             world.player.damage(window, self.hit_damage, self.vel)
+            self.health = min(self.health + 1, self.max_health)
             self.prepare_attack = self.prepare_attack_length
         elif self.prepare_attack >= 0:
             self.prepare_attack -= window.delta_time
