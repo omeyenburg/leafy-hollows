@@ -10,6 +10,7 @@ from scripts.graphics import sound
 from scripts.menu.menu import Menu
 from scripts.utility import file
 import pprint
+import time
 
 
 # Setup
@@ -163,7 +164,7 @@ def draw_game():
             window.draw_image(weapon.image, weapon_pos, weapon_size, angle=weapon.angle)
             
             # Arrow count
-            if weapon.image == "bow":
+            if weapon.image in ("bow", "banana"):
                 arrow_text = f"{world.player.inventory.arrows}/{world.player.inventory.max_arrows}"
                 window.draw_text((0.75, -0.42), arrow_text, (255, 255, 255), 0.17)
                 window.draw_image("arrow_item", (0.9, -0.5), (0.1, 0.1 / window.height * window.width), angle=0)
@@ -391,14 +392,18 @@ def main():
 
         elif menu.game_state == "game":
             # Draw and update the game
+            t1 = time.time()
             draw_game()
+            t2 = time.time()
             world.update(window)
+            t3 = time.time()
 
             if window.camera.pos[0] >= world.camera_stop:
                 window.draw_text((0, 0.8), "You escaped from the caves!", (255, 255, 255), 0.3, centered=True)
 
             # Update and draw the menu
             window.update(world.player.rect.center)
+            t4 = time.time()
 
             # Move camera
             update_game_camera()

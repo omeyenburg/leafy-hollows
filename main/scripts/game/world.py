@@ -15,6 +15,8 @@ class World:
         self.view_size: tuple = (0, 0)
         self.chunks = {} # {(chunk_x, chunk_y): numpy_array(16x16x4)} -> (block, plant, background, water_level)
         self.camera_stop: int = 0 # maximum camera x
+        self.item_count: int = 0
+        os.environ["item_count"] = "0"
 
         self.block_generation_properties = block_generation_properties
         self.block_properties = block_properties
@@ -335,10 +337,11 @@ class World:
 
     def save(self, window):
         window.loading_progress[:3] = "Saving inventory", 0, 2
-        self.player.inventory.save(self)
         if not window.options["save world"]:
             return        
 
+        self.item_count = int(os.environ.get("item_count"))
+        self.player.inventory.save(self)
         window.loading_progress[:2] = "Saving world", 1
         file.save("data/user/world.data", self, file_format="pickle")
         window.loading_progress[1] = 2
@@ -352,6 +355,7 @@ class World:
         try:
             if isinstance(world, World):
                 window.loading_progress[:3] = "Loading world", 2, 2
+                os.environ["item_count"] = str(world.item_count)
                 return world
         except Exception as e:
             print(e)

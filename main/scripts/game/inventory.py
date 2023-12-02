@@ -12,8 +12,6 @@ import copy
 class Inventory:
     def __init__(self):
         self.weapons = [Stick(1)]
-        #self.weapons = [Bow(1), Bow(1)]
-        #self.weapons[0].attributes = {"ferocity": 10, "critical": 13}
         self.selected = self.weapons[0]
         self.marked_weapons = set()
         self.arrows = 0
@@ -109,8 +107,8 @@ class Inventory:
             return
 
         # Get mouse scroll
-        scroll_speed = 20
-        window.mouse_wheel[1] = min(max(window.mouse_wheel[1], 0), len(inventory) * scroll_speed - scroll_speed)
+        scroll_speed = -20
+        window.mouse_wheel[1] = max(min(window.mouse_wheel[1], 0), len(inventory) * scroll_speed - scroll_speed)
         scroll_position = window.mouse_wheel[1] / scroll_speed
         if not window.mouse_wheel[3]:
             window.mouse_wheel[1] += (round(scroll_position) - scroll_position) * scroll_speed * 0.02

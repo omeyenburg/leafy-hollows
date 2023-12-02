@@ -111,7 +111,7 @@
     "Allows your weapon to cut through enemies, hitting %s additional targets in its path.": "Ermöglicht es deiner Waffe, durch Feinde hindurchzuschneiden und %s zusätzliche Ziele zu treffen.",
     "Enhances the weapon's aggressiveness, increasing damage and attack speed by %s%% each.": "Erhöht Schaden und Angriffsgeschwindigkeit der Waffe um jeweils %s%%.",
     "Regenerate %s%% health with every successful hit, siphoning life from enemies.": "Regeneriere %s%% Gesundheit bei jedem erfolgreichen Treffer.",
-    "Increases the possible level of an attribute on dropped weapons by %s.": "Erhöht die mögliche Stufe einer Eigenschaft auf neu aufgenommenen Waffen um %s.",
+    "Boosts weapon drop rates by %s%% and potential attribute levels on dropped weapons for every third level.": "Erhöht Chancen, Waffen zu finden um %s%% und deren m<oe>gliche Attribut-Level um 1 für jedes dritte Level.",
     "Attacks detonate on impact, dealing %s%% of your weapon's damage to the target and nearby enemies.": "Angriffe explodieren beim Aufprall und verursachen %s%% des Schadens deiner Waffe als Fl<ae>chenschaden.",
     "Strikes have a %s%% chance to temporarily stun enemies.": "Angriffe haben eine %s%%-Chance, Feinde vorübergehend zu lähmen.",
     "Increases damage by %s%%, but at the cost of a corresponding reduction in defense.": "Erhöht den Schaden um %s%%, macht dich jedoch entsprechend verletzlicher.",
