@@ -52,6 +52,8 @@ SLIME_RECT_SIZE: [float] = (0.7, 0.7)
 GOBLIN_RECT_SIZE: [float] = (0.9, 1.8)
 BAT_RECT_SIZE: [float] = (0.7, 0.7)
 
+PATH_FIND_DELAY: float = 0.5
+
 PHYSICS_REALISTIC: bool = False
 PHYSICS_PREVENT_MOVEMENT_IN_AIR: bool = False
 PHYSICS_GRAVITY_CONSTANT: float = 9.81 if PHYSICS_REALISTIC else 15
@@ -63,10 +65,10 @@ PHYSICS_MAX_MOVE_DISTANCE: float = 1.0 # Maximum distance in blocks, which an ob
 
 BLOCKS_CLIMBABLE: tuple = ("pole", "vines0", "vines0_flipped", "ladder")
 
+WORLD_UPDATE_INTERVAL = 0.1 # Delay between world updates
 WORLD_CHUNK_SIZE_POWER = 5
 WORLD_CHUNK_SIZE = 2 ** WORLD_CHUNK_SIZE_POWER
 WORLD_WATER_PER_BLOCK: int = 1000
-WORLD_WATER_SPEED: float = 0.1 # Water update interval
 WORLD_WIND_STRENGTH: int = 20
 WORLD_BLOCK_SIZE: int = 16
 

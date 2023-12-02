@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 from scripts.game.baseentity import LivingEntity
 from scripts.game.physics import PhysicsObject
+from scripts.game.pathfinding import a_star
 from scripts.graphics.window import Window
 from scripts.graphics import particle
 from scripts.utility.const import *
 from scripts.graphics import sound
 from scripts.game.weapon import *
-from scripts.game.pathfinding import a_star
 
 
 class GreenSlime(LivingEntity):
@@ -46,7 +46,7 @@ class GreenSlime(LivingEntity):
                 sound.play(window, "slime", x=(self.rect.x - world.player.rect.x) / 5)
 
             self.hit_ground -= window.delta_time
-            self.vel[0] *= 0.8
+            self.vel[0] *= 0.6 ** window.delta_time
             self.attack_cooldown = 0
 
             if self.hit_ground < -0.5:
@@ -54,7 +54,7 @@ class GreenSlime(LivingEntity):
                 self.vel[1] += 6 * self.jump_strength
         else:
             self.hit_ground = 0
-            self.vel[0] += 0.1 * (-self.direction + 0.5) * self.jump_strength
+            self.vel[0] += 10 * (-self.direction + 0.5) * self.jump_strength * window.delta_time
 
         if self.underWater:
             self.vel[1] *= 0.8
@@ -212,6 +212,8 @@ class Bat(LivingEntity):
         self.hit_ground = 0         # Used for hit ground animation
 
         self.last_position = spawn_pos
+        self.path: list[list[int, int]] = None
+        self.path_search_delay: float = 1.0
 
     def draw(self, window: Window):
         super().draw(window)
@@ -229,8 +231,7 @@ class Bat(LivingEntity):
             
             grid.reverse()
             """
-            grid = numpy.swapaxes(world.view[:, :, 0], 0, 1)
-        
+            
             """
             print(window.camera.pos, len(grid[0]), len(grid), str())
             offset = [window.camera.pos[0] - ((len(grid[0]) - 1) / 2), window.camera.pos[1] - ((len(grid) - 1) / 2)]  # offset between center of grid (relative) and camera_pos (absolute)
@@ -238,43 +239,60 @@ class Bat(LivingEntity):
             end_pos: list[int, int] = [round(world.player.rect.center[i] - offset[i]) for i in range(2)]
             print(start_pos, end_pos, offset, self.rect.center, world.player.rect.center)
             """
-            # vector approach; flipped vector directions, now it works, don't know why
-            start_pos = [int(self.rect.center[0] - world.loaded_blocks[0][0]), int(self.rect.center[1] - world.loaded_blocks[0][1])]
-            end_pos = [int(world.player.rect.center[0] - world.loaded_blocks[0][0]), int(world.player.rect.center[1] - world.loaded_blocks[0][1])]
+            
+            if self.path is None or len(self.path) == 0 or math.dist(self.path[0], world.player.rect.center) > 3:
+                self.path_search_delay += window.delta_time
+                if self.path_search_delay > PATH_FIND_DELAY: # Recalculate path when player moved too far
+                    self.path_search_delay = 0
 
-            result = a_star(grid=grid, start_pos=start_pos, end_pos=end_pos, full_path=True)
+                    grid = numpy.swapaxes(world.view[:, :, 0], 0, 1)
 
-            if result:
-                #next_pos = [(result[2][0] - relative_camera_pos[0]) + window.camera.pos[0], (relative_camera_pos[1] - result[2][1]) + window.camera.pos[1]]   # vector approach
-                next_pos = [result[2][0] + world.loaded_blocks[0][0], result[2][1] + world.loaded_blocks[0][1]]
-                if window.options["draw_pathfinding"]:
-                    window.draw_block_highlight(start_pos[0] + world.loaded_blocks[0][0], start_pos[1] + world.loaded_blocks[0][1], (255, 0, 255, 100))
-                    window.draw_block_highlight(end_pos[0] + world.loaded_blocks[0][0], end_pos[1] + world.loaded_blocks[0][1], (0, 255, 0, 100))
-                    for i in range(len(result)):
-                        window.draw_block_highlight(result[i][0] + world.loaded_blocks[0][0], result[i][1] + world.loaded_blocks[0][1])
+                    # Vector approach; flipped vector directions, now it works, don't know why
+                    # Start search from player to reverse path
+                    start_pos = [int(world.player.rect.center[0] - world.loaded_blocks[0][0]), int(world.player.rect.center[1] - world.loaded_blocks[0][1])]
+                    end_pos = [int(self.rect.center[0] - world.loaded_blocks[0][0]), int(self.rect.center[1] - world.loaded_blocks[0][1])]
+                    result = a_star(grid=grid, start_pos=start_pos, end_pos=end_pos, full_path=True)
+                    if result is None:
+                        return None
 
-                """
-                print(relative_camera_pos, start_pos, end_pos, result[2])
-                for y, _ in enumerate(grid):
-                    for x, _ in enumerate(grid[y]):
-                        if [x, y] == start_pos:
-                            print("\x1b[41m" + " " + "\x1b[0m", end="")
-                        elif [x, y] == end_pos:
-                            print("\x1b[42m" + " " + "\x1b[0m", end="")
-                        elif [x, y] == relative_camera_pos:
-                            print("\x1b[43m" + " " + "\x1b[0m", end="")
-                        elif [x, y] == result[2]:
-                            print("\x1b[44m" + " " + "\x1b[0m", end="")
-                        else:
-                            print("\x1b[47m" + " " + "\x1b[0m" if int(grid[y][x]) == 0 else "\x1b[40m" + " " + "\x1b[0m", end="")
-                    print()
-                """
+                    self.path = [(x + world.loaded_blocks[0][0], y + world.loaded_blocks[0][1]) for x, y in result]
 
-                return next_pos
-            return None
+            if not self.path:
+                return None
 
-        if window.average_fps > 40 and math.dist(self.rect.center, world.player.rect.center) > 3:
-            # Find path for longer distances and performance killswitch
+            if math.dist(self.path[-1], self.rect.center) < 1.5:
+                self.path.pop(-1)
+
+            if not self.path:
+                return None
+
+            next_pos = self.path[-1]
+            if window.options["draw_pathfinding"]:
+                window.draw_block_highlight(self.path[0][0], self.path[0][1], (255, 0, 255, 100))
+                window.draw_block_highlight(self.path[-1][0], self.path[-1][1], (0, 255, 0, 100))
+                for i in range(len(self.path)):
+                    window.draw_block_highlight(self.path[i][0], self.path[i][1])
+
+            """
+            print(relative_camera_pos, start_pos, end_pos, result[2])
+            for y, _ in enumerate(grid):
+                for x, _ in enumerate(grid[y]):
+                    if [x, y] == start_pos:
+                        print("\x1b[41m" + " " + "\x1b[0m", end="")
+                    elif [x, y] == end_pos:
+                        print("\x1b[42m" + " " + "\x1b[0m", end="")
+                    elif [x, y] == relative_camera_pos:
+                        print("\x1b[43m" + " " + "\x1b[0m", end="")
+                    elif [x, y] == result[2]:
+                        print("\x1b[44m" + " " + "\x1b[0m", end="")
+                    else:
+                        print("\x1b[47m" + " " + "\x1b[0m" if int(grid[y][x]) == 0 else "\x1b[40m" + " " + "\x1b[0m", end="")
+                print()
+            """
+
+            return next_pos
+
+        if math.dist(self.rect.center, world.player.rect.center) > 3: # Find path for longer distances
             next_pos = pathfind()
 
             if not next_pos:

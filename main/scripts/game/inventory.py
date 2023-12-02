@@ -246,11 +246,8 @@ class Inventory:
             elif key == "Fuse":
                 button_image = "fuse_icon"
             else:
-                #button_text = key + "  +" + str(destroy_health_gain)
                 button_image = "heart"
                 button_image_size = 0.1
-                #window.draw_text((-0.9, -i * 0.2 + 0.7), destroy_text, (255, 255, 255), 0.17)
-                #window.draw_image("heart", (-0.9 + destroy_text_size[0], -i * 0.2 + 0.65), (0.1 * window.height / window.width, 0.1))
 
             action_width = window.draw_text((-0.9, -i * 0.2 + 0.7), button_text, (255, 255, 255), 0.17)[0]
             if key == "Destroy":
@@ -285,7 +282,8 @@ class Inventory:
 
         for i, (attribute, level) in enumerate(weapon.attributes.items()):
             description_y = -0.15 * i + 0.5
-            window.draw_text((-0.6, description_y), f"{attribute.title()} {INT_TO_ROMAN[level]}", (223, 132, 165), 0.17, wrap=1)
+            attribute_name = translate(window.options['language'], attribute).title()
+            window.draw_text((-0.6, description_y), f"{attribute_name} {INT_TO_ROMAN[level]}", (223, 132, 165), 0.17, wrap=1)
         
         # Search bar
         window.draw_rect((0.12, -0.98), (0.8, 0.16), (27, 21, 39))
@@ -315,14 +313,11 @@ class Inventory:
         inventory = sorted(
             filter(
                 lambda i:
-                (search_text in i.image or any([
-                    search_text in attribute.lower() or
-                    search_text in ATTRIBUTE_DESCRIPTIONS[attribute].lower()
-                    for attribute in i.attributes
-                ])) and not i is menu.inventory_page.fuse_item and
+                search_text in translate(window.options["language"], i.image) or
                 any([
-                    i.attributes.get(attribute, 0) >= level
-                    for attribute, level in weapon.attributes.items()
+                    search_text in translate(window.options["language"], attribute).lower() or
+                    search_text in translate(window.options["language"], ATTRIBUTE_DESCRIPTIONS[attribute]).lower()
+                    for attribute in i.attributes
                 ]),
                 world.player.inventory.weapons
             ),
@@ -391,7 +386,7 @@ class Inventory:
             weapon_pos = Vec(0.8 - weapon_size[0] / 2, 0)
             window.draw_image(secondary_weapon.image, weapon_pos, weapon_size, angle=secondary_weapon.angle)
 
-        matching_items_text = str(len(inventory)) + " matching item" + "s" * int(len(inventory) != 1) + ":"
+        matching_items_text = translate(window.options['language'], "%s matching item" + "s" * int(len(inventory) != 1) + ":") % str(len(inventory))
         window.draw_text((0.2, 0.9), matching_items_text, (255, 255, 255), 0.17)
 
         name = secondary_weapon.image.title()
@@ -399,7 +394,8 @@ class Inventory:
 
         for i, (attribute, level) in enumerate(secondary_weapon.attributes.items()):
             description_y = -0.15 * i + 0.5
-            window.draw_text((0.3, description_y), f"{attribute.title()} {INT_TO_ROMAN[level]}", (223, 132, 165), 0.17, wrap=1)
+            attribute_name = translate(window.options['language'], attribute).title()
+            window.draw_text((0.3, description_y), f"{attribute_name} {INT_TO_ROMAN[level]}", (223, 132, 165), 0.17, wrap=1)
 
         fusion_attributes = {
             attribute:
@@ -409,7 +405,8 @@ class Inventory:
 
         for i, (attribute, level) in enumerate(fusion_attributes.items()):
             description_y = -0.15 * i - 0.3
-            window.draw_text((-0.12, description_y), f"{attribute.title()} {INT_TO_ROMAN[level]}", (223, 132, 165), 0.17, wrap=1)
+            attribute_name = translate(window.options['language'], attribute).title()
+            window.draw_text((-0.12, description_y), f"{attribute_name} {INT_TO_ROMAN[level]}", (223, 132, 165), 0.17, wrap=1)
 
         # Fuse button
         rect = Rect(-0.25, -0.1 / window.height * window.width / 2, 0.5, 0.1 / window.height * window.width)
@@ -421,6 +418,8 @@ class Inventory:
                 menu.inventory_page.fuse_item.attributes = fusion_attributes
                 menu.inventory_page.fuse_item = previous_fuse_item
                 menu.inventory_page.secondary_fuse_item = secondary_weapon
+                if world.player.holding == secondary_weapon:
+                    world.player.holding = menu.inventory_page.fuse_item
                 world.player.inventory.weapons.remove(secondary_weapon)
                 sound.play(window, "fuse")
             if any(window.mouse_buttons):

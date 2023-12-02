@@ -2,7 +2,7 @@
     "name": "dirt_block",
     "family": "dirt",
     "layer": "foreground",
-    "hardness": 1,
+    "hardness": 2,
     "speed": 0,
     "frames": [
         "dirt_block.png"

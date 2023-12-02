@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from scripts.game.world_generation import generate_world, generate_block
+from scripts.game.physics import PhysicsObject
 from scripts.graphics import particle
 from scripts.utility import geometry
 from scripts.utility.const import *
@@ -17,6 +18,8 @@ class World:
         self.camera_stop: int = 0 # maximum camera x
         self.item_count: int = 0
         os.environ["item_count"] = "0"
+
+        self.delta_time = 0
 
         self.block_generation_properties = block_generation_properties
         self.block_properties = block_properties
@@ -145,26 +148,9 @@ class World:
         mod_x = x & (WORLD_CHUNK_SIZE - 1)
         mod_y = y & (WORLD_CHUNK_SIZE - 1)
 
-        if abs(self.chunks[(chunk_x, chunk_y)][mod_x, mod_y, 3]) < 0:
-            return -1
-        return 1
+        return math.copysign(1, abs(self.chunks[(chunk_x, chunk_y)][mod_x, mod_y, 3]))
 
-    def update(self, window):
-        self.wind = math.sin(window.time) * WORLD_WIND_STRENGTH + math.cos(window.time * 5) * WORLD_WIND_STRENGTH / 2
-        window.particle_wind = self.wind / 50
-
-        if not random.randint(0, int(window.fps * 10)):
-            sound.play(window, "water_drop", x=random.random() * 2 - 1)
-        elif not random.randint(0, int(window.fps * 60)):
-            sound.play(window, "cave_ambient", x=random.random() * 2 - 1)
-
-        self.water_update_timer += window.delta_time
-        if self.water_update_timer > WORLD_WATER_SPEED:
-            self.water_update_timer = 0.0
-            for y in geometry.shuffled_range(self.view_size[1] - 1):
-                for x in geometry.shuffled_range(self.view_size[0] - 1):
-                    self.update_block(window, self.loaded_blocks[0][0] + x, self.loaded_blocks[0][1] + y)
-
+    def update_physics(self, window):
         for entity in self.loaded_entities:
             if hasattr(entity, "health") and entity.health <= 0:
                 if not entity is self.player:
@@ -175,6 +161,30 @@ class World:
         if window.options["particles"]:
             particle.update(window)
 
+    def update(self, window):
+        self.delta_time += window.delta_time
+        if self.delta_time < WORLD_UPDATE_INTERVAL:
+            return
+        delta_time = self.delta_time
+        self.delta_time = 0
+        
+        # Update wind
+        self.wind = math.sin(window.time) * WORLD_WIND_STRENGTH + math.cos(window.time * 5) * WORLD_WIND_STRENGTH / 2
+        window.particle_wind = self.wind / 50
+
+        # Play ambient sounds
+        if not random.randint(0, int(10 / delta_time)):
+            sound.play(window, "water_drop", x=random.random() * 2 - 1)
+        elif not random.randint(0, int(60 / delta_time)):
+            sound.play(window, "cave_ambient", x=random.random() * 2 - 1)
+
+        # Update water
+        for y in geometry.shuffled_range(self.view_size[1] - 1):
+            for x in geometry.shuffled_range(self.view_size[0] - 1):
+                self.update_block(window, self.loaded_blocks[0][0] + x, self.loaded_blocks[0][1] + y)
+
+        # Update particles
+        if window.options["particles"]:
             # Spawn ambient particles
             if particle.spawn_possible(window, "big_leaf_particle"):
                 x = random.randint(self.loaded_blocks[0][0], self.loaded_blocks[1][0])
@@ -183,7 +193,6 @@ class World:
             if particle.spawn_possible(window, "small_leaf_particle"):
                 x = random.randint(self.loaded_blocks[0][0], self.loaded_blocks[1][0])
                 particle.spawn(window, "small_leaf_particle", x, self.loaded_blocks[1][1])
-
 
     def draw(self, window):
         self.loaded_blocks = window.camera.visible_blocks()

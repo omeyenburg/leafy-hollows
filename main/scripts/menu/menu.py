@@ -581,7 +581,7 @@ class Menu:
             if self.window.options["show fps"]:
                 self.window.draw_text(
                     (-0.98, 0.95),
-                    str(round(self.window.fps, 3)),
+                    str(round(self.window.average_fps, 3)),
                     (250, 250, 250, 200),
                     size=TEXT_SIZE_DESCRIPTION
                 )

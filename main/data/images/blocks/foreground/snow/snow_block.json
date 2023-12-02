@@ -2,7 +2,7 @@
     "name": "snow_block",
     "family": "snow",
     "layer": "foreground",
-    "hardness": 3,
+    "hardness": 1,
     "speed": 0,
     "frames": [
         "snow_block.png"

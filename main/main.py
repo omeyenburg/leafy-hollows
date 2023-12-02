@@ -297,7 +297,46 @@ def main():
         item_shown = False
 
     while True:
-        if menu.game_state == "testing":
+        if menu.game_state == "game":
+            # Draw and update the game
+            #t1 = time.time()
+            draw_game()
+            #t2 = time.time()
+            world.update(window)
+            #t3 = time.time()
+            world.update_physics(window)
+            #t4 = time.time()
+
+            if window.camera.pos[0] >= world.camera_stop:
+                window.draw_text((0, 0.8), "You escaped from the caves!", (255, 255, 255), 0.3, centered=True)
+
+            # Update and draw the menu
+            window.update(world.player.rect.center)
+            #t5 = time.time()
+            #print(f"draw_game: {round(t2 - t1, 4): 4f}; world.update: {round(t3 - t2, 4): 4f}; world.update_physics: {round(t4 - t3, 4): 4f}; window.update: {round(t5 - t4, 4): 4f}")
+
+            # Move camera
+            update_game_camera()
+
+            # Pause
+            if window.keybind("return") == 1:
+                menu.pause_page.open()
+                menu.game_state = "pause"
+
+            # Inventory
+            elif window.keybind("inventory") == 1:
+                menu.inventory_page.open()
+                menu.game_state = "inventory"
+
+            # Death
+            elif world.player.health <= 0:
+                world.player.inventory.save(world)
+                file.delete("data/user/world.data")
+                menu.death_page.open()
+                menu.game_state = "death"
+                sound.play(window, "damage", channel_volume=2)
+
+        elif menu.game_state == "testing":
             if "p" in window.unicode:
                 time_paused = not time_paused
                 unique_stepping = False
@@ -386,45 +425,10 @@ def main():
         elif menu.game_state == "intro":
             window.camera.set_zoom(CAMERA_RESOLUTION_INTRO)
             world.update(window)
+            world.update_physics(window)
             draw_game()
             draw_intro()
             update_intro()
-
-        elif menu.game_state == "game":
-            # Draw and update the game
-            t1 = time.time()
-            draw_game()
-            t2 = time.time()
-            world.update(window)
-            t3 = time.time()
-
-            if window.camera.pos[0] >= world.camera_stop:
-                window.draw_text((0, 0.8), "You escaped from the caves!", (255, 255, 255), 0.3, centered=True)
-
-            # Update and draw the menu
-            window.update(world.player.rect.center)
-            t4 = time.time()
-
-            # Move camera
-            update_game_camera()
-
-            # Pause
-            if window.keybind("return") == 1:
-                menu.pause_page.open()
-                menu.game_state = "pause"
-
-            # Inventory
-            if window.keybind("inventory") == 1:
-                menu.inventory_page.open()
-                menu.game_state = "inventory"
-
-            # Death
-            if world.player.health <= 0:
-                world.player.inventory.save(world)
-                file.delete("data/user/world.data")
-                menu.death_page.open()
-                menu.game_state = "death"
-                sound.play(window, "damage", channel_volume=2)
 
         elif menu.game_state in ("pause", "death", "inventory"):
             # Draw world
@@ -433,6 +437,7 @@ def main():
             if menu.game_state == "inventory":
                 world.player.can_move = False
                 world.update(window)
+                world.update_physics(window)
                 world.player.can_move = True
                 update_game_camera()
 
@@ -449,7 +454,7 @@ def main():
             # Update window + shader
             window.update()
 
-            # Game
+            # Return to the game (or menu)
             if window.keybind("return") == 1 or (window.keybind("inventory") == 1 and not menu.inventory_page.search_selected):
                 if menu.game_state in ("pause", "inventory"):
                     window.mouse_wheel[1] = 0
@@ -485,7 +490,23 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
+    """
+    import cProfile, pstats
 
-    # Profiler
-    #import cProfile
-    #cProfile.run('main()')
+    profiler = cProfile.Profile()
+    profiler.enable()
+
+    main()
+
+    profiler.disable()
+    
+    # Creating a stats object from the profile
+    stats = pstats.Stats(profiler)
+    
+    # Sorting the stats by tottime in descending order
+    stats.sort_stats('tottime')
+
+    # Printing the top 20 functions
+    stats.print_stats(20)
+    """
