@@ -122,35 +122,27 @@ class Camera:
         Current format specified by from_pixel, from_centered, from_world.
         Output format specified by pixel, centered, world.
         """
-        if from_world:
-            from_pixel = True
-        if world:
-            pixel = True
+        from_pixel = True
+        from_centered = True
+        pixel = False
+        centered = True
+
         coord = list(coord)
 
-        if from_world and not world:
+        if world:
+            for i in range(len(coord)):
+                coord[i] = coord[i] / self.pixels_per_meter + self.pos[i % 2]
+            return coord
+
+        if from_world:
             for i in range(len(coord)):
                 if i < 2:
                     coord[i] = (coord[i] - self.pos[i]) * self.pixels_per_meter
                 else:
                     coord[i] = coord[i] * self.pixels_per_meter
-        elif (not from_world) and world:
-            for i in range(len(coord)):
-                coord[i] = coord[i] / self.pixels_per_meter + self.pos[i % 2]
-
-        if from_pixel and not pixel:
-            for i in range(len(coord)):
-                coord[i] /= (self.window.width, self.window.height)[i%2] / 2
-        elif (not from_pixel) and pixel:
-            for i in range(len(coord)):
-                coord[i] /= (self.window.width, self.window.height)[i%2] / 2
-
-        if (not from_centered) and centered:
-            for i in range(2):
-                coord[i] -= 1
-        elif from_centered and not centered:
-            for i in range(2):
-                coord[i] += 1
+        
+        for i in range(len(coord)):
+            coord[i] /= (self.window.width, self.window.height)[i%2] / 2
 
         return coord
 

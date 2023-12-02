@@ -183,14 +183,17 @@ class Player(LivingEntity):
                 if world.get_block(round(self.rect.x), round(self.rect.y + 1), layer=2) in world.blocks_climbable:
                     self.vel[1] = max(self.climb_speed, self.vel[1])
                     self.state = "climb_pole"
+                    self.direction = 0
                 else:
                     self.vel[1] = 0
                     self.state = "on_pole"
+                    self.direction = 0
             elif (not grab_pole) or window.keybind("crouch"):
                 self.rect.x = round(self.rect.x)
                 self.vel[0] = 0
                 self.vel[1] = 0
                 self.state = "on_pole"
+                self.direction = 0
         else:
             self.on_pole = False
         

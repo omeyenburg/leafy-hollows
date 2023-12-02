@@ -2,7 +2,7 @@
     "name": "snowy_grass_block",
     "family": "snow",
     "layer": "foreground",
-    "hardness": 1,
+    "hardness": 2,
     "speed": 0,
     "frames": [
         "snowy_grass_block.png"

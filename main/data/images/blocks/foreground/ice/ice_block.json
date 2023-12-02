@@ -2,7 +2,7 @@
     "name": "ice_block",
     "family": "ice",
     "layer": "foreground",
-    "hardness": 2,
+    "hardness": 3,
     "speed": 0,
     "frames": [
         "ice_block.png"

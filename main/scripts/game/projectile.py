@@ -62,8 +62,8 @@ class Arrow(PhysicsObject):
 
             for entity in world.loaded_entities:
                 if entity.type in ("enemy", "player"):
-                    distance = math.sqrt((entity.rect.centerx - self.rect.centerx) ** 2 + (entity.rect.centery - self.rect.centery) ** 2)
-                    entity.stunned += 0.5
-                    damage = explosion_damage * min(1, max(0, 4 - distance))
-                    if damage:
+                    distance = math.dist(entity.rect.center, self.rect.center)
+                    if distance < 3:
+                        entity.stunned += 0.3
+                        damage = explosion_damage * min(1, max(0, 3 - distance)) ** 0.4
                         entity.damage(window, damage, (0, 0))

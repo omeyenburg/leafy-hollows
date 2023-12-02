@@ -100,7 +100,7 @@ class MeleeWeapon(BaseItem):
         for entity in world.loaded_entities:
             if entity is attacker or not isinstance(entity, LivingEntity):
                 continue
-            entity_distance = math.sqrt((attacker.rect.centerx - entity.rect.centerx) ** 2 + (attacker.rect.centery - entity.rect.centery) ** 2)
+            entity_distance = math.dist(attacker.rect.center, entity.rect.center)
             if entity_distance > weapon_range:
                 continue
             if entity_distance < 1:
@@ -150,9 +150,11 @@ class MeleeWeapon(BaseItem):
 
             for entity in world.loaded_entities:
                 if entity.type in ("enemy", "player"):
-                    distance = math.sqrt((entity.rect.centerx - target.rect.centerx) ** 2 + (entity.rect.centery - target.rect.centery) ** 2)
-                    entity.stunned += 0.5
-                    entity.damage(window, explosion_damage * min(1, max(0, 4 - distance)), (0, 0))
+                    distance = math.dist(entity.rect.center, target.rect.center)
+                    if distance < 3:
+                        entity.stunned += 0.3
+                        damage = explosion_damage * min(1, max(0, 3 - distance)) ** 0.4
+                        entity.damage(window, damage, (0, 0))
 
 # Bow, Banana
 class RangedWeapon(BaseItem):

@@ -45,6 +45,7 @@ def generate_world(world, window):
     next_special = 2
 
     structure_names = random.sample(list(structures.keys()), k=len(structures))
+    structure_names[0] = "labyrinth"
     structure_index = 0
     generated_structures = []
 

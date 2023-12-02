@@ -64,7 +64,7 @@ class Window:
         self.fps: int = 0
         self.average_fps: int = 0
         self.average_fps_delay: float = 0
-        self.previous_fps: set = set()
+        self.previous_fps: float = 0
         self.delta_time: float = 1.0
         self.time: float = 0.0
         self.resolution: float = 1.0
@@ -302,9 +302,10 @@ class Window:
             self._shape_transform_vbo_array = new_shape_transform_vbo_array
 
         # Write drawing data into buffers
-        self._dest_vbo_array[4 * self._vbo_instances_index:4 * self._vbo_instances_index + 4] = dest
-        self._source_or_color_vbo_array[4 * self._vbo_instances_index:4 * self._vbo_instances_index + 4] = source_or_color
-        self._shape_transform_vbo_array[4 * self._vbo_instances_index:4 * self._vbo_instances_index + 4] = numpy.array(shape_transform, dtype=numpy.float32)
+        index = 4 * self._vbo_instances_index
+        self._dest_vbo_array[index:index + 4] = dest
+        self._source_or_color_vbo_array[index:index + 4] = source_or_color
+        self._shape_transform_vbo_array[index:index + 4] = shape_transform
         
         self._vbo_instances_index += 1
 
@@ -338,7 +339,7 @@ class Window:
             flags = pygame.DOUBLEBUF | pygame.RESIZABLE
 
         # Toggle vsync: Restart required on Windows; Instant on Darwin
-        self._window = pygame.display.set_mode((self.width, self.height), flags=pygame.OPENGL, vsync=self.options["enable vsync"])
+        self._window = pygame.display.set_mode((self.width, self.height), flags=flags | pygame.OPENGL, vsync=self.options["enable vsync"])
         self._window = pygame.display.set_mode((self.width, self.height), flags=flags | pygame.OPENGL, vsync=self.options["enable vsync"])
         GL.glViewport(0, 0, self.width, self.height)
 
@@ -356,6 +357,7 @@ class Window:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.quit()
+                return 1
 
             elif event.type == pygame.VIDEORESIZE:
                 if self._resize_supress:
@@ -400,6 +402,7 @@ class Window:
 
             elif event.type == pygame.MOUSEWHEEL:
                 self.mouse_wheel = [self.mouse_wheel[0] + event.x, self.mouse_wheel[1] + event.y, event.x, event.y]
+        return 0
 
     def update(self, player_position=(0, 0)):
         """
@@ -413,17 +416,15 @@ class Window:
             self.delta_time = (self.delta_time + 1 / self.fps) * 0.5
             if self.average_fps_delay <= 0:
                 self.average_fps_delay = 0.5
-                if len(self.previous_fps):
-                    self.average_fps = sum(self.previous_fps) / len(self.previous_fps)
-                    self.previous_fps = set()
+                self.average_fps = self.previous_fps
             else:
                 self.average_fps_delay -= self.delta_time
-                self.previous_fps.add(self.fps)
+                self.previous_fps = (self.previous_fps * 3 + self.fps) * 0.25
 
         self.time += self.delta_time
         if self.damage_time:
             self.damage_time -= self.delta_time
-            self._instance_shader.setvar("damage_screen", self.damage_time / 0.3)
+            self._instance_shader.setvar("damage_screen", self.damage_time * 3)
             if self.damage_time < 0:
                 self.damage_time = 0
                 self._instance_shader.setvar("damage_screen", 0)
@@ -442,12 +443,13 @@ class Window:
         GL.glBindTexture(GL.GL_TEXTURE_2D, self._texShadow)
 
         # Send instance data to shader
+        size = int(self._dest_vbo_array.nbytes * min((self._vbo_instances_index + 1) / self._vbo_instances_length, 1))
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._dest_vbo)
-        GL.glBufferSubData(GL.GL_ARRAY_BUFFER, 0, self._dest_vbo_array.nbytes, self._dest_vbo_array)
+        GL.glBufferSubData(GL.GL_ARRAY_BUFFER, 0, size, self._dest_vbo_array)
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._source_or_color_vbo)
-        GL.glBufferSubData(GL.GL_ARRAY_BUFFER, 0, self._source_or_color_vbo_array.nbytes, self._source_or_color_vbo_array)
+        GL.glBufferSubData(GL.GL_ARRAY_BUFFER, 0, size, self._source_or_color_vbo_array)
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._shape_transform_vbo)
-        GL.glBufferSubData(GL.GL_ARRAY_BUFFER, 0, self._shape_transform_vbo_array.nbytes, self._shape_transform_vbo_array)
+        GL.glBufferSubData(GL.GL_ARRAY_BUFFER, 0, size, self._shape_transform_vbo_array)
 
         # Draw
         GL.glClear(GL.GL_COLOR_BUFFER_BIT)
@@ -560,7 +562,7 @@ class Window:
         """
         Clear the world view.
         """
-        self.world_view[:, :, :] = 0
+        self.world_view.fill(0)
     
     def _texture(self, image, blur=False):
         """
