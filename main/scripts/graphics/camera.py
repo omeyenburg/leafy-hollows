@@ -116,33 +116,38 @@ class Camera:
         self.shift_pos += (self.shift_dest - self.shift_pos) * self.window.delta_time * 0.5
         self.pos[0] += self.shift_pos
 
-    def map_coord(self, coord: [float], from_pixel: bool=True, from_centered: bool=True, from_world: bool=False, pixel: bool=False, centered: bool=True, world: bool=False):
+    def map_coord(self, coord: [float], from_world: bool=False, to_world: bool=False):
         """
         Convert a coordinate to a different format.
-        Current format specified by from_pixel, from_centered, from_world.
-        Output format specified by pixel, centered, world.
         """
-        from_pixel = True
-        from_centered = True
-        pixel = False
-        centered = True
-
         coord = list(coord)
 
-        if world:
-            for i in range(len(coord)):
-                coord[i] = coord[i] / self.pixels_per_meter + self.pos[i % 2]
+        if to_world:
+            coord[0] = coord[0] / self.pixels_per_meter + self.pos[0]
+            coord[1] = coord[1] / self.pixels_per_meter + self.pos[1]
+
+            # Condition never met.
+            #if len(coord) > 2:
+            #    coord[2] = coord[2] / self.pixels_per_meter + self.pos[0]
+            #    coord[3] = coord[3] / self.pixels_per_meter + self.pos[1]
+            
             return coord
 
         if from_world:
-            for i in range(len(coord)):
-                if i < 2:
-                    coord[i] = (coord[i] - self.pos[i]) * self.pixels_per_meter
-                else:
-                    coord[i] = coord[i] * self.pixels_per_meter
+            coord[0] = (coord[0] - self.pos[0]) * self.pixels_per_meter / self.window.width * 2
+            coord[1] = (coord[1] - self.pos[1]) * self.pixels_per_meter / self.window.height * 2
+            if len(coord) > 2:
+                coord[2] *= self.pixels_per_meter / self.window.width * 2
+                coord[3] *= self.pixels_per_meter / self.window.height * 2
+            return coord
         
-        for i in range(len(coord)):
-            coord[i] /= (self.window.width, self.window.height)[i%2] / 2
+        coord[0] /= self.window.width / 2
+        coord[1] /= self.window.height / 2
+
+        # Condition never met.
+        #if len(coord) > 2:
+        #    coord[2] /= self.window.width / 2
+        #    coord[3] /= self.window.height / 2
 
         return coord
 

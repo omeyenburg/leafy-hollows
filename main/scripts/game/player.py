@@ -423,7 +423,7 @@ class Player(LivingEntity):
         """
         if window.mouse_buttons[0] == 1: # left click: pull player to mouse
             def mouse_pull(strenght):
-                mouse_pos = window.camera.map_coord(window.mouse_pos[:2], world=True)
+                mouse_pos = window.camera.map_coord(window.mouse_pos[:2], to_world=True)
             
                 delta_x, delta_y = mouse_pos[0] - self.rect.centerx, mouse_pos[1] - self.rect.centery
                 angle_to_mouse = math.degrees(math.atan2(delta_y, delta_x))
@@ -436,7 +436,7 @@ class Player(LivingEntity):
         # Place/break block with right click
         """
         if window.mouse_buttons[2] == 1:
-            mouse_pos = window.camera.map_coord(window.mouse_pos[:2], world=True)
+            mouse_pos = window.camera.map_coord(window.mouse_pos[:2], to_world=True)
             if world.get_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1])) > 0:
                 world.set_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), 0)
             else:
@@ -446,14 +446,14 @@ class Player(LivingEntity):
         # Attack
         if window.mouse_buttons[0] == 1:
             if not self.holding is None:
-                mouse_pos = window.camera.map_coord(window.mouse_pos[:2], world=True)
+                mouse_pos = window.camera.map_coord(window.mouse_pos[:2], to_world=True)
                 angle = math.atan2(mouse_pos[1] - self.rect.centery, mouse_pos[0] - self.rect.centerx)
                 self.holding.attack(window, world, self, angle)
 
         """
         # Place water
         if window.mouse_buttons[2] == 1: # place water
-            mouse_pos = window.camera.map_coord(window.mouse_pos[:2], world=True)
+            mouse_pos = window.camera.map_coord(window.mouse_pos[:2], to_world=True)
             water_level = world.get_water(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]))
             world.set_water(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), water_level + 1000)
         """
