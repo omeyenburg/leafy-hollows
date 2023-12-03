@@ -61,7 +61,7 @@ class Page:
 
     def update(self, window: Window):
         self.draw(window)
-        mouse_pos = window.camera.map_coord(window.mouse_pos[:2], from_pixel=1, from_centered=1)
+        mouse_pos = window.camera.map_coord(window.mouse_pos[:2])
         for child in self.children:
             child.update(window)
             if child.rect.collide_point(mouse_pos):
@@ -156,7 +156,7 @@ class Button(Widget):
         self.duration = duration # When button pressed: self.clicked > 0 for [duration] seconds
 
     def update(self, window: Window):
-        mouse_pos = window.camera.map_coord(window.mouse_pos[:2], from_pixel=1, from_centered=1)
+        mouse_pos = window.camera.map_coord(window.mouse_pos[:2])
         if self.rect.collide_point(mouse_pos):
             if (window.mouse_buttons[0] == 1 or window.mouse_buttons[0] and self.clicked):
                 if self.duration > 0:
@@ -316,7 +316,7 @@ class ScrollBox(Widget):
 
         # Draw & Update children
         self.draw(window)
-        mouse_pos = window.camera.map_coord(window.mouse_pos[:2], from_pixel=1, from_centered=1)
+        mouse_pos = window.camera.map_coord(window.mouse_pos[:2])
     
         window.stencil_rect = (self.rect[0] + self.rect[2] / 2, self.rect[1] + self.rect[3] / 2, self.rect[2] / 2, self.rect[3] / 2)
         for child in self.children:

@@ -487,9 +487,9 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    #main()
     
-    """
+    #"""
     import cProfile, pstats
 
     profiler = cProfile.Profile()
@@ -510,4 +510,4 @@ if __name__ == "__main__":
 
     # Printing the top 20 functions
     stats.print_stats(20)
-    """
+    #"""
