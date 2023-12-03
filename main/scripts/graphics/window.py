@@ -108,7 +108,7 @@ class Window:
         self.camera: Camera = Camera(self)
         self.world_view: numpy.array = numpy.empty((0, 0, 4))
         pygame.display.set_caption(caption)
-        pygame.key.set_repeat(1000, 10)
+        pygame.key.set_repeat(500, 50)
         
         # OpenGL setup
         GL.glViewport(0, 0, self.width, self.height)
@@ -205,7 +205,7 @@ class Window:
         self._shadow_texture_size = (self.width // 2, self.height // 2)
         self._texShadow = GL.glGenTextures(1)
         GL.glBindTexture(GL.GL_TEXTURE_2D, self._texShadow)
-        GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RED, *self._shadow_texture_size, 0, GL.GL_RED, GL.GL_UNSIGNED_BYTE, numpy.zeros(self._shadow_texture_size))
+        GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RED, *self._shadow_texture_size, 0, GL.GL_RED, GL.GL_UNSIGNED_BYTE, None)
         GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_NEAREST)
         GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_NEAREST)
         GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
@@ -281,7 +281,7 @@ class Window:
         Queue a object to be drawn on the screen and resize buffers as necessary.
         """
         if self._vbo_instances_length == self._vbo_instances_index: # Resize all instanced vbos
-            self._vbo_instances_length = int(1 + self._vbo_instances_length * 1.5)
+            self._vbo_instances_length += 10
 
             new_dest_vbo_array = numpy.empty(self._vbo_instances_length * 4, dtype=numpy.float32)
             new_dest_vbo_array[:len(self._dest_vbo_array)] = self._dest_vbo_array
@@ -554,9 +554,11 @@ class Window:
         # Save options
         options.save(self.options)
 
-        # Quit
+        # Quit window
         pygame.quit()
-        sys.exit()
+        
+        # Quit the program; can be catched for profiling
+        raise SystemExit()
 
     def clear_world(self):
         """
@@ -638,9 +640,8 @@ class Window:
         else:
             # Write world data into texture
             GL.glBindTexture(GL.GL_TEXTURE_2D, self._texWorld)
-            GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA32I, *self._world_size, 0, GL.GL_RGBA_INTEGER, GL.GL_INT, data)
-            #print("a")
-            #GL.glTexSubImage2D(GL.GL_TEXTURE_2D, 0, 0, 0, *self._world_size, GL.GL_RGBA_INTEGER, GL.GL_INT, data)
+            #GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA32I, *self._world_size, 0, GL.GL_RGBA_INTEGER, GL.GL_INT, data)
+            GL.glTexSubImage2D(GL.GL_TEXTURE_2D, 0, 0, 0, *self._world_size, GL.GL_RGBA_INTEGER, GL.GL_INT, data)
             #GL.glBufferData(GL.GL_TEXTURE_2D, data.nbytes, data, GL.GL_STREAM_COPY)
 
     def _draw_shadows(self, offset, player_position):
@@ -718,8 +719,8 @@ class Window:
         else:
             GL.glBindTexture(GL.GL_TEXTURE_2D, self._texShadow)
             #GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, 0, 0, *surface_data.shape[::-1], GL.GL_RED, GL.GL_UNSIGNED_BYTE, surface_data)
-            #GL.glTexSubImage2D(GL.GL_TEXTURE_2D, 0, 0, 0, *surface_data.shape[::-1], GL.GL_RED, GL.GL_UNSIGNED_BYTE, surface_data)
-            GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RED, *surface_data.shape[::-1], 0, GL.GL_RED, GL.GL_UNSIGNED_BYTE, surface_data)
+            GL.glTexSubImage2D(GL.GL_TEXTURE_2D, 0, 0, 0, *surface_data.shape[::-1], GL.GL_RED, GL.GL_UNSIGNED_BYTE, surface_data)
+            #GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RED, *surface_data.shape[::-1], 0, GL.GL_RED, GL.GL_UNSIGNED_BYTE, surface_data)
             GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
 
         #print(3, time.time() - t)

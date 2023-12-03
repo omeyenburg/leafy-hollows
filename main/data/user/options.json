@@ -1,5 +1,5 @@
 {
-    "enable vsync": true,
+    "enable vsync": false,
     "max fps": 1000,
     "text resolution": 40,
     "shadow resolution": 0,
@@ -8,7 +8,7 @@
     "reduce camera movement": true,
     "show fps": true,
     "show debug": false,
-    "language": "deutsch",
+    "language": "english",
     "master volume": 1,
     "player volume": 1,
     "enemy volume": 1,

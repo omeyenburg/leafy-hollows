@@ -42,10 +42,9 @@ def generate_world(world, window):
     segments_count = 50
     min_special_distance = 2
     special_speading = 2
-    next_special = 2
+    next_special = 5
 
     structure_names = random.sample(list(structures.keys()), k=len(structures))
-    structure_names[0] = "labyrinth"
     structure_index = 0
     generated_structures = []
 
@@ -59,7 +58,6 @@ def generate_world(world, window):
             # Special cave (vertical, blob or random structure)
             next_special = min_special_distance + random.randint(0, special_speading)
             cave_type = random.random()
-            cave_type = 0
 
             if cave_type < 0.6:
                 # Structure

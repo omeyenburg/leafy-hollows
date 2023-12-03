@@ -11,7 +11,7 @@ import copy
 
 class Inventory:
     def __init__(self):
-        self.weapons = [Stick(1)]
+        self.weapons = [Banana(1)]
         self.selected = self.weapons[0]
         self.marked_weapons = set()
         self.arrows = 0
@@ -313,11 +313,14 @@ class Inventory:
         inventory = sorted(
             filter(
                 lambda i:
-                search_text in translate(window.options["language"], i.image) or
-                any([
+                (search_text in translate(window.options["language"], i.image) or any([
                     search_text in translate(window.options["language"], attribute).lower() or
                     search_text in translate(window.options["language"], ATTRIBUTE_DESCRIPTIONS[attribute]).lower()
                     for attribute in i.attributes
+                ])) and not i is menu.inventory_page.fuse_item and
+                any([
+                    i.attributes.get(attribute, 0) >= level
+                    for attribute, level in weapon.attributes.items()
                 ]),
                 world.player.inventory.weapons
             ),
