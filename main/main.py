@@ -12,7 +12,6 @@ from scripts.utility import file
 import pprint
 import time
 
-
 # Setup
 caption = "Leafy Hollows"
 *block_data, block_atlas_image = load_blocks()
@@ -21,7 +20,6 @@ menu: Menu = Menu(window)
 world: World = None
 menu.load_threaded("Leafy Hollows", "menu", window.setup)
 menu.main_page.open()
-
 
 def save_world():
     global world
@@ -497,7 +495,10 @@ if __name__ == "__main__":
     profiler = cProfile.Profile()
     profiler.enable()
 
-    main()
+    try:
+        main()
+    except SystemExit:
+        pass
 
     profiler.disable()
     

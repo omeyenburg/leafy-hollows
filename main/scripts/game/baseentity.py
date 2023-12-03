@@ -36,21 +36,33 @@ class LivingEntity(physics.PhysicsObject):
     def draw_holding_item(self, window):
         hand_position = get_hand_position(window, self.image + "_" + self.state, offset=self.uuid)
 
-        flip = (not self.direction, 0)
+        if "climb" in self.state:
+            flip = (0, 0)
+            weapon_offset = (-0.1, 0)
+        else:
+            flip = (not self.direction, 0)
+            if self.holding.image == "banana":
+                weapon_offset = (0.15, -0.05)
+            elif self.holding.image == "bow":
+                weapon_offset = (-0.15, -0.1)        
+            else:
+                weapon_offset = (0, 0)
+
         if self.direction:
             center = (
-                self.rect.centerx - hand_position[0],
-                self.rect.centery + hand_position[1]
+                self.rect.centerx - hand_position[0] - weapon_offset[0],
+                self.rect.centery + hand_position[1] + weapon_offset[1]
             )
             angle = -hand_position[2]
         else:
             #center = (self.rect.right + 0.2, self.rect.centery - 0.1)
             #angle = -40
             center = (
-                self.rect.centerx + hand_position[0],
-                self.rect.centery + hand_position[1]
+                self.rect.centerx + hand_position[0] + weapon_offset[0],
+                self.rect.centery + hand_position[1] + weapon_offset[1]
             )
             angle = hand_position[2]
+        
 
         weapon_size = 0.6
         rect = window.camera.map_coord((center[0] - weapon_size / 2, center[1] - weapon_size / 2, weapon_size, weapon_size), from_world=True)

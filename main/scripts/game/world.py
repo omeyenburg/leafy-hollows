@@ -200,6 +200,7 @@ class World:
 
         (start_x, start_y), (end_x, end_y) = self.loaded_blocks
         self.loaded_entities.clear()
+        self.loaded_entities.add(self.player)
         for entity in self.entities.copy():
             if start_x < entity.rect.x < end_x and start_y < entity.rect.y < end_y:
                 entity.draw(window)

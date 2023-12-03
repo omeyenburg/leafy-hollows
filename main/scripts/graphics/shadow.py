@@ -55,7 +55,7 @@ def find_collision_point(start, end, edges):
             x = edge[0]
             y = start[1] * distance_end + end[1] * distance_start
             if min(edge[1], edge[3]) < y < max(edge[1], edge[3]) and min(start[0], end[0]) < x < max(start[0], end[0]):
-                d = math.dist(start, (x, y))
+                d = math.sqrt((start[0] - x) ** 2 + (start[1] - y) ** 2)
                 if collision_point[0] == -1 or collision_point[0] > d:
                     collision_point[0] = d
                     collision_point[1] = x
@@ -69,7 +69,7 @@ def find_collision_point(start, end, edges):
             y = edge[1]
             x = start[0] * distance_end + end[0] * distance_start
             if min(edge[0], edge[2]) < x < max(edge[0], edge[2]) and min(start[1], end[1]) < y < max(start[1], end[1]):
-                d = math.dist(start, (x, y))
+                d = math.sqrt((start[0] - x) ** 2 + (start[1] - y) ** 2)
                 if collision_point[0] == -1 or collision_point[0] > d:
                     collision_point[0] = d
                     collision_point[1] = x
