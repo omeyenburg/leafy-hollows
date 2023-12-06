@@ -1,0 +1,10 @@
+{
+    "name": "rope",
+    "family": "background",
+    "layer": "background",
+    "hardness": 1,
+    "speed": 0,
+    "frames": [
+        "rope.png"
+    ]
+}

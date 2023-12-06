@@ -41,7 +41,7 @@ def load(block_name):
 
         entrance_ceiling = find_cave_wall(array, entrance_coord, entrance_angle + pi / 2)
         entrance_floor = find_cave_wall(array, entrance_coord, entrance_angle - pi / 2)
-        entrance_size = sqrt((entrance_ceiling[0] - entrance_floor[0]) ** 2 + (entrance_ceiling[1] - entrance_floor[1]) ** 2) - 2
+        entrance_size = sqrt((entrance_ceiling[0] - entrance_floor[0]) ** 2 + (entrance_ceiling[1] - entrance_floor[1]) ** 2)
         entrance_coord = ((entrance_ceiling[0] + entrance_floor[0]) / 2, (entrance_ceiling[1] + entrance_floor[1]) / 2)
 
         exit_ceiling = find_cave_wall(array, exit_coord, exit_angle + pi / 2)

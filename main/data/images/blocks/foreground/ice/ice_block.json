@@ -8,6 +8,6 @@
         "ice_block.png"
     ],
     "properties": {
-        "friction": 0.3
+        "friction": 0.1
     }
 }

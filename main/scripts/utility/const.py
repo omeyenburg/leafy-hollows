@@ -63,7 +63,7 @@ PHYSICS_JUMP_THRESHOLD: int = 3 # Time to jump after leaving the ground in ticks
 PHYSICS_WALL_JUMP_THRESHOLD: float = 0.3 # Time to jump after leaving a wall in seconds
 PHYSICS_MAX_MOVE_DISTANCE: float = 1.0 # Maximum distance in blocks, which an object can travel each tick
 
-BLOCKS_CLIMBABLE: tuple = ("pole", "vines0", "vines0_flipped", "ladder")
+BLOCKS_CLIMBABLE: tuple = ("pole", "vines0", "vines0_flipped", "ladder", "rope")
 
 WORLD_UPDATE_INTERVAL = 0.1 # Delay between world updates
 WORLD_CHUNK_SIZE_POWER = 5
