@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from pygame.locals import *
 import scripts.utility.file as file
+from pygame.locals import *
 import random
 import pygame
 import pickle

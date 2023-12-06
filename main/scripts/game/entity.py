@@ -153,11 +153,11 @@ class Goblin(LivingEntity):
         if world.player.rect.centerx < self.rect.centerx:
             self.vel[0] = -speed
             self.direction = 1
-            side_block = world.get_block(math.floor(self.rect.left - 0.6), round(self.rect.y)) and not world.get_block(math.floor(self.rect.left - 0.6), round(self.rect.y + 1))
+            side_block = world.get_block(floor(self.rect.left - 0.6), round(self.rect.y)) and not world.get_block(floor(self.rect.left - 0.6), round(self.rect.y + 1))
         else:
             self.vel[0] = speed
             self.direction = 0
-            side_block = world.get_block(math.floor(self.rect.right + 0.6), round(self.rect.y)) and not world.get_block(math.floor(self.rect.right + 0.6), round(self.rect.y + 1))
+            side_block = world.get_block(floor(self.rect.right + 0.6), round(self.rect.y)) and not world.get_block(floor(self.rect.right + 0.6), round(self.rect.y + 1))
 
         # Auto jump
         if side_block and self.block_below:
@@ -182,9 +182,9 @@ class Goblin(LivingEntity):
             self.prepare_attack -= window.delta_time
 
             if self.prepare_attack < 0:
-                angle = math.atan2(world.player.rect.centery - self.rect.centery, world.player.rect.centerx - self.rect.centerx)
+                angle = atan2(world.player.rect.centery - self.rect.centery, world.player.rect.centerx - self.rect.centerx)
                 if holding_bow:
-                    angle += math.cos(angle) * 0.015 * distance_player
+                    angle += cos(angle) * 0.015 * distance_player
                 self.holding.attack(window, world, self, angle)
                 self.prepare_attack = self.prepare_attack_length
         elif not holding_bow:
@@ -240,7 +240,7 @@ class Bat(LivingEntity):
             print(start_pos, end_pos, offset, self.rect.center, world.player.rect.center)
             """
             
-            if self.path is None or len(self.path) == 0 or math.dist(self.path[0], world.player.rect.center) > 3:
+            if self.path is None or len(self.path) == 0 or dist(self.path[0], world.player.rect.center) > 3:
                 self.path_search_delay += window.delta_time
                 if self.path_search_delay > PATH_FIND_DELAY: # Recalculate path when player moved too far
                     self.path_search_delay = 0
@@ -260,7 +260,7 @@ class Bat(LivingEntity):
             if not self.path:
                 return None
 
-            if math.dist(self.path[-1], self.rect.center) < 1.5:
+            if dist(self.path[-1], self.rect.center) < 1.5:
                 self.path.pop(-1)
 
             if not self.path:
@@ -292,7 +292,7 @@ class Bat(LivingEntity):
 
             return next_pos
 
-        if math.dist(self.rect.center, world.player.rect.center) > 3: # Find path for longer distances
+        if dist(self.rect.center, world.player.rect.center) > 3: # Find path for longer distances
             next_pos = pathfind()
 
             if not next_pos:

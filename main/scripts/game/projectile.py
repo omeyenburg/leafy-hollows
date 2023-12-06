@@ -25,7 +25,7 @@ class Arrow(PhysicsObject):
 
         # Draw arrow
         rect = window.camera.map_coord((self.rect.x - 0.25 + self.rect.w / 2, self.rect.y - 0.25 + self.rect.h / 2, 0.5, 0.5), from_world=True)
-        window.draw_image("arrow", rect[:2], rect[2:], angle=math.degrees(self.angle))
+        window.draw_image("arrow", rect[:2], rect[2:], angle=degrees(self.angle))
 
     def update(self, world, window: Window):
         # Cancel when arrow in wall
@@ -35,7 +35,7 @@ class Arrow(PhysicsObject):
             return
 
         # Rotate along velocity
-        self.angle = math.atan2(*self.vel[::-1]) + math.pi
+        self.angle = atan2(*self.vel[::-1]) + pi
 
         last_center = self.rect.center
         super().update(world, window.delta_time)
@@ -45,7 +45,7 @@ class Arrow(PhysicsObject):
             if (not (entity is self or entity is self.owner)) and isinstance(entity, LivingEntity) and entity.rect.collide_line(self.rect.center, last_center):
                 damage, attack_speed, weapon_range, crit_chance = self.bow.get_weapon_stat_increase(world)
                 damage *= 1 + 0.5 * (crit_chance > random.random())
-                entity.damage(window, damage, self.vel)
+                entity.damage(window, damage, (5 * self.vel[0] / sum(self.vel), 5 * self.vel[1] / sum(self.vel)))
 
                 self.bow.apply_attributes(window, self.owner, entity)
                 self.explode(window, world)
@@ -62,7 +62,7 @@ class Arrow(PhysicsObject):
 
             for entity in world.loaded_entities:
                 if entity.type in ("enemy", "player"):
-                    distance = math.dist(entity.rect.center, self.rect.center)
+                    distance = dist(entity.rect.center, self.rect.center)
                     if distance < 3:
                         entity.stunned += 0.3
                         damage = explosion_damage * min(1, max(0, 3 - distance)) ** 0.4

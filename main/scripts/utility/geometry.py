@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
-from pygame import Rect as pygame_Rect
-from inspect import stack
 from random import shuffle
-import math
+from math import *
 
 
 class Rect:
@@ -227,20 +225,20 @@ class Vec:
         return Vec(-self[0], -self[1])
 
     def __abs__(self):
-        return math.sqrt(self[0] ** 2 + self[1] ** 2)
+        return sqrt(self[0] ** 2 + self[1] ** 2)
 
     def copy(self):
         return Vec(self)
 
     def rotate(self, angle):
         length = abs(self)
-        angle = math.atan2(self.y, self.x) + angle
-        self.x = math.cos(angle) * length
-        self.y = math.sin(angle) * length
+        angle = atan2(self.y, self.x) + angle
+        self.x = cos(angle) * length
+        self.y = sin(angle) * length
 
 
 def angle(a):
-    return a % (2 * math.pi)
+    return a % (2 * pi)
 
 
 def shuffled_range(n):

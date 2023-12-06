@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
+from math import *
 import platform
 import random
 import numpy
-import math
 import os
 
 
@@ -52,7 +52,7 @@ SLIME_RECT_SIZE: [float] = (0.7, 0.7)
 GOBLIN_RECT_SIZE: [float] = (0.9, 1.8)
 BAT_RECT_SIZE: [float] = (0.7, 0.7)
 
-PATH_FIND_DELAY: float = 0.5
+PATH_FIND_DELAY: float = 0.3
 
 PHYSICS_REALISTIC: bool = False
 PHYSICS_PREVENT_MOVEMENT_IN_AIR: bool = False

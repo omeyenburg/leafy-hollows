@@ -148,7 +148,7 @@ class World:
         mod_x = x & (WORLD_CHUNK_SIZE - 1)
         mod_y = y & (WORLD_CHUNK_SIZE - 1)
 
-        return math.copysign(1, abs(self.chunks[(chunk_x, chunk_y)][mod_x, mod_y, 3]))
+        return copysign(1, abs(self.chunks[(chunk_x, chunk_y)][mod_x, mod_y, 3]))
 
     def update_physics(self, window):
         for entity in self.loaded_entities:
@@ -167,9 +167,19 @@ class World:
             return
         delta_time = self.delta_time
         self.delta_time = 0
+
+        # Filter entites
+        (start_x, start_y), (end_x, end_y) = self.loaded_blocks
+        self.loaded_entities.clear()
+        self.loaded_entities.add(self.player)
+        for entity in self.entities.copy():
+            if start_x < entity.rect.x < end_x and start_y < entity.rect.y < end_y:
+                self.loaded_entities.add(entity)
+            elif entity.destroy_unloaded:
+                self.entities.discard(entity)
         
         # Update wind
-        self.wind = math.sin(window.time) * WORLD_WIND_STRENGTH + math.cos(window.time * 5) * WORLD_WIND_STRENGTH / 2
+        self.wind = sin(window.time) * WORLD_WIND_STRENGTH + cos(window.time * 5) * WORLD_WIND_STRENGTH / 2
         window.particle_wind = self.wind / 50
 
         # Play ambient sounds
@@ -198,15 +208,8 @@ class World:
         self.loaded_blocks = window.camera.visible_blocks()
         self.create_view(window)
 
-        (start_x, start_y), (end_x, end_y) = self.loaded_blocks
-        self.loaded_entities.clear()
-        self.loaded_entities.add(self.player)
-        for entity in self.entities.copy():
-            if start_x < entity.rect.x < end_x and start_y < entity.rect.y < end_y:
-                entity.draw(window)
-                self.loaded_entities.add(entity)
-            elif entity.destroy_unloaded:
-                self.entities.discard(entity)
+        for entity in self.loaded_entities:
+            entity.draw(window)
 
     def update_block(self, window, x, y):
         block_array = self.get_block(x, y, layer=slice(None), generate=True)
@@ -300,8 +303,8 @@ class World:
         start_chunk_y = start[1] >> WORLD_CHUNK_SIZE_POWER
         start_mod_x = start[0] & (WORLD_CHUNK_SIZE - 1)
         start_mod_y = start[1] & (WORLD_CHUNK_SIZE - 1)
-        chunk_num_x = math.ceil((start_mod_x + view_size[0]) / WORLD_CHUNK_SIZE)
-        chunk_num_y = math.ceil((start_mod_y + view_size[1]) / WORLD_CHUNK_SIZE)
+        chunk_num_x = ceil((start_mod_x + view_size[0]) / WORLD_CHUNK_SIZE)
+        chunk_num_y = ceil((start_mod_y + view_size[1]) / WORLD_CHUNK_SIZE)
         uncut_view = numpy.empty((chunk_num_x * WORLD_CHUNK_SIZE, chunk_num_y * WORLD_CHUNK_SIZE, 4))
 
         #print("view_size", view_size)

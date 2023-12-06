@@ -13,6 +13,7 @@ class LivingEntity(physics.PhysicsObject):
         self.health: int = health
         self.max_health: int = health
         self.stunned: float = 0
+        self.attack_animation: float = -1
 
     def draw(self, window):
         # Draw hitbox
@@ -35,6 +36,8 @@ class LivingEntity(physics.PhysicsObject):
 
     def draw_holding_item(self, window):
         hand_position = get_hand_position(window, self.image + "_" + self.state, offset=self.uuid)
+        if self.attack_animation > -1:
+            self.attack_animation -= window.delta_time * 8
 
         if "climb" in self.state:
             flip = (0, 0)
@@ -62,11 +65,17 @@ class LivingEntity(physics.PhysicsObject):
                 self.rect.centery + hand_position[1] + weapon_offset[1]
             )
             angle = hand_position[2]
-        
+
+        if self.attack_animation > -1:
+            attack_rotation = cos(radians(angle)) ** 4 * (self.direction * 2 - 1) * (1 - abs(self.attack_animation)) * 80
+            rotation_y_offset = sin(radians(attack_rotation)) * 0.05
+            angle += attack_rotation
+        else:
+            rotation_y_offset = 0
 
         weapon_size = 0.6
         rect = window.camera.map_coord((center[0] - weapon_size / 2, center[1] - weapon_size / 2, weapon_size, weapon_size), from_world=True)
-        window.draw_image(self.holding.image, rect[:2], rect[2:], angle, flip)
+        window.draw_image(self.holding.image, (rect[0], rect[1] + rotation_y_offset * rect[3]), rect[2:], angle, flip)
 
     def update(self, world, delta_time):
         if not self.holding is None:
@@ -91,7 +100,7 @@ class LivingEntity(physics.PhysicsObject):
         amount = round(amount, 1)
 
         self.stunned += 0.2
-        self.health -= amount
+        self.health = max(0, self.health - amount)
 
         self.vel[0] += velocity[0] * 0.5
         self.vel[1] += velocity[1] * 0.5

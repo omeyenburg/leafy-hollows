@@ -1,5 +1,5 @@
 {
-    "enable vsync": false,
+    "enable vsync": true,
     "max fps": 1000,
     "text resolution": 40,
     "shadow resolution": 0,
@@ -17,7 +17,7 @@
     "simulation distance": 5,
     "save world": true,
     "auto jump": false,
-    "draw_pathfinding": true,
+    "draw_pathfinding": false,
     "key.left": "a",
     "key.right": "d",
     "key.jump": "space",

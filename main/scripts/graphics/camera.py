@@ -82,8 +82,8 @@ class Camera:
         #xvel = round((self.dest[0] - self.pos[0]) * 0.1, 3)
         #yvel = round((self.dest[1] - self.pos[1]) * 0.1, 3)
 
-        xvel = math.copysign(max(abs(xvel) - self.threshold, 0), xvel)
-        yvel = math.copysign(max(abs(yvel) - self.threshold, 0), yvel)
+        xvel = copysign(max(abs(xvel) - self.threshold, 0), xvel)
+        yvel = copysign(max(abs(yvel) - self.threshold, 0), yvel)
 
         self.vel[0] = xvel
         self.vel[1] = yvel
@@ -160,10 +160,15 @@ class Camera:
 
     def visible_blocks(self):
         simulation_distance = self.window.options["simulation distance"]
-        center = (math.floor(self.pos[0]),
-                  math.floor(self.pos[1]))
-        start = (center[0] - math.floor(self.window.width / 2 / self.pixels_per_meter) - simulation_distance,
-                 center[1] - math.floor(self.window.height / 2 / self.pixels_per_meter) - simulation_distance)
-        end = (center[0] + math.ceil(self.window.width / 2 / self.pixels_per_meter) + simulation_distance,
-               center[1] + math.ceil(self.window.height / 2 / self.pixels_per_meter) + simulation_distance)
-        return start, end
+        
+        center_x = floor(self.pos[0])
+        center_y = floor(self.pos[1])
+
+        return ((
+            center_x - floor(self.window.width / 2 / self.pixels_per_meter) - simulation_distance,
+            center_y - floor(self.window.height / 2 / self.pixels_per_meter) - simulation_distance
+        ), (
+            center_x + ceil(self.window.width / 2 / self.pixels_per_meter) + simulation_distance,
+            center_y + ceil(self.window.height / 2 / self.pixels_per_meter) + simulation_distance
+        ))
+        

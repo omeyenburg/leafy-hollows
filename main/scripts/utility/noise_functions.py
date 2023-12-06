@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import opensimplex
-import math
+from math import *
 
 
 try:
@@ -11,11 +11,11 @@ except ModuleNotFoundError:
         octaves = min(octaves, 3)
 
         if repeat:
-            x = abs(math.sin(x * math.pi / repeat + 2.928) * repeat)
+            x = abs(sin(x * pi / repeat + 2.928) * repeat)
 
         for i in range(octaves):
             divisor = 2 ** i
-            z += opensimplex.noise2(x / divisor, math.e) / divisor
+            z += opensimplex.noise2(x / divisor, e) / divisor
 
         return z
 
@@ -24,9 +24,9 @@ except ModuleNotFoundError:
         octaves = min(octaves, 3)
 
         if repeatx:
-            x = abs(math.sin(x * math.pi / repeatx + 0.214) * repeatx)
+            x = abs(sin(x * pi / repeatx + 0.214) * repeatx)
         if repeaty:
-            y = abs(math.sin(y * math.pi / repeaty + 1.331) * repeaty)
+            y = abs(sin(y * pi / repeaty + 1.331) * repeaty)
 
         for i in range(octaves):
             divisor = 2 ** i

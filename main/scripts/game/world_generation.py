@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 from scripts.utility.noise_functions import pnoise1, snoise2
-from scripts.game import cave
 from scripts.utility.const import *
 from scripts.game import structure
 from scripts.game.entity import *
+from scripts.game import cave
 import copy
 
 
@@ -17,7 +17,7 @@ def generate_world(world, window):
     """
     Main world generation function
     """
-    world.seed: float = random.randint(-10**6, 10**6) + math.e # Float between -10^6 and 10^6
+    world.seed: float = random.randint(-10**6, 10**6) + e # Float between -10^6 and 10^6
     window.loading_progress[2] = 11
 
     # Load structures
@@ -149,7 +149,7 @@ def generate_world(world, window):
         else:
             Entity = random.choice((GreenSlime, YellowSlime, BlueSlime, Bat, Goblin))
         if Entity == Bat:
-            if coord[0] < last_bat + 30:
+            if coord[0] < last_bat + 10:
                 continue
             last_bat = coord[0]
         world.add_entity(Entity(coord))
@@ -277,16 +277,16 @@ def get_decoration_block_type(world, x, y):
 
 
 def generate_decoration_block(world, x, y, decoration_block, flipped, side):
-    expansion_length = int(math.sqrt(random.random() * (world.block_generation_properties[decoration_block].get("expansion_length", 1) - 1) ** 2) + 1)
-    expansion_direction = {"up": math.pi / 2, "down": -math.pi / 2, "left": math.pi, "right": 0}.get(world.block_generation_properties[decoration_block].get("expansion_direction", "up"), 0)
+    expansion_length = int(sqrt(random.random() * (world.block_generation_properties[decoration_block].get("expansion_length", 1) - 1) ** 2) + 1)
+    expansion_direction = {"up": pi / 2, "down": -pi / 2, "left": pi, "right": 0}.get(world.block_generation_properties[decoration_block].get("expansion_direction", "up"), 0)
 
     size = world.block_group_size.get(decoration_block, (1, 1))
     if size == (1, 1):
         layer = world.block_layer[decoration_block]
 
         for i in range(expansion_length):
-            dx = round(math.cos(expansion_direction) * i)
-            dy = round(math.sin(expansion_direction) * i)
+            dx = round(cos(expansion_direction) * i)
+            dy = round(sin(expansion_direction) * i)
 
             if world.get_block(x + dx, y + dy, layer):
                 return

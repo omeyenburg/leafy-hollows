@@ -117,7 +117,7 @@ class Player(LivingEntity):
                 self.vel[0] -= acceleration_speed
             
         # Auto jump
-        if window.options["auto jump"] and self.block_below and (bool(key_right) ^ bool(key_left)) and (not window.keybind("jump")) and world.get_block(math.floor(abs(-self.rect.left * bool(key_left) + self.rect.right * bool(key_right) + 0.6)), round(self.rect.y)) and (not world.get_block(math.floor(abs(-self.rect.left * bool(key_left) + self.rect.right * bool(key_right) + 0.6)), round(self.rect.y + 1))):
+        if window.options["auto jump"] and self.block_below and (bool(key_right) ^ bool(key_left)) and (not window.keybind("jump")) and world.get_block(floor(abs(-self.rect.left * bool(key_left) + self.rect.right * bool(key_right) + 0.6)), round(self.rect.y)) and (not world.get_block(floor(abs(-self.rect.left * bool(key_left) + self.rect.right * bool(key_right) + 0.6)), round(self.rect.y + 1))):
             self.jump(window, 5)
             self.vel[0] *= 0.7
 
@@ -243,7 +243,7 @@ class Player(LivingEntity):
                 if window.keybind("jump") == 1:
                     self.vel[1] = 7
                     self.state = "high_jump"
-                    self.rect.y = math.ceil(self.rect.y)
+                    self.rect.y = ceil(self.rect.y)
                     if self.direction:
                         self.vel[0] = -1
                     else:
@@ -426,9 +426,9 @@ class Player(LivingEntity):
                 mouse_pos = window.camera.map_coord(window.mouse_pos[:2], to_world=True)
             
                 delta_x, delta_y = mouse_pos[0] - self.rect.centerx, mouse_pos[1] - self.rect.centery
-                angle_to_mouse = math.degrees(math.atan2(delta_y, delta_x))
+                angle_to_mouse = degrees(atan2(delta_y, delta_x))
 
-                force = min(math.dist(self.rect.center, mouse_pos), 3) / window.delta_time * strenght
+                force = min(dist(self.rect.center, mouse_pos), 3) / window.delta_time * strenght
                 self.apply_force(force, angle_to_mouse, window.delta_time)
             mouse_pull(300) # constant activation balances out w/ gravity --> usable as rope
         """
@@ -437,25 +437,25 @@ class Player(LivingEntity):
         """
         if window.mouse_buttons[2] == 1:
             mouse_pos = window.camera.map_coord(window.mouse_pos[:2], to_world=True)
-            if world.get_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1])) > 0:
-                world.set_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), 0)
+            if world.get_block(floor(mouse_pos[0]), floor(mouse_pos[1])) > 0:
+                world.set_block(floor(mouse_pos[0]), floor(mouse_pos[1]), 0)
             else:
-                world.set_block(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), world.block_name["stone_block"])
+                world.set_block(floor(mouse_pos[0]), floor(mouse_pos[1]), world.block_name["stone_block"])
         """    
             
         # Attack
         if window.mouse_buttons[0] == 1:
             if not self.holding is None:
                 mouse_pos = window.camera.map_coord(window.mouse_pos[:2], to_world=True)
-                angle = math.atan2(mouse_pos[1] - self.rect.centery, mouse_pos[0] - self.rect.centerx)
+                angle = atan2(mouse_pos[1] - self.rect.centery, mouse_pos[0] - self.rect.centerx)
                 self.holding.attack(window, world, self, angle)
 
         """
         # Place water
         if window.mouse_buttons[2] == 1: # place water
             mouse_pos = window.camera.map_coord(window.mouse_pos[:2], to_world=True)
-            water_level = world.get_water(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]))
-            world.set_water(math.floor(mouse_pos[0]), math.floor(mouse_pos[1]), water_level + 1000)
+            water_level = world.get_water(floor(mouse_pos[0]), floor(mouse_pos[1]))
+            world.set_water(floor(mouse_pos[0]), floor(mouse_pos[1]), water_level + 1000)
         """
 
     def update(self, world, window: Window):
