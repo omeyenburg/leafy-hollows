@@ -296,35 +296,25 @@ class Bat(LivingEntity):
             next_pos = pathfind()
 
             if not next_pos:
-                return
-
-            if next_pos[0] + 0.5 < self.rect.centerx:
-                self.vel[0] = -self.max_speed
-                self.direction = 1
-            elif next_pos[0] + 0.5 > self.rect.centerx:
-                self.vel[0] = self.max_speed
-                self.direction = 0
-            
-            if next_pos[1] + 0.5 < self.rect.centery:
-                self.vel[1] = -self.max_speed
-            elif next_pos[1] + 0.5 > self.rect.centery:
-                self.vel[1] = self.max_speed
-
+                next_pos = (world.player.rect.centerx, world.player.rect.y + self.prepare_attack * 2)
+            else:
+                next_pos = (next_pos[0] + 0.5, next_pos[1] + 0.5)
         else:
-            speed_x = min(self.max_speed, abs(world.player.rect.centerx - self.rect.centerx))
-            if world.player.rect.centerx < self.rect.centerx:
-                self.vel[0] = -speed_x
-                self.direction = 1
-            elif world.player.rect.centerx > self.rect.centerx:
-                self.vel[0] = speed_x
-                self.direction = 0
+            next_pos = (world.player.rect.centerx, world.player.rect.y + self.prepare_attack * 2)
 
-            y_offset = self.prepare_attack * 2
-            speed_y = min(self.max_speed, abs(world.player.rect.centery + y_offset - self.rect.centery))
-            if world.player.rect.centery + y_offset < self.rect.centery and not self.underWater:
-                self.vel[1] = -speed_y
-            elif world.player.rect.centery + y_offset > self.rect.centery:
-                self.vel[1] = speed_y
+        speed_x = min(self.max_speed, abs(world.player.rect.centerx - self.rect.centerx))
+        if next_pos[0] < self.rect.centerx:
+            self.vel[0] = -speed_x
+            self.direction = 1
+        elif next_pos[0] > self.rect.centerx:
+            self.vel[0] = speed_x
+            self.direction = 0
+
+        speed_y = min(self.max_speed, abs(world.player.rect.centery - self.rect.centery))
+        if next_pos[1] < self.rect.centery and not self.underWater:
+            self.vel[1] = -speed_y
+        elif next_pos[1] > self.rect.centery:
+            self.vel[1] = speed_y
 
     def update(self, world, window: Window):
         super().update(world, window.delta_time)
@@ -344,5 +334,5 @@ class Bat(LivingEntity):
 
         if not random.randint(0, int(window.fps * 10)):
             sound.play(window, "bat_fly", identifier=str(self.uuid), x=(self.rect.x - world.player.rect.x) / 5)
-        elif not random.randint(0, int(window.fps * 10)):
+        elif not random.randint(0, int(window.fps * 9)):
             sound.play(window, "bat_scream", identifier=str(self.uuid), x=(self.rect.x - world.player.rect.x) / 5)

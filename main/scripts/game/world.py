@@ -185,7 +185,7 @@ class World:
         # Play ambient sounds
         if not random.randint(0, int(10 / delta_time)):
             sound.play(window, "water_drop", x=random.random() * 2 - 1)
-        elif not random.randint(0, int(60 / delta_time)):
+        elif self.player.rect.x > 20 and not random.randint(0, int(60 / delta_time)):
             sound.play(window, "cave_ambient", x=random.random() * 2 - 1)
 
         # Update water

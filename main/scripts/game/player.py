@@ -123,13 +123,13 @@ class Player(LivingEntity):
 
         # Jumping
         if window.keybind("jump") and (self.block_below or self.block_right and key_left or self.block_left and key_right):
-            if self.state == "crouch" and self.block_below:
+            if self.state in ("crouch", "crawl") and self.block_below:
                 # Charge crouch jump
                 self.charge_crouch_jump += window.delta_time
             elif (not self.charge_crouch_jump) and (not self.state in ("crouch", "crawl", "crouch_jump")):
                 # Normal jump
                 self.jump(window, 5)
-        elif self.block_below and self.charge_crouch_jump and self.state == "crouch":
+        elif self.block_below and self.charge_crouch_jump and self.state in ("crouch", "crawl"):
             # Crouch jump
             self.jump(window, self.crouch_jump_strength * min(self.crouch_jump_max_charge, self.charge_crouch_jump)) # 1/4 seconds to charge max crouch jump
             self.charge_crouch_jump = 0

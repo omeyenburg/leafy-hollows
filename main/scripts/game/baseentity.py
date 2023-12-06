@@ -53,7 +53,7 @@ class LivingEntity(physics.PhysicsObject):
 
         if self.direction:
             center = (
-                self.rect.centerx - hand_position[0] - weapon_offset[0],
+                self.rect.centerx - hand_position[0] - weapon_offset[0] + 0.8 * (self.type == "player" and self.rect[2] > self.rect[3]),
                 self.rect.centery + hand_position[1] + weapon_offset[1]
             )
             angle = -hand_position[2]

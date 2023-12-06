@@ -227,6 +227,7 @@ class PhysicsObject:
         self.inWater = world.get_water(*block_feet) > 0.2
         if self.inWater and world.get_water(*block_head) > 0.2:
             self.underWater = 5
+            self.vel[0] *= 0.5 ** delta_time
         elif self.underWater:
             self.underWater -= 1
 
@@ -238,5 +239,6 @@ class PhysicsObject:
 
         # Friction
         block_fricton = world.get_block_friction(self.block_below)
-        self.apply_force_horizontal(-self.vel[0] * self.mass * block_fricton * 0.1, 1)
-        self.vel[0] *= 0.9 ** delta_time
+        if block_fricton:
+            self.apply_force_horizontal(-self.vel[0] * self.mass * block_fricton * 0.1, 1)
+            self.vel[0] *= 0.9 ** delta_time
