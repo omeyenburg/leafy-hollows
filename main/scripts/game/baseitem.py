@@ -91,6 +91,8 @@ class MeleeWeapon(BaseItem):
         if self.cooldown > 0:
             return
 
+        attacker.attack_animation = 1.5
+
         damage, attack_speed, weapon_range, crit_chance = self.get_weapon_stat_increase(world)
         if not arg_range is None:
             weapon_range = arg_range
@@ -100,13 +102,13 @@ class MeleeWeapon(BaseItem):
         for entity in world.loaded_entities:
             if entity is attacker or not isinstance(entity, LivingEntity):
                 continue
-            entity_distance = math.dist(attacker.rect.center, entity.rect.center)
+            entity_distance = dist(attacker.rect.center, entity.rect.center)
             if entity_distance > weapon_range:
                 continue
             if entity_distance < 1:
                 targets.add((1, entity))
                 continue
-            entity_angle = math.atan2(entity.rect.centery - attacker.rect.centery, entity.rect.centerx - attacker.rect.centerx)
+            entity_angle = atan2(entity.rect.centery - attacker.rect.centery, entity.rect.centerx - attacker.rect.centerx)
             angle_distance = abs(entity_angle - angle)
             if angle_distance < self.max_angle_offset:
                 targets.add((angle_distance, entity))
@@ -118,8 +120,8 @@ class MeleeWeapon(BaseItem):
 
         max_target_count = self.attributes.get("piercing", 0) + 1
         velocity = (
-            attacker.vel[0] * 0.5 + math.cos(angle),
-            attacker.vel[1] * 0.5 + math.sin(angle)
+            attacker.vel[0] * 0.5 + cos(angle),
+            attacker.vel[1] * 0.5 + sin(angle)
         )
 
         critical_multiplier = 1 + 0.5 * (crit_chance > random.random())
@@ -136,7 +138,7 @@ class MeleeWeapon(BaseItem):
         BaseItem.apply_attributes(self, window, attacker, target)
     
         attack_particle = random.choice(("impact", "swing"))
-        if -math.pi < angle * 2 < math.pi:
+        if -pi < angle * 2 < pi:
             attack_particle += "_right"
         else:
             attack_particle += "_left"
@@ -150,7 +152,7 @@ class MeleeWeapon(BaseItem):
 
             for entity in world.loaded_entities:
                 if entity.type in ("enemy", "player"):
-                    distance = math.dist(entity.rect.center, target.rect.center)
+                    distance = dist(entity.rect.center, target.rect.center)
                     if distance < 3:
                         entity.stunned += 0.3
                         damage = explosion_damage * min(1, max(0, 3 - distance)) ** 0.4

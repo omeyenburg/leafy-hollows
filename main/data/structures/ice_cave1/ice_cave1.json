@@ -1,15 +1,15 @@
 {
-    "name": "labyrinth",
+    "name": "ice_cave1",
     "generation": {
         "weight": 1.0,
         "entrance_coord": [
             0,
-            12
+            10
         ],
         "entrance_angle": 0,
         "exit_coord": [
-            39,
-            38
+            29,
+            10
         ],
         "exit_angle": 0
     },

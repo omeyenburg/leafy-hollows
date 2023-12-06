@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
+from math import *
 import random
-import math
 
 
 def setup(window, image: str, time: float, delay: float, size: tuple=(1, 1), gravity: float=None, growth: float=0, speed: float=None, angle: float=None, divergence: float=None, amount: float=1.0):
@@ -60,9 +60,9 @@ def spawn(window, name, x: float, y: float, speed: float=None, angle: float=None
 
 def text(window, text: str, x: float, y: float, size: float=1.0, color: [float]=(0, 0, 0, 0), time: float=1.0, offset_radius: float=0):
     if offset_radius:
-        angle = math.pi * random.random() # Only upper half of circle
-        x += math.cos(angle) * offset_radius
-        y += math.sin(angle) * offset_radius
+        angle = pi * random.random() # Only upper half of circle
+        x += cos(angle) * offset_radius
+        y += sin(angle) * offset_radius
     window.particles.append(["text", text, x, y, size, window.time + time, *color])
 
 
@@ -86,8 +86,8 @@ def update_particle(window, i, particle):
         window.particles.pop(i)
         return
 
-    window.particles[i][1] += math.cos(angle) * speed * window.delta_time
-    window.particles[i][2] += (math.sin(angle) * speed - window.particle_types[name][3]) * window.delta_time
+    window.particles[i][1] += cos(angle) * speed * window.delta_time
+    window.particles[i][2] += (sin(angle) * speed - window.particle_types[name][3]) * window.delta_time
     if window.particle_types[name][7]:
         window.particles[i][5] += (random.random() - 0.5 + window.particle_wind) * window.particle_types[name][7] / 200
     size_factor = 1 - (time - window.time) / window.particle_types[name][1] * window.particle_types[name][4]
@@ -95,7 +95,7 @@ def update_particle(window, i, particle):
 
     rect = window.camera.map_coord((x - size[0] / 2, y - size[1] / 2, *size), from_world=True)
     window.draw_image(name, rect[:2], rect[2:])
-    if -window.particle_types[name][3] + math.sin(angle) > -window.particle_types[name][3]:
+    if -window.particle_types[name][3] + sin(angle) > -window.particle_types[name][3]:
         window.particles[i][4] *= 0.9
 
     if not (-1 < rect[0] < 2 and -1 < rect[1] < 2):

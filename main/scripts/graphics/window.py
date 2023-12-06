@@ -12,11 +12,11 @@ from scripts.graphics import shadow
 from scripts.graphics import sound
 from scripts.utility import file
 from OpenGL import GL
+from math import *
 import pygame
 import ctypes
 import numpy
 import time
-import math
 import sys
 
 
@@ -90,6 +90,16 @@ class Window:
         self.get_keys_all = pygame.key.get_mods
         self.get_key_name = pygame.key.name
         self.get_mod_name = lambda mod: self._mod_names[mod]
+        self.event_types = (
+            pygame.QUIT,
+            pygame.VIDEORESIZE,
+            pygame.KEYDOWN,
+            pygame.KEYUP,
+            pygame.MOUSEMOTION,
+            pygame.MOUSEBUTTONDOWN,
+            pygame.MOUSEBUTTONUP,
+            pygame.MOUSEWHEEL
+        )
 
         # Window variables
         info = pygame.display.Info()
@@ -273,7 +283,7 @@ class Window:
         self.particle_wind: float = 0.0
         particle_data = file.load(file.abspath("data/particles/particles.json"), file_format="json")
         for particle_name, kwargs in particle_data.items():
-            kwargs["angle"] *= math.pi / 180
+            kwargs["angle"] *= pi / 180
             particle.setup(self, particle_name, **kwargs)
 
     def _add_vbo_instance(self, dest, source_or_color, shape_transform):
@@ -354,10 +364,13 @@ class Window:
             if value == 1:
                 self.keys[key] = 2
         
-        for event in pygame.event.get():
+        events = pygame.event.get()
+        #events = pygame.event.get(self.event_types)
+        #pygame.event.clear()
+
+        for event in events:
             if event.type == pygame.QUIT:
                 self.quit()
-                return 1
 
             elif event.type == pygame.VIDEORESIZE:
                 if self._resize_supress:
@@ -402,7 +415,6 @@ class Window:
 
             elif event.type == pygame.MOUSEWHEEL:
                 self.mouse_wheel = [self.mouse_wheel[0] + event.x, self.mouse_wheel[1] + event.y, event.x, event.y]
-        return 0
 
     def update(self, player_position=(0, 0)):
         """
@@ -673,10 +685,10 @@ class Window:
         """
 
         # Use player as light source
-        center = (math.floor(self.camera.pos[0]),
-                    math.floor(self.camera.pos[1]))
-        start = (center[0] - math.floor(self.width / 2 / self.camera.pixels_per_meter) - self.options["simulation distance"],
-                    center[1] - math.floor(self.height / 2 / self.camera.pixels_per_meter) - self.options["simulation distance"])
+        center = (floor(self.camera.pos[0]),
+                    floor(self.camera.pos[1]))
+        start = (center[0] - floor(self.width / 2 / self.camera.pixels_per_meter) - self.options["simulation distance"],
+                    center[1] - floor(self.height / 2 / self.camera.pixels_per_meter) - self.options["simulation distance"])
         player_position = (player_position[0] - start[0] - 1.0, player_position[1] - start[1] - 1.0)
 
         # Find corners
@@ -935,9 +947,9 @@ class Window:
                             rect[2] * (width / org[2]),
                             rect[3] * ((height / org[3]) if (height / org[3]) < 1 else 0)
                         )
-                self._add_vbo_instance(dest_rect, rect, (0, *flip, angle / 180 * math.pi))
+                self._add_vbo_instance(dest_rect, rect, (0, *flip, angle / 180 * pi))
         else:
-            self._add_vbo_instance(dest_rect, rect, (0, *flip, angle / 180 * math.pi))
+            self._add_vbo_instance(dest_rect, rect, (0, *flip, angle / 180 * pi))
 
     def draw_rect(self, position: [float], size: [float], color: [int]):
         """
@@ -972,9 +984,9 @@ class Window:
         Draw a line on the window.
         """
         center = ((start[0] + end[0]) / 2,  (start[1] + end[1]) / 2)
-        angle = math.atan2(start[1] - end[1], start[0] - end[0])
-        sinAngle = abs(math.sin(angle))
-        size = (math.sqrt(((start[0] - end[0]) / 2) ** 2 + ((start[1] - end[1]) / 2) ** 2),
+        angle = atan2(start[1] - end[1], start[0] - end[0])
+        sinAngle = abs(sin(angle))
+        size = (sqrt(((start[0] - end[0]) / 2) ** 2 + ((start[1] - end[1]) / 2) ** 2),
                 width / self.width * sinAngle + width / self.height * (1 - sinAngle))
         self._add_vbo_instance((*center, *size), self.camera.map_color(color), (1, 0, 0, angle))
 

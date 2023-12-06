@@ -63,11 +63,11 @@ class PhysicsObject:
             return self.apply_force_vertical(-force, delta_time)
 
         if not is_radians:
-            angle = math.radians(angle)
+            angle = radians(angle)
             
         acceleration = force / self.mass
-        self.vel[0] += math.cos(angle) * acceleration * delta_time
-        self.vel[1] += math.sin(angle) * acceleration * delta_time
+        self.vel[0] += cos(angle) * acceleration * delta_time
+        self.vel[1] += sin(angle) * acceleration * delta_time
     
     def apply_velocity(self, world, delta_time: float):
         """
@@ -90,17 +90,17 @@ class PhysicsObject:
 
         # Push water to adjacent blocks
         stength = (abs(self.vel[0]) + abs(self.vel[1])) * 5
-        #block_feet = (math.floor(self.rect.centerx), round(self.rect.y))
-        block_feet = (math.floor(self.rect.centerx), round(self.rect.top))
+        #block_feet = (floor(self.rect.centerx), round(self.rect.y))
+        block_feet = (floor(self.rect.centerx), round(self.rect.top))
         ...
 
     def get_collision(self, world):
         """
         Returns whether the object collides with a block.
         """
-        for x in range(math.floor(self.rect.left), math.ceil(self.rect.right)):
-            #for y in range(math.floor(self.rect.y), math.ceil(self.rect.y + self.rect.h)):
-            for y in range(math.floor(self.rect.top), math.ceil(self.rect.bottom)):
+        for x in range(floor(self.rect.left), ceil(self.rect.right)):
+            #for y in range(floor(self.rect.y), ceil(self.rect.y + self.rect.h)):
+            for y in range(floor(self.rect.top), ceil(self.rect.bottom)):
                 if world.get_block(x, y):
                     return True
         return False
@@ -150,13 +150,13 @@ class PhysicsObject:
         if self.vel[0]:
             self.block_right = self.block_left = 0
 
-        for x in range(math.floor(round(self.rect.left, 5)), math.ceil(round(self.rect.right, 5))):
-            #for y in range(math.floor(round(self.rect.y, 5)), math.ceil(round(self.rect.y + self.rect.h, 5))):
-            for y in range(math.floor(round(self.rect.top, 5)), math.ceil(round(self.rect.bottom, 5))):
+        for x in range(floor(round(self.rect.left, 5)), ceil(round(self.rect.right, 5))):
+            #for y in range(floor(round(self.rect.y, 5)), ceil(round(self.rect.y + self.rect.h, 5))):
+            for y in range(floor(round(self.rect.top, 5)), ceil(round(self.rect.bottom, 5))):
                 if world.get_block(x, y):
                     
                     # Push player up if possible (instead of colliding)
-                    self.rect.y = math.ceil(self.rect.y)
+                    self.rect.y = ceil(self.rect.y)
                     if not (self.type != "player" or self.vel[1] <= 0 or abs(self.vel[0]) < 1 or self.rect.y - last_y > 0.5 or collision or self.get_collision(world)):
                         self.vel[1] *= 0.8
                         continue
@@ -183,9 +183,9 @@ class PhysicsObject:
         """
         if any(self.vel):
             self.block_above = self.block_below = 0
-        for x in range(math.floor(round(self.rect.left, 5)), math.ceil(round(self.rect.right, 5))):
-            #for y in range(math.floor(round(self.rect.y, 5)), math.ceil(round(self.rect.y + self.rect.h, 5))):
-            for y in range(math.floor(round(self.rect.top, 5)), math.ceil(round(self.rect.bottom, 5))):
+        for x in range(floor(round(self.rect.left, 5)), ceil(round(self.rect.right, 5))):
+            #for y in range(floor(round(self.rect.y, 5)), ceil(round(self.rect.y + self.rect.h, 5))):
+            for y in range(floor(round(self.rect.top, 5)), ceil(round(self.rect.bottom, 5))):
                 if world.get_block(x, y):
                     if self.vel[1] > 0:
                         self.rect.bottom = y
@@ -209,7 +209,7 @@ class PhysicsObject:
 
             #block_friction = self.get_ground_friction(world)
             #block_friction = 0.1
-            #friction = math.copysign(delta_time / block_friction, self.vel[0])
+            #friction = copysign(delta_time / block_friction, self.vel[0])
             #if abs(friction) > abs(self.vel[0]):
             #    self.vel[0] = 0
             #else:
@@ -219,10 +219,10 @@ class PhysicsObject:
         #if self.block_right:
         #    self.block_right -= 1
 
-        block_feet = (math.floor(self.rect.centerx), round(self.rect.top))
-        block_head = (math.floor(self.rect.centerx), round(self.rect.bottom))
-        #block_feet = (math.floor(self.rect.centerx), round(self.rect.y))
-        #block_head = (math.floor(self.rect.centerx), round(self.rect.y + self.rect.h))
+        block_feet = (floor(self.rect.centerx), round(self.rect.top))
+        block_head = (floor(self.rect.centerx), round(self.rect.bottom))
+        #block_feet = (floor(self.rect.centerx), round(self.rect.y))
+        #block_head = (floor(self.rect.centerx), round(self.rect.y + self.rect.h))
 
         self.inWater = world.get_water(*block_feet) > 0.2
         if self.inWater and world.get_water(*block_head) > 0.2:

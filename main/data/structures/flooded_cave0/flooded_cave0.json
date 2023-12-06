@@ -1,15 +1,15 @@
 {
-    "name": "ice_cave",
+    "name": "flooded_cave0",
     "generation": {
         "weight": 1.0,
         "entrance_coord": [
             0,
-            12
+            26
         ],
         "entrance_angle": 0,
         "exit_coord": [
-            29,
-            12
+            49,
+            27
         ],
         "exit_angle": 0
     },

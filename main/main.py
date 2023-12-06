@@ -9,6 +9,7 @@ from scripts.utility.const import *
 from scripts.graphics import sound
 from scripts.menu.menu import Menu
 from scripts.utility import file
+import cProfile, pstats
 import pprint
 import time
 
@@ -84,8 +85,8 @@ def draw_game():
         )
         window.draw_text(
             (-0.98, 0.75 - y_offset),
-            "Mouse Pos: " + str((math.floor(mouse_pos[0]),
-            math.floor(mouse_pos[1]))),
+            "Mouse Pos: " + str((floor(mouse_pos[0]),
+            floor(mouse_pos[1]))),
             (250, 250, 250, 200),
             size=TEXT_SIZE_DESCRIPTION
         )
@@ -98,8 +99,8 @@ def draw_game():
         window.draw_text(
             (-0.98, 0.55 - y_offset),
             "Mouse Block: " + str(world.get_block(
-                math.floor(mouse_pos[0]),
-                math.floor(mouse_pos[1]),
+                floor(mouse_pos[0]),
+                floor(mouse_pos[1]),
                 layer=slice(None) 
             )),
             (250, 250, 250, 200),
@@ -294,11 +295,33 @@ def main():
         item_image = "sword"
         item_shown = False
 
+    counter = 0
+
     while True:
         if menu.game_state == "game":
             # Draw and update the game
             #t1 = time.time()
-            draw_game()
+            counter += 1
+            if counter == 0:
+                profiler = cProfile.Profile()
+                profiler.enable()
+
+                draw_game()
+
+                profiler.disable()
+                
+                # Creating a stats object from the profile
+                stats = pstats.Stats(profiler)
+                
+                # Sorting the stats by tottime in descending order
+                stats.sort_stats('tottime')
+
+                # Printing the top 20 functions
+                stats.print_stats(20)
+                raise SystemExit
+
+            else:      
+                draw_game()
             #t2 = time.time()
             world.update(window)
             #t3 = time.time()
@@ -487,9 +510,8 @@ def main():
 
 
 if __name__ == "__main__":
-    #main()
+    main()
     
-    #"""
     import cProfile, pstats
 
     profiler = cProfile.Profile()
@@ -510,4 +532,3 @@ if __name__ == "__main__":
 
     # Printing the top 20 functions
     stats.print_stats(20)
-    #"""

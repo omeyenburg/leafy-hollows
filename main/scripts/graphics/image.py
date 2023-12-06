@@ -79,8 +79,8 @@ def load_blocks():
         if not data["family"] in families:
             families[data["family"]] = len(families)
 
-    width = math.ceil(math.sqrt(len(frames)))
-    height = math.ceil(len(frames) / width)
+    width = ceil(sqrt(len(frames)))
+    height = ceil(len(frames) / width)
     block_animation_rows = len(frames) // (width * WORLD_BLOCK_SIZE) + 1
     image = pygame.Surface((width * WORLD_BLOCK_SIZE, height * WORLD_BLOCK_SIZE + block_animation_rows), pygame.SRCALPHA)
 

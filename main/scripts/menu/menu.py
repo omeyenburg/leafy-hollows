@@ -180,7 +180,7 @@ class Menu:
             window.set_antialiasing(antialiasing)
 
         if window.options["antialiasing"]:
-            value = [i / 5 for i in range(1, 6)][round(math.log2(window.options["antialiasing"]))]
+            value = [i / 5 for i in range(1, 6)][round(log2(window.options["antialiasing"]))]
         else:
             value = 0
         slider_antialiasing = Slider(settings_video_page, MENU_BUTTON_SMALL_SIZE, value=value)
@@ -204,7 +204,7 @@ class Menu:
             window._instance_shader.setvar("shadow_resolution", window.options["shadow resolution"])
 
         if window.options["shadow resolution"]:
-            value = [i / 6 for i in range(1, 7)][round(math.log2(window.options["shadow resolution"]))]
+            value = [i / 6 for i in range(1, 7)][round(log2(window.options["shadow resolution"]))]
         else:
             value = 0
         slider_shadow_resolution = Slider(settings_video_page, MENU_BUTTON_SMALL_SIZE, value=value)

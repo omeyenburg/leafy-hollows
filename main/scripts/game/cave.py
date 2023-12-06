@@ -11,8 +11,8 @@ def generate_points_segment(position: [float], length, start_angle: float, devia
     max_angle_change = 0.5
 
     for i in range(length):
-        position[0] = position[0] + math.cos(angle) * WORLD_GENERATION_STEP_SIZE
-        position[1] = position[1] + math.sin(angle) * WORLD_GENERATION_STEP_SIZE
+        position[0] = position[0] + cos(angle) * WORLD_GENERATION_STEP_SIZE
+        position[1] = position[1] + sin(angle) * WORLD_GENERATION_STEP_SIZE
         points.add(tuple(position))
         angle_change = snoise2(i * 20.215 + 0.0142, 1, octaves=3) * max_angle_change
         angle_change -= (angle - start_angle) / deviation * max_angle_change
@@ -47,7 +47,7 @@ def intro(world, window, position):
     window.loading_progress[1] = 2
 
     points = set()
-    start_angle = angle = -math.pi/2
+    start_angle = angle = -pi/2
     length = INTRO_LENGTH
     deviation = 5
     lowest = 0
@@ -97,8 +97,8 @@ def interpolated(world, position, start_angle=None, end_angle=None, start_radius
         angle = start_angle * (1 - interpolation) + end_angle * interpolation
         radius = round(start_radius * (1 - interpolation) + end_radius * interpolation)
 
-        x = position[0] = position[0] + math.cos(angle) * WORLD_GENERATION_STEP_SIZE
-        y = position[1] = position[1] + math.sin(angle) * WORLD_GENERATION_STEP_SIZE
+        x = position[0] = position[0] + cos(angle) * WORLD_GENERATION_STEP_SIZE
+        y = position[1] = position[1] + sin(angle) * WORLD_GENERATION_STEP_SIZE
 
         for delta_x in range(-radius - WORLD_GENERATION_CAVE_BORDER_PADDING, radius + WORLD_GENERATION_CAVE_BORDER_PADDING + 1):
             for delta_y in range(-radius - WORLD_GENERATION_CAVE_BORDER_PADDING, radius + WORLD_GENERATION_CAVE_BORDER_PADDING + 1):
@@ -110,7 +110,7 @@ def interpolated(world, position, start_angle=None, end_angle=None, start_radius
 
 
 def vertical(world, position):
-    angle = math.pi / 2 * 3 * (random.randint(0, 1) * 2 - 1)
+    angle = pi / 2 * 3 * (random.randint(0, 1) * 2 - 1)
     length = random.randint(60, 70)
     deviation = 0.5
     radius = 2

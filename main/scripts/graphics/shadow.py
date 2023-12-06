@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-from numba.typed import List
 from numba import jit, prange
+from numba.typed import List
+from math import *
 import numpy
-import math
 
 
 @jit(nopython=True, cache=True, fastmath=True)
@@ -55,7 +55,7 @@ def find_collision_point(start, end, edges):
             x = edge[0]
             y = start[1] * distance_end + end[1] * distance_start
             if min(edge[1], edge[3]) < y < max(edge[1], edge[3]) and min(start[0], end[0]) < x < max(start[0], end[0]):
-                d = math.sqrt((start[0] - x) ** 2 + (start[1] - y) ** 2)
+                d = sqrt((start[0] - x) ** 2 + (start[1] - y) ** 2)
                 if collision_point[0] == -1 or collision_point[0] > d:
                     collision_point[0] = d
                     collision_point[1] = x
@@ -69,7 +69,7 @@ def find_collision_point(start, end, edges):
             y = edge[1]
             x = start[0] * distance_end + end[0] * distance_start
             if min(edge[0], edge[2]) < x < max(edge[0], edge[2]) and min(start[1], end[1]) < y < max(start[1], end[1]):
-                d = math.sqrt((start[0] - x) ** 2 + (start[1] - y) ** 2)
+                d = sqrt((start[0] - x) ** 2 + (start[1] - y) ** 2)
                 if collision_point[0] == -1 or collision_point[0] > d:
                     collision_point[0] = d
                     collision_point[1] = x
@@ -122,12 +122,12 @@ def get_triangle_points(view=numpy.array([[]]), light_source=List, corners=numpy
         if collision:
             continue
 
-        angle = math.atan2(corner[1] - light_source[1], corner[0] - light_source[0])
+        angle = atan2(corner[1] - light_source[1], corner[0] - light_source[0])
         corner_angles.append([angle, *corner])
         
         for variation in (-0.0001, 0.0001):
             v_angle = angle + variation
-            v_corner = (math.cos(v_angle) * 100 + light_source[0], math.sin(v_angle) * 100 + light_source[1])
+            v_corner = (cos(v_angle) * 100 + light_source[0], sin(v_angle) * 100 + light_source[1])
 
             collision = find_collision_point(light_source, v_corner, edges)
             if collision[0] != -1:

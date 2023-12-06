@@ -121,8 +121,8 @@ class Inventory:
             weapon_y -= weapon_size[1]
             weapon_positions.append(weapon_y)
 
-        distance = abs(math.floor(scroll_position) - scroll_position)
-        weapon_center_y = (1 - distance) * weapon_positions[math.floor(scroll_position)] + distance * weapon_positions[math.ceil(scroll_position)]
+        distance = abs(floor(scroll_position) - scroll_position)
+        weapon_center_y = (1 - distance) * weapon_positions[floor(scroll_position)] + distance * weapon_positions[ceil(scroll_position)]
 
         # Draw weapon list
         for i, weapon in enumerate(inventory):
@@ -139,9 +139,9 @@ class Inventory:
             weapon_rect.collide_point((window.mouse_pos[0] / window.width * 2, window.mouse_pos[1] / window.height * 2)) and
             abs(round(scroll_position) - i) == 1):
                 if scroll_position < i:
-                    window.mouse_wheel[1] = (math.ceil(round(window.mouse_wheel[1] / scroll_speed) + 0.1) - 0.3) * scroll_speed
+                    window.mouse_wheel[1] = (ceil(round(window.mouse_wheel[1] / scroll_speed) + 0.1) - 0.3) * scroll_speed
                 else:
-                    window.mouse_wheel[1] = (math.floor(round(window.mouse_wheel[1] / scroll_speed) - 0.1) + 0.3) * scroll_speed
+                    window.mouse_wheel[1] = (floor(round(window.mouse_wheel[1] / scroll_speed) - 0.1) + 0.3) * scroll_speed
                 sound.play(window, "click")
 
             if (1 in window.mouse_buttons and
@@ -347,8 +347,8 @@ class Inventory:
                 weapon_y -= weapon_size[1]
                 weapon_positions.append(weapon_y)
 
-            distance = abs(math.floor(scroll_position) - scroll_position)
-            weapon_center_y = (1 - distance) * weapon_positions[math.floor(scroll_position)] + distance * weapon_positions[math.ceil(scroll_position)]
+            distance = abs(floor(scroll_position) - scroll_position)
+            weapon_center_y = (1 - distance) * weapon_positions[floor(scroll_position)] + distance * weapon_positions[ceil(scroll_position)]
 
             # Draw weapon list
             for i, weapon in enumerate(inventory):
@@ -364,9 +364,9 @@ class Inventory:
                 weapon_rect.collide_point((window.mouse_pos[0] / window.width * 2, window.mouse_pos[1] / window.height * 2)) and
                 abs(round(scroll_position) - i) == 1):
                     if scroll_position < i:
-                        window.mouse_wheel[1] = (math.ceil(round(window.mouse_wheel[1] / scroll_speed) + 0.1) - 0.3) * scroll_speed
+                        window.mouse_wheel[1] = (ceil(round(window.mouse_wheel[1] / scroll_speed) + 0.1) - 0.3) * scroll_speed
                     else:
-                        window.mouse_wheel[1] = (math.floor(round(window.mouse_wheel[1] / scroll_speed) - 0.1) + 0.3) * scroll_speed
+                        window.mouse_wheel[1] = (floor(round(window.mouse_wheel[1] / scroll_speed) - 0.1) + 0.3) * scroll_speed
 
                 # Draw highlight circle
                 if i == round(scroll_position):
