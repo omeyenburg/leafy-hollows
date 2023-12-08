@@ -9,11 +9,9 @@ def get_sprite_rect(window, image, offset=0):
     Returns the rectangle of the current animation frame of an image.
     """
     frames, speed = window.sprites[image]
-    if speed != 0 or len(frames) > 1:
-        index = int((window.time + 10 * offset) // speed % len(frames))
-    else:
-        index = 0
-    return window.sprite_rects[frames[index]]
+    if speed != 0:
+        return window.sprite_rects[frames[int((window.time + 10 * offset) // speed % len(frames))]]
+    return window.sprite_rects[frames[0]]
 
 
 def get_hand_position(window, image, offset=0):

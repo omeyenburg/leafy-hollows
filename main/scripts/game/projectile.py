@@ -2,6 +2,7 @@
 from scripts.game.baseentity import LivingEntity
 from scripts.game.physics import PhysicsObject
 from scripts.graphics.window import Window
+from scripts.utility.geometry import Vec
 from scripts.graphics import particle
 from scripts.utility.const import *
 from scripts.graphics import sound
@@ -45,11 +46,12 @@ class Arrow(PhysicsObject):
             if (not (entity is self or entity is self.owner)) and isinstance(entity, LivingEntity) and entity.rect.collide_line(self.rect.center, last_center):
                 damage, attack_speed, weapon_range, crit_chance = self.bow.get_weapon_stat_increase(world)
                 damage *= 1 + 0.5 * (crit_chance > random.random())
-                entity.damage(window, damage, (5 * self.vel[0] / sum(self.vel), 5 * self.vel[1] / sum(self.vel)))
+                entity.damage(window, damage, Vec(*self.vel).normalized)
 
                 self.bow.apply_attributes(window, self.owner, entity)
                 self.explode(window, world)
                 world.entities.discard(self)
+                world.loaded_entities.discard(self)
                 break
 
     def explode(self, window, world):

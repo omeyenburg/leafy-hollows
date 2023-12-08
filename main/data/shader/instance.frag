@@ -28,7 +28,6 @@ uniform vec2 camera;
 uniform float resolution;
 uniform float shadow_resolution;
 uniform float time;
-uniform int gray_screen;
 uniform float damage_screen;
 
 // Predefined values
@@ -702,7 +701,7 @@ vec4 get_color_foreground() {
 
 void draw_post_processing() {
     vec4 corner_color = CORNER_COLOR + damage_screen * BLOOD_COLOR;
-    fragColor = mix((get_color_foreground() + vec4(0, 0, 0, gray_screen)) / (1 + gray_screen), corner_color, sqrt(pow((vertTexcoord.x - 0.5) * 5, 2) + pow((vertTexcoord.y - 0.5) * 5, 2)) / 5);
+    fragColor = mix(get_color_foreground(), corner_color, sqrt(pow((vertTexcoord.x - 0.5) * 5, 2) + pow((vertTexcoord.y - 0.5) * 5, 2)) / 5);
 }
 
 

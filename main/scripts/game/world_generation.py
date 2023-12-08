@@ -45,7 +45,6 @@ def generate_world(world, window):
     next_special = 5
 
     structure_names = random.sample(list(structures.keys()), k=len(structures))
-    structure_names[0] = "ice_cave2"
     structure_index = 0
     generated_structures = []
 
@@ -110,7 +109,7 @@ def generate_world(world, window):
 
     # Smoother cave walls
     flatten_edges(world)
-
+ 
     # Generate structures between line cave segments
     window.loading_progress[:2] = "Generating structures", 7
     for x, y, array in generated_structures:
@@ -140,6 +139,8 @@ def generate_world(world, window):
         if coord[0] < 30 or coord[1] > -500 or world.get_block(coord[0], coord[1] + 1) or coord[0] > last_enemy_x or world.get_water(coord[0], coord[1]):
             continue
         if coord[0] < 100:
+            if random.randint(0, 1):
+                continue
             Entity = GreenSlime
         elif coord[0] < 300:
             Entity = random.choice((GreenSlime, Bat))

@@ -70,23 +70,22 @@ class Shader:
         Returns variable location, glsl data type as a valid function and the variable value.
         """
         # OpenGL functions to send data to a shader and glsl data types
-        """
-        glUniform1f(location, value): Sets a single float value (float).
-        glUniform1i(location, value): Sets a single integer value (int).
-        glUniform1ui(location, value): Sets a single unsigned integer value (uint).
-        glUniform2f(location, value1, value2): Sets a 2-component float vector (vec2).
-        glUniform2i(location, value1, value2): Sets a 2-component integer vector (ivec2).
-        glUniform2ui(location, value1, value2): Sets a 2-component unsigned integer vector (uvec2).
-        glUniform3f(location, value1, value2, value3): Sets a 3-component float vector (vec3).
-        glUniform3i(location, value1, value2, value3): Sets a 3-component integer vector (ivec3).
-        glUniform3ui(location, value1, value2, value3): Sets a 3-component unsigned integer vector (uvec3).
-        glUniform4f(location, value1, value2, value3, value4): Sets a 4-component float vector (vec4).
-        glUniform4i(location, value1, value2, value3, value4): Sets a 4-component integer vector (ivec4).
-        glUniform4ui(location, value1, value2, value3, value4): Sets a 4-component unsigned integer vector (uvec4).
-        glUniformMatrix2fv(location, count, transpose, value): Sets a 2x2 matrix or an array of 2x2 matrices (mat2).
-        glUniformMatrix3fv(location, count, transpose, value): Sets a 3x3 matrix or an array of 3x3 matrices (mat3).
-        glUniformMatrix4fv(location, count, transpose, value): Sets a 4x4 matrix or an array of 4x4 matrices (mat4).
-        """
+        # glUniform1f(location, value): Sets a single float value (float).
+        # glUniform1i(location, value): Sets a single integer value (int).
+        # glUniform1ui(location, value): Sets a single unsigned integer value (uint).
+        # glUniform2f(location, value1, value2): Sets a 2-component float vector (vec2).
+        # glUniform2i(location, value1, value2): Sets a 2-component integer vector (ivec2).
+        # glUniform2ui(location, value1, value2): Sets a 2-component unsigned integer vector (uvec2).
+        # glUniform3f(location, value1, value2, value3): Sets a 3-component float vector (vec3).
+        # glUniform3i(location, value1, value2, value3): Sets a 3-component integer vector (ivec3).
+        # glUniform3ui(location, value1, value2, value3): Sets a 3-component unsigned integer vector (uvec3).
+        # glUniform4f(location, value1, value2, value3, value4): Sets a 4-component float vector (vec4).
+        # glUniform4i(location, value1, value2, value3, value4): Sets a 4-component integer vector (ivec4).
+        # glUniform4ui(location, value1, value2, value3, value4): Sets a 4-component unsigned integer vector (uvec4).
+        # glUniformMatrix2fv(location, count, transpose, value): Sets a 2x2 matrix or an array of 2x2 matrices (mat2).
+        # glUniformMatrix3fv(location, count, transpose, value): Sets a 3x3 matrix or an array of 3x3 matrices (mat3).
+        # glUniformMatrix4fv(location, count, transpose, value): Sets a 4x4 matrix or an array of 4x4 matrices (mat4).
+        
         loc = GL.glGetUniformLocation(program, variable)
         func = data_type_map = {'int': GL.glUniform1i,
                                 'uint': GL.glUniform1ui,

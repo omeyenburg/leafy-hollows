@@ -157,17 +157,20 @@ class Rect:
 
 
 class Vec:
-    def __init__(self, *args):
-        args_length = len(args)
-        if args_length == 2:
-            self.x, self.y = args
-            return
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
 
-        if args_length == 1:
-            self.x, self.y = args[0]
-            return
+        # args_length = len(args)
+        # if args_length == 2:
+        #     self.x, self.y = args
+        #     return
+
+        # if args_length == 1:
+        #     self.x, self.y = args[0]
+        #     return
         
-        raise TypeError("Vec expected a list, Vec or 2 numeric arguments, got " + str(args))
+        # raise TypeError("Vec expected a list, Vec or 2 numeric arguments, got " + str(args))
 
     def __repr__(self):
         return f"Vec({self.x}, {self.y})"
@@ -227,8 +230,13 @@ class Vec:
     def __abs__(self):
         return sqrt(self[0] ** 2 + self[1] ** 2)
 
+    @property
+    def normalized(self):
+        length = abs(self)
+        return (self.x / length, self.y / length)
+
     def copy(self):
-        return Vec(self)
+        return Vec(self.x, self.y)
 
     def rotate(self, angle):
         length = abs(self)

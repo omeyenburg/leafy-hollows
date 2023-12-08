@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from scripts.utility.noise_functions import pnoise1, snoise2
+from scripts.utility.noise_functions import pnoise1
 from scripts.utility.language import translate
 from scripts.utility.geometry import *
 from scripts.utility.const import *
@@ -11,7 +11,7 @@ import copy
 
 class Inventory:
     def __init__(self):
-        self.weapons = [Banana(1)]
+        self.weapons = [Stick(1)]
         self.selected = self.weapons[0]
         self.marked_weapons = set()
         self.arrows = 0

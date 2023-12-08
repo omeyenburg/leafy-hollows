@@ -59,7 +59,7 @@ def draw_game():
     if window.options["show fps"]:
         window.draw_text(
             (-0.98, 0.95),
-            "FPS: " + str(round(window.average_fps, 3)),
+            f"FPS: {window.average_fps: 8.3F}",
             (250, 250, 250, 200),
             size=TEXT_SIZE_DESCRIPTION
         )
@@ -69,7 +69,7 @@ def draw_game():
 
     # Write debug info
     if window.options["show debug"]:
-        mouse_pos = window.camera.map_coord(window.mouse_pos[:2], from_pixel=1, world=1)
+        mouse_pos = window.camera.map_coord(window.mouse_pos[:2], to_world=1)
         window.draw_text(
             (-0.98, 0.95 - y_offset),
             "Player Pos: " + str((round(world.player.rect.centerx, 1),
@@ -143,7 +143,7 @@ def draw_game():
             size=TEXT_SIZE_DESCRIPTION
         )
     
-    if menu.game_state != "intro" and not (world.player.rect.x == 0 and menu.game_state == "pause"):
+    if world.player.block_below or not (world.player.rect.x == 0):
         # Draw player health bar
         health_percentage = world.player.health / world.player.max_health
         heart_center = Vec(-0.9, -0.9)
@@ -155,26 +155,26 @@ def draw_game():
         window.draw_rect(heart_center + Vec(heart_size.x * 0.8, -health_bar_size.y / 2), (0.5 * health_percentage, 0.05), (165, 48, 48, 255))
         window.draw_rect(heart_center + Vec(heart_size.x * 0.8 + 0.5 * health_percentage, -health_bar_size.y / 2), (0.5 * (1 - health_percentage), 0.05), (56, 29, 49, 255))
 
+        # Draw weapon of player
         weapon = world.player.holding
-        if not weapon is None:
-            # Weapon image
-            weapon_pos = (0.8, -0.9)
-            weapon_size = Vec(0.2, 0.2 / window.height * window.width)
-            window.draw_image(weapon.image, weapon_pos, weapon_size, angle=weapon.angle)
-            
-            # Arrow count
-            if weapon.image in ("bow", "banana"):
-                arrow_text = f"{world.player.inventory.arrows}/{world.player.inventory.max_arrows}"
-                window.draw_text((0.75, -0.42), arrow_text, (255, 255, 255), 0.17)
-                window.draw_image("arrow_item", (0.9, -0.5), (0.1, 0.1 / window.height * window.width), angle=0)
+        weapon_pos = (0.8, -0.9)
+        weapon_size = Vec(0.2, 0.2 / window.height * window.width)
+        window.draw_image(weapon.image, weapon_pos, weapon_size, angle=weapon.angle)
+        
+        # Arrow count
+        if weapon.image in ("bow", "banana"):
+            arrow_text = f"{world.player.inventory.arrows}/{world.player.inventory.max_arrows}"
+            window.draw_text((0.75, -0.42), arrow_text, (255, 255, 255), 0.17)
+            window.draw_image("arrow_item", (0.9, -0.5), (0.1, 0.1 / window.height * window.width), angle=0)
 
-            # Weapon cooldown
-            attack_speed = weapon.get_weapon_stat_increase(world)[1]
-            cooldown_index = max(0, round(weapon.cooldown * attack_speed * 16))
-            if 0 < cooldown_index:
-                cooldown_image = "cooldown_" + chr(ord("a") + 16 - cooldown_index)
-                window.draw_image(cooldown_image, weapon_pos, weapon_size)
+        # Weapon cooldown
+        attack_speed = weapon.get_weapon_stat_increase(world)[1]
+        cooldown_index = max(0, round(weapon.cooldown * attack_speed * 16))
+        if 0 < cooldown_index:
+            cooldown_image = "cooldown_" + chr(ord("a") + 16 - cooldown_index)
+            window.draw_image(cooldown_image, weapon_pos, weapon_size)
 
+        # Draw recently received weapon
         if world.player.recent_drop[0] > 0:
             world.player.recent_drop[0] -= window.delta_time
             drop_y = max(0.8, 1 - world.player.recent_drop[0])
@@ -184,7 +184,10 @@ def draw_game():
             else:
                 window.draw_text((0.85, drop_y + 0.05 / window.height * window.width), "+", (255, 255, 255), 0.25)
                 window.draw_image(world.player.recent_drop[1].image, (0.9, drop_y), (0.1, 0.1 / window.height * window.width), angle=world.player.recent_drop[1].angle)
-                
+
+        if window.camera.pos[0] >= world.camera_stop:
+            window.draw_text((0, 0.8), "You escaped from the caves!", (255, 255, 255), 0.3, centered=True)
+           
 
 def draw_intro():
     # Draw intro text
@@ -221,7 +224,7 @@ def update_intro():
     window.camera.move(camera_move_pos)
 
     # Update window + shader
-    window.update(world.player.rect.center)
+    window.update()
     window.camera.update()
 
     # Skip intro
@@ -239,7 +242,6 @@ def update_intro():
         menu.pause_page.open()
         menu.game_state = "pause"
         menu.game_intro = True
-        window.effects["gray_screen"] = 1
 
     # End intro
     if world.player.block_below:
@@ -255,7 +257,7 @@ def update_game_camera():
     )
 
     if not window.options["reduce camera movement"]:
-        mouse_pos = window.camera.map_coord(window.mouse_pos[:2], world=True)
+        mouse_pos = window.camera.map_coord(window.mouse_pos[:2], to_world=True)
         camera_pos = (
             (camera_pos[0] * 0.8 + mouse_pos[0] * 0.2),
             (camera_pos[1] * 0.8 + mouse_pos[1] * 0.2)
@@ -295,41 +297,16 @@ def main():
         item_image = "sword"
         item_shown = False
 
-    counter = 0
-
     while True:
         if menu.game_state == "game":
             # Draw and update the game
-            #t1 = time.time()
-            counter += 1
-            if counter == 0:
-                profiler = cProfile.Profile()
-                profiler.enable()
-
-                draw_game()
-
-                profiler.disable()
-                
-                # Creating a stats object from the profile
-                stats = pstats.Stats(profiler)
-                
-                # Sorting the stats by tottime in descending order
-                stats.sort_stats('tottime')
-
-                # Printing the top 20 functions
-                stats.print_stats(20)
-                raise SystemExit
-
-            else:      
-                draw_game()
+            #t1 = time.time()    
+            draw_game()
             #t2 = time.time()
             world.update(window)
             #t3 = time.time()
             world.update_physics(window)
             #t4 = time.time()
-
-            if window.camera.pos[0] >= world.camera_stop:
-                window.draw_text((0, 0.8), "You escaped from the caves!", (255, 255, 255), 0.3, centered=True)
 
             # Update and draw the menu
             window.update(world.player.rect.center)
@@ -350,7 +327,8 @@ def main():
                 menu.game_state = "inventory"
 
             # Death
-            elif world.player.health <= 0:
+            if world.player.health <= 0:
+                world.player.state = "idle"
                 world.player.inventory.save(world)
                 file.delete("data/user/world.data")
                 menu.death_page.open()
@@ -500,7 +478,7 @@ def main():
             if window.options["show fps"]:
                 window.draw_text(
                     (-0.98, 0.95),
-                    str(round(window.average_fps, 3)),
+                    f"FPS: {window.average_fps: 8.3F}",
                     (250, 250, 250, 200),
                     size=TEXT_SIZE_DESCRIPTION
                 )
@@ -512,23 +490,23 @@ def main():
 if __name__ == "__main__":
     main()
     
-    import cProfile, pstats
+    # import cProfile, pstats
 
-    profiler = cProfile.Profile()
-    profiler.enable()
+    # profiler = cProfile.Profile()
+    # profiler.enable()
 
-    try:
-        main()
-    except SystemExit:
-        pass
+    # try:
+    #     main()
+    # except SystemExit:
+    #     pass
 
-    profiler.disable()
+    # profiler.disable()
     
-    # Creating a stats object from the profile
-    stats = pstats.Stats(profiler)
+    # # Creating a stats object from the profile
+    # stats = pstats.Stats(profiler)
     
-    # Sorting the stats by tottime in descending order
-    stats.sort_stats('tottime')
+    # # Sorting the stats by tottime in descending order
+    # stats.sort_stats('tottime')
 
-    # Printing the top 20 functions
-    stats.print_stats(20)
+    # # Printing the top 20 functions
+    # stats.print_stats(20)
