@@ -18,7 +18,7 @@ class Camera:
         self.dest: [float] = [0, 0]
         self.shift_pos: float = 0.0
         self.shift_dest: float = 0.0
-        self.window: Window = window
+        self.window = window
 
     def reset(self):
         self.resolution: float = 1.0
@@ -171,4 +171,3 @@ class Camera:
             center_x + ceil(self.window.width / 2 / self.pixels_per_meter) + simulation_distance,
             center_y + ceil(self.window.height / 2 / self.pixels_per_meter) + simulation_distance
         ))
-        

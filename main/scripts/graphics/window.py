@@ -194,8 +194,7 @@ class Window:
         self._texSprites = self._texture(sprite_atlas_image)
 
         # Font texture
-        self._font_options = ("RobotoMono-Bold.json", "bold")
-        #self._font_options = ("Arial", "bold")
+        self._font_options = ("RobotoMono-Bold.ttf", "bold")
         self._font, font_atlas_image = Font(
             self._font_options[0],
             resolution=self.options["text resolution"],
@@ -290,7 +289,8 @@ class Window:
         """
         Queue a object to be drawn on the screen and resize buffers as necessary.
         """
-        if self._vbo_instances_length == self._vbo_instances_index: # Resize all instanced vbos
+        if self._vbo_instances_length == self._vbo_instances_index:
+            # Resize all instanced vbos, adding 10 additional instances
             self._vbo_instances_length += 10
 
             new_dest_vbo_array = numpy.empty(self._vbo_instances_length * 4, dtype=numpy.float32)
@@ -317,6 +317,7 @@ class Window:
         self._source_or_color_vbo_array[index:index + 4] = source_or_color
         self._shape_transform_vbo_array[index:index + 4] = shape_transform
         
+        # Increment instance counter
         self._vbo_instances_index += 1
 
     def get_pressed_keys(self):
@@ -364,17 +365,14 @@ class Window:
             if value == 1:
                 self.keys[key] = 2
         
-        events = pygame.event.get()
-        #events = pygame.event.get(self.event_types)
-        #pygame.event.clear()
-
+        events = filter(lambda i: i.type in self.event_types, pygame.event.get())
         for event in events:
             if event.type == pygame.QUIT:
                 self.quit()
 
             elif event.type == pygame.VIDEORESIZE:
                 if self._resize_supress:
-                    resize_supress = False
+                    self._resize_supress = False
                     continue
                 self.size = event.size
                 self.width, self.height = event.w, event.h
@@ -422,7 +420,13 @@ class Window:
         """
         # Update pygame
         self._events()
-        self._clock.tick(self.options["max fps"])
+
+        fps_limit = self.options["max fps"]
+        if fps_limit == 1000 or self.options["enable vsync"]:
+            fps_limit = 0
+        self._clock.tick(fps_limit)
+        #self.fps = 1000 / max(1, self._clock.tick(fps_limit))
+
         self.fps = self._clock.get_fps()
         if self.fps != 0:
             self.delta_time = (self.delta_time + 1 / self.fps) * 0.5
@@ -441,15 +445,17 @@ class Window:
                 self.damage_time = 0
                 self._instance_shader.setvar("damage_screen", 0)
 
+        self._update_world(player_position)
+
         # Send variables to shader
         for effect, value in self.effects.items():
             self._instance_shader.setvar(effect, value)
-        self._update_world(player_position)
+
         self._instance_shader.update()
 
         # Rebind textures
-        GL.glActiveTexture(GL.GL_TEXTURE1)
-        GL.glBindTexture(GL.GL_TEXTURE_2D, self._texFont)
+        #GL.glActiveTexture(GL.GL_TEXTURE1)
+        #GL.glBindTexture(GL.GL_TEXTURE_2D, self._texFont)
 
         GL.glActiveTexture(GL.GL_TEXTURE4)
         GL.glBindTexture(GL.GL_TEXTURE_2D, self._texShadow)
@@ -474,7 +480,7 @@ class Window:
         # Draw background and world
         self._instance_shader.setvar("time", self.time)
         self._add_vbo_instance((0, 0, 1, 1), (0, 0, 0, 0), (4, 0, 0, 0))
-        self.effects = {}
+        self.effects.clear()
 
     def toggle_fullscreen(self):
         """
@@ -617,7 +623,7 @@ class Window:
             return
 
         # Draw shadows
-        if self.options["shadow resolution"] and player_position != (0, 0):
+        if any(player_position) and self.options["shadow resolution"]:
             self._draw_shadows(offset, player_position)
 
         # Send variables to shader
@@ -630,6 +636,7 @@ class Window:
         # View size
         size = self.world_view.shape[:2]
         data = numpy.array(numpy.swapaxes(self.world_view, 0, 1), dtype=numpy.int32)
+
         if self._world_size != size:
             if not self._texWorld is None:
                 GL.glDeleteTextures(1, (self._texWorld,))
@@ -637,7 +644,7 @@ class Window:
             self._world_size = size
         
         if self._texWorld is None:
-            # Generate texture
+            # Generate new texture
             texture = GL.glGenTextures(1)
             GL.glBindTexture(GL.GL_TEXTURE_2D, texture)
             GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA32I, *self._world_size, 0, GL.GL_RGBA_INTEGER, GL.GL_INT, data)
@@ -674,15 +681,12 @@ class Window:
         surface = pygame.Surface(surface_size)
 
         # Use torches as light source
-        """
-        light_sources = (
-            list(numpy.argwhere(self.world_view[:, :, 1] == self.block_data["torch"][0]))
-          + list(numpy.argwhere(self.world_view[:, :, 1] == self.block_data["torch_flipped"][0]))
-        )
-
-        for player_position in light_sources:
-            ...
-        """
+        # light_sources = (
+        #     list(numpy.argwhere(self.world_view[:, :, 1] == self.block_data["torch"][0]))
+        #   + list(numpy.argwhere(self.world_view[:, :, 1] == self.block_data["torch_flipped"][0]))
+        # )
+        # for player_position in light_sources:
+        #     ...
 
         # Use player as light source
         center = (floor(self.camera.pos[0]),
@@ -927,29 +931,29 @@ class Window:
         rect = get_sprite_rect(self, image, offset=animation_offset)
 
         dest_rect = (position[0] + size[0] / 2, position[1] + size[1] / 2, size[0] / 2, size[1] / 2)
-        if self.stencil_rect:
-            org = dest_rect[:]
+        # if self.stencil_rect:
+        #     org = dest_rect[:]
 
-            left = max(dest_rect[0] - dest_rect[2], self.stencil_rect[0] - self.stencil_rect[2])
-            right = min(dest_rect[0] + dest_rect[2], self.stencil_rect[0] + self.stencil_rect[2])
-            top = max(dest_rect[1] - dest_rect[3], self.stencil_rect[1] - self.stencil_rect[3])
-            bottom = min(dest_rect[1] + dest_rect[3], self.stencil_rect[1] + self.stencil_rect[3])
+        #     left = max(dest_rect[0] - dest_rect[2], self.stencil_rect[0] - self.stencil_rect[2])
+        #     right = min(dest_rect[0] + dest_rect[2], self.stencil_rect[0] + self.stencil_rect[2])
+        #     top = max(dest_rect[1] - dest_rect[3], self.stencil_rect[1] - self.stencil_rect[3])
+        #     bottom = min(dest_rect[1] + dest_rect[3], self.stencil_rect[1] + self.stencil_rect[3])
 
-            width = (right - left) / 2
-            height = (bottom - top) / 2
+        #     width = (right - left) / 2
+        #     height = (bottom - top) / 2
 
-            if width > 0 and height > 0:
-                dest_rect = (left + width, top + height, width, height)
-                if org[2] - width > 0.0001 or org[3] - height > 0.0001:
-                    rect = (
-                            rect[0] + rect[2] * ((1 - dest_rect[2] / org[2]) if dest_rect[0] > org[0] else 0),
-                            rect[1] + rect[3] * (round(1 - dest_rect[3] / org[3], 6) if dest_rect[1] > org[1] else 0),
-                            rect[2] * (width / org[2]),
-                            rect[3] * ((height / org[3]) if (height / org[3]) < 1 else 0)
-                        )
-                self._add_vbo_instance(dest_rect, rect, (0, *flip, angle / 180 * pi))
-        else:
-            self._add_vbo_instance(dest_rect, rect, (0, *flip, angle / 180 * pi))
+        #     if width > 0 and height > 0:
+        #         dest_rect = (left + width, top + height, width, height)
+        #         if org[2] - width > 0.0001 or org[3] - height > 0.0001:
+        #             rect = (
+        #                     rect[0] + rect[2] * ((1 - dest_rect[2] / org[2]) if dest_rect[0] > org[0] else 0),
+        #                     rect[1] + rect[3] * (round(1 - dest_rect[3] / org[3], 6) if dest_rect[1] > org[1] else 0),
+        #                     rect[2] * (width / org[2]),
+        #                     rect[3] * ((height / org[3]) if (height / org[3]) < 1 else 0)
+        #                 )
+        #         self._add_vbo_instance(dest_rect, rect, (0, *flip, angle / 180 * pi))
+        # else:
+        self._add_vbo_instance(dest_rect, rect, (0, *flip, angle / 180 * pi))
 
     def draw_rect(self, position: [float], size: [float], color: [int]):
         """

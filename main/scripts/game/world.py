@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-from scripts.game.world_generation import generate_world, generate_block
-from scripts.game.physics import PhysicsObject
+from scripts.game.world_generation import generate_world
 from scripts.graphics import particle
 from scripts.utility import geometry
 from scripts.utility.const import *
@@ -57,6 +56,7 @@ class World:
         self.wind: float = 0.0 # Wind direction
         self.loaded_blocks: tuple = ((0, 0), (0, 0)) # (start, end)
         self.water_update_timer: float = 0.0
+        self.entity_water_obstructions: set = set()
 
         if PHYSICS_REALISTIC:
             self.player: player.Player = player.Player(spawn_pos=[0, 0])
@@ -151,11 +151,11 @@ class World:
         return copysign(1, abs(self.chunks[(chunk_x, chunk_y)][mod_x, mod_y, 3]))
 
     def update_physics(self, window):
-        for entity in self.loaded_entities:
-            if hasattr(entity, "health") and entity.health <= 0:
-                if not entity is self.player:
-                    self.player.obtain_weapon_drop(window, entity)
+        for entity in self.loaded_entities.copy():
+            if entity.health <= 0 and not entity is self.player:
+                self.player.obtain_weapon_drop(window, entity)
                 self.entities.discard(entity)
+                self.loaded_entities.discard(entity)
             entity.update(self, window)
 
         if window.options["particles"]:
@@ -172,9 +172,11 @@ class World:
         (start_x, start_y), (end_x, end_y) = self.loaded_blocks
         self.loaded_entities.clear()
         self.loaded_entities.add(self.player)
+        #self.entity_water_obstructions.clear()
         for entity in self.entities.copy():
             if start_x < entity.rect.x < end_x and start_y < entity.rect.y < end_y:
                 self.loaded_entities.add(entity)
+                #self.entity_water_obstructions.add((round(entity.rect.centerx), floor(entity.rect.centery)))
             elif entity.destroy_unloaded:
                 self.entities.discard(entity)
         
@@ -254,11 +256,13 @@ class World:
         # Blocks on both sides
         blocks = {(x, y): water_level}
         total_water = water_level
+
         for _x, _y in ((x - 1, y), (x + 1, y)):
             if not (self.get_block(_x, _y) or self.get_block(_x, _y - 1) and self.get_water(_x, _y - 1) > 1):
                 water_level_target = self.get_water(_x, _y)
                 total_water += water_level_target
                 blocks[(_x, _y)] = water_level_target
+
         max_water = len(blocks) * WORLD_WATER_PER_BLOCK
         if total_water > max_water:
             emmitable_water = total_water - max_water
@@ -293,21 +297,17 @@ class World:
 
     def create_view(self, window):
         start, end = self.loaded_blocks
-        view_size = (end[0] - start[0], end[1] - start[1])
-
-        if self.view_size != view_size:
-            self.view = numpy.empty((*view_size, 4))
-            self.view_size = view_size
+        self.view_size = (end[0] - start[0], end[1] - start[1])
 
         start_chunk_x = start[0] >> WORLD_CHUNK_SIZE_POWER
         start_chunk_y = start[1] >> WORLD_CHUNK_SIZE_POWER
         start_mod_x = start[0] & (WORLD_CHUNK_SIZE - 1)
         start_mod_y = start[1] & (WORLD_CHUNK_SIZE - 1)
-        chunk_num_x = ceil((start_mod_x + view_size[0]) / WORLD_CHUNK_SIZE)
-        chunk_num_y = ceil((start_mod_y + view_size[1]) / WORLD_CHUNK_SIZE)
+        chunk_num_x = ceil((start_mod_x + self.view_size[0]) / WORLD_CHUNK_SIZE)
+        chunk_num_y = ceil((start_mod_y + self.view_size[1]) / WORLD_CHUNK_SIZE)
         uncut_view = numpy.empty((chunk_num_x * WORLD_CHUNK_SIZE, chunk_num_y * WORLD_CHUNK_SIZE, 4))
 
-        #print("view_size", view_size)
+        #print("view_size", self.view_size)
         #print("start", start)
         #print("end", end)
         #print("start_chunk", start_chunk_x, start_chunk_y)
@@ -321,32 +321,31 @@ class World:
             if not (chunk_x, chunk_y) in self.chunks:
                 self.chunks[(chunk_x, chunk_y)] = numpy.zeros((WORLD_CHUNK_SIZE, WORLD_CHUNK_SIZE, 4))
                 self.chunks[(chunk_x, chunk_y)][:, :, 0] = self.block_name["dirt_block"]
-                #print(chunk_x, chunk_y)
 
             uncut_view[chunk_delta_x * WORLD_CHUNK_SIZE:(chunk_delta_x + 1) * WORLD_CHUNK_SIZE, chunk_delta_y * WORLD_CHUNK_SIZE:(chunk_delta_y + 1) * WORLD_CHUNK_SIZE] = self.chunks[(chunk_x, chunk_y)]
 
-        window.world_view = self.view = uncut_view[start_mod_x:start_mod_x + view_size[0], start_mod_y:start_mod_y + view_size[1]]
+        window.world_view = self.view = uncut_view[start_mod_x:start_mod_x + self.view_size[0], start_mod_y:start_mod_y + self.view_size[1]]
 
-            #print("chunk", "[rel]", chunk_delta_x, chunk_delta_y, "[abs]", chunk_x, chunk_y)
+            # print("chunk", "[rel]", chunk_delta_x, chunk_delta_y, "[abs]", chunk_x, chunk_y)
             
-            #copy_start_x = max(start[0], chunk_x * WORLD_CHUNK_SIZE) & (WORLD_CHUNK_SIZE - 1)
-            #copy_start_y = max(start[1], chunk_y * WORLD_CHUNK_SIZE) & (WORLD_CHUNK_SIZE - 1)
-            #copy_end_x = min(end[0], (chunk_x + 1) * WORLD_CHUNK_SIZE - 1) & (WORLD_CHUNK_SIZE - 1)
-            #copy_end_y = min(end[1], (chunk_y + 1) * WORLD_CHUNK_SIZE - 1) & (WORLD_CHUNK_SIZE - 1)
-            #print("copy start", copy_start_x, copy_start_y)
-            #print("copy end", copy_end_x, copy_end_y)
-            #print("copy size", copy_end_x - copy_start_x, copy_end_y - copy_start_y)
+            # copy_start_x = max(start[0], chunk_x * WORLD_CHUNK_SIZE) & (WORLD_CHUNK_SIZE - 1)
+            # copy_start_y = max(start[1], chunk_y * WORLD_CHUNK_SIZE) & (WORLD_CHUNK_SIZE - 1)
+            # copy_end_x = min(end[0], (chunk_x + 1) * WORLD_CHUNK_SIZE - 1) & (WORLD_CHUNK_SIZE - 1)
+            # copy_end_y = min(end[1], (chunk_y + 1) * WORLD_CHUNK_SIZE - 1) & (WORLD_CHUNK_SIZE - 1)
+            # print("copy start", copy_start_x, copy_start_y)
+            # print("copy end", copy_end_x, copy_end_y)
+            # print("copy size", copy_end_x - copy_start_x, copy_end_y - copy_start_y)
 
-            #dest_start_x = max(0, WORLD_CHUNK_SIZE * (chunk_x) - start_mod_x)
-            #dest_start_y = max(0, WORLD_CHUNK_SIZE * (chunk_y) - start_mod_y)
-            #dest_end_x = copy_end_x - copy_start_x + dest_start_x#min(view_size[0], start_mod_x + WORLD_CHUNK_SIZE * (chunk_x - 1))
-            #dest_end_y = copy_end_y - copy_start_y + dest_start_y#min(view_size[1], start_mod_y + WORLD_CHUNK_SIZE * (chunk_y - 1))
-            #print("dest start", dest_start_x, dest_start_y)
-            #print("dest end", dest_end_x, dest_end_y)
-            #print("dest size", dest_end_x - dest_start_x, dest_end_y - dest_start_y)
+            # dest_start_x = max(0, WORLD_CHUNK_SIZE * (chunk_x) - start_mod_x)
+            # dest_start_y = max(0, WORLD_CHUNK_SIZE * (chunk_y) - start_mod_y)
+            # dest_end_x = copy_end_x - copy_start_x + dest_start_x#min(self.view_size[0], start_mod_x + WORLD_CHUNK_SIZE * (chunk_x - 1))
+            # dest_end_y = copy_end_y - copy_start_y + dest_start_y#min(self.view_size[1], start_mod_y + WORLD_CHUNK_SIZE * (chunk_y - 1))
+            # print("dest start", dest_start_x, dest_start_y)
+            # print("dest end", dest_end_x, dest_end_y)
+            # print("dest size", dest_end_x - dest_start_x, dest_end_y - dest_start_y)
 
-            #data = self.chunks[(chunk_x, chunk_y)][copy_start_x:copy_end_x, copy_start_y:copy_end_y]
-            #self.view[dest_start_x:dest_end_x, dest_start_y:dest_end_y] = data  
+            # data = self.chunks[(chunk_x, chunk_y)][copy_start_x:copy_end_x, copy_start_y:copy_end_y]
+            # self.view[dest_start_x:dest_end_x, dest_start_y:dest_end_y] = data
 
     def save(self, window):
         window.loading_progress[:3] = "Saving inventory", 0, 2

@@ -74,7 +74,7 @@ def intro(world, window, position):
     
 
 def horizontal(world, position):
-    angle = snoise2(position[0] / 100 + world.seed, world.seed, octaves=4) * 0.6
+    angle = snoise2(position[0] / 100 + world.seed, world.seed, octaves=2) * 0.2
     length = random.randint(50, 150)
     deviation = random.randint(2, 5)
     radius = 3

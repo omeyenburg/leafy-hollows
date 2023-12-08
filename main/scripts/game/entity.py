@@ -46,7 +46,7 @@ class GreenSlime(LivingEntity):
                 sound.play(window, "slime", x=(self.rect.x - world.player.rect.x) / 5)
 
             self.hit_ground -= window.delta_time
-            self.vel[0] *= 0.6 ** window.delta_time
+            self.vel[0] *= 0.8 ** window.delta_time
             self.attack_cooldown = 0
 
             if self.hit_ground < -0.5:
@@ -119,7 +119,7 @@ class Goblin(LivingEntity):
         self.holding = random.choice((Stick, Sword, Axe, Pickaxe, Bow))(1)
         if isinstance(self.holding, Bow):
             self.holding.attributes["longshot"] = 3
-            self.prepare_attack_length *= 8
+            self.prepare_attack_length *= 5
 
         # Animation states
         self.state: str = "idle"    # state is used for movement & animations
@@ -137,9 +137,6 @@ class Goblin(LivingEntity):
         if self.stunned:
             self.state = "hit_ground"
             return
-
-        if self.underWater:
-            self.vel[0] *= 0.9
 
         holding_bow = isinstance(self.holding, Bow)
         distance_player = abs(world.player.rect.centerx - self.rect.centerx)
@@ -163,6 +160,10 @@ class Goblin(LivingEntity):
         if side_block and self.block_below:
             self.vel[1] += 6.5
             self.vel[0] *= 0.5
+
+        if self.underWater and world.player.rect.centery > self.rect.centery and self.vel[1] < 2.5:
+            self.vel[1] += window.delta_time * 50
+            self.vel[0] *= 0.3
         
         if not self.block_below:
             self.state = "jump"
@@ -222,30 +223,26 @@ class Bat(LivingEntity):
 
     def move(self, world, window: Window): # pathfinding implementation
         def pathfind() -> list[int, int]:
-            """
-            grid: list[list[int, int]] = []
-            for y in range(world.view.shape[1]):
-                grid.append([])
-                for x in range(world.view.shape[0]):
-                    grid[y].append(0 if world.view[x, y, 0] == 0 else 1)
+            # grid: list[list[int, int]] = []
+            # for y in range(world.view.shape[1]):
+            #     grid.append([])
+            #     for x in range(world.view.shape[0]):
+            #         grid[y].append(0 if world.view[x, y, 0] == 0 else 1)
             
-            grid.reverse()
-            """
+            # grid.reverse()
             
-            """
-            print(window.camera.pos, len(grid[0]), len(grid), str())
-            offset = [window.camera.pos[0] - ((len(grid[0]) - 1) / 2), window.camera.pos[1] - ((len(grid) - 1) / 2)]  # offset between center of grid (relative) and camera_pos (absolute)
-            start_pos: list[int, int] = [round(self.rect.center[i] - offset[i]) for i in range(2)]
-            end_pos: list[int, int] = [round(world.player.rect.center[i] - offset[i]) for i in range(2)]
-            print(start_pos, end_pos, offset, self.rect.center, world.player.rect.center)
-            """
+            # print(window.camera.pos, len(grid[0]), len(grid), str())
+            # offset = [window.camera.pos[0] - ((len(grid[0]) - 1) / 2), window.camera.pos[1] - ((len(grid) - 1) / 2)]  # offset between center of grid (relative) and camera_pos (absolute)
+            # start_pos: list[int, int] = [round(self.rect.center[i] - offset[i]) for i in range(2)]
+            # end_pos: list[int, int] = [round(world.player.rect.center[i] - offset[i]) for i in range(2)]
+            # print(start_pos, end_pos, offset, self.rect.center, world.player.rect.center)
             
             if self.path is None or len(self.path) == 0 or dist(self.path[0], world.player.rect.center) > 3:
                 self.path_search_delay += window.delta_time
                 if self.path_search_delay > PATH_FIND_DELAY: # Recalculate path when player moved too far
                     self.path_search_delay = 0
 
-                    grid = numpy.swapaxes(world.view[:, :, 0], 0, 1)
+                    grid: list[list[int, int]] = numpy.swapaxes(world.view[:, :, 0], 0, 1)
 
                     # Vector approach; flipped vector directions, now it works, don't know why
                     # Start search from player to reverse path
@@ -273,22 +270,20 @@ class Bat(LivingEntity):
                 for i in range(len(self.path)):
                     window.draw_block_highlight(self.path[i][0], self.path[i][1])
 
-            """
-            print(relative_camera_pos, start_pos, end_pos, result[2])
-            for y, _ in enumerate(grid):
-                for x, _ in enumerate(grid[y]):
-                    if [x, y] == start_pos:
-                        print("\x1b[41m" + " " + "\x1b[0m", end="")
-                    elif [x, y] == end_pos:
-                        print("\x1b[42m" + " " + "\x1b[0m", end="")
-                    elif [x, y] == relative_camera_pos:
-                        print("\x1b[43m" + " " + "\x1b[0m", end="")
-                    elif [x, y] == result[2]:
-                        print("\x1b[44m" + " " + "\x1b[0m", end="")
-                    else:
-                        print("\x1b[47m" + " " + "\x1b[0m" if int(grid[y][x]) == 0 else "\x1b[40m" + " " + "\x1b[0m", end="")
-                print()
-            """
+            # print(relative_camera_pos, start_pos, end_pos, result[2])
+            # for y, _ in enumerate(grid):
+            #     for x, _ in enumerate(grid[y]):
+            #         if [x, y] == start_pos:
+            #             print("\x1b[41m" + " " + "\x1b[0m", end="")
+            #         elif [x, y] == end_pos:
+            #             print("\x1b[42m" + " " + "\x1b[0m", end="")
+            #         elif [x, y] == relative_camera_pos:
+            #             print("\x1b[43m" + " " + "\x1b[0m", end="")
+            #         elif [x, y] == result[2]:
+            #             print("\x1b[44m" + " " + "\x1b[0m", end="")
+            #         else:
+            #             print("\x1b[47m" + " " + "\x1b[0m" if int(grid[y][x]) == 0 else "\x1b[40m" + " " + "\x1b[0m", end="")
+            #     print()
 
             return next_pos
 
@@ -302,15 +297,17 @@ class Bat(LivingEntity):
         else:
             next_pos = (world.player.rect.centerx, world.player.rect.y + self.prepare_attack * 2)
 
-        speed_x = min(self.max_speed, abs(world.player.rect.centerx - self.rect.centerx))
+        speed_x = min(self.max_speed, 0.1 + (world.player.rect.centerx - self.rect.centerx) ** 2)
         if next_pos[0] < self.rect.centerx:
             self.vel[0] = -speed_x
-            self.direction = 1
+            if speed_x == self.max_speed:
+                self.direction = 1
         elif next_pos[0] > self.rect.centerx:
             self.vel[0] = speed_x
-            self.direction = 0
+            if speed_x == self.max_speed:
+                self.direction = 0
 
-        speed_y = min(self.max_speed, abs(world.player.rect.centery - self.rect.centery))
+        speed_y = min(self.max_speed, 0.1 + abs(world.player.rect.centery - self.rect.centery))
         if next_pos[1] < self.rect.centery and not self.underWater:
             self.vel[1] = -speed_y
         elif next_pos[1] > self.rect.centery:

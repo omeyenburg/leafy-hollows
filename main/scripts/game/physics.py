@@ -15,6 +15,7 @@ class PhysicsObject:
         self.mass: float = mass
         self.rect: geometry.Rect = geometry.Rect(*position, *size)
         self.vel: [float] = [0.0, 0.0]
+        self.health: int = 1 # Used to delete objects
 
         self.inWater: bool = False
         self.underWater: bool = False
@@ -49,8 +50,8 @@ class PhysicsObject:
         Applies force to the object.
         Angle in degrees; 0 equals right; counterclockwise
         """
-        if self.underWater:
-            force /= 3
+        #if self.underWater:
+        #    force /= 3
 
         # Horizontal and vertical only force to skip sin/cos
         if angle == 0:
@@ -88,11 +89,11 @@ class PhysicsObject:
             self.rect.center = last_position
             self.vel = [0, 0]
 
-        # Push water to adjacent blocks
-        stength = (abs(self.vel[0]) + abs(self.vel[1])) * 5
-        #block_feet = (floor(self.rect.centerx), round(self.rect.y))
-        block_feet = (floor(self.rect.centerx), round(self.rect.top))
-        ...
+        ## Push water to adjacent blocks
+        #stength = (abs(self.vel[0]) + abs(self.vel[1])) * 5
+        ##block_feet = (floor(self.rect.centerx), round(self.rect.y))
+        #block_feet = (floor(self.rect.centerx), round(self.rect.top))
+        #...
 
     def get_collision(self, world):
         """
@@ -109,11 +110,7 @@ class PhysicsObject:
         """
         Applies gravity force to the object.
         """
-        if self.inWater:
-            gravity = PHYSICS_GRAVITY_CONSTANT_WATER
-        else:
-            gravity = PHYSICS_GRAVITY_CONSTANT
-        self.apply_force(gravity * self.mass, 270, delta_time)
+        self.apply_force(PHYSICS_GRAVITY_CONSTANT * self.mass, 270, delta_time)
 
     def apply_friction_force(self, delta_time):
         """
@@ -139,7 +136,6 @@ class PhysicsObject:
         if touching:
             force = velocity_product * block_friction * self.mass
             self.apply_force_vertical(force, delta_time)
-        
     
     def x_collide(self, world, delta_time):
         """
@@ -176,7 +172,6 @@ class PhysicsObject:
 
         return collision
 
-    
     def y_collide(self, world):
         """
         Resolves collisions on the y-axis.
@@ -196,7 +191,6 @@ class PhysicsObject:
                         self.block_below = world.get_block(x, y, generate=False)
 
                     self.vel[1] = 0#self.vel[1] // 2
-
 
     def update(self, world, delta_time):
         """
@@ -227,7 +221,7 @@ class PhysicsObject:
         self.inWater = world.get_water(*block_feet) > 0.2
         if self.inWater and world.get_water(*block_head) > 0.2:
             self.underWater = 5
-            self.vel[0] *= 0.5 ** delta_time
+            self.vel[0] *= 0.2 ** delta_time
         elif self.underWater:
             self.underWater -= 1
 
@@ -242,3 +236,16 @@ class PhysicsObject:
         if block_fricton:
             self.apply_force_horizontal(-self.vel[0] * self.mass * block_fricton * 0.1, 1)
             self.vel[0] *= 0.9 ** delta_time
+
+        # Entity collision
+        for other in world.loaded_entities:
+            if other is self:
+                continue
+            
+            distance = dist(self.rect.center, other.rect.center)
+            if distance > 1:
+                continue
+
+            push_strength = (1 - distance) * 1000
+            angle = atan2(self.rect.centery - other.rect.centery, self.rect.centerx - other.rect.centerx) + random.random()
+            self.apply_force(push_strength, angle, delta_time, is_radians=True)

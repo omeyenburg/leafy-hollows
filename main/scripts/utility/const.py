@@ -57,7 +57,6 @@ PATH_FIND_DELAY: float = 0.3
 PHYSICS_REALISTIC: bool = False
 PHYSICS_PREVENT_MOVEMENT_IN_AIR: bool = False
 PHYSICS_GRAVITY_CONSTANT: float = 9.81 if PHYSICS_REALISTIC else 15
-PHYSICS_GRAVITY_CONSTANT_WATER: float = PHYSICS_GRAVITY_CONSTANT
 PHYSICS_FRICTION_X: float = 0.1
 PHYSICS_JUMP_THRESHOLD: int = 3 # Time to jump after leaving the ground in ticks
 PHYSICS_WALL_JUMP_THRESHOLD: float = 0.3 # Time to jump after leaving a wall in seconds
