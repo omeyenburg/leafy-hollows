@@ -1,0 +1,10 @@
+{
+    "name": "crate",
+    "family": "treasure",
+    "layer": "foreground",
+    "hardness": 1,
+    "speed": 0,
+    "frames": [
+        "crate.png"
+    ]
+}

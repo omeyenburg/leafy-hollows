@@ -178,8 +178,3 @@ class RangedWeapon(BaseItem):
         damage, attack_speed, weapon_range, crit_chance = self.get_weapon_stat_increase(world)
         world.add_entity(Arrow(attacker.rect.center, speed=weapon_range * 10, angle=angle, owner=attacker))
         self.cooldown = 1 / attack_speed
-
-# Magic Wands
-class MagicWeapon(BaseItem):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)

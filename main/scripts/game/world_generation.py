@@ -1,15 +1,10 @@
 # -*- coding: utf-8 -*-
-from scripts.utility.noise_functions import pnoise1, snoise2
+from scripts.utility.noise_functions import snoise2
 from scripts.utility.const import *
 from scripts.game import structure
 from scripts.game.entity import *
 from scripts.game import cave
 import copy
-
-
-# Replace with better names...? Add / Remove?
-BIOMES = ["overgrown", "mushroom", "dripstone", "frozen", "underwater", "stone", "desert", "hell", "crystal", "dwarf"]
-CAVE_SHAPES = ["intro", "horizontal", "vertical", "blob", "structure"]
 
 
 # Called from World
@@ -33,7 +28,6 @@ def generate_world(world, window):
     # Generate intro
     window.loading_progress[:2] = "Generating intro", 1
     cave.intro(world, window, position)
-
     cave.horizontal(world, position)
 
     # Generate cave segments
@@ -48,7 +42,7 @@ def generate_world(world, window):
     structure_index = 0
     generated_structures = []
 
-    for i in range(segments_count):
+    for _ in range(segments_count):
         next_special -= 1
 
         if next_special:
@@ -109,7 +103,8 @@ def generate_world(world, window):
 
     # Smoother cave walls
     flatten_edges(world)
- 
+    flatten_edges(world)
+
     # Generate structures between line cave segments
     window.loading_progress[:2] = "Generating structures", 7
     for x, y, array in generated_structures:
@@ -118,11 +113,11 @@ def generate_world(world, window):
 
     # Generate foliage
     window.loading_progress[:2] = "Generating foliage", 9
-    
+
     # Find block edges with air
     blocks_ground, blocks_ceiling, blocks_wall_right, blocks_wall_left = find_edge_blocks(world)
 
-     # Generate poles
+    # Generate poles
     poles_successful = generate_poles(world, poles, blocks_ground, blocks_ceiling)
     if not poles_successful:
         return 0
@@ -172,6 +167,9 @@ def find_edge_blocks(world):
         if block_type == world.block_name["dirt_block"]: # Generate terrain block
             generate_block(world, *coord)
             continue
+        elif block_type == world.block_name["crate"]:
+            world.set_block(*coord, 0)
+            world.add_entity(Crate(coord))
         elif block_type != 0: # Not air
             continue
 
@@ -256,7 +254,6 @@ def get_decoration_block_type(world, x, y):
         return [None]
 
     block_comparison = ("any", block_name, world.block_family[block_name])
-    block_generation_properties = world.block_generation_properties
 
     decoration_list = list(filter(lambda name: (
         any([selected in block_comparison for selected in world.block_generation_properties[name].get("on", "any").split("|")]) and
@@ -346,6 +343,19 @@ def generate_poles(world, poles, blocks_ground, blocks_ceiling):
 
             y_ground = blocks_ground[x + x_offest]
             y_ceiling = max(y_ground, blocks_ceiling[x + x_offest] - 2)
+
+            found_air_above = False
+            for _y in range(50):
+                y = y_ceiling + _y
+                if not world.get_block_exists(x + x_offest, y):
+                    break
+                block = world.get_block(x + x_offest, y)
+                if not block:
+                    found_air_above = True
+                    y_ceiling = y
+                elif found_air_above:
+                    y_ceiling = y - 2
+            
             height = y_ceiling - y_ground - abs(x_offest)
 
             if height > pole_height:
@@ -377,7 +387,7 @@ def flatten_edges(world):
 def generate_block(world, x, y, repeat=0):
     if x > 30:
         z = snoise2(x / 8 + world.seed, y / 8 + world.seed, octaves=3, persistence=0.1, lacunarity=5)
-    if x > 20: # Interpolation (from intro )
+    if x > 20: # Interpolation (from intro)
         z1 = snoise2(x / 16 + world.seed, y / 16, octaves=3, persistence=0.1, lacunarity=5, repeaty=repeat / 16)
         z2 = snoise2(x / 8 + world.seed, y / 8 + world.seed, octaves=3, persistence=0.1, lacunarity=5)
         i = (x - 20) / 10

@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+
+
 class Node:
     def __init__(self, position: list[int, int], parent):
         self.pos = position

@@ -2,7 +2,6 @@
 from scripts.graphics.image import load_sprites, get_sprite_rect
 from scripts.utility.const import OPENGL_VERSION, PLATFORM
 from scripts.utility.language import translate
-from scripts.utility.thread import threaded
 from scripts.graphics.shader import Shader
 from scripts.graphics.camera import Camera
 from scripts.graphics.font import Font
@@ -16,8 +15,6 @@ from math import *
 import pygame
 import ctypes
 import numpy
-import time
-import sys
 
 
 class Window:

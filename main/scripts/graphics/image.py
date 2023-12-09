@@ -36,7 +36,6 @@ def load_blocks():
     block_paths = file.find("data/images/blocks", "*.json", True)
     
     block_data = {}
-    block_indices = {}
     frames = []
     animation = []
     blocks = []
@@ -73,7 +72,7 @@ def load_blocks():
                         sub_block = f"{block}_{x // WORLD_BLOCK_SIZE}_{y // WORLD_BLOCK_SIZE}"
                         block_data[sub_block] = (data["hardness"], data["family"], data["layer"])
                         animation.append((sub_block, len(data["frames"]), data["speed"]))        
-        
+
         if not data["family"] in families:
             families[data["family"]] = len(families)
 
@@ -151,7 +150,6 @@ def load_sprites():
 
     sprite_paths = file.find("data/images/sprites", "*.json", True)
     for path in sprite_paths:
-        sprite = file.basename(path)
         data = file.load(path, file_format="json")
         indices = []
         for frame in data["frames"]:

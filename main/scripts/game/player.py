@@ -42,6 +42,7 @@ class Player(LivingEntity):
         self.hit_ground = 0         # Used for hit ground animation
         self.can_move: bool = False # Disabled during intro
         self.damage_time: float = 0.0
+        self.attack_time: float = 0.0
 
         # Long crouch jump
         self.charge_crouch_jump: float = 0
@@ -53,12 +54,21 @@ class Player(LivingEntity):
         Draw the player.
         """
         # Draw hitbox
-        #rect = window.camera.map_coord((self.rect.x, self.rect.y, self.rect.w, self.rect.h), from_world=True)
-        #window.draw_rect(rect[:2], rect[2:], (255, 0, 0, 100))
+        if window.options["test.draw_hitboxes"]:
+            rect = window.camera.map_coord((self.rect.x, self.rect.y, self.rect.w, self.rect.h), from_world=True)
+            window.draw_rect(rect[:2], rect[2:], (255, 0, 0, 100))
 
         # Draw player
         rect = window.camera.map_coord((self.rect.x - 1 + self.rect.w / 2, self.rect.y, 2, 2), from_world=True)
         window.draw_image("player_" + self.state, rect[:2], rect[2:], flip=(self.direction, 0), animation_offset=self.uuid)
+
+        if self.attack_time:
+            if self.attack_time > 0 and self.state in ("idle", "walk", "sprint", "fall", "fall_slow", "hit_ground", "jump", "high_jump"):
+                self.state = "attack_" + chr(ord("a") + 5 - floor(self.attack_time))
+                window.draw_image("player_" + self.state, rect[:2], rect[2:], flip=(self.direction, 0))
+                self.attack_time -= window.delta_time * 10
+            else:
+                self.attack_time = 0
 
         # Draw item
         self.draw_holding_item(window)
@@ -420,33 +430,37 @@ class Player(LivingEntity):
         """
 
         # Mouse pull
-        # if window.mouse_buttons[0] == 1: # left click: pull player to mouse
-        #     def mouse_pull(strenght):
-        #         mouse_pos = window.camera.map_coord(window.mouse_pos[:2], to_world=True)
-        #         delta_x, delta_y = mouse_pos[0] - self.rect.centerx, mouse_pos[1] - self.rect.centery
-        #         angle_to_mouse = degrees(atan2(delta_y, delta_x))
-        #         force = min(dist(self.rect.center, mouse_pos), 3) / window.delta_time * strenght
-        #         self.apply_force(force, angle_to_mouse, window.delta_time)
-        #     mouse_pull(300) # constant activation balances out w/ gravity --> usable as rope
-        
+        if window.mouse_buttons[0] == 1 and window.options["test.player_leap"]: # Left click: pull player to mouse
+            def mouse_pull(strenght):
+                mouse_pos = window.camera.map_coord(window.mouse_pos[:2], to_world=True)
+                delta_x, delta_y = mouse_pos[0] - self.rect.centerx, mouse_pos[1] - self.rect.centery
+                angle_to_mouse = degrees(atan2(delta_y, delta_x))
+                force = min(dist(self.rect.center, mouse_pos), 3) / window.delta_time * strenght
+                self.apply_force(force, angle_to_mouse, window.delta_time)
+            mouse_pull(200) # constant activation balances out gravity --> usable as rope
 
         # Place/break block with right click
-        # if window.mouse_buttons[2] == 1:
-        #     mouse_pos = window.camera.map_coord(window.mouse_pos[:2], to_world=True)
-        #     if world.get_block(floor(mouse_pos[0]), floor(mouse_pos[1])) > 0:
-        #         world.set_block(floor(mouse_pos[0]), floor(mouse_pos[1]), 0)
-        #     else:
-        #         world.set_block(floor(mouse_pos[0]), floor(mouse_pos[1]), world.block_name["stone_block"])   
-            
+        if window.mouse_buttons[2] == 1 and window.options["test.edit_blocks"]:
+            mouse_pos = window.camera.map_coord(window.mouse_pos[:2], to_world=True)
+            if world.get_block(floor(mouse_pos[0]), floor(mouse_pos[1])) > 0:
+                world.set_block(floor(mouse_pos[0]), floor(mouse_pos[1]), 0)
+            else:
+                world.set_block(floor(mouse_pos[0]), floor(mouse_pos[1]), world.block_name["stone_block"])   
+
         # Attack
         if window.mouse_buttons[0] == 1:
-            if not self.holding is None:
-                mouse_pos = window.camera.map_coord(window.mouse_pos[:2], to_world=True)
-                angle = atan2(mouse_pos[1] - self.rect.centery, mouse_pos[0] - self.rect.centerx)
-                self.holding.attack(window, world, self, angle)
+            mouse_pos = window.camera.map_coord(window.mouse_pos[:2], to_world=True)
+            angle = atan2(mouse_pos[1] - self.rect.centery, mouse_pos[0] - self.rect.centerx)
+            self.holding.attack(window, world, self, angle)
+            if not self.holding.image in ("bow", "banana"):
+                self.attack_time = 5.9999
+
+        # Mouse zoom
+        if window.mouse_wheel[3] and window.options["test.scroll_zoom"]:
+            window.camera.zoom(window.camera.resolution_goal + window.mouse_wheel[3] * 0.05, 1)
 
         # Place water
-        if window.mouse_buttons[2] == 1: # place water
+        if window.mouse_buttons[2] == 1 and window.options["test.place_water"]:
             mouse_pos = window.camera.map_coord(window.mouse_pos[:2], to_world=True)
             water_level = world.get_water(floor(mouse_pos[0]), floor(mouse_pos[1]))
             world.set_water(floor(mouse_pos[0]), floor(mouse_pos[1]), water_level + 1000)

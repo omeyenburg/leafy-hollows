@@ -1,6 +1,6 @@
 {
     "name": "sword_hit",
-    "speed": 0.1,
+    "speed": 0.01,
     "volume": 0.5,
     "category": "player",
     "sounds": [

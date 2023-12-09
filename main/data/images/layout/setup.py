@@ -1,5 +1,4 @@
 from pathlib import Path
-from rectpack import newPacker
 import rectpack as pack
 import pygame
 import sys
@@ -51,11 +50,11 @@ def fit(size_divider):
 
 
 def main():
-    size_divider = 10
+    size_divider = 20
 
     while size_divider > 0:
         rectangles, images, data = fit(size_divider)
-        size_divider -= 1
+        size_divider -= 0.5
         if not geometry.Rect.multi_intersection(rectangles):
             break
     

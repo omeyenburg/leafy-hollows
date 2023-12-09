@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-from scripts.utility.noise_functions import pnoise1, snoise2
 from scripts.graphics.image import load_blocks
-from scripts.utility.thread import threaded
 from scripts.graphics.window import Window
 from scripts.utility.geometry import *
 from scripts.game.world import World
@@ -9,9 +7,8 @@ from scripts.utility.const import *
 from scripts.graphics import sound
 from scripts.menu.menu import Menu
 from scripts.utility import file
-import cProfile, pstats
 import pprint
-import time
+
 
 # Setup
 caption = "Leafy Hollows"
@@ -21,6 +18,7 @@ menu: Menu = Menu(window)
 world: World = None
 menu.load_threaded("Leafy Hollows", "menu", window.setup)
 menu.main_page.open()
+
 
 def save_world():
     global world
@@ -276,16 +274,19 @@ def main():
     window.camera.set_zoom(CAMERA_RESOLUTION_GAME)
     #menu.game_state = "testing"
 
-    if menu.game_state == "testing":
+    if window.options["test.edit_holding_enabled"]:
         time_paused = False
         flip_direction = False
         unique_stepping = False
-        entity = "goblin"
-        state = "walk"
+        entity = window.options["test.edit_holding_entity"]
+        state = window.options["test.edit_holding_state"]
         image = entity + "_" + state
         frames, speed = window.sprites[image]
 
-        animation_path = file.find("data/images/sprites", image + "_.json", True, True)
+        animation_path = file.find("data/images/sprites", image + ".json", True, True)
+        if not len(animation_path):
+            animation_path = file.find("data/images/sprites", image + "_.json", True, True)
+
         animation_data = file.load(animation_path, file_format="json")
         frame_names = animation_data["frames"]
         unique_frames = sorted(set(frame_names), key=lambda i: (len(i), i))
@@ -360,8 +361,6 @@ def main():
                     p_unique_index = unique_frames.index(p_frame_name)
                     pre_print_positions.append(item_positions[p_unique_index])
 
-                last_position = pre_print_positions[-1]
-
                 for i, current_position in enumerate(pre_print_positions):
                     previous_position = pre_print_positions[i - 1]
                     next_position = pre_print_positions[(i + 1) % len(pre_print_positions)]
@@ -370,7 +369,6 @@ def main():
                     interpolated_y = round((previous_position[1] + current_position[1] * 10 + next_position[1]) / 12, 4)
                     interpolated_a = round((previous_position[2] + current_position[2] * 10 + next_position[2]) / 12, 4)
 
-                    last_position = [interpolated_x, interpolated_y, interpolated_a]
                     print_positions.append([interpolated_x, interpolated_y, interpolated_a])
                 
                 pprint.pprint(print_positions)

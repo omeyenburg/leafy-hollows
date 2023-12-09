@@ -147,6 +147,28 @@ class Label(Widget):
         window.draw_text(self.rect.center, self.text, (250, 250, 250, 200), self.fontsize, centered=True)
 
 
+class Image(Widget):
+    def __init__(self, *args, image: str="", size=(1, 1), **kwargs):
+        super().__init__(*args, **kwargs)
+        self.image = image
+        self.size = size
+
+    def update(self, window: Window):
+        self.draw(window)
+
+    def draw(self, window: Window):
+        start = (
+            self.rect[0] + (self.rect[2] - self.size[0]) / 2,
+            self.rect[1] + (self.rect[3] - self.size[1]) / 2
+        )
+        size = (
+            self.size[0],
+            self.size[1] * window.width / window.height,
+        )
+        window.draw_image(self.image, start, size)
+        # window.draw_text(self.rect.center, self.text, (250, 250, 250, 200), self.fontsize, centered=True)
+
+
 class Button(Widget):
     def __init__(self, *args, text: str="", callback=None, duration: float=0.2, **kwargs):
         super().__init__(*args, **kwargs)
@@ -253,7 +275,7 @@ class Entry(Widget):
         self.selected = False
         self.cursor = 0
 
-    def update(self):
+    def update(self, window: Window):
         if window.unicode == "\x08":
             self.text = self.text[:-1]
         elif window.unicode.isprintable():
@@ -261,7 +283,7 @@ class Entry(Widget):
 
         self.draw()
 
-    def draw(self):
+    def draw(self, window: Window):
         window.draw_rect(self.rect[:2], self.rect[2:], (255, 0, 0, 200))
         window.draw_text(self.rect.center, self.text, (0, 0, 0, 255), self.fontsize, centered=True)
 

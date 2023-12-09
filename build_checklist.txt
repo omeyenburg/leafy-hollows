@@ -1,3 +1,4 @@
 - delete "data/user/*"
 - set "self.weapons" to "[Stick(1)]" in "scripts/game/inventory.py"
 - in "scripts/game/world_generation.py" check "structure_names"
+- disable player block placing
