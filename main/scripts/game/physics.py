@@ -246,6 +246,6 @@ class PhysicsObject:
             if distance > 1:
                 continue
 
-            push_strength = (1 - distance) * 1000
-            angle = atan2(self.rect.centery - other.rect.centery, self.rect.centerx - other.rect.centerx) + random.random()
+            push_strength = (1 - distance) * 500
+            angle = atan2((self.rect.centery - other.rect.centery) * 0.5, self.rect.centerx - other.rect.centerx + random.random() * 0.1)
             self.apply_force(push_strength, angle, delta_time, is_radians=True)

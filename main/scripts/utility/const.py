@@ -51,6 +51,7 @@ ARROW_RECT_SIZE: [float] = (0.2, 0.2)
 SLIME_RECT_SIZE: [float] = (0.7, 0.7)
 GOBLIN_RECT_SIZE: [float] = (0.9, 1.8)
 BAT_RECT_SIZE: [float] = (0.7, 0.7)
+CRATE_RECT_SIZE: [float] = (1, 1)
 
 PATH_FIND_DELAY: float = 0.3
 
@@ -103,17 +104,17 @@ ATTRIBUTE_BASE_MODIFIERS: dict = {
     "piercing": 1,
     "ferocity": 15,
     "vampire": 5,
-    "looting": 20,
-    "explosive": 20,
+    "looting": 30,
+    "explosive": 15,
     "paralysis": 15,
     "berserker": 25,
-    "agility": 15,
+    "agility": 20,
     "soul drain": 20,
-    "shielding": 10,
+    "shielding": 5,
     "critical": 30,
     "warrior": 5,
     "assassin": 20,
-    "longshot": 10
+    "longshot": 20
 }
 
 ATTRIBUTE_DESCRIPTIONS: dict = {

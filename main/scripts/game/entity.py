@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from scripts.game.baseentity import LivingEntity
-from scripts.game.physics import PhysicsObject
 from scripts.game.pathfinding import a_star
 from scripts.graphics.window import Window
 from scripts.graphics import particle
@@ -264,7 +263,7 @@ class Bat(LivingEntity):
                 return None
 
             next_pos = self.path[-1]
-            if window.options["draw_pathfinding"]:
+            if window.options["test.draw_pathfinding"]:
                 window.draw_block_highlight(self.path[0][0], self.path[0][1], (255, 0, 255, 100))
                 window.draw_block_highlight(self.path[-1][0], self.path[-1][1], (0, 255, 0, 100))
                 for i in range(len(self.path)):
@@ -333,3 +332,18 @@ class Bat(LivingEntity):
             sound.play(window, "bat_fly", identifier=str(self.uuid), x=(self.rect.x - world.player.rect.x) / 5)
         elif not random.randint(0, int(window.fps * 9)):
             sound.play(window, "bat_scream", identifier=str(self.uuid), x=(self.rect.x - world.player.rect.x) / 5)
+
+
+class Crate(LivingEntity):
+    def __init__(self, spawn_pos: [float]):
+        super().__init__(30, spawn_pos, CRATE_RECT_SIZE, health=1)
+        self.type = "crate"
+        self.image = "crate"
+        self.item_drop_chance = 1.0
+
+    def draw(self, window: Window):
+        rect = window.camera.map_coord((self.rect.x - 0.5 + self.rect.w / 2, self.rect.y, 1, 1), from_world=True)
+        window.draw_image(self.image, rect[:2], rect[2:])
+
+    def update(self, world, window: Window):
+        super().update(world, window.delta_time)

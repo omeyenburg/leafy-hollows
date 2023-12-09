@@ -16,7 +16,9 @@ class Menu:
         ###---###  Main page  ###---###
         self.main_page = Page(columns=2, spacing=MENU_SPACING)
         Label(self.main_page, MENU_TITLE_SIZE, columnspan=2, text="Leafy Hollows", fontsize=TEXT_SIZE_HEADING)
-        button_main_play = Button(self.main_page, MENU_BUTTON_SIZE, columnspan=2, text="Play", fontsize=TEXT_SIZE_BUTTON, callback=lambda: self.set_state("load_world"))
+        #Label(self.main_page, MENU_BUTTON_SIZE, columnspan=2, text="", fontsize=TEXT_SIZE_TEXT)
+        #Image(self.main_page, MENU_TITLE_SIZE, columnspan=2, image="title", size=(.80, .64))
+        Button(self.main_page, MENU_BUTTON_SIZE, columnspan=2, text="Play", fontsize=TEXT_SIZE_BUTTON, callback=lambda: self.set_state("load_world"))
         button_main_settings = Button(self.main_page, MENU_BUTTON_SMALL_SIZE, text="Settings", fontsize=TEXT_SIZE_BUTTON)
         Button(self.main_page, MENU_BUTTON_SMALL_SIZE, callback=window.quit, text="Quit", fontsize=TEXT_SIZE_BUTTON)
         self.main_page.layout()
@@ -38,8 +40,8 @@ class Menu:
 
         self.pause_page = Page(columns=1, spacing=MENU_SPACING)
         Label(self.pause_page, MENU_HEADING_SIZE, text="Paused", fontsize=TEXT_SIZE_HEADING)
-        button_pause_play = Button(self.pause_page, MENU_BUTTON_SIZE, text="Play", callback=button_pause_play_update, fontsize=TEXT_SIZE_BUTTON)
-        button_pause_menu = Button(self.pause_page, MENU_BUTTON_SIZE, text="Main Menu", callback=button_pause_menu_update, fontsize=TEXT_SIZE_BUTTON)
+        Button(self.pause_page, MENU_BUTTON_SIZE, text="Play", callback=button_pause_play_update, fontsize=TEXT_SIZE_BUTTON)
+        Button(self.pause_page, MENU_BUTTON_SIZE, text="Main Menu", callback=button_pause_menu_update, fontsize=TEXT_SIZE_BUTTON)
         self.pause_page.layout()
 
 
@@ -62,7 +64,7 @@ class Menu:
 
         self.death_page = Page(columns=1, spacing=MENU_SPACING)
         Label(self.death_page, MENU_HEADING_SIZE, text="You Died", fontsize=TEXT_SIZE_HEADING)
-        button_death_menu = Button(self.death_page, MENU_BUTTON_SIZE, text="Main Menu", callback=button_death_menu_update, fontsize=TEXT_SIZE_BUTTON)
+        Button(self.death_page, MENU_BUTTON_SIZE, text="Main Menu", callback=button_death_menu_update, fontsize=TEXT_SIZE_BUTTON)
         self.death_page.layout()
 
 
@@ -517,7 +519,9 @@ class Menu:
             "Jump with [%s]",
             "Crouch with [%s]",
             "Sprint with [%s]",
-            "Escape from the caves!"
+            "Open your\ninventory with [%s]",
+            "Fuse items together to\nincrease their strength.",
+            "And escape\nfrom the caves!"
         ]
 
         formatter = (
@@ -526,6 +530,8 @@ class Menu:
             (self.window.options['key.jump'].title(),),
             (self.window.options['key.crouch'].title(),),
             (self.window.options['key.sprint'].title(),),
+            (self.window.options['key.inventory'].title(),),
+            (),
             (),
         )
 

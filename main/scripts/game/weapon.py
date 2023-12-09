@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-from scripts.game.baseitem import MeleeWeapon, RangedWeapon, MagicWeapon
-from scripts.graphics import particle
+from scripts.game.baseitem import MeleeWeapon, RangedWeapon
 from math import *
 
 
@@ -50,10 +49,3 @@ class Banana(RangedWeapon):
         self.image = "banana"
         self.angle = -30
         self.max_angle_offset = pi / 4
-
-
-class ArcaneStaff(MagicWeapon):
-    def __init__(self, luck: int=1):
-        super().__init__(damage=5, attack_speed=1, range=20, crit_chance=0.5, luck=luck)
-        self.image = "arcane_staff"
-        self.angle = 30

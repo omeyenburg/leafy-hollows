@@ -1,0 +1,10 @@
+{
+    "name": "player_attack_e",
+    "speed": 0,
+    "frames": [
+        "player_attack_e.png"
+    ],
+    "hand": [
+        [0.8125, -0.3125, 276.0]
+    ]
+}

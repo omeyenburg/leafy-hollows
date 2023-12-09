@@ -1,0 +1,7 @@
+{
+    "name": "title",
+    "speed": 0,
+    "frames": [
+        "title.png"
+    ]
+}

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from OpenGL.GL.shaders import compileProgram, compileShader
+from OpenGL.GL.shaders import compileShader
 from scripts.utility import file
 from OpenGL import GL
 
@@ -87,24 +87,26 @@ class Shader:
         # glUniformMatrix4fv(location, count, transpose, value): Sets a 4x4 matrix or an array of 4x4 matrices (mat4).
         
         loc = GL.glGetUniformLocation(program, variable)
-        func = data_type_map = {'int': GL.glUniform1i,
-                                'uint': GL.glUniform1ui,
-                                'float': GL.glUniform1f,
-                                'vec2': GL.glUniform2f,
-                                'vec3': GL.glUniform3f,
-                                'vec4': GL.glUniform4f,
-                                'bvec2': GL.glUniform2i,
-                                'bvec3': GL.glUniform3i,
-                                'bvec4': GL.glUniform4i,
-                                'ivec2': GL.glUniform2i,
-                                'ivec3': GL.glUniform3i,
-                                'ivec4': GL.glUniform4i,
-                                'uvec2': GL.glUniform2ui,
-                                'uvec3': GL.glUniform3ui,
-                                'uvec4': GL.glUniform4ui,
-                                'mat2': GL.glUniformMatrix2fv,
-                                'mat3': GL.glUniformMatrix3fv,
-                                'mat4': GL.glUniformMatrix4fv}[data_type]
+        func = {
+            'int': GL.glUniform1i,
+            'uint': GL.glUniform1ui,
+            'float': GL.glUniform1f,
+            'vec2': GL.glUniform2f,
+            'vec3': GL.glUniform3f,
+            'vec4': GL.glUniform4f,
+            'bvec2': GL.glUniform2i,
+            'bvec3': GL.glUniform3i,
+            'bvec4': GL.glUniform4i,
+            'ivec2': GL.glUniform2i,
+            'ivec3': GL.glUniform3i,
+            'ivec4': GL.glUniform4i,
+            'uvec2': GL.glUniform2ui,
+            'uvec3': GL.glUniform3ui,
+            'uvec4': GL.glUniform4ui,
+            'mat2': GL.glUniformMatrix2fv,
+            'mat3': GL.glUniformMatrix3fv,
+            'mat4': GL.glUniformMatrix4fv
+        }[data_type]
         return [loc, func, None]
 
     def update(self):

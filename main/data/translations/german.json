@@ -67,7 +67,9 @@
     "Jump with [%s]": "Springe mit [%s]",
     "Crouch with [%s]": "Krieche mit [%s]",
     "Sprint with [%s]": "Sprinte mit [%s]",
-    "Escape from the caves!": "Entkomme aus den H<oe>hlen!",
+    "Open your\ninventory with [%s]": "<Oe>ffne dein\nInventar mit [%s]",
+    "Fuse items together to\nincrease their strength.": "Kombiniere Waffen\num sie zu verst<ae>rken.",
+    "Escape from\nthe caves!": "Und entkomme aus\nden H<oe>hlen!",
 
     "Click a button and press a key to bind a new key to an action": "Klicke einen Knopf und eine Taste, um sie an die Aktion zu binden",
     "Limit the Fps at a cap. When Vsync is enabled, the Fps limit is synchronized with your screen's refresh rate.": "Begrenze die maximalen Fps. Wenn Vsync aktiviert ist, ist das Fps limit synchronisiert mit deinem Bildschirm.",

@@ -35,14 +35,15 @@ class Camera:
         self.shift_dest: float = 0.0
 
     def set_zoom(self, resolution: float):
-        self.resolution = self.resolution_goal = resolution
-        self.pixels_per_meter = self.resolution * WORLD_BLOCK_SIZE
+        self.resolution = self.resolution_goal = round(resolution, 4)
+        self.pixels_per_meter = round(self.resolution * WORLD_BLOCK_SIZE, 4)
         self.resolution_index = 1
 
     def zoom(self, resolution: float, speed: float):
         if speed == 0:
             self.set_zoom(resolution)
         else:
+            self.resolution_start = self.resolution
             self.resolution_goal = resolution
             self.resolution_speed = 1 / speed
             self.resolution_index = 0

@@ -17,8 +17,9 @@ class LivingEntity(physics.PhysicsObject):
 
     def draw(self, window):
         # Draw hitbox
-        #rect = window.camera.map_coord((self.rect.x, self.rect.y, self.rect.w, self.rect.h), from_world=True)
-        #window.draw_rect(rect[:2], rect[2:], (255, 0, 0, 100))
+        if window.options["test.draw_hitboxes"]:
+            rect = window.camera.map_coord((self.rect.x, self.rect.y, self.rect.w, self.rect.h), from_world=True)
+            window.draw_rect(rect[:2], rect[2:], (255, 0, 0, 100))
 
         # Health bar
         unmapped_rect = (self.rect.x - 0.5 + self.rect.w / 2, self.rect.y + self.rect.h + 0.5, 1, 4/16)
@@ -42,6 +43,7 @@ class LivingEntity(physics.PhysicsObject):
         if "climb" in self.state:
             flip = (0, 0)
             weapon_offset = (-0.1, 0)
+            self.attack_animation = -1
         else:
             flip = (not self.direction, 0)
             if self.holding.image == "banana":
@@ -66,7 +68,7 @@ class LivingEntity(physics.PhysicsObject):
             )
             angle = hand_position[2]
 
-        if self.attack_animation > -1:
+        if self.attack_animation > -1 and not "attack" in self.state:
             attack_rotation = cos(radians(angle)) ** 4 * (self.direction * 2 - 1) * (1 - abs(self.attack_animation)) * 80
             rotation_y_offset = sin(radians(attack_rotation)) * 0.05
             angle += attack_rotation
