@@ -10,6 +10,7 @@
     "generation": {
         "on": "dirt|stone",
         "side": "above",
-        "weight": 2
+        "weight": 2,
+        "water": "any"
     }
 }

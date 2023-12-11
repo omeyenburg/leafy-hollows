@@ -1,7 +1,7 @@
 {
     "name": "player_run_stone",
     "speed": 0.4,
-    "volume": 0.3,
+    "volume": 0.8,
     "category": "player",
     "sounds": [
         "player_walk_stone0.ogg",

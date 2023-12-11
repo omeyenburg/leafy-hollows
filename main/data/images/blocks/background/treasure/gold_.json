@@ -1,0 +1,11 @@
+{
+    "name": "gold",
+    "family": "treasure",
+    "layer": "background",
+    "hardness": 1,
+    "speed": 0,
+    "frames": [
+        "gold_a.png",
+        "gold_b.png"
+    ]
+}

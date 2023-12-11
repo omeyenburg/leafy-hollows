@@ -1,7 +1,7 @@
 {
     "name": "heal",
     "speed": 0.2,
-    "volume": 0.2,
+    "volume": 0.5,
     "category": "player",
     "sounds": [
         "heal.ogg"

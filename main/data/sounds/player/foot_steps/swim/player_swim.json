@@ -1,7 +1,7 @@
 {
     "name": "player_swim",
     "speed": 0.6,
-    "volume": 0.4,
+    "volume": 1.0,
     "category": "player",
     "sounds": [
         "player_swim0.ogg",

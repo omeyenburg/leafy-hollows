@@ -1,7 +1,7 @@
 {
     "name": "sword_swing",
     "speed": 0.01,
-    "volume": 0.5,
+    "volume": 0.8,
     "category": "player",
     "sounds": [
         "sword_swing.ogg"

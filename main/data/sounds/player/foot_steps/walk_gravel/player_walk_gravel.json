@@ -1,7 +1,7 @@
 {
     "name": "player_walk_gravel",
     "speed": 0.5,
-    "volume": 0.2,
+    "volume": 0.4,
     "category": "player",
     "sounds": [
         "player_walk_gravel0.ogg",

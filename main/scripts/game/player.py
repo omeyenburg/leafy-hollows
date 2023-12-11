@@ -467,7 +467,7 @@ class Player(LivingEntity):
 
     def update(self, world, window: Window):
         self.move(world, window)
-        super().update(world, window.delta_time)
+        super().update(world, window)
         if self.can_move:
             self.mouse_inputs(world, window)
 
@@ -478,9 +478,10 @@ class Player(LivingEntity):
             self.heal(window, weapon_heal)
 
         weapon_looting = self.holding.attributes.get("looting", 0)
-        drop_chance = entity.item_drop_chance * (weapon_looting + 1)
+        drop_chance = entity.item_drop_chance * (weapon_looting + 1) * ATTRIBUTE_BASE_MODIFIERS["looting"] * 0.01
 
         if random.random() < drop_chance or len(self.inventory.weapons) <= 3:
+
             if self.inventory.arrows < self.inventory.max_arrows:
                 arrow_drop = random.random()
                 if arrow_drop < 0.15 or arrow_drop < 0.3 and len(self.inventory.weapons) <= 5:

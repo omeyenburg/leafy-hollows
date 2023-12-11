@@ -1,7 +1,7 @@
 {
     "name": "player_walk_wet_ground",
     "speed": 0.6,
-    "volume": 0.4,
+    "volume": 0.8,
     "category": "player",
     "sounds": [
         "player_walk_wet_ground0.ogg",

@@ -1,7 +1,7 @@
 {
     "name": "player_hit_ground",
     "speed": 0.7,
-    "volume": 0.8,
+    "volume": 1.5,
     "category": "player",
     "sounds": [
         "player_walk_grass0.ogg",

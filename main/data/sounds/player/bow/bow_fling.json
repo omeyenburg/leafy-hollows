@@ -1,7 +1,7 @@
 {
     "name": "bow_fling",
     "speed": 0.1,
-    "volume": 0.5,
+    "volume": 1.0,
     "category": "player",
     "sounds": [
         "bow_fling.ogg"

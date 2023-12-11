@@ -826,64 +826,76 @@ class Window:
         line_height = 5
         text += " "
 
-        for i, letter in enumerate(text):
-            # New line
-            if letter == "\n":
-                x_offset = 0
-                y_offset += 1
-                continue
-            
-            if letter == " " and (x_offset == 0 or i + 1 == len(text)):
-                continue
-
-            # Get letter rect in texture
-            rect = self._font.get_rect(letter)
-
-            # Create destination rect
-            if fixed_size == 0:
-                dest_rect = (position[0] + x_offset, position[1] - y_offset * rect[3] * line_height * size, rect[2] * size, rect[3] * 2 * size)
-                letter_x_offset = rect[2] * spacing * size * 2
-            elif fixed_size == 1:
-                dest_rect = (position[0] + x_offset, position[1] - y_offset * rect[3] * line_height * size * y_factor_relational, rect[2] * size, rect[3] * 2 * size * y_factor_relational)
-                letter_x_offset = rect[2] * spacing * size * 2
-            else:
-                dest_rect = (position[0] + x_offset, position[1] - y_offset * rect[3] * line_height * size * y_factor_fixed, rect[2] * size * x_factor_fixed, rect[3] * 2 * size * y_factor_fixed)
-                letter_x_offset = rect[2] * spacing * size * x_factor_fixed * 2
-
-            x_offset += letter_x_offset
-
-            # Find next space
-            next_space = text.find(" ", i + 1) - i
-            if (not wrap is None) and next_space >= 0 and x_offset + letter_x_offset * next_space > wrap:
-                x_offset = 0
-                y_offset += 1
-
-            if letter == " ":
-                continue
-
-            if self.stencil_rect:
-                org = dest_rect[:]
-
-                left = max(dest_rect[0] - dest_rect[2], self.stencil_rect[0] - self.stencil_rect[2])
-                right = min(dest_rect[0] + dest_rect[2], self.stencil_rect[0] + self.stencil_rect[2])
-                top = max(dest_rect[1] - dest_rect[3], self.stencil_rect[1] - self.stencil_rect[3])
-                bottom = min(dest_rect[1] + dest_rect[3], self.stencil_rect[1] + self.stencil_rect[3])
-
-                width = (right - left) / 2
-                height = (bottom - top) / 2
-
-                if width < 0 or height < 0:
+        if not len(text.strip()):
+            rect = self._font.get_rect("A")
+            x_offset = rect[2] * spacing * size * 2 * (len(text) - 1)
+        else:
+            for i, letter in enumerate(text):
+                # New line
+                if letter == "\n":
+                    x_offset = 0
+                    y_offset += 1
+                    continue
+                
+                if letter == " " and i + 1 == len(text):
                     continue
 
-                dest_rect = (left + width, top + height, width, height)
+                # Get letter rect in texture
+                rect = self._font.get_rect(letter)
 
-                if org[2] - width > 0.0001 or org[3] - height > 0.0001:
-                    source_and_color = (
-                        color[0] + rect[0] + rect[2] * ((1 - dest_rect[2] / org[2]) if dest_rect[0] > org[0] else 0),
-                        color[1] + rect[1] + rect[3] * (round(1 - dest_rect[3] / org[3], 6) if dest_rect[1] > org[1] else 0),
-                        color[2] + rect[2] * (width / org[2]),
-                        color[3] + rect[3] * ((height / org[3]) if (height / org[3]) < 1 else 0)
-                    )
+                # Create destination rect
+                if fixed_size == 0:
+                    dest_rect = (position[0] + x_offset, position[1] - y_offset * rect[3] * line_height * size, rect[2] * size, rect[3] * 2 * size)
+                    letter_x_offset = rect[2] * spacing * size * 2
+                elif fixed_size == 1:
+                    dest_rect = (position[0] + x_offset, position[1] - y_offset * rect[3] * line_height * size * y_factor_relational, rect[2] * size, rect[3] * 2 * size * y_factor_relational)
+                    letter_x_offset = rect[2] * spacing * size * 2
+                else:
+                    dest_rect = (position[0] + x_offset, position[1] - y_offset * rect[3] * line_height * size * y_factor_fixed, rect[2] * size * x_factor_fixed, rect[3] * 2 * size * y_factor_fixed)
+                    letter_x_offset = rect[2] * spacing * size * x_factor_fixed * 2
+
+                x_offset += letter_x_offset
+
+                # Find next space
+                next_space = text.find(" ", i + 1) - i
+                if (not wrap is None) and next_space >= 0 and x_offset + letter_x_offset * next_space > wrap:
+                    x_offset = 0
+                    y_offset += 1
+
+                if letter == " ":
+                    continue
+
+                if self.stencil_rect:
+                    org = dest_rect[:]
+
+                    left = max(dest_rect[0] - dest_rect[2], self.stencil_rect[0] - self.stencil_rect[2])
+                    right = min(dest_rect[0] + dest_rect[2], self.stencil_rect[0] + self.stencil_rect[2])
+                    top = max(dest_rect[1] - dest_rect[3], self.stencil_rect[1] - self.stencil_rect[3])
+                    bottom = min(dest_rect[1] + dest_rect[3], self.stencil_rect[1] + self.stencil_rect[3])
+
+                    width = (right - left) / 2
+                    height = (bottom - top) / 2
+
+                    if width < 0 or height < 0:
+                        continue
+
+                    dest_rect = (left + width, top + height, width, height)
+
+                    if org[2] - width > 0.0001 or org[3] - height > 0.0001:
+                        source_and_color = (
+                            color[0] + rect[0] + rect[2] * ((1 - dest_rect[2] / org[2]) if dest_rect[0] > org[0] else 0),
+                            color[1] + rect[1] + rect[3] * (round(1 - dest_rect[3] / org[3], 6) if dest_rect[1] > org[1] else 0),
+                            color[2] + rect[2] * (width / org[2]),
+                            color[3] + rect[3] * ((height / org[3]) if (height / org[3]) < 1 else 0)
+                        )
+
+                    else:
+                        source_and_color = (
+                            color[0] + rect[0],
+                            color[1] + rect[1],
+                            color[2] + rect[2],
+                            color[3] + rect[3]
+                        )
 
                 else:
                     source_and_color = (
@@ -893,15 +905,7 @@ class Window:
                         color[3] + rect[3]
                     )
 
-            else:
-                source_and_color = (
-                    color[0] + rect[0],
-                    color[1] + rect[1],
-                    color[2] + rect[2],
-                    color[3] + rect[3]
-                )
-
-            self._add_vbo_instance(dest_rect, source_and_color, (3, 0, 0, 0))
+                self._add_vbo_instance(dest_rect, source_and_color, (3, 0, 0, 0))
     
         # Return width and height of text
         y_offset += 1

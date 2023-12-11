@@ -1,7 +1,7 @@
 {
     "name": "water_drop",
     "speed": 10,
-    "volume": 0.5,
+    "volume": 1.0,
     "category": "ambient",
     "sounds": [
         "water_drop_a.ogg",

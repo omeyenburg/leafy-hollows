@@ -1,0 +1,11 @@
+{
+    "name": "silver",
+    "family": "treasure",
+    "layer": "background",
+    "hardness": 1,
+    "speed": 0,
+    "frames": [
+        "silver_a.png",
+        "silver_b.png"
+    ]
+}

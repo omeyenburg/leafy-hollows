@@ -1,7 +1,7 @@
 {
     "name": "damage",
     "speed": 0.1,
-    "volume": 0.4,
+    "volume": 1.0,
     "category": "player",
     "sounds": [
         "damage_a.ogg",

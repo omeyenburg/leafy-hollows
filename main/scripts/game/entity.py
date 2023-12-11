@@ -33,7 +33,7 @@ class GreenSlime(LivingEntity):
         window.draw_image("_".join((self.slime_variant, self.image, self.state)), rect[:2], rect[2:], flip=(self.direction, 0), animation_offset=self.uuid)
 
     def update(self, world, window: Window):
-        super().update(world, window.delta_time)
+        super().update(world, window)
 
         if self.stunned:
             return
@@ -85,7 +85,7 @@ class YellowSlime(GreenSlime):
         self.slime_variant = "yellow"
 
         # Enemy attributes
-        self.item_drop_chance = 0.3
+        self.item_drop_chance = 0.5
         self.attack_cooldown: float = 3
         self.jump_strength = 1.5
 
@@ -96,7 +96,7 @@ class BlueSlime(GreenSlime):
         self.slime_variant = "blue"
 
         # Enemy attributes
-        self.item_drop_chance = 0.4
+        self.item_drop_chance = 0.7
         self.attack_cooldown: float = 2
         self.jump_strength = 2
         
@@ -110,7 +110,7 @@ class Goblin(LivingEntity):
         self.image = "goblin"
 
         # Enemy attributes
-        self.item_drop_chance = 0.3
+        self.item_drop_chance = 0.4
         self.max_speed = 3
         self.prepare_attack_length: float = 0.4
         self.prepare_attack: float = self.prepare_attack_length
@@ -131,7 +131,7 @@ class Goblin(LivingEntity):
         super().draw(window)
 
     def update(self, world, window: Window):
-        super().update(world, window.delta_time)
+        super().update(world, window)
 
         if self.stunned:
             self.state = "hit_ground"
@@ -200,7 +200,7 @@ class Bat(LivingEntity):
         self.image = "bat"
 
         # Enemy attributes
-        self.item_drop_chance = 0.1
+        self.item_drop_chance = 0.3
         self.hit_damage = min(round(1 * (1 + spawn_pos[0] / 200)), 4)
         self.max_speed = 2.5
         self.prepare_attack_length: float = 4.0
@@ -294,7 +294,7 @@ class Bat(LivingEntity):
             else:
                 next_pos = (next_pos[0] + 0.5, next_pos[1] + 0.5)
         else:
-            next_pos = (world.player.rect.centerx, world.player.rect.y + self.prepare_attack * 2)
+            next_pos = (world.player.rect.centerx, world.player.rect.y + world.player.rect.h + self.prepare_attack * 2)
 
         speed_x = min(self.max_speed, 0.1 + (world.player.rect.centerx - self.rect.centerx) ** 2)
         if next_pos[0] < self.rect.centerx:
@@ -306,14 +306,14 @@ class Bat(LivingEntity):
             if speed_x == self.max_speed:
                 self.direction = 0
 
-        speed_y = min(self.max_speed, 0.1 + abs(world.player.rect.centery - self.rect.centery))
+        speed_y = min(self.max_speed, 0.1 + abs(world.player.rect.y + world.player.rect.h - self.rect.centery))
         if next_pos[1] < self.rect.centery and not self.underWater:
             self.vel[1] = -speed_y
         elif next_pos[1] > self.rect.centery:
             self.vel[1] = speed_y
 
     def update(self, world, window: Window):
-        super().update(world, window.delta_time)
+        super().update(world, window)
 
         if self.stunned:
             return
@@ -346,4 +346,4 @@ class Crate(LivingEntity):
         window.draw_image(self.image, rect[:2], rect[2:])
 
     def update(self, world, window: Window):
-        super().update(world, window.delta_time)
+        super().update(world, window)

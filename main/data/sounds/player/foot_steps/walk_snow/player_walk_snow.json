@@ -1,7 +1,7 @@
 {
     "name": "player_walk_snow",
     "speed": 0.5,
-    "volume": 0.2,
+    "volume": 0.6,
     "category": "player",
     "sounds": [
         "player_walk_snow0.ogg",

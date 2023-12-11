@@ -1,0 +1,17 @@
+{
+    "name": "dirt_step_ground0",
+    "family": "dirt",
+    "layer": "background",
+    "hardness": 1,
+    "speed": 0,
+    "frames": [
+        "dirt_step_ground0_a.png",
+        "dirt_step_ground0_b.png"
+    ],
+    "generation": {
+        "on": "dirt",
+        "side": "above",
+        "corner": true,
+        "weight": 10
+    }
+}

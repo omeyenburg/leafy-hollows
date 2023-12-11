@@ -38,22 +38,6 @@ class Inventory:
             self.update_inventory(window, menu, world)
 
     def update_inventory(self, window, menu, world):
-        window.draw_text((-0.95, 0), "Sort by:", (255, 255, 255), 0.2)
-
-        for i, key in enumerate(("Level", "Type", "Age")):
-            if key == menu.inventory_page.sort_key:
-                sort_image = "button_dark_selected"
-            else:
-                sort_image = "button_dark_unselected"
-
-            rect = Rect(-0.95, -i * 0.2 - 0.05 / window.height * window.width - 0.2, 0.5, 0.1 / window.height * window.width)
-            if 1 in window.mouse_buttons and rect.collide_point((window.mouse_pos[0] / window.width * 2, window.mouse_pos[1] / window.height * 2)):
-                menu.inventory_page.sort_key = key
-                sound.play(window, "click")
-
-            window.draw_image(sort_image, rect[:2], rect[2:])
-            window.draw_text((-0.9, -i * 0.2 - 0.2), key, (255, 255, 255), 0.17)
-        
         # Search bar
         window.draw_rect((-0.88, -0.98), (0.8, 0.16), (27, 21, 39))
         window.draw_image("search_icon", (-0.98, -0.98), (0.09, 0.09 / window.height * window.width))
@@ -105,6 +89,22 @@ class Inventory:
         if not len(inventory):
             window.draw_text((0.2, 0.7), "Could not find\nany matching item.", (255, 255, 255), 0.2)
             return
+        
+        window.draw_text((-0.95, 0), "Sort by:", (255, 255, 255), 0.2)
+
+        for i, key in enumerate(("Level", "Type", "Age")):
+            if key == menu.inventory_page.sort_key:
+                sort_image = "button_dark_selected"
+            else:
+                sort_image = "button_dark_unselected"
+
+            rect = Rect(-0.95, -i * 0.2 - 0.05 / window.height * window.width - 0.2, 0.5, 0.1 / window.height * window.width)
+            if 1 in window.mouse_buttons and rect.collide_point((window.mouse_pos[0] / window.width * 2, window.mouse_pos[1] / window.height * 2)):
+                menu.inventory_page.sort_key = key
+                sound.play(window, "click")
+
+            window.draw_image(sort_image, rect[:2], rect[2:])
+            window.draw_text((-0.9, -i * 0.2 - 0.2), key, (255, 255, 255), 0.17)
 
         # Get mouse scroll
         scroll_speed = -20
@@ -202,6 +202,9 @@ class Inventory:
             name = translate(window.options["language"], attribute).title()
             description = translate(window.options["language"], ATTRIBUTE_DESCRIPTIONS[attribute]) % modifier
             window.draw_text((0, description_y), f"{name} {INT_TO_ROMAN.get(level, level)}: {description}", (223, 132, 165), 0.17, wrap=1)
+
+        matching_items_text = translate(window.options['language'], "%s matching item" + "s" * int(len(inventory) != 1)) % str(len(inventory))
+        window.draw_text((-0.92, -0.75), matching_items_text, (255, 255, 255), 0.17)
 
         if len(world.player.inventory.weapons) == 1:
             return
@@ -333,8 +336,8 @@ class Inventory:
 
         if menu.inventory_page.secondary_fuse_item is None:
             # Get mouse scroll
-            scroll_speed = 20
-            window.mouse_wheel[1] = min(max(window.mouse_wheel[1], 0), len(inventory) * scroll_speed - scroll_speed)
+            scroll_speed = -20
+            window.mouse_wheel[1] = max(min(window.mouse_wheel[1], 0), len(inventory) * scroll_speed - scroll_speed)
             scroll_position = window.mouse_wheel[1] / scroll_speed
             if not window.mouse_wheel[3]:
                 window.mouse_wheel[1] += (round(scroll_position) - scroll_position) * scroll_speed * 0.02
@@ -389,7 +392,7 @@ class Inventory:
             weapon_pos = Vec(0.8 - weapon_size[0] / 2, 0)
             window.draw_image(secondary_weapon.image, weapon_pos, weapon_size, angle=secondary_weapon.angle)
 
-        matching_items_text = translate(window.options['language'], "%s matching item" + "s" * int(len(inventory) != 1) + ":") % str(len(inventory))
+        matching_items_text = (translate(window.options['language'], "%s matching item" + "s" * int(len(inventory) != 1)) % str(len(inventory))) + ":"
         window.draw_text((0.2, 0.9), matching_items_text, (255, 255, 255), 0.17)
 
         name = secondary_weapon.image.title()

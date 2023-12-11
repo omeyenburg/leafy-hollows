@@ -1,0 +1,15 @@
+{
+    "name": "snow_roots",
+    "family": "grass",
+    "layer": "plant",
+    "hardness": 1,
+    "speed": 0,
+    "frames": [
+        "snow_roots.png"
+    ],
+    "generation": {
+        "on": "snow",
+        "side": "below",
+        "weight": 20
+    }
+}

@@ -90,7 +90,6 @@ def generate_world(world, window):
                 # Blob
                 cave.blob(world, position)
 
-
     structure_data = goal_structure
     cave.interpolated(world, position, end_angle=structure_data["generation"]["entrance_angle"], end_radius=structure_data["generation"]["entrance_size"] / 2)
     last_enemy_x = position[0]
@@ -258,7 +257,8 @@ def get_decoration_block_type(world, x, y):
     decoration_list = list(filter(lambda name: (
         any([selected in block_comparison for selected in world.block_generation_properties[name].get("on", "any").split("|")]) and
         side == world.block_generation_properties[name].get("side", "above") and
-        water_level >= world.block_generation_properties[name].get("water", False) and
+        (bool(water_level) == world.block_generation_properties[name].get("water", False) or
+        "any" == world.block_generation_properties[name].get("water", False)) and
         corner == world.block_generation_properties[name].get("corner", False)
     ), list(world.block_generation_properties)))
 
@@ -342,20 +342,19 @@ def generate_poles(world, poles, blocks_ground, blocks_ceiling):
                 continue
 
             y_ground = blocks_ground[x + x_offest]
-            y_ceiling = max(y_ground, blocks_ceiling[x + x_offest] - 2)
+            y_ceiling = max(y_ground, blocks_ceiling[x + x_offest])
 
-            found_air_above = False
+            found_dirt_above = False
             for _y in range(50):
                 y = y_ceiling + _y
                 if not world.get_block_exists(x + x_offest, y):
                     break
                 block = world.get_block(x + x_offest, y)
-                if not block:
-                    found_air_above = True
+                if block and not found_dirt_above:
+                    found_dirt_above = True
+                elif found_dirt_above and not block:
                     y_ceiling = y
-                elif found_air_above:
-                    y_ceiling = y - 2
-            
+
             height = y_ceiling - y_ground - abs(x_offest)
 
             if height > pole_height:
@@ -367,9 +366,16 @@ def generate_poles(world, poles, blocks_ground, blocks_ceiling):
         if not pole_height:
             print("Could not generate a pole at x=" + str(x))
             return False
+        
+        pole_block = random.choice(("pole", "rope", "vines0"))
+        if pole_block == "pole":
+            pole_y_ceiling -= 2
+        else:
+            pole_y_ground += 2
+            pole_y_ceiling += 1
 
         for y in range(pole_y_ground, pole_y_ceiling):
-            world.set_block(pole_x, y, world.block_name["pole"])
+            world.set_block(pole_x, y, world.block_name[pole_block])
             world.set_block(pole_x, y, 0, 0)
 
     return True
@@ -379,7 +385,7 @@ def generate_poles(world, poles, blocks_ground, blocks_ceiling):
 def flatten_edges(world):
     world_copy = copy.deepcopy(world)
     for x, y in world_copy.iterate():
-        block_types = [world_copy.get_block(x + dx, y + dy, layer=0, default=0) for dx in range(-1, 2) for dy in range(-1, 2)]
+        block_types = [world_copy.get_block(x + dx, y + dy, layer=0, default=1) for dx in range(-1, 2) for dy in range(-1, 2)]
         block_type = max(block_types, key=block_types.count)
         world.set_block(x, y, block_type)
 

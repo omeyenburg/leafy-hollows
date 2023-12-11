@@ -1,7 +1,7 @@
 {
     "name": "explosion",
     "speed": 0.5,
-    "volume": 0.5,
+    "volume": 1.0,
     "category": "ambient",
     "sounds": [
         "explosion.ogg"

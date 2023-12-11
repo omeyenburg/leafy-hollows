@@ -1,0 +1,16 @@
+{
+    "name": "sea_grass",
+    "family": "grass",
+    "layer": "plant",
+    "hardness": 1,
+    "speed": 0,
+    "frames": [
+        "sea_grass.png"
+    ],
+    "generation": {
+        "on": "any",
+        "side": "above",
+        "weight": 15,
+        "water": true
+    }
+}

@@ -112,8 +112,8 @@ def interpolated(world, position, start_angle=None, end_angle=None, start_radius
 def vertical(world, position):
     angle = pi / 2 * 3 * (random.randint(0, 1) * 2 - 1)
     length = random.randint(60, 70)
-    deviation = 0.5
-    radius = 2
+    deviation = 0.3
+    radius = 2.5
 
     line_cave(world, position, length, angle, deviation, radius)
 

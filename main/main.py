@@ -272,9 +272,9 @@ def main():
     menu.save_world = save_world
     window.callback_quit = save_world
     window.camera.set_zoom(CAMERA_RESOLUTION_GAME)
-    #menu.game_state = "testing"
 
     if window.options["test.edit_holding_enabled"]:
+        menu.game_state = "testing"
         time_paused = False
         flip_direction = False
         unique_stepping = False

@@ -40,7 +40,7 @@ class LivingEntity(physics.PhysicsObject):
         if self.attack_animation > -1:
             self.attack_animation -= window.delta_time * 8
 
-        if "climb" in self.state:
+        if self.state in ("climb", "climb_pole", "on_pole"):
             flip = (0, 0)
             weapon_offset = (-0.1, 0)
             self.attack_animation = -1
@@ -79,14 +79,23 @@ class LivingEntity(physics.PhysicsObject):
         rect = window.camera.map_coord((center[0] - weapon_size / 2, center[1] - weapon_size / 2, weapon_size, weapon_size), from_world=True)
         window.draw_image(self.holding.image, (rect[0], rect[1] + rotation_y_offset * rect[3]), rect[2:], angle, flip)
 
-    def update(self, world, delta_time):
+    def update(self, world, window):
         if not self.holding is None:
-            self.holding.cooldown -= delta_time
+            self.holding.cooldown -= window.delta_time
         if self.stunned:
-            self.stunned = max(0, self.stunned - delta_time)
-        super().update(world, delta_time)
+            self.stunned = max(0, self.stunned - window.delta_time)
+        inWater = self.inWater
+        super().update(world, window.delta_time)
+        if self.vel[1] < -2 and self.inWater and not inWater:
+            if self.mass < 10:
+                sound.play(window, "small_stone_hit_water", world.player.rect.x - self.rect.x)
+            else:
+                sound.play(window, "large_stone_hit_water", world.player.rect.x - self.rect.x)
 
     def damage(self, window, amount: float=0, velocity: [float]=(0, 0)):
+        if self.type == "player" and window.options["test.invulnerability"]:
+            return
+
         if not self.holding is None:
             damage_multiplier = 1
 
@@ -109,7 +118,8 @@ class LivingEntity(physics.PhysicsObject):
 
         x = (self.rect.centerx - window.camera.pos[0]) * 0.1
         sound.play(window, "damage", x)
-        particle.text(window, "-" + str(amount), *self.rect.center, size=0.2, color=(165, 48, 48, 255), time=0.5, offset_radius=self.rect.h)
+        color = DAMAGE_COLORS[min(int(amount // 2), len(DAMAGE_COLORS) - 1)]
+        particle.text(window, "-" + str(amount), *self.rect.center, size=0.2, color=color, time=0.5, offset_radius=self.rect.h)
 
         if self.health <= 0:
             self.death(window)
@@ -122,7 +132,7 @@ class LivingEntity(physics.PhysicsObject):
     def heal(self, window, amount: float=0):
         if self.health < self.max_health:
             sound.play(window, "heal")
-            particle.text(window, "+", *self.rect.center, size=0.2, color=(165, 48, 48, 255), time=0.5, offset_radius=self.rect.h)
+            #particle.text(window, "+", *self.rect.center, size=0.2, color=(165, 48, 48, 255), time=0.5, offset_radius=self.rect.h)
             self.health = min(self.health + amount, self.max_health)
 
     def death(self, window):

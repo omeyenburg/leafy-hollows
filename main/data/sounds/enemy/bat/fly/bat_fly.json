@@ -1,7 +1,7 @@
 {
     "name": "bat_fly",
     "speed": 11,
-    "volume": 0.5,
+    "volume": 1.0,
     "category": "enemy",
     "sounds": [
         "bat_fly.ogg"

@@ -1,7 +1,7 @@
 {
     "name": "player_run_grass",
     "speed": 0.4,
-    "volume": 0.4,
+    "volume": 0.8,
     "category": "player",
     "sounds": [
         "player_walk_grass0.ogg",
