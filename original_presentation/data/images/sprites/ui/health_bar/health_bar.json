@@ -1,0 +1,7 @@
+{
+    "name": "health_bar",
+    "speed": 0,
+    "frames": [
+        "health_bar.png"
+    ]
+}

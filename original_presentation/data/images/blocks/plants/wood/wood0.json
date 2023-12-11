@@ -1,0 +1,15 @@
+{
+    "name": "wood0",
+    "family": "rocks",
+    "layer": "plant",
+    "hardness": 1,
+    "speed": 0,
+    "frames": [
+        "wood0.png"
+    ],
+    "generation": {
+        "on": "dirt",
+        "side": "above",
+        "weight": 5
+    }
+}

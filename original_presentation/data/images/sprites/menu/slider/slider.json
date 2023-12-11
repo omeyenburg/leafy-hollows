@@ -1,0 +1,7 @@
+{
+    "name": "slider",
+    "speed": 0,
+    "frames": [
+        "slider.png"
+    ]
+}

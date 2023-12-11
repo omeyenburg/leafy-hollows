@@ -1,0 +1,16 @@
+{
+    "name": "roots2",
+    "family": "roots",
+    "layer": "plant",
+    "hardness": 1,
+    "speed": 0.5,
+    "frames": [
+        "roots2_a.png",
+        "roots2_b.png"
+    ],
+    "generation": {
+        "on": "dirt",
+        "side": "below",
+        "weight": 10
+    }
+}

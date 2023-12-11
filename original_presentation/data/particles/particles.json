@@ -1,0 +1,134 @@
+{
+    "dust_particle": {
+        "time": 0.5,
+        "delay": 0.1,
+        "size": [0.0625, 0.0625],
+        "gravity": 1,
+        "growth": -2,
+        "speed": 3,
+        "angle": 90,
+        "divergence": 2,
+        "amount": 0.8
+    },
+    "blood_particle": {
+        "time": 0.5,
+        "delay": 0.1,
+        "size": [0.0625, 0.0625],
+        "gravity": 1,
+        "growth": -2,
+        "speed": 3,
+        "angle": 90,
+        "divergence": 2,
+        "amount": 0.3
+    },
+    "fire_particle": {
+        "time": 1,
+        "delay": 1,
+        "size": [0.2, 0.2],
+        "gravity": -1,
+        "growth": -1,
+        "speed": 1,
+        "angle": 90,
+        "divergence": 2,
+        "amount": -1
+    },
+    "green_slime_particle": {
+        "time": 1,
+        "delay": 0.1,
+        "size": [0.05, 0.05],
+        "gravity": 1,
+        "growth": -1,
+        "speed": 6,
+        "angle": 90,
+        "divergence": 2,
+        "amount": 0.5
+    },
+    "yellow_slime_particle": {
+        "time": 1,
+        "delay": 0.1,
+        "size": [0.05, 0.05],
+        "gravity": 1,
+        "growth": -1,
+        "speed": 6,
+        "angle": 90,
+        "divergence": 2,
+        "amount": 0.5
+    },
+    "blue_slime_particle": {
+        "time": 1,
+        "delay": 0.1,
+        "size": [0.05, 0.05],
+        "gravity": 1,
+        "growth": -1,
+        "speed": 6,
+        "angle": 90,
+        "divergence": 2,
+        "amount": 0.5
+    },
+    "big_leaf_particle": {
+        "time": 20,
+        "delay": 8,
+        "size": [0.2, 0.2],
+        "gravity": 0.5,
+        "growth": -0.1,
+        "speed": 1,
+        "angle": 270,
+        "divergence": 5,
+        "amount": -1
+    },
+    "small_leaf_particle": {
+        "time": 20,
+        "delay": 7,
+        "size": [0.15, 0.15],
+        "gravity": 0.5,
+        "growth": -0.1,
+        "speed": 0.5,
+        "angle": 270,
+        "divergence": 2,
+        "amount": -1
+    },
+    "impact_right_particle": {
+        "time": 0.3,
+        "delay": 1,
+        "size": [1.0, 1.0],
+        "gravity": 0,
+        "growth": 0,
+        "speed": 5.0,
+        "angle": 0,
+        "divergence": 0,
+        "amount": -1
+    },
+    "impact_left_particle": {
+        "time": 0.3,
+        "delay": 1,
+        "size": [1.0, 1.0],
+        "gravity": 0,
+        "growth": 0,
+        "speed": 5.0,
+        "angle": 180,
+        "divergence": 0,
+        "amount": -1
+    },
+    "swing_right_particle": {
+        "time": 0.3,
+        "delay": 1,
+        "size": [1.0, 1.0],
+        "gravity": 0,
+        "growth": 0,
+        "speed": 2.0,
+        "angle": 0,
+        "divergence": 1,
+        "amount": -1
+    },
+    "swing_left_particle": {
+        "time": 0.3,
+        "delay": 1,
+        "size": [1.0, 1.0],
+        "gravity": 0,
+        "growth": 0,
+        "speed": 2.0,
+        "angle": 180,
+        "divergence": 1,
+        "amount": -1
+    }
+}

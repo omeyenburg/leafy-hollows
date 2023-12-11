@@ -1,0 +1,12 @@
+{
+    "name": "player_walk_grass",
+    "speed": 0.5,
+    "volume": 0.3,
+    "category": "player",
+    "sounds": [
+        "player_walk_grass0.ogg",
+        "player_walk_grass1.ogg",
+        "player_walk_grass2.ogg",
+        "player_walk_grass3.ogg"
+    ]
+}

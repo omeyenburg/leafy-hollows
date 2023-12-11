@@ -1,0 +1,18 @@
+{
+    "name": "vines0",
+    "family": "roots",
+    "layer": "background",
+    "hardness": 1,
+    "speed": 0.5,
+    "frames": [
+        "vines0_a.png",
+        "vines0_b.png"
+    ],
+    "generation": {
+        "on": "dirt",
+        "side": "below",
+        "weight": 7,
+        "expansion_length": 8,
+        "expansion_direction": "down"
+    }
+}

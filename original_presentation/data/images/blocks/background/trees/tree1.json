@@ -1,0 +1,15 @@
+{
+    "name": "tree1",
+    "family": "tree",
+    "layer": "background",
+    "hardness": 1,
+    "speed": 0,
+    "frames": [
+        "tree1.png"
+    ],
+    "generation": {
+        "on": "dirt",
+        "side": "above",
+        "weight": 2
+    }
+}

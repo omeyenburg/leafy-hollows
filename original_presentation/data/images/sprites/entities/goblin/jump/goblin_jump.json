@@ -1,0 +1,10 @@
+{
+    "name": "goblin_jump",
+    "speed": 0,
+    "frames": [
+        "goblin_jump.png"
+    ],
+    "hand": [
+        [0.5625, 0.0, 328.0]
+    ]
+}

@@ -1,0 +1,13 @@
+{
+    "name": "stone_block",
+    "family": "stone",
+    "layer": "foreground",
+    "hardness": 3,
+    "speed": 0,
+    "frames": [
+        "stone_block.png"
+    ],
+    "properties": {
+        "friction": 0.95
+    }
+}

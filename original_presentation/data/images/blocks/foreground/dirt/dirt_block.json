@@ -1,0 +1,13 @@
+{
+    "name": "dirt_block",
+    "family": "dirt",
+    "layer": "foreground",
+    "hardness": 1,
+    "speed": 0,
+    "frames": [
+        "dirt_block.png"
+    ],
+    "properties": {
+        "friction": 0.95
+    }
+}

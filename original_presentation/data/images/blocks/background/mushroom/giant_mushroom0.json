@@ -1,0 +1,15 @@
+{
+    "name": "giant_mushroom0",
+    "family": "mushroom",
+    "layer": "background",
+    "hardness": 1,
+    "speed": 0,
+    "frames": [
+        "giant_mushroom0.png"
+    ],
+    "generation": {
+        "on": "dirt",
+        "side": "above",
+        "weight": 1
+    }
+}

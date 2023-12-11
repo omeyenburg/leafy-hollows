@@ -1,0 +1,15 @@
+{
+    "name": "topaz0",
+    "family": "crystal",
+    "layer": "plant",
+    "hardness": 1,
+    "speed": 0,
+    "frames": [
+        "topaz0.png"
+    ],
+    "generation": {
+        "on": "dirt|stone",
+        "side": "wall",
+        "weight": 3
+    }
+}

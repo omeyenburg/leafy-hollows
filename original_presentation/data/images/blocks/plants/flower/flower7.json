@@ -1,0 +1,15 @@
+{
+    "name": "flower7",
+    "family": "grass",
+    "layer": "plant",
+    "hardness": 1,
+    "speed": 0,
+    "frames": [
+        "flower7.png"
+    ],
+    "generation": {
+        "on": "dirt",
+        "side": "above",
+        "weight": 7
+    }
+}

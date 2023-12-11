@@ -1,0 +1,16 @@
+{
+    "name": "cobweb_step_ceiling",
+    "family": "dirt",
+    "layer": "background",
+    "hardness": 1,
+    "speed": 0,
+    "frames": [
+        "cobweb_step_ceiling.png"
+    ],
+    "generation": {
+        "on": "any",
+        "side": "below",
+        "corner": true,
+        "weight": 5
+    }
+}

@@ -1,0 +1,15 @@
+{
+    "name": "bones0",
+    "family": "bones",
+    "layer": "plant",
+    "hardness": 1,
+    "speed": 0,
+    "frames": [
+        "bones0.png"
+    ],
+    "generation": {
+        "on": "dirt|stone",
+        "side": "above",
+        "weight": 4
+    }
+}

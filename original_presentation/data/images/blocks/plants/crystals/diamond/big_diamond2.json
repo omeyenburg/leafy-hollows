@@ -1,0 +1,15 @@
+{
+    "name": "big_diamond2",
+    "family": "crystal",
+    "layer": "plant",
+    "hardness": 1,
+    "speed": 0,
+    "frames": [
+        "big_diamond2.png"
+    ],
+    "generation": {
+        "on": "dirt|stone",
+        "side": "above",
+        "weight": 3
+    }
+}

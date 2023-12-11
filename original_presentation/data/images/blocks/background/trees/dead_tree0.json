@@ -1,0 +1,15 @@
+{
+    "name": "dead_tree0",
+    "family": "tree",
+    "layer": "background",
+    "hardness": 1,
+    "speed": 0,
+    "frames": [
+        "dead_tree0.png"
+    ],
+    "generation": {
+        "on": "dirt",
+        "side": "above",
+        "weight": 1
+    }
+}

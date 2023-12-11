@@ -1,0 +1,16 @@
+{
+    "name": "player_crawl",
+    "speed": 0.1,
+    "frames": [
+        "player_crawl_a.png",
+        "player_crawl_b.png",
+        "player_crawl_a.png",
+        "player_crawl_b.png"
+    ],
+    "hand": [
+        [1.401, -0.8073, 300.5],
+        [1.3802, -0.7865, 302.5],
+        [1.401, -0.8073, 300.5],
+        [1.3802, -0.7865, 302.5]
+    ]
+}

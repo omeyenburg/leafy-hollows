@@ -1,0 +1,11 @@
+{
+    "name": "player_run_stone",
+    "speed": 0.4,
+    "volume": 0.3,
+    "category": "player",
+    "sounds": [
+        "player_walk_stone0.ogg",
+        "player_walk_stone1.ogg",
+        "player_walk_stone2.ogg"
+    ]
+}

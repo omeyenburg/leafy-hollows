@@ -1,0 +1,7 @@
+{
+    "name": "banana",
+    "speed": 0,
+    "frames": [
+        "banana.png"
+    ]
+}

@@ -1,0 +1,15 @@
+{
+    "name": "mushroom4",
+    "family": "mushroom",
+    "layer": "plant",
+    "hardness": 1,
+    "speed": 0,
+    "frames": [
+        "mushroom4.png"
+    ],
+    "generation": {
+        "on": "dirt",
+        "side": "above",
+        "weight": 7
+    }
+}

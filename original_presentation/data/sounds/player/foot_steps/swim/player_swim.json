@@ -1,0 +1,12 @@
+{
+    "name": "player_swim",
+    "speed": 0.6,
+    "volume": 0.4,
+    "category": "player",
+    "sounds": [
+        "player_swim0.ogg",
+        "player_swim1.ogg",
+        "player_swim2.ogg",
+        "player_swim3.ogg"
+    ]
+}

@@ -1,0 +1,15 @@
+{
+    "name": "stone1",
+    "family": "rocks",
+    "layer": "plant",
+    "hardness": 1,
+    "speed": 0,
+    "frames": [
+        "stone1.png"
+    ],
+    "generation": {
+        "on": "dirt|stone",
+        "side": "above",
+        "weight": 3
+    }
+}

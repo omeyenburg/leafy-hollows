@@ -1,0 +1,11 @@
+{
+    "name": "player_on_pole",
+    "speed": 0,
+    "frames": [
+        "player_climb_pole_c.png"
+    ],
+    "hand": [
+        [0.0938, 0.25, 140.0]
+    ]
+}
+

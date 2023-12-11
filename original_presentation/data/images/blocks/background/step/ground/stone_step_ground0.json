@@ -1,0 +1,16 @@
+{
+    "name": "stone_step_ground0",
+    "family": "stone",
+    "layer": "background",
+    "hardness": 1,
+    "speed": 0,
+    "frames": [
+        "stone_step_ground0.png"
+    ],
+    "generation": {
+        "on": "stone",
+        "side": "above",
+        "corner": true,
+        "weight": 10
+    }
+}

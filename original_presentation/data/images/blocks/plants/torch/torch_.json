@@ -1,0 +1,17 @@
+{
+    "name": "torch",
+    "family": "light",
+    "layer": "plant",
+    "hardness": 1,
+    "speed": 0.1,
+    "frames": [
+        "torch_a.png",
+        "torch_b.png",
+        "torch_c.png"
+    ],
+    "generation": {
+        "on": "dirt|stone",
+        "side": "above",
+        "weight": 4
+    }
+}

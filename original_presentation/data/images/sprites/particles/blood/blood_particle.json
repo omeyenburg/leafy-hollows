@@ -1,0 +1,7 @@
+{
+    "name": "blood_particle",
+    "speed": 0,
+    "frames": [
+        "blood_particle.png"
+    ]
+}

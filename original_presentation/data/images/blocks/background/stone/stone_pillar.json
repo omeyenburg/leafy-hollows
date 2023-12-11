@@ -1,0 +1,15 @@
+{
+    "name": "stone_pillar",
+    "family": "stone",
+    "layer": "background",
+    "hardness": 1,
+    "speed": 0,
+    "frames": [
+        "stone_pillar.png"
+    ],
+    "generation": {
+        "on": "dirt|stone",
+        "side": "above",
+        "weight": 1
+    }
+}

@@ -1,0 +1,13 @@
+{
+    "name": "brick_block",
+    "family": "brick",
+    "layer": "foreground",
+    "hardness": 1,
+    "speed": 0,
+    "frames": [
+        "brick_block.png"
+    ],
+    "properties": {
+        "friction": 0.95
+    }
+}

@@ -1,0 +1,7 @@
+{
+    "name": "arrow_item",
+    "speed": 0,
+    "frames": [
+        "arrow_item.png"
+    ]
+}

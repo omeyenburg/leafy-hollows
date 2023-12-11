@@ -1,0 +1,10 @@
+{
+    "name": "horizontal_wood_log",
+    "family": "wood",
+    "layer": "background",
+    "hardness": 1,
+    "speed": 0,
+    "frames": [
+        "horizontal_wood_log.png"
+    ]
+}

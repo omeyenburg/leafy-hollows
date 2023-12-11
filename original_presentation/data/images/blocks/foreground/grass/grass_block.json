@@ -1,0 +1,13 @@
+{
+    "name": "grass_block",
+    "family": "dirt",
+    "layer": "foreground",
+    "hardness": 1,
+    "speed": 0,
+    "frames": [
+        "grass_block.png"
+    ],
+    "properties": {
+        "friction": 0.95
+    }
+}

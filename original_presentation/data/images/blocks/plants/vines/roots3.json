@@ -1,0 +1,15 @@
+{
+    "name": "roots3",
+    "family": "roots",
+    "layer": "plant",
+    "hardness": 1,
+    "speed": 0,
+    "frames": [
+        "roots3.png"
+    ],
+    "generation": {
+        "on": "dirt|stone",
+        "side": "below",
+        "weight": 9
+    }
+}

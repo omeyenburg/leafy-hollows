@@ -1,0 +1,15 @@
+{
+    "name": "amethyst0",
+    "family": "crystal",
+    "layer": "plant",
+    "hardness": 1,
+    "speed": 0,
+    "frames": [
+        "amethyst0.png"
+    ],
+    "generation": {
+        "on": "dirt|stone",
+        "side": "above",
+        "weight": 4
+    }
+}

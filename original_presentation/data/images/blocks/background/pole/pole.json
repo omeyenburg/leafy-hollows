@@ -1,0 +1,10 @@
+{
+    "name": "pole",
+    "family": "background",
+    "layer": "background",
+    "hardness": 1,
+    "speed": 0,
+    "frames": [
+        "pole.png"
+    ]
+}
