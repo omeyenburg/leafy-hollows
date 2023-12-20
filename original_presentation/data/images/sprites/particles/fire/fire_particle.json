@@ -1,7 +1,0 @@
-{
-    "name": "fire_particle",
-    "speed": 0,
-    "frames": [
-        "fire_particle.png"
-    ]
-}

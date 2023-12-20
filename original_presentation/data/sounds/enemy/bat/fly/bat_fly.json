@@ -1,9 +1,0 @@
-{
-    "name": "bat_fly",
-    "speed": 11,
-    "volume": 0.5,
-    "category": "enemy",
-    "sounds": [
-        "bat_fly.ogg"
-    ]
-}

@@ -1,7 +1,0 @@
-{
-    "name": "dust_particle",
-    "speed": 0,
-    "frames": [
-        "dust_particle.png"
-    ]
-}

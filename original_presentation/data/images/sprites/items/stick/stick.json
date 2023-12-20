@@ -1,7 +1,0 @@
-{
-    "name": "stick",
-    "speed": 0,
-    "frames": [
-        "stick.png"
-    ]
-}

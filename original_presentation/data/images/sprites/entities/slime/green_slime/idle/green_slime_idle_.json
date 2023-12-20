@@ -1,8 +1,0 @@
-{
-    "name": "green_slime_idle",
-    "speed": 0.15,
-    "frames": [
-        "green_slime_idle_a.png",
-        "green_slime_idle_b.png"
-    ]
-}

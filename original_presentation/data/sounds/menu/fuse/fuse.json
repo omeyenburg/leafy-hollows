@@ -1,9 +1,0 @@
-{
-    "name": "fuse",
-    "speed": 2.5,
-    "volume": 1.0,
-    "category": "menu",
-    "sounds": [
-        "fuse.ogg"
-    ]
-}
