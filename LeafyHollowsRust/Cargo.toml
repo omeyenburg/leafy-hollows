@@ -7,3 +7,5 @@ edition = "2021"
 
 [dependencies]
 directories = "5.0.1"
+gl = "0.14.0"
+sdl2 = "0.36.0"
