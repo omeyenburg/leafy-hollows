@@ -1,8 +1,15 @@
+- copyright: different player; own font; check sounds + replace with own
+- add own music
 - higher arrow drop rate & don't replace item drops with arrow drops (separated arrow drops)
 - dealt damage based on own velocity
+- entities stored in quad-trees
+- update all entites in one stage (between two gates)
+- when updating entites: update physics for all, play sounds for near and render visible entites
+- rewrite water updating and rendering
+- use framebuffers for shadows
+- move project to rust
 - add inventory grid view
 - improve shadows
-- remove numba
 - item cap (increases over time)
 - unskippable intro when inventory is empty
 - warning when fusing low attribute with higher attribute

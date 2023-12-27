@@ -1,0 +1,19 @@
+# Windows
+pip install pyinstaller
+pyinstaller main.spec
+# or
+python -m PyInstaller --onefile --noconsole --add-data "data;data" --icon "data/icon/icon.ico" main.py
+
+
+
+# MacOS
+pip install pyinstaller
+find . -name ".DS_Store" -exec rm -f {} \;
+pyinstaller main.spec
+chmod +x builddmg.sh
+./builddmg.sh
+
+# Android (only possible on MacOS & Linux)
+https://buildozer.readthedocs.io
+https://www.youtube.com/watch?v=L6XOqakZOeA
+requirements: python3, pygame, jnius, sdl2, sdl2_image, sdl2_mixer, sdl2_ttf, png, jpeg

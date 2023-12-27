@@ -1,0 +1,1 @@
+/Users/oskar/Documents/GitHub/LeafyHollows/LeafyHollowsRust/target/debug/main: /Users/oskar/Documents/GitHub/LeafyHollows/LeafyHollowsRust/src/main.rs /Users/oskar/Documents/GitHub/LeafyHollows/LeafyHollowsRust/src/window.rs

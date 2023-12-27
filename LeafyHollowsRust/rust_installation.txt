@@ -1,0 +1,20 @@
+Rust installation:
+https://www.rust-lang.org/tools/install
+
+Rust create new project:
+run "cargo new project_name"
+
+Compile:
+run "rustc path_to/src/main.rs" for simple executable
+or "cargo build" in project folder
+
+VSCode extensions:
+CodeLLDB,
+crates,
+Even Better TOML,
+GitHub Pull Requests and Issues,
+Python,
+Pylance,
+Rust Syntax,
+rust-analyzer,
+Shader languages support for VS Code
