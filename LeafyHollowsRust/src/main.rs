@@ -1,9 +1,8 @@
 #![allow(dead_code, unused_imports)]
-mod window;    // Used A) to introduce window into scope and B) to allow the path "window::greet"
-use window::*; // Used for "NUMBER" without "hello::"
-mod file;
+mod window;
+use window::*;
 mod constants;
-
+mod file;
 
 enum State {
     Menu,
@@ -23,8 +22,8 @@ fn main() {
     let state = State::Game;
     match state {
         State::Game => game(),
-        State::Menu => ()
+        State::Menu => (),
     }
-    let window = window::Window::new();
+    let window = window::Window::new().unwrap();
     window.update();
 }

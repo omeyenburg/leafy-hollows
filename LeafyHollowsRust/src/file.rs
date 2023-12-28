@@ -1,15 +1,14 @@
-use std::path::{Path, PathBuf};
 use crate::constants;
+use std::path::{Path, PathBuf};
 
 extern crate directories;
 use directories::ProjectDirs;
 
-
 fn get_project_directory() -> ProjectDirs {
-    if let Some(project_directory) = ProjectDirs::from("", "",  constants::PROJECT_DIRECTORY) {
-        return project_directory;
+    if let Some(project_directory) = ProjectDirs::from("", "", constants::PROJECT_DIRECTORY) {
+        project_directory
     } else {
-        panic!("Could not get project directory");
+        panic!("Could not find project directory");
     }
 }
 
