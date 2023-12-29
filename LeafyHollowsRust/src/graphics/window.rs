@@ -87,7 +87,7 @@ impl Window {
         let event_pump: sdl2::EventPump = unwrap![sdl_context.event_pump()];
 
         unsafe {
-            gl::Viewport(0, 0, width as i32, height as i32);
+            //gl::Viewport(0, 0, width as i32, height as i32);
             gl::ClearColor(0.0, 0.0, 0.0, 1.0);
             gl::Enable(gl::BLEND);
             gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
@@ -119,7 +119,9 @@ impl Window {
     }
 
     pub fn update(mut self) {
+        let mut r = 0.0;
         'running: loop {
+            r += self.clock.delta_time;
             for event in self.event_pump.poll_iter() {
                 match event {
                     Event::Quit { .. }
@@ -132,9 +134,9 @@ impl Window {
             }
 
             self.buffer.add_instance(
-                [1.0, 1.0, 1.0, 1.0],
+                [0.0, 0.0, 0.5, 0.5],
                 [0.0, 0.0, 0.0, 0.0],
-                [0.0, 0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, r],
             );
 
             unsafe {
