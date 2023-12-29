@@ -1,8 +1,10 @@
 #![allow(dead_code, unused_imports)]
-mod window;
-use window::*;
-mod constants;
-mod file;
+mod graphics;
+mod utility;
+
+use graphics::window;
+use utility::constants;
+use utility::file;
 
 enum State {
     Menu,
