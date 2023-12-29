@@ -4,8 +4,8 @@ fn size_of<T>() -> usize {
 
 pub struct Buffer {
     size: isize,
-    index: isize,
-    vao: gl::types::GLuint,
+    pub index: isize,
+    pub vao: gl::types::GLuint,
     ebo_indices: gl::types::GLuint,
     vbo_vertices: gl::types::GLuint,
     vbo_dest: gl::types::GLuint,
@@ -171,9 +171,5 @@ impl Buffer {
             gl::BufferSubData(gl::ARRAY_BUFFER, data_offset, data_size, shape_transform.as_ptr() as *const gl::types::GLvoid);
         }
         self.index += 1;
-    }
-
-    pub fn update(&mut self) {
-        self.index = 0;
     }
 }

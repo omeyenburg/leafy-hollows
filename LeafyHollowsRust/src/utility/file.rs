@@ -21,3 +21,8 @@ pub fn get_data_directory() -> PathBuf {
     let dirs: ProjectDirs = get_project_directory();
     dirs.data_dir().to_path_buf()
 }
+
+pub fn read(path: &str) -> Result<String, Box<dyn std::error::Error>> {
+    let content = std::fs::read_to_string(path)?;
+    Ok(content)
+}

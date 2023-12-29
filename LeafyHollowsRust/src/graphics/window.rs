@@ -2,11 +2,14 @@ use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 
-use crate::constants;
-use crate::graphics::clock;
 use crate::graphics::buffer;
+use crate::graphics::clock;
 use crate::graphics::input;
+use crate::graphics::shader;
 
+use crate::unwrap;
+use crate::utility::constants;
+use crate::utility::file;
 
 pub struct Window {
     sdl_context: sdl2::Sdl,
@@ -15,16 +18,17 @@ pub struct Window {
     event_pump: sdl2::EventPump,
     clock: clock::Clock,
     buffer: buffer::Buffer,
+    shader: shader::Shader,
 }
 
 impl Window {
     // Initialisation method of window
     pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
         // Create sdl context and return error when failing
-        let sdl_context: sdl2::Sdl = sdl2::init()?;
+        let sdl_context: sdl2::Sdl = unwrap![sdl2::init()];
 
         // Get video subsystem and return error on failure
-        let video_subsystem: sdl2::VideoSubsystem = sdl_context.video()?;
+        let video_subsystem: sdl2::VideoSubsystem = unwrap![sdl_context.video()];
         println!("Display bounds: {:?}", video_subsystem.display_bounds(0));
         println!(
             "Usable display bounds: {:?}",
@@ -39,28 +43,27 @@ impl Window {
         gl_attr.set_context_profile(sdl2::video::GLProfile::Core);
         gl_attr.set_context_version(constants::OPENGL_VERSION.0, constants::OPENGL_VERSION.1);
 
-        let display_size: sdl2::rect::Rect = video_subsystem.display_bounds(0)?;
+        let display_size: sdl2::rect::Rect = unwrap![video_subsystem.display_bounds(0)];
         let title: &str = constants::PROJECT_NAME;
         let width: u32 = (display_size.w / 3 * 2) as u32;
         let height: u32 = (display_size.h / 5 * 3) as u32;
 
         // Create window and return error on failure
-        let window: sdl2::video::Window = video_subsystem
+        let window = video_subsystem
             .window(title, width, height)
             .position_centered()
             .resizable()
             .allow_highdpi()
             .opengl()
-            .build()?;
+            .build();
+        let window = unwrap![window];
 
         // Create gl context and return error on failure
-        let gl_context: sdl2::video::GLContext = window.gl_create_context()?;
+        let gl_context: sdl2::video::GLContext = unwrap![window.gl_create_context()];
         gl::load_with(|s| video_subsystem.gl_get_proc_address(s) as *const std::os::raw::c_void);
 
         // Set swap interval to vsync
-        window
-            .subsystem()
-            .gl_set_swap_interval(sdl2::video::SwapInterval::VSync)?;
+        //window.subsystem().gl_set_swap_interval(sdl2::video::SwapInterval::VSync);
 
         // Depth size
         println!("Default depth size: {:?}", gl_attr.depth_size());
@@ -81,7 +84,7 @@ impl Window {
         }
 
         // Create event pump and return error on failure
-        let event_pump: sdl2::EventPump = sdl_context.event_pump()?;
+        let event_pump: sdl2::EventPump = unwrap![sdl_context.event_pump()];
 
         unsafe {
             gl::Viewport(0, 0, width as i32, height as i32);
@@ -91,8 +94,17 @@ impl Window {
         }
 
         let clock = clock::Clock::new(&sdl_context);
-
         let buffer = buffer::Buffer::new();
+
+        let vertex = unwrap![file::read("ressources/shader/vertex.glsl")];
+        let fragment = unwrap![file::read("ressources/shader/fragment.glsl")];
+        let shader = shader::Shader::new(&vertex, &fragment);
+
+        unsafe {
+            gl::BindVertexArray(buffer.vao);
+            shader.apply();
+            gl::ClearColor(0.3, 0.6, 0.4, 1.0);
+        }
 
         // Create and return Window instance
         Ok(Self {
@@ -102,6 +114,7 @@ impl Window {
             event_pump,
             clock,
             buffer,
+            shader,
         })
     }
 
@@ -117,22 +130,27 @@ impl Window {
                     _ => {}
                 }
             }
+
+            self.buffer.add_instance(
+                [1.0, 1.0, 1.0, 1.0],
+                [0.0, 0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 0.0],
+            );
+
             unsafe {
-                gl::ClearColor(0.3, 0.6, 0.4, 1.0);
                 gl::Clear(gl::COLOR_BUFFER_BIT);
+                gl::DrawElementsInstanced(
+                    gl::TRIANGLES,
+                    6,
+                    gl::UNSIGNED_INT,
+                    std::ptr::null(),
+                    self.buffer.index as i32,
+                );
             }
+
             self.window.gl_swap_window();
-            // The rest of the game loop goes here...
-
-            //::std::thread::sleep(std::time::Duration::new(0, 1_000_000_000u32 / 60));
-
             self.clock.update();
-            //if self.clock.fps > 55.0 {
-            println!("{}", self.clock.get_delta_time());
-            //}
-
-            self.buffer.add_instance([0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0]);
-            self.buffer.update();
+            self.buffer.index = 0;
         }
     }
 }

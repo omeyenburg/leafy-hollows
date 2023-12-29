@@ -1,4 +1,6 @@
 #![allow(dead_code, unused_imports)]
+use anyhow::{Result, Context};
+
 mod graphics;
 mod utility;
 
