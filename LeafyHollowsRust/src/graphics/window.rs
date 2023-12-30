@@ -1,6 +1,17 @@
 use crate::graphics::*;
-use crate::unwrap;
 use crate::utility::constants;
+
+macro_rules! unwrap {
+    [$expr:expr] => {
+        match $expr {
+            Ok(value) => value,
+            Err(err) => {
+                eprintln!("\nError: {:?}.", err);
+                panic!("");
+            }
+        }
+    };
+}
 
 pub struct Window {
     pub running: bool,

@@ -30,11 +30,12 @@ fn main() {
 
     let mut r: f32 = 0.0;
     while window.running {
-        r += window.clock.delta_time;
+        r += window.clock.delta_time as f32;
+
         for i in 0..100 {
             window.draw_rectangle(
                 [
-                    (i as f32 / 50.0 + window.clock.time as f32 * 0.000000002).cos() * 0.3,
+                    (i as f32 / 50.0 + window.clock.time as f32).cos() * 0.2,
                     -0.25 + i as f32 / 200.0,
                     0.5,
                     0.5,
