@@ -1,6 +1,4 @@
 #![allow(dead_code, unused_imports)]
-use anyhow::{Context, Result};
-
 mod graphics;
 mod utility;
 
@@ -30,10 +28,21 @@ fn main() {
     }
     let mut window = window::Window::new();
 
-    let mut r = 0.0;
+    let mut r: f32 = 0.0;
     while window.running {
         r += window.clock.delta_time;
-        window.draw_rectangle([0.0, 0.0, 0.5, 0.5], [0.7, 0.2, 0.3, 0.9], r);
+        for i in 0..100 {
+            window.draw_rectangle(
+                [
+                    (i as f32 / 50.0 + window.clock.time as f32 * 0.000000002).cos() * 0.3,
+                    -0.25 + i as f32 / 200.0,
+                    0.5,
+                    0.5,
+                ],
+                [0.7 * i as f32 / 100.0, 0.2, 0.4, 0.9],
+                r,
+            );
+        }
         window.update();
     }
 }

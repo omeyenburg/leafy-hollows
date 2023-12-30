@@ -10,3 +10,10 @@ macro_rules! unwrap {
         }
     };
 }
+
+#[macro_export]
+macro_rules! read {
+    ($expr:expr) => {
+        include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/", $expr))
+    };
+}

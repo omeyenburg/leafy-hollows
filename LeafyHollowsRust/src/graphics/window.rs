@@ -1,13 +1,6 @@
-use sdl2::pixels::Color;
-
-use crate::graphics::buffer;
-use crate::graphics::clock;
-use crate::graphics::input;
-use crate::graphics::shader;
-
+use crate::graphics::*;
 use crate::unwrap;
 use crate::utility::constants;
-use crate::utility::file;
 
 pub struct Window {
     pub running: bool,
@@ -23,7 +16,6 @@ pub struct Window {
 }
 
 impl Window {
-    // Initialisation method of window
     pub fn new() -> Self {
         // Create sdl context and return error when failing
         let sdl_context: sdl2::Sdl = unwrap![sdl2::init()];
@@ -89,7 +81,7 @@ impl Window {
 
         unsafe {
             //gl::Viewport(0, 0, width, height);
-            gl::ClearColor(0.0, 0.0, 0.0, 1.0);
+            gl::ClearColor(0.15, 0.0, 0.05, 1.0);
             gl::Enable(gl::BLEND);
             gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
         }
@@ -97,9 +89,10 @@ impl Window {
         let clock = clock::Clock::new(&sdl_context);
         let buffer = buffer::Buffer::new();
 
-        let vertex = unwrap![file::read("ressources/shader/vertex.glsl")];
-        let fragment = unwrap![file::read("ressources/shader/fragment.glsl")];
-        let mut shader = shader::Shader::new(&vertex, &fragment);
+        let mut shader = shader::Shader::new(
+            &constants::VERTEX_SHADER_SOURCE,
+            &constants::FRAGMENT_SHADER_SOURCE,
+        );
 
         shader.add_var(
             "window_size_relation",
@@ -109,7 +102,6 @@ impl Window {
 
         unsafe {
             gl::BindVertexArray(buffer.vao);
-            gl::ClearColor(0.3, 0.6, 0.4, 1.0);
         }
 
         // Create and return Window instance
