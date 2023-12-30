@@ -1,4 +1,4 @@
-use sdl2::event::Event;
+use sdl2::event::{Event, WindowEvent};
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 
@@ -12,6 +12,9 @@ use crate::utility::constants;
 use crate::utility::file;
 
 pub struct Window {
+    running: bool,
+    width: i32,
+    height: i32,
     sdl_context: sdl2::Sdl,
     window: sdl2::video::Window,
     gl_context: sdl2::video::GLContext,
@@ -23,7 +26,7 @@ pub struct Window {
 
 impl Window {
     // Initialisation method of window
-    pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn new() -> Self {
         // Create sdl context and return error when failing
         let sdl_context: sdl2::Sdl = unwrap![sdl2::init()];
 
@@ -45,12 +48,12 @@ impl Window {
 
         let display_size: sdl2::rect::Rect = unwrap![video_subsystem.display_bounds(0)];
         let title: &str = constants::PROJECT_NAME;
-        let width: u32 = (display_size.w / 3 * 2) as u32;
-        let height: u32 = (display_size.h / 5 * 3) as u32;
+        let width: i32 = display_size.w / 3 * 2;
+        let height: i32 = display_size.h / 5 * 3;
 
         // Create window and return error on failure
         let window = video_subsystem
-            .window(title, width, height)
+            .window(title, width as u32, height as u32)
             .position_centered()
             .resizable()
             .allow_highdpi()
@@ -87,7 +90,7 @@ impl Window {
         let event_pump: sdl2::EventPump = unwrap![sdl_context.event_pump()];
 
         unsafe {
-            //gl::Viewport(0, 0, width as i32, height as i32);
+            //gl::Viewport(0, 0, width, height);
             gl::ClearColor(0.0, 0.0, 0.0, 1.0);
             gl::Enable(gl::BLEND);
             gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
@@ -98,16 +101,24 @@ impl Window {
 
         let vertex = unwrap![file::read("ressources/shader/vertex.glsl")];
         let fragment = unwrap![file::read("ressources/shader/fragment.glsl")];
-        let shader = shader::Shader::new(&vertex, &fragment);
+        let mut shader = shader::Shader::new(&vertex, &fragment);
+
+        shader.add_var(
+            "window_size_relation",
+            shader::UniformValue::Float(height as f32 / width as f32),
+            true,
+        );
 
         unsafe {
             gl::BindVertexArray(buffer.vao);
-            shader.apply();
             gl::ClearColor(0.3, 0.6, 0.4, 1.0);
         }
 
         // Create and return Window instance
-        Ok(Self {
+        Self {
+            running: true,
+            width,
+            height,
             sdl_context,
             window,
             gl_context,
@@ -115,29 +126,26 @@ impl Window {
             clock,
             buffer,
             shader,
-        })
+        }
     }
 
     pub fn update(mut self) {
         let mut r = 0.0;
-        'running: loop {
+        while self.running {
             r += self.clock.delta_time;
-            for event in self.event_pump.poll_iter() {
-                match event {
-                    Event::Quit { .. }
-                    | Event::KeyDown {
-                        keycode: Some(Keycode::Escape),
-                        ..
-                    } => break 'running,
-                    _ => {}
-                }
-            }
+            self.events();
 
             self.buffer.add_instance(
                 [0.0, 0.0, 0.5, 0.5],
                 [0.0, 0.0, 0.0, 0.0],
                 [0.0, 0.0, 0.0, r],
             );
+
+            self.shader.set_var(
+                0,
+                shader::UniformValue::Float(self.height as f32 / self.width as f32),
+            );
+            self.shader.update();
 
             unsafe {
                 gl::Clear(gl::COLOR_BUFFER_BIT);
@@ -153,6 +161,90 @@ impl Window {
             self.window.gl_swap_window();
             self.clock.update();
             self.buffer.index = 0;
+        }
+    }
+
+    fn events(&mut self) {
+        for event in self.event_pump.poll_iter() {
+            match event {
+                Event::Quit { .. }
+                | Event::KeyDown {
+                    keycode: Some(Keycode::Escape),
+                    ..
+                } => {self.running = false},
+                Event::Window {
+                    timestamp: _,
+                    window_id: _,
+                    win_event,
+                } => match win_event {
+                    WindowEvent::SizeChanged(width, height) => {
+                        self.width = width;
+                        self.height = height;
+                    }
+                    WindowEvent::FocusLost => println!("App lost focus -> pause game!"),
+                    _ => {}
+                },
+                Event::KeyDown {
+                    timestamp: _,
+                    window_id: _,
+                    keycode,
+                    scancode: _,
+                    keymod,
+                    repeat,
+                } => println!("Key down: {keycode:?}, Keymod: {keymod}, Repeat: {repeat}"),
+                Event::KeyUp {
+                    timestamp: _,
+                    window_id: _,
+                    keycode,
+                    scancode: _,
+                    keymod,
+                    repeat,
+                } => println!("Key up: {keycode:?}, Keymod: {keymod}, Repeat: {repeat}"),
+                Event::TextInput {
+                    timestamp: _,
+                    window_id: _,
+                    text,
+                } => println!("Text input: {text}"),
+                Event::MouseMotion {
+                    timestamp: _,
+                    window_id: _,
+                    which: _,
+                    mousestate: _,
+                    x,
+                    y,
+                    xrel,
+                    yrel,
+                } => println!("Moved mouse: ({x}|{y}), Velocity: ({xrel}|{yrel})"),
+                Event::MouseButtonDown {
+                    timestamp: _,
+                    window_id: _,
+                    which: _,
+                    mouse_btn,
+                    clicks: _,
+                    x: _,
+                    y: _,
+                } => println!("Pressed mouse button: {mouse_btn:?}"),
+                Event::MouseButtonUp {
+                    timestamp: _,
+                    window_id: _,
+                    which: _,
+                    mouse_btn,
+                    clicks: _,
+                    x: _,
+                    y: _,
+                } => println!("Released mouse button: {mouse_btn:?}"),
+                Event::MouseWheel {
+                    timestamp: _,
+                    window_id: _,
+                    which: _,
+                    x,
+                    y,
+                    direction,
+                    precise_x,
+                    precise_y,
+                } => println!("Mouse wheel: {x}, {y}; Precise: {precise_x}, {precise_y}; Wheel direction: {direction:?}"),
+                _ => {}
+            }
         }
     }
 }

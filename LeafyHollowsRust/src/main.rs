@@ -1,5 +1,5 @@
 #![allow(dead_code, unused_imports)]
-use anyhow::{Result, Context};
+use anyhow::{Context, Result};
 
 mod graphics;
 mod utility;
@@ -28,6 +28,6 @@ fn main() {
         State::Game => game(),
         State::Menu => (),
     }
-    let window = window::Window::new().unwrap();
+    let window = window::Window::new();
     window.update();
 }

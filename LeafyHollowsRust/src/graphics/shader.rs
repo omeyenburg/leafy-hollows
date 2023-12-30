@@ -1,9 +1,33 @@
-use gl::types::{GLenum, GLint, GLuint};
+use gl::{
+    types::{GLenum, GLint, GLuint},
+    GetBooleani_v,
+};
 use std::ffi::CString;
 
 pub struct Shader {
     program: GLuint,
-    variables: Vec<u32>,
+    variables: Vec<UniformVariable>,
+}
+
+struct UniformVariable {
+    loc: i32,
+    value: UniformValue,
+    update: bool,
+}
+
+pub enum UniformValue {
+    Int(i32),
+    UInt(u32),
+    Float(f32),
+    Vec2([f32; 2]),
+    Vec3([f32; 3]),
+    Vec4([f32; 4]),
+    IVec2([i32; 2]),
+    IVec3([i32; 3]),
+    IVec4([i32; 4]),
+    UVec2([u32; 2]),
+    UVec3([u32; 3]),
+    UVec4([u32; 4]),
 }
 
 impl Shader {
@@ -45,9 +69,41 @@ impl Shader {
         }
     }
 
-    pub fn apply(&self) {
+    pub fn update(&self) {
         unsafe {
             gl::UseProgram(self.program);
+
+            for var in &self.variables {
+                if !var.update {
+                    continue;
+                }
+                match var.value {
+                    UniformValue::Int(value) => gl::Uniform1i(var.loc, value),
+                    UniformValue::UInt(value) => gl::Uniform1ui(var.loc, value),
+                    UniformValue::Float(value) => gl::Uniform1f(var.loc, value),
+                    UniformValue::Vec2(value) => gl::Uniform2f(var.loc, value[0], value[1]),
+                    UniformValue::Vec3(value) => {
+                        gl::Uniform3f(var.loc, value[0], value[1], value[2])
+                    }
+                    UniformValue::Vec4(value) => {
+                        gl::Uniform4f(var.loc, value[0], value[1], value[2], value[3])
+                    }
+                    UniformValue::IVec2(value) => gl::Uniform2i(var.loc, value[0], value[1]),
+                    UniformValue::IVec3(value) => {
+                        gl::Uniform3i(var.loc, value[0], value[1], value[2])
+                    }
+                    UniformValue::IVec4(value) => {
+                        gl::Uniform4i(var.loc, value[0], value[1], value[2], value[3])
+                    }
+                    UniformValue::UVec2(value) => gl::Uniform2ui(var.loc, value[0], value[1]),
+                    UniformValue::UVec3(value) => {
+                        gl::Uniform3ui(var.loc, value[0], value[1], value[2])
+                    }
+                    UniformValue::UVec4(value) => {
+                        gl::Uniform4ui(var.loc, value[0], value[1], value[2], value[3])
+                    }
+                }
+            }
         }
     }
 
@@ -82,6 +138,27 @@ impl Shader {
             gl::AttachShader(*program, id);
         }
         return id;
+    }
+
+    pub fn add_var(&mut self, name: &str, value: UniformValue, send: bool) {
+        let loc;
+        let name = CString::new(name).unwrap();
+        unsafe {
+            loc = gl::GetUniformLocation(
+                self.program,
+                name.as_ptr() as *const i8,
+            );
+        }
+        let variable = UniformVariable {
+            loc,
+            value,
+            update: send,
+        };
+        self.variables.push(variable)
+    }
+
+    pub fn set_var(&mut self, index: usize, value: UniformValue) {
+        self.variables[index].value = value;
     }
 }
 
