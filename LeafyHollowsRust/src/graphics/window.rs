@@ -1,5 +1,3 @@
-use sdl2::event::{Event, WindowEvent};
-use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 
 use crate::graphics::buffer;
@@ -12,15 +10,15 @@ use crate::utility::constants;
 use crate::utility::file;
 
 pub struct Window {
-    running: bool,
-    width: i32,
-    height: i32,
+    pub running: bool,
+    pub width: i32,
+    pub height: i32,
     sdl_context: sdl2::Sdl,
     window: sdl2::video::Window,
     gl_context: sdl2::video::GLContext,
-    event_pump: sdl2::EventPump,
-    clock: clock::Clock,
-    buffer: buffer::Buffer,
+    pub event_pump: sdl2::EventPump,
+    pub clock: clock::Clock,
+    pub buffer: buffer::Buffer,
     shader: shader::Shader,
 }
 
@@ -129,122 +127,27 @@ impl Window {
         }
     }
 
-    pub fn update(mut self) {
-        let mut r = 0.0;
-        while self.running {
-            r += self.clock.delta_time;
-            self.events();
+    pub fn update(&mut self) {
+        self.events();
+        self.shader.set_var(
+            0,
+            shader::UniformValue::Float(self.height as f32 / self.width as f32),
+        );
+        self.shader.update();
 
-            self.buffer.add_instance(
-                [0.0, 0.0, 0.5, 0.5],
-                [0.0, 0.0, 0.0, 0.0],
-                [0.0, 0.0, 0.0, r],
+        unsafe {
+            gl::Clear(gl::COLOR_BUFFER_BIT);
+            gl::DrawElementsInstanced(
+                gl::TRIANGLES,
+                6,
+                gl::UNSIGNED_INT,
+                std::ptr::null(),
+                self.buffer.index as i32,
             );
-
-            self.shader.set_var(
-                0,
-                shader::UniformValue::Float(self.height as f32 / self.width as f32),
-            );
-            self.shader.update();
-
-            unsafe {
-                gl::Clear(gl::COLOR_BUFFER_BIT);
-                gl::DrawElementsInstanced(
-                    gl::TRIANGLES,
-                    6,
-                    gl::UNSIGNED_INT,
-                    std::ptr::null(),
-                    self.buffer.index as i32,
-                );
-            }
-
-            self.window.gl_swap_window();
-            self.clock.update();
-            self.buffer.index = 0;
         }
-    }
 
-    fn events(&mut self) {
-        for event in self.event_pump.poll_iter() {
-            match event {
-                Event::Quit { .. }
-                | Event::KeyDown {
-                    keycode: Some(Keycode::Escape),
-                    ..
-                } => {self.running = false},
-                Event::Window {
-                    timestamp: _,
-                    window_id: _,
-                    win_event,
-                } => match win_event {
-                    WindowEvent::SizeChanged(width, height) => {
-                        self.width = width;
-                        self.height = height;
-                    }
-                    WindowEvent::FocusLost => println!("App lost focus -> pause game!"),
-                    _ => {}
-                },
-                Event::KeyDown {
-                    timestamp: _,
-                    window_id: _,
-                    keycode,
-                    scancode: _,
-                    keymod,
-                    repeat,
-                } => println!("Key down: {keycode:?}, Keymod: {keymod}, Repeat: {repeat}"),
-                Event::KeyUp {
-                    timestamp: _,
-                    window_id: _,
-                    keycode,
-                    scancode: _,
-                    keymod,
-                    repeat,
-                } => println!("Key up: {keycode:?}, Keymod: {keymod}, Repeat: {repeat}"),
-                Event::TextInput {
-                    timestamp: _,
-                    window_id: _,
-                    text,
-                } => println!("Text input: {text}"),
-                Event::MouseMotion {
-                    timestamp: _,
-                    window_id: _,
-                    which: _,
-                    mousestate: _,
-                    x,
-                    y,
-                    xrel,
-                    yrel,
-                } => println!("Moved mouse: ({x}|{y}), Velocity: ({xrel}|{yrel})"),
-                Event::MouseButtonDown {
-                    timestamp: _,
-                    window_id: _,
-                    which: _,
-                    mouse_btn,
-                    clicks: _,
-                    x: _,
-                    y: _,
-                } => println!("Pressed mouse button: {mouse_btn:?}"),
-                Event::MouseButtonUp {
-                    timestamp: _,
-                    window_id: _,
-                    which: _,
-                    mouse_btn,
-                    clicks: _,
-                    x: _,
-                    y: _,
-                } => println!("Released mouse button: {mouse_btn:?}"),
-                Event::MouseWheel {
-                    timestamp: _,
-                    window_id: _,
-                    which: _,
-                    x,
-                    y,
-                    direction,
-                    precise_x,
-                    precise_y,
-                } => println!("Mouse wheel: {x}, {y}; Precise: {precise_x}, {precise_y}; Wheel direction: {direction:?}"),
-                _ => {}
-            }
-        }
+        self.window.gl_swap_window();
+        self.clock.update();
+        self.buffer.index = 0;
     }
 }

@@ -28,6 +28,12 @@ fn main() {
         State::Game => game(),
         State::Menu => (),
     }
-    let window = window::Window::new();
-    window.update();
+    let mut window = window::Window::new();
+
+    let mut r = 0.0;
+    while window.running {
+        r += window.clock.delta_time;
+        window.draw_rectangle([0.0, 0.0, 0.5, 0.5], [0.7, 0.2, 0.3, 0.9], r);
+        window.update();
+    }
 }
