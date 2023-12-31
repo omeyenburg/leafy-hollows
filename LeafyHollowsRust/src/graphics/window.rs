@@ -45,8 +45,11 @@ impl Window {
         );
         println!("Video driver: {:?}", video_subsystem.current_video_driver());
         let gl_attr: sdl2::video::gl_attr::GLAttr<'_> = video_subsystem.gl_attr();
+
         gl_attr.set_context_profile(sdl2::video::GLProfile::Core);
         gl_attr.set_context_version(constants::OPENGL_VERSION.0, constants::OPENGL_VERSION.1);
+        //gl_attr.set_multisample_buffers(16);
+        //gl_attr.set_multisample_samples(16);
 
         let display_size: sdl2::rect::Rect = unwrap![video_subsystem.display_bounds(0)];
         let title: &str = constants::PROJECT_NAME;
@@ -67,6 +70,14 @@ impl Window {
         let gl_context: sdl2::video::GLContext = unwrap![window.gl_create_context()];
         gl::load_with(|s| video_subsystem.gl_get_proc_address(s) as *const std::os::raw::c_void);
 
+        // Antialiasing
+        //println!("Multisample buffers: {:?}", gl_attr.multisample_buffers());
+        //println!("Multisample samples: {:?}", gl_attr.multisample_samples());
+        unsafe {
+            gl::Enable(gl::MULTISAMPLE);
+            //GL.glDisable(GL.GL_MULTISAMPLE)
+        }
+
         // Set swap interval to vsync
         //window.subsystem().gl_set_swap_interval(sdl2::video::SwapInterval::VSync);
 
@@ -79,14 +90,6 @@ impl Window {
             std::ffi::CStr::from_ptr(data).to_str().unwrap().to_owned()
         };
         println!("OpenGL version: {}", version);
-
-        // Antialiasing
-        println!("Multisample buffers: {:?}", gl_attr.multisample_buffers());
-        println!("Multisample samples: {:?}", gl_attr.multisample_samples());
-        unsafe {
-            gl::Enable(gl::MULTISAMPLE);
-            //GL.glDisable(GL.GL_MULTISAMPLE)
-        }
 
         // Create event pump and return error on failure
         let event_pump: sdl2::EventPump = unwrap![sdl_context.event_pump()];
@@ -157,4 +160,8 @@ impl Window {
         self.clock.update();
         self.buffer.index = 0;
     }
+}
+
+impl Drop for Window {
+    fn drop(&mut self) {}
 }

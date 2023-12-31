@@ -11,6 +11,11 @@ void draw_rectangle() {
     fragColor = vec4(source_color);
 }
 
+void draw_circle() {
+    int inside = int(pow(texcoord.x - 0.5, 2) + pow(texcoord.y - 0.5, 2) < pow(0.5, 2));
+    fragColor = vec4(source_color) * inside;
+}
+
 void draw_image() {
     fragColor = texture(texSprites, texcoord);
 }
@@ -21,6 +26,9 @@ void main() {
             draw_rectangle();
             break;
         case 1:
+            draw_circle();
+            break;
+        case 2:
             draw_image();
             break;
     }

@@ -30,7 +30,7 @@ fn main() {
 
     let mut r: f32 = 0.0;
     while window.running {
-        r += window.clock.delta_time as f32;
+        r += window.clock.delta_time as f32 * 0.3;
 
         for i in 0..100 {
             window.draw_image(
@@ -44,6 +44,13 @@ fn main() {
                 r,
             );
         }
+
+        window.draw_circle(
+            [0.7, 0.3],
+            [0.6, 0.2, 0.9, 0.4],
+            0.2,
+        );
+
         window.update();
     }
 }

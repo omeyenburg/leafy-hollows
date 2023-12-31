@@ -89,3 +89,9 @@ impl Textures {
         }
     }
 }
+
+
+impl Drop for Textures {
+    fn drop(&mut self) {
+    }
+}
