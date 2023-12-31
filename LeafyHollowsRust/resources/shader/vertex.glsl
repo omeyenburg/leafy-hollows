@@ -7,7 +7,7 @@ layout (location = 4) in vec4 vertex_shape_transform;
 
 out vec2 texcoord;
 flat out vec4 source_color;
-flat out float shape;
+flat out int shape;
 
 uniform float window_size_relation;
 
@@ -41,5 +41,5 @@ void main() {
 
     texcoord = vertex_texcoord;
     source_color = vertex_source_color;
-    shape = vertex_shape_transform.r;
+    shape = int(round(vertex_shape_transform.r));
 }

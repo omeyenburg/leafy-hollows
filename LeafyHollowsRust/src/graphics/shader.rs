@@ -1,7 +1,7 @@
-use gl::{
-    types::{GLenum, GLint, GLuint},
-    GetBooleani_v,
-};
+use crate::utility::file;
+use core::panic;
+use gl::types::{GLenum, GLint, GLuint};
+use gl::GetBooleani_v;
 use std::ffi::CString;
 
 pub struct Shader {
@@ -107,8 +107,8 @@ impl Shader {
         }
     }
 
-    fn attach_shader(program: &GLuint, path: &str, shader_type: GLenum) -> GLenum {
-        let source_code = CString::new(path).unwrap();
+    fn attach_shader(program: &GLuint, source_code: &str, shader_type: GLenum) -> GLenum {
+        let source_code = CString::new(source_code).unwrap();
         let mut success: GLint = 0;
         let id: GLuint;
 
@@ -131,8 +131,15 @@ impl Shader {
 
                 error_log.set_len(error_log_size as usize);
                 let log = String::from_utf8(error_log).unwrap();
-                eprint!("{}", log);
-                panic!("Failed to compile shader!")
+
+                let mut file_path = String::from("");
+                match shader_type {
+                    gl::VERTEX_SHADER => file_path += "vertex.glsl",
+                    gl::GEOMETRY_SHADER => file_path += "geometry.glsl",
+                    gl::FRAGMENT_SHADER => file_path += "fragment.glsl",
+                    _ => panic!("Unkown shader type: {}", shader_type),
+                };
+                panic!("\nShader Error: {}{}", file_path, &log[8..]);
             }
 
             gl::AttachShader(*program, id);
@@ -144,10 +151,7 @@ impl Shader {
         let loc;
         let name = CString::new(name).unwrap();
         unsafe {
-            loc = gl::GetUniformLocation(
-                self.program,
-                name.as_ptr() as *const i8,
-            );
+            loc = gl::GetUniformLocation(self.program, name.as_ptr() as *const i8);
         }
         let variable = UniformVariable {
             loc,

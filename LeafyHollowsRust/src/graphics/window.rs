@@ -24,6 +24,7 @@ pub struct Window {
     pub clock: clock::Clock,
     pub buffer: buffer::Buffer,
     shader: shader::Shader,
+    textures: image::Textures,
 }
 
 impl Window {
@@ -115,6 +116,8 @@ impl Window {
             gl::BindVertexArray(buffer.vao);
         }
 
+        let textures = image::Textures::new();
+
         // Create and return Window instance
         Self {
             running: true,
@@ -127,6 +130,7 @@ impl Window {
             clock,
             buffer,
             shader,
+            textures,
         }
     }
 
