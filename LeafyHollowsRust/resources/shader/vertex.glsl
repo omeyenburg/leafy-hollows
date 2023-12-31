@@ -5,11 +5,12 @@ layout (location = 2) in vec4 vertex_dest_rect;
 layout (location = 3) in vec4 vertex_source_color;
 layout (location = 4) in vec4 vertex_shape_transform;
 
+uniform float window_size_relation;
+
 out vec2 texcoord;
 flat out vec4 source_color;
 flat out int shape;
 
-uniform float window_size_relation;
 
 void main() {
     vec2 flip = vertex_shape_transform.gb;

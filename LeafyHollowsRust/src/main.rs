@@ -33,14 +33,14 @@ fn main() {
         r += window.clock.delta_time as f32;
 
         for i in 0..100 {
-            window.draw_rectangle(
+            window.draw_image(
                 [
                     (i as f32 / 50.0 + window.clock.time as f32).cos() * 0.2,
                     -0.25 + i as f32 / 200.0,
                     0.5,
                     0.5,
                 ],
-                [0.7 * i as f32 / 100.0, 0.2, 0.4, 0.9],
+                1,
                 r,
             );
         }

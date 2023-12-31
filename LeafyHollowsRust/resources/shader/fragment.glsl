@@ -19,7 +19,9 @@ void main() {
     switch (shape) {
         case 0:
             draw_rectangle();
+            break;
         case 1:
             draw_image();
+            break;
     }
 }
