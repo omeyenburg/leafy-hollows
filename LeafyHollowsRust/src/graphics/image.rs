@@ -1,5 +1,6 @@
 use crate::constants::*;
 use gl::types::*;
+use gl::NUM_SAMPLE_COUNTS;
 use image::DynamicImage;
 use image::GenericImageView;
 
@@ -90,8 +91,6 @@ impl Textures {
     }
 }
 
-
 impl Drop for Textures {
-    fn drop(&mut self) {
-    }
+    fn drop(&mut self) {}
 }

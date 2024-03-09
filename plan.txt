@@ -1,0 +1,128 @@
+- small blocks (player size = 2x3 blocks) -> Terraria
+- grass slopes -> diagonal velocity
+- player can walk up steps -> slowdown
+- rotational physics
+- echos
+- fluid & sand physics
+- npcs
+- staircase/ladder/lift
+- mini map (automatic/player discovers pieces)
+- relics
+- player may have hunger & thirst
+- time limit
+  > periodical ermerging earthquakes/poisonous fog/ghosts
+  > torch/lantern goes out & needs to be refueled at checkpoint & monsters attack in darkness
+- structures -> ruins, villages
+- lost civilisation
+
+Storyline:
+- player falls into a pit ==> 20 m / 40 blocks deep
+- quest to find lantern in pit
+- mossy sewer (first area) -> muddy water falls, brick tunnels, stairs => labyrinth-like
+- player lights lantern (dynamic lights)
+- player explores sewer and later caves
+- most monsters flee from light
+- lantern goes out & needs to be refueled at checkpoint & monsters attack in darkness
+
+The Cataclysmic Rift:
+Millions of years ago, the world you know was whole. This region, however, was ravaged by a cataclysmic event. A colossal earthquake split the earth open, creating a gaping chasm that stretched for miles. Over time, water erosion widened the fissure, carving out the vast network of caverns that now lie beneath the surface.
+
+A Refuge for the Unseen:
+The sudden influx of darkness and isolation fostered a unique ecosystem within the caverns. Creatures, mutated by the harsh environment and imbued with an otherworldly resilience, thrived in the perpetual gloom. These are the denizens of the deep – blind, predatory creatures with heightened senses of smell and hearing, drawn to the faintest vibrations.
+
+Echoes of a Fallen Empire:
+The lost civilization that once flourished above these caverns was known as the Lumenfolk. Masters of light manipulation, they harnessed a mysterious energy source they called "Aether." The murals depict the Lumenfolk using Aether to create wondrous feats – glowing cities, advanced machinery, and even the ability to manipulate gravity (explaining the staircase/ladder/lift technology).
+
+The Fall from Grace:
+However, greed and ambition corroded their society. A faction within the Lumenfolk sought to weaponize Aether, leading to a devastating civil war. The misuse of this volatile energy destabilized the earth, triggering the cataclysm that ripped open the chasm. The Lumenfolk civilization crumbled, and the remnants of their once-great works – tools, structures, and the powerful Aether Relic – were swallowed by the earth.
+
+The Relic's Allure:
+The Aether Relic pulsates with a potent, yet unstable, energy. It holds the power to manipulate reality itself – to heal, to destroy, or even to reshape the very fabric of time and space. This immense power has become a beacon, drawing fortune hunters, power-hungry warlords, and even malevolent entities from beyond the veil.
+
+Echoes in the Darkness:
+The whispers you hear in the caverns are not mere echoes, but the anguished pleas of the Lumenfolk trapped within the Aether. Their spirits, bound to the caverns by their misuse of the relic, are a constant reminder of the dangers of unchecked ambition.
+
+A Race Against Time:
+The caverns are not static. The constant tremors and the unstable nature of the Aether Relic threaten to trigger another cataclysm. Your quest is not just about retrieving the relic; it's about preventing its misuse and ensuring the stability of the world above.
+
+Uncovering the Truth:
+Scattered throughout the caverns are hidden chambers and forgotten texts left behind by the Lumenfolk. These hold the key to understanding their history, the true nature of the Aether, and potentially a way to neutralize the relic's destructive potential.
+
+This expanded storyline offers a richer world with hidden depths. Players can not only experience the dangers of the caverns, but also piece together the tragic history of the Lumenfolk and the consequences of their actions. The choice of claiming or destroying the relic becomes even more impactful, as it determines the fate of not just the world above, but also the restless spirits trapped within.
+
+The Descent:
+Your world was peaceful, a familiar tapestry of sunlit meadows and bustling villages. But fate, or perhaps a misstep, has a way of unraveling normalcy. One seemingly harmless exploration trip takes a treacherous turn as the ground beneath you crumbles, sending you plummeting into a gaping chasm. The air whooshes past your ears, the world blurs into a dizzying kaleidoscope of browns and grays. The fall ends with a bone-jarring thud, the darkness pressing down on you like a suffocating shroud.
+
+Twenty meters down, trapped in a narrow, earthen pit, panic claws at your throat. The only sound is your ragged breathing and the distant drip-drip of water echoing through the oppressive silence. But amidst the despair, a flicker of hope ignites – a faint glint catches your eye in the gloom. It's a weathered lantern, its brass frame tarnished but seemingly intact. With trembling hands, you reach out and grasp it.
+
+A Spark in the Darkness:
+A gentle tug, a satisfying click, and a burst of warm light bathes the pit in a golden glow. Relief washes over you as the lantern, fueled by some unknown source, casts dancing shadows on the rough-hewn walls. It reveals a network of damp, moss-covered brick tunnels snaking away into the unknown. This must be the remnants of an ancient civilization, swallowed by the earth eons ago.
+
+The Moaning Sewers:
+The air hangs heavy with the smell of stagnant water and decay. The first steps you take disturb a colony of scuttling insects, their skittering a chorus of unease in the enclosed space. The tunnels twist and turn, a labyrinthine maze punctuated by the sound of dripping water cascading down moss-covered walls. You encounter remnants of the lost civilization – crumbling arches, faded murals depicting scenes of a forgotten life, and the occasional skeletal remains, a grim testament to the unforgiving passage of time.
+
+Echoes of the Past:
+As you delve deeper, the tunnels narrow, giving way to natural caves carved by time and water. The air grows colder, and an unsettling stillness descends.  Eerie echoes distort your voice, bouncing off the cavern walls, and you swear you can hear whispers carried on the wind, the mournful sighs of a civilization long gone.
+
+Light and Shadow:
+The lantern, your sole source of solace, becomes a beacon in this inhospitable world. You soon discover you're not alone. Strange creatures, born of the darkness, lurk in the shadows, their eyes gleaming with an otherworldly hunger. But these creatures seem to recoil from the lantern's light, a primal fear flickering in their reptilian eyes. This knowledge becomes your shield, a flickering defense against the ever-present threat.
+
+A Race Against Time:
+But the lantern's fuel dwindles with every passing hour. You discover checkpoints scattered throughout the caverns, each marked by an ancient brazier. Refueling the lantern at these checkpoints becomes a desperate race against time, a constant reminder of the dangers that lurk in the shadows. The darkness breeds terror, emboldening the creatures that dwell within. They swarm from the inky blackness, their guttural screeches echoing through the caverns.
+
+Whispers of a Lost Age:
+As you delve deeper, fragmented murals and cryptic inscriptions begin to paint a picture of the lost civilization. They depict a powerful artifact, a relic of immense power, hidden within the heart of the caverns. Legends speak of its ability to control the very fabric of reality, but also of the catastrophic consequences unleashed when it fell into the wrong hands.
+
+The Looming Threat:
+The whispers turn into a chilling certainty. You're not alone in your quest. Others, driven by greed or a thirst for power, have ventured into these depths before you. Evidence of their presence – scattered tools, abandoned campsites, and the gnawed bones of unfortunate souls – hint at a darker purpose. The fate of these individuals serves as a stark warning of the dangers that lie ahead.
+
+The Choice:
+Finally, you reach the heart of the caverns, a vast chamber bathed in an otherworldly glow. There, nestled on an ancient pedestal, lies the relic – a pulsating orb of pure energy. But guarding it are monstrous creatures, awakened by the disturbance you've caused. A fierce battle ensues, a desperate struggle for survival.
+
+And then, the choice. Do you claim the relic for yourself, potentially unleashing a power you cannot control? Or do you find a way to seal it away once more, ensuring its destructive potential remains dormant? The weight of this decision rests heavy on your shoulders, for the fate of the world above may very well hang in the balance.
+
+
+World & Multiplayer:
+- one default level (speed running)
+- multiplayer -> host invites other players into a world using ip address
+- world selection: three large buttons
+  1. Default World -> hardcoded seed
+  2. Random & Custom Worlds
+  3. Sandbox -> Selection of an arena; PvP; PvE
+- sandbox -> customize items, enemies, game rules, physics, abilities
+- world (except arenas) split up in regions; only one loaded at once
+  -> in multiplayer, all players must go to the new region
+- ingame chat for multiplayer
+- when inviting players, they get teleported to host player
+
+Enemy Ai:
+- enemy ai inputs
+  > fear from own output
+  > strength + health - hunger
+  > threat level = closest enemy size/strength + closest enemy speed/confidence - closest enemy flees
+  > closest enemy distance (-/+ = left/right; amplitude = distance)
+  > closest friend distance (-/+ = left/right; amplitude = distance)
+  > incoming attack damage (-/+ = direction: left/right; amplitude = damage)
+  > sounds/loudness (-/+ = left/right; amplitude = distance * sound amplitude * sound pitch)
+  > higher light level (-/+ = left/right)
+  > food source distance (-/+ = left/right; amplitude = distance)
+
+- enemy ai outputs
+  > fear
+  > attack closest enemy
+  > move (-/+ = left/right; amplitude = speed; |x| < threshold = only rotate towards sign)
+  > mark shelter
+  > move to closest shelter (-/+ = left/right)
+  > explore region (-/+ = left/right)
+
+
+Mobs:
+- Wisp
+- Silent Watcher
+- Death Serpent
+- Wraith
+- Voracious Slime
+- Skeletor
+- Goblin
+- Skeleton
+- Bat

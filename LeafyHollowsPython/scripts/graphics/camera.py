@@ -129,7 +129,7 @@ class Camera:
 
             # Condition never met.
             #if len(coord) > 2:
-            #    coord[2] = coord[2] / self.pixels_per_meter + self.pos[0]
+            #    coord[2] = coordaaa[2] / self.pixels_per_meter + self.pos[0]
             #    coord[3] = coord[3] / self.pixels_per_meter + self.pos[1]
             
             return coord

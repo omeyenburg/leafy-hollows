@@ -1,0 +1,85 @@
+I. Core Mechanics & Experience:
+- Obvious goal
+- Logical mechanics
+- World & Progress saving
+- Uniform animations & drawing styles
+- Music & Sound effects
+- Storyline (optional)
+- Tutorial
+- Challenges
+- Visual cues
+- Particle effects
+- Possiblities for exploration
+- Cross-platform compatibility and testing
+
+II. Controls:
+- Input responsiveness
+- Few inputs & intuitive controls
+- Input combination
+- Input compatibility (controller, keyboard, mobile)
+- Combo system/special attacks and moves
+- Fps & delta time (https://www.youtube.com/watch?v=yGhfUcPjXuE)
+
+III. Replayability:
+- Timer/Speedrunning
+- Secrets
+- Choices
+- Quests & Side Quests
+- Leaderboards
+- Multiple Endings
+- Randomness (world generation, setting & randomizing seeds)
+- Rewards (unlockables, daily/weekly challenges, achievements)
+- Optional Difficulty Modes (advanced)
+- High depth (multiple equally good ways to win)
+- Low skill floor (difficulty of playing successfully)
+- High skill ceiling (difficulity of playing perfectly)
+
+IV. Content:
+- Increasing & Fluctuating Difficulty
+- Balancing
+- Parallax background for large caves and the sky
+- Stone background in small caves
+- Puzzles
+- Shortcuts
+- Unique enemies & strengths/weaknesses
+- Skin selection/customisation
+- Character progression (abilities, skills)
+- Hidden Lore & Collectibles
+- Environmental Storytelling
+- Day/Night Cycle (optional)
+- Weather Events (optional)
+- Checkpoints
+- Narrator
+
+V. Player motivations:
+- Meaning
+- Accomplishment
+- Empowerment
+- Ownership
+- Social influence
+- Scarcity
+- Unpredictability
+- Avoidance
+- Freedom
+- Challenge
+
+VI. Appealing to new players
+- Presentation
+- Readability -> understanding the game from a few seconds of recorded game play
+- Uniqueness from other games
+- Similarity to other games -> intended audience
+- Public play testing -> many players; feedback
+
+VII. Advanced:
+- Level Editor (advanced)
+- Legal and copyright considerations
+- Multiplayer & Friends system
+- Version selection & automatic updating
+
+VIII. Avoid:
+- Grinding
+- Repetitive actions, inputs and movements
+- Repetitive enemy and item design patterns
+- Too repetitive world generation
+- Unfunctional doors (Not keeping promises)
+- Single game tester

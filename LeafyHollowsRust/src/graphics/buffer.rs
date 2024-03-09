@@ -2,6 +2,29 @@ fn size_of<T>() -> usize {
     std::mem::size_of::<T>()
 }
 
+/*
+-- New buffer layout --
+
+In total: 10*f32 (= 40 bytes)
+Values:   [shape, a, dest_x, dest_y, dest_w, dest_h, b, c, d, e]
+
+Rectangle:
+[shape, rotation]: vec2
+dest: vec4
+color: vec4
+
+Image
+[shape, rotation]: vec2
+dest: vec4
+[flipX, flipY, image, _]: vec4
+
+Text
+[shape, char]: vec2
+dest: vec4
+color: vec4
+
+*/
+
 pub struct Buffer {
     size: isize,
     pub index: isize,
@@ -119,7 +142,12 @@ impl Buffer {
         }
     }
 
-    pub fn add_instance(&mut self, dest: [f32; 4], source_color: [f32; 4], shape_transform: [f32; 4]) {
+    pub fn add_instance(
+        &mut self,
+        dest: [f32; 4],
+        source_color: [f32; 4],
+        shape_transform: [f32; 4],
+    ) {
         let f32_size: isize = std::mem::size_of::<f32>() as isize;
 
         if self.index >= self.size {
@@ -164,11 +192,26 @@ impl Buffer {
         let data_size: isize = 4 * f32_size;
         unsafe {
             gl::BindBuffer(gl::ARRAY_BUFFER, self.vbo_dest);
-            gl::BufferSubData(gl::ARRAY_BUFFER, data_offset, data_size, dest.as_ptr() as *const gl::types::GLvoid);
+            gl::BufferSubData(
+                gl::ARRAY_BUFFER,
+                data_offset,
+                data_size,
+                dest.as_ptr() as *const gl::types::GLvoid,
+            );
             gl::BindBuffer(gl::ARRAY_BUFFER, self.vbo_source_color);
-            gl::BufferSubData(gl::ARRAY_BUFFER, data_offset, data_size, source_color.as_ptr() as *const gl::types::GLvoid);
+            gl::BufferSubData(
+                gl::ARRAY_BUFFER,
+                data_offset,
+                data_size,
+                source_color.as_ptr() as *const gl::types::GLvoid,
+            );
             gl::BindBuffer(gl::ARRAY_BUFFER, self.vbo_shape_transform);
-            gl::BufferSubData(gl::ARRAY_BUFFER, data_offset, data_size, shape_transform.as_ptr() as *const gl::types::GLvoid);
+            gl::BufferSubData(
+                gl::ARRAY_BUFFER,
+                data_offset,
+                data_size,
+                shape_transform.as_ptr() as *const gl::types::GLvoid,
+            );
         }
         self.index += 1;
     }

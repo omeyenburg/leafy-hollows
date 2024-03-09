@@ -46,10 +46,11 @@ impl Window {
         println!("Video driver: {:?}", video_subsystem.current_video_driver());
         let gl_attr: sdl2::video::gl_attr::GLAttr<'_> = video_subsystem.gl_attr();
 
-        gl_attr.set_context_profile(sdl2::video::GLProfile::Core);
         gl_attr.set_context_version(constants::OPENGL_VERSION.0, constants::OPENGL_VERSION.1);
-        //gl_attr.set_multisample_buffers(16);
-        //gl_attr.set_multisample_samples(16);
+        gl_attr.set_context_profile(sdl2::video::GLProfile::Core);
+        gl_attr.set_context_flags().forward_compatible().debug();
+        gl_attr.set_multisample_buffers(1);
+        gl_attr.set_multisample_samples(4);
 
         let display_size: sdl2::rect::Rect = unwrap![video_subsystem.display_bounds(0)];
         let title: &str = constants::PROJECT_NAME;
@@ -71,11 +72,11 @@ impl Window {
         gl::load_with(|s| video_subsystem.gl_get_proc_address(s) as *const std::os::raw::c_void);
 
         // Antialiasing
-        //println!("Multisample buffers: {:?}", gl_attr.multisample_buffers());
-        //println!("Multisample samples: {:?}", gl_attr.multisample_samples());
+        println!("Multisample buffers: {:?}", gl_attr.multisample_buffers());
+        println!("Multisample samples: {:?}", gl_attr.multisample_samples());
         unsafe {
             gl::Enable(gl::MULTISAMPLE);
-            //GL.glDisable(GL.GL_MULTISAMPLE)
+            //gl::Disable(gl::MULTISAMPLE)
         }
 
         // Set swap interval to vsync
@@ -112,6 +113,11 @@ impl Window {
         shader.add_var(
             "window_size_relation",
             shader::UniformValue::Float(height as f32 / width as f32),
+            true,
+        );
+        shader.add_var(
+            "window_size",
+            shader::UniformValue::IVec2([width, height]),
             true,
         );
 
