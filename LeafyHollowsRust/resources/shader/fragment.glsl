@@ -5,6 +5,7 @@ const int SHAPE_IMAGE = 2;
 const int SHAPE_TEXT = 3;
 const float FLOAT_THRESHOLD_ZERO = 0.000001;
 const float FLOAT_THRESHOLD_ONE = 0.999999;
+const vec4 TRANSPARENCY = vec4(0.0, 0.0, 0.0, 0.0);
 
 out vec4 fragColor;
 in vec2 texcoord;
@@ -28,12 +29,21 @@ void draw_circle() {
 }
 
 void draw_image() {
+    ivec2 sprites_size = textureSize(texSprites, 0);
+
     int image_id = int(shape.y);
     fragColor = texture(texSprites, texcoord);
 }
 
 void draw_text() {
     int char_id = int(shape.y);
+    ivec2 source = ivec2(char_id % 26 * 5 + 5 * texcoord.x, char_id / 26 * 10 + 10 * texcoord.y);
+    vec4 pixel = texelFetch(texFont, source, 0);
+    if (pixel.r > FLOAT_THRESHOLD_ZERO) {
+        fragColor = color;
+    } else {
+        fragColor = TRANSPARENCY;
+    }
 }
 
 void main() {

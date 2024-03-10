@@ -25,6 +25,7 @@ pub struct Window {
     pub buffer: buffer::Buffer,
     shader: shader::Shader,
     textures: image::Textures,
+    pub font: font::Font,
 }
 
 impl Window {
@@ -125,6 +126,8 @@ impl Window {
 
         let textures = image::Textures::new();
 
+        let font = font::Font::new();
+
         // Create and return Window instance
         Self {
             running: true,
@@ -138,6 +141,7 @@ impl Window {
             buffer,
             shader,
             textures,
+            font,
         }
     }
 

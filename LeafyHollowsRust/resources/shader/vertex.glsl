@@ -39,6 +39,7 @@ void main() {
         angle = 0.0;
         break;
     }
+    position.y *= -1;
 
     if (angle != 0.0) {
         float angle_sin = sin(angle);

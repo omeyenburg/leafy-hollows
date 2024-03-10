@@ -32,7 +32,7 @@ fn main() {
     while window.running {
         r += window.clock.delta_time as f32 * 0.3;
 
-        for i in 0..100 {
+        for i in 0..1 {
             window.draw_image(
                 [
                     (i as f32 / 50.0 + window.clock.time as f32).cos() * 0.2,
@@ -40,13 +40,15 @@ fn main() {
                     0.5,
                     0.5,
                 ],
-                1,
+                0,
                 r,
+                0,
+                0,
             );
         }
 
         window.draw_circle([1.0, 0.3], [0.6, 0.2, 0.9, 0.7], 0.2);
-        //window.draw_text([0.0, 0.0, 1.0, 1.0], 4);
+        window.draw_text([-1.0, 0.9], &window.clock.fps.round().to_string(), 0.1, [1.0, 1.0, 1.0, 1.0]);
 
         window.update();
     }
