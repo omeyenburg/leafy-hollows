@@ -25,7 +25,8 @@ class Window:
 
         # Callbacks
         self.callback_quit = None
-        self.loading_progress: [str, int] = ["", 0, 0] # description, progress, total progress
+        # description, progress, total progress
+        self.loading_progress: [str, int] = ["", 0, 0]
 
         # Initialize pygame
         pygame.init()
@@ -35,28 +36,35 @@ class Window:
         opengl_minor = int(OPENGL_VERSION.split(".")[1][:1])
         opengl_core = "core" in OPENGL_VERSION
 
-        pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MAJOR_VERSION, opengl_major)
-        pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MINOR_VERSION, opengl_minor)
+        pygame.display.gl_set_attribute(
+            pygame.GL_CONTEXT_MAJOR_VERSION, opengl_major)
+        pygame.display.gl_set_attribute(
+            pygame.GL_CONTEXT_MINOR_VERSION, opengl_minor)
         if opengl_core:
             pygame.display.gl_set_attribute(pygame.GL_CONTEXT_PROFILE_MASK,
                                             pygame.GL_CONTEXT_PROFILE_CORE)
 
         # MacOS support
         if PLATFORM == "Darwin":
-            pygame.display.gl_set_attribute(pygame.GL_CONTEXT_FORWARD_COMPATIBLE_FLAG, True)
+            pygame.display.gl_set_attribute(
+                pygame.GL_CONTEXT_FORWARD_COMPATIBLE_FLAG, True)
 
         # Antialiasing
         if self.options["antialiasing"]:
             pygame.display.gl_set_attribute(pygame.GL_MULTISAMPLEBUFFERS, 1)
-            pygame.display.gl_set_attribute(pygame.GL_MULTISAMPLESAMPLES, self.options["antialiasing"])
+            pygame.display.gl_set_attribute(
+                pygame.GL_MULTISAMPLESAMPLES, self.options["antialiasing"])
         else:
             pygame.display.gl_set_attribute(pygame.GL_MULTISAMPLEBUFFERS, 0)
             pygame.display.gl_set_attribute(pygame.GL_MULTISAMPLESAMPLES, 0)
 
         # Events
-        self.keys: dict = dict.fromkeys([value for key, value in self.options.items() if key.startswith("key.")], 0) # 0 = Not pressed | 1 = Got pressed | 2 = Is pressed
+        self.keys: dict = dict.fromkeys([value for key, value in self.options.items(
+            # 0 = Not pressed | 1 = Got pressed | 2 = Is pressed
+        ) if key.startswith("key.")], 0)
         self.unicode: str = ""                    # Backspace = "\x08"
-        self.mouse_buttons: [int] = [0, 0, 0]     # Left, Middle, Right | 0 = Not pressed | 1 = Got pressed | 2 = Is pressed
+        # Left, Middle, Right | 0 = Not pressed | 1 = Got pressed | 2 = Is pressed
+        self.mouse_buttons: [int] = [0, 0, 0]
         self.mouse_pos: [int] = (0, 0, 0, 0)      # x, y, relx, rely
         self.mouse_wheel: [int] = [0, 0, 0, 0]    # x, y, relx, rely
         self.fps: int = 0
@@ -71,18 +79,21 @@ class Window:
         # Key press states
         if PLATFORM == "Darwin":
             self._mod_names = {
-                pygame.__dict__[identifier]: identifier[4:].replace("_R", "Right ").replace("_L", "Left ").replace("_", "").replace("META", "Cmd").title()
+                pygame.__dict__[identifier]: identifier[4:].replace("_R", "Right ").replace(
+                    "_L", "Left ").replace("_", "").replace("META", "Cmd").title()
                 for index, identifier in enumerate(pygame.__dict__.keys())
                 if identifier.startswith("KMOD_") and not identifier[5:] in ("NONE", "CTRL", "SHIFT", "ALT", "GUI", "META")
             }
         else:
             self._mod_names = {
-                pygame.__dict__[identifier]: identifier[4:].replace("_R", "Right ").replace("_L", "Left ").replace("_", "").title()
+                pygame.__dict__[identifier]: identifier[4:].replace(
+                    "_R", "Right ").replace("_L", "Left ").replace("_", "").title()
                 for index, identifier in enumerate(pygame.__dict__.keys())
                 if identifier.startswith("KMOD_") and not identifier[5:] in ("NONE", "CTRL", "SHIFT", "ALT", "GUI", "META")
             }
 
-        self._key_names = tuple([pygame.__dict__[identifier] for identifier in pygame.__dict__.keys() if identifier.startswith("K_")])
+        self._key_names = tuple([pygame.__dict__[
+                                identifier] for identifier in pygame.__dict__.keys() if identifier.startswith("K_")])
         self._button_names = ("left click", "middle click", "right click")
         self.get_keys_all = pygame.key.get_pressed
         self.get_keys_all = pygame.key.get_mods
@@ -102,7 +113,8 @@ class Window:
         # Window variables
         info = pygame.display.Info()
         self.screen_size = info.current_w, info.current_h
-        self.width, self.height = self.size = self.pre_fullscreen = (int(info.current_w / 3 * 2), int(info.current_h / 5 * 3))
+        self.width, self.height = self.size = self.pre_fullscreen = (
+            int(info.current_w / 3 * 2), int(info.current_h / 5 * 3))
         self.stencil_rect = ()
         self._fullscreen = False
         self._wireframe = False
@@ -111,13 +123,14 @@ class Window:
 
         # Window
         flags = pygame.DOUBLEBUF | pygame.RESIZABLE | pygame.OPENGL
-        self._window = pygame.display.set_mode((self.width, self.height), flags=flags, vsync=self.options["enable vsync"])
+        self._window = pygame.display.set_mode(
+            (self.width, self.height), flags=flags, vsync=self.options["enable vsync"])
         self._clock = pygame.time.Clock()
         self.camera: Camera = Camera(self)
         self.world_view: numpy.array = numpy.empty((0, 0, 4))
         pygame.display.set_caption(caption)
         pygame.key.set_repeat(500, 50)
-        
+
         # OpenGL setup
         GL.glViewport(0, 0, self.width, self.height)
         GL.glClearColor(0.0, 0.0, 0.0, 1.0)
@@ -134,12 +147,13 @@ class Window:
         GL.glBindVertexArray(self._instance_vao)
 
         # Create vertex buffer objects
-        self._vertices_vbo, self._ebo, self._dest_vbo, self._source_or_color_vbo, self._shape_transform_vbo = GL.glGenBuffers(5)
+        self._vertices_vbo, self._ebo, self._dest_vbo, self._source_or_color_vbo, self._shape_transform_vbo = GL.glGenBuffers(
+            5)
 
         # Instanced shader inputs
         self._vbo_instances_length = 0
         self._vbo_instances_index = 0
-  
+
         self._dest_vbo_array = numpy.empty(0, dtype=numpy.float32)
         self._source_or_color_vbo_array = numpy.empty(0, dtype=numpy.float32)
         self._shape_transform_vbo_array = numpy.empty(0, dtype=numpy.float32)
@@ -153,12 +167,15 @@ class Window:
         ], dtype=numpy.float32)
 
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._vertices_vbo)
-        GL.glBufferData(GL.GL_ARRAY_BUFFER, vertices.nbytes, vertices, GL.GL_STATIC_DRAW)
+        GL.glBufferData(GL.GL_ARRAY_BUFFER, vertices.nbytes,
+                        vertices, GL.GL_STATIC_DRAW)
         GL.glEnableVertexAttribArray(0)
-        GL.glVertexAttribPointer(0, 2, GL.GL_FLOAT, GL.GL_FALSE, 4 * vertices.itemsize, ctypes.c_void_p(0))
+        GL.glVertexAttribPointer(
+            0, 2, GL.GL_FLOAT, GL.GL_FALSE, 4 * vertices.itemsize, ctypes.c_void_p(0))
         GL.glEnableVertexAttribArray(1)
-        GL.glVertexAttribPointer(1, 2, GL.GL_FLOAT, GL.GL_FALSE, 4 * vertices.itemsize, ctypes.c_void_p(2 * vertices.itemsize))
-        
+        GL.glVertexAttribPointer(1, 2, GL.GL_FLOAT, GL.GL_FALSE, 4 *
+                                 vertices.itemsize, ctypes.c_void_p(2 * vertices.itemsize))
+
         # Create element buffer object (EBO) for indices
         indices = numpy.array([
             0, 1, 2,
@@ -166,25 +183,32 @@ class Window:
         ], dtype=numpy.uint32)
 
         GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, self._ebo)
-        GL.glBufferData(GL.GL_ELEMENT_ARRAY_BUFFER, len(indices) * 4, (GL.GLuint * len(indices))(*indices), GL.GL_STATIC_DRAW)
+        GL.glBufferData(GL.GL_ELEMENT_ARRAY_BUFFER, len(
+            indices) * 4, (GL.GLuint * len(indices))(*indices), GL.GL_STATIC_DRAW)
 
         # Create vertex buffer objects (VBOs) for draw data
         GL.glEnableVertexAttribArray(2)
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._dest_vbo)
-        GL.glBufferData(GL.GL_ARRAY_BUFFER, 0, self._dest_vbo_array, GL.GL_STREAM_COPY)
-        GL.glVertexAttribPointer(2, 4, GL.GL_FLOAT, GL.GL_FALSE, 0, ctypes.c_void_p(0))
+        GL.glBufferData(GL.GL_ARRAY_BUFFER, 0,
+                        self._dest_vbo_array, GL.GL_STREAM_COPY)
+        GL.glVertexAttribPointer(
+            2, 4, GL.GL_FLOAT, GL.GL_FALSE, 0, ctypes.c_void_p(0))
         GL.glVertexAttribDivisor(2, 1)
 
         GL.glEnableVertexAttribArray(3)
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._source_or_color_vbo)
-        GL.glBufferData(GL.GL_ARRAY_BUFFER, 0, self._source_or_color_vbo_array, GL.GL_STREAM_COPY)
-        GL.glVertexAttribPointer(3, 4, GL.GL_FLOAT, GL.GL_FALSE, 0, ctypes.c_void_p(0))
+        GL.glBufferData(GL.GL_ARRAY_BUFFER, 0,
+                        self._source_or_color_vbo_array, GL.GL_STREAM_COPY)
+        GL.glVertexAttribPointer(
+            3, 4, GL.GL_FLOAT, GL.GL_FALSE, 0, ctypes.c_void_p(0))
         GL.glVertexAttribDivisor(3, 1)
 
         GL.glEnableVertexAttribArray(4)
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._shape_transform_vbo)
-        GL.glBufferData(GL.GL_ARRAY_BUFFER, 0, self._shape_transform_vbo_array, GL.GL_STREAM_COPY)
-        GL.glVertexAttribPointer(4, 4, GL.GL_FLOAT, GL.GL_FALSE, 0, ctypes.c_void_p(0))
+        GL.glBufferData(GL.GL_ARRAY_BUFFER, 0,
+                        self._shape_transform_vbo_array, GL.GL_STREAM_COPY)
+        GL.glVertexAttribPointer(
+            4, 4, GL.GL_FLOAT, GL.GL_FALSE, 0, ctypes.c_void_p(0))
         GL.glVertexAttribDivisor(4, 1)
 
         # Create sprite texture
@@ -212,9 +236,12 @@ class Window:
         self._shadow_texture_size = (self.width // 2, self.height // 2)
         self._texShadow = GL.glGenTextures(1)
         GL.glBindTexture(GL.GL_TEXTURE_2D, self._texShadow)
-        GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RED, *self._shadow_texture_size, 0, GL.GL_RED, GL.GL_UNSIGNED_BYTE, None)
-        GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_NEAREST)
-        GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_NEAREST)
+        GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RED, *
+                        self._shadow_texture_size, 0, GL.GL_RED, GL.GL_UNSIGNED_BYTE, None)
+        GL.glTexParameteri(
+            GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_NEAREST)
+        GL.glTexParameteri(
+            GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_NEAREST)
         GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
 
         # Instance shader
@@ -246,7 +273,8 @@ class Window:
         self._instance_shader.setvar("texWorld", 3)
         self._instance_shader.setvar("texShadow", 4)
         self._instance_shader.setvar("resolution", self.camera.resolution)
-        self._instance_shader.setvar("shadow_resolution", self.options["shadow resolution"])
+        self._instance_shader.setvar(
+            "shadow_resolution", self.options["shadow resolution"])
 
         # Use instance shader
         self._instance_shader.activate()
@@ -272,13 +300,14 @@ class Window:
         # Load sounds
         self.loading_progress[:3] = "Loading sounds", 1, 2
         self.loaded_sounds, self.played_sounds = sound.load()
-    
+
         # Create particle types
         self.loading_progress[:2] = "Loading particles", 2
         self.particles: list = []
         self.particle_types: dict = {}
         self.particle_wind: float = 0.0
-        particle_data = file.load(file.abspath("data/particles/particles.json"), file_format="json")
+        particle_data = file.load(file.abspath(
+            "data/particles/particles.json"), file_format="json")
         for particle_name, kwargs in particle_data.items():
             kwargs["angle"] *= pi / 180
             particle.setup(self, particle_name, **kwargs)
@@ -291,22 +320,31 @@ class Window:
             # Resize all instanced vbos, adding 10 additional instances
             self._vbo_instances_length += 10
 
-            new_dest_vbo_array = numpy.empty(self._vbo_instances_length * 4, dtype=numpy.float32)
-            new_dest_vbo_array[:len(self._dest_vbo_array)] = self._dest_vbo_array
+            new_dest_vbo_array = numpy.empty(
+                self._vbo_instances_length * 4, dtype=numpy.float32)
+            new_dest_vbo_array[:len(self._dest_vbo_array)
+                               ] = self._dest_vbo_array
             GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._dest_vbo)
-            GL.glBufferData(GL.GL_ARRAY_BUFFER, new_dest_vbo_array.nbytes, new_dest_vbo_array, GL.GL_STREAM_COPY)
+            GL.glBufferData(GL.GL_ARRAY_BUFFER, new_dest_vbo_array.nbytes,
+                            new_dest_vbo_array, GL.GL_STREAM_COPY)
             self._dest_vbo_array = new_dest_vbo_array
- 
-            new_source_or_color_vbo_array = numpy.empty(self._vbo_instances_length * 4, dtype=numpy.float32)
-            new_source_or_color_vbo_array[:len(self._source_or_color_vbo_array)] = self._source_or_color_vbo_array
+
+            new_source_or_color_vbo_array = numpy.empty(
+                self._vbo_instances_length * 4, dtype=numpy.float32)
+            new_source_or_color_vbo_array[:len(
+                self._source_or_color_vbo_array)] = self._source_or_color_vbo_array
             GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._source_or_color_vbo)
-            GL.glBufferData(GL.GL_ARRAY_BUFFER, new_source_or_color_vbo_array.nbytes, new_source_or_color_vbo_array, GL.GL_STREAM_COPY)
+            GL.glBufferData(GL.GL_ARRAY_BUFFER, new_source_or_color_vbo_array.nbytes,
+                            new_source_or_color_vbo_array, GL.GL_STREAM_COPY)
             self._source_or_color_vbo_array = new_source_or_color_vbo_array
 
-            new_shape_transform_vbo_array = numpy.empty(self._vbo_instances_length * 4, dtype=numpy.float32)
-            new_shape_transform_vbo_array[:len(self._shape_transform_vbo_array)] = self._shape_transform_vbo_array
+            new_shape_transform_vbo_array = numpy.empty(
+                self._vbo_instances_length * 4, dtype=numpy.float32)
+            new_shape_transform_vbo_array[:len(
+                self._shape_transform_vbo_array)] = self._shape_transform_vbo_array
             GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._shape_transform_vbo)
-            GL.glBufferData(GL.GL_ARRAY_BUFFER, new_shape_transform_vbo_array.nbytes, new_shape_transform_vbo_array, GL.GL_STREAM_COPY)
+            GL.glBufferData(GL.GL_ARRAY_BUFFER, new_shape_transform_vbo_array.nbytes,
+                            new_shape_transform_vbo_array, GL.GL_STREAM_COPY)
             self._shape_transform_vbo_array = new_shape_transform_vbo_array
 
         # Write drawing data into buffers
@@ -314,7 +352,7 @@ class Window:
         self._dest_vbo_array[index:index + 4] = dest
         self._source_or_color_vbo_array[index:index + 4] = source_or_color
         self._shape_transform_vbo_array[index:index + 4] = shape_transform
-        
+
         # Increment instance counter
         self._vbo_instances_index += 1
 
@@ -348,8 +386,10 @@ class Window:
             flags = pygame.DOUBLEBUF | pygame.RESIZABLE
 
         # Toggle vsync: Restart required on Windows; Instant on Darwin
-        self._window = pygame.display.set_mode((self.width, self.height), flags=flags | pygame.OPENGL, vsync=self.options["enable vsync"])
-        self._window = pygame.display.set_mode((self.width, self.height), flags=flags | pygame.OPENGL, vsync=self.options["enable vsync"])
+        self._window = pygame.display.set_mode(
+            (self.width, self.height), flags=flags | pygame.OPENGL, vsync=self.options["enable vsync"])
+        self._window = pygame.display.set_mode(
+            (self.width, self.height), flags=flags | pygame.OPENGL, vsync=self.options["enable vsync"])
         GL.glViewport(0, 0, self.width, self.height)
 
     def _events(self):
@@ -357,13 +397,15 @@ class Window:
         Process input events.
         """
         self.unicode = ""
-        self.mouse_buttons = [2 if value == 1 else value for value in self.mouse_buttons]
+        self.mouse_buttons = [2 if value ==
+                              1 else value for value in self.mouse_buttons]
         self.mouse_wheel[2], self.mouse_wheel[3] = 0, 0
         for key, value in self.keys.items():
             if value == 1:
                 self.keys[key] = 2
-        
-        events = filter(lambda i: i.type in self.event_types, pygame.event.get())
+
+        events = filter(lambda i: i.type in self.event_types,
+                        pygame.event.get())
         for event in events:
             if event.type == pygame.QUIT:
                 self.quit()
@@ -393,7 +435,8 @@ class Window:
                     self.keys[key] = 0
 
             elif event.type == pygame.MOUSEMOTION:
-                self.mouse_pos = (event.pos[0] - self.width / 2, self.height / 2 - event.pos[1], event.rel[0], -event.rel[1])
+                self.mouse_pos = (
+                    event.pos[0] - self.width / 2, self.height / 2 - event.pos[1], event.rel[0], -event.rel[1])
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button < 4:
@@ -410,7 +453,8 @@ class Window:
                         self.keys[button_name] = 0
 
             elif event.type == pygame.MOUSEWHEEL:
-                self.mouse_wheel = [self.mouse_wheel[0] + event.x, self.mouse_wheel[1] + event.y, event.x, event.y]
+                self.mouse_wheel = [self.mouse_wheel[0] + event.x,
+                                    self.mouse_wheel[1] + event.y, event.x, event.y]
 
     def update(self, player_position=(0, 0)):
         """
@@ -423,7 +467,7 @@ class Window:
         if fps_limit == 1000 or self.options["enable vsync"]:
             fps_limit = 0
         self._clock.tick(fps_limit)
-        #self.fps = 1000 / max(1, self._clock.tick(fps_limit))
+        # self.fps = 1000 / max(1, self._clock.tick(fps_limit))
 
         self.fps = self._clock.get_fps()
         if self.fps != 0:
@@ -452,24 +496,28 @@ class Window:
         self._instance_shader.update()
 
         # Rebind textures
-        #GL.glActiveTexture(GL.GL_TEXTURE1)
-        #GL.glBindTexture(GL.GL_TEXTURE_2D, self._texFont)
+        # GL.glActiveTexture(GL.GL_TEXTURE1)
+        # GL.glBindTexture(GL.GL_TEXTURE_2D, self._texFont)
 
         GL.glActiveTexture(GL.GL_TEXTURE4)
         GL.glBindTexture(GL.GL_TEXTURE_2D, self._texShadow)
 
         # Send instance data to shader
-        size = int(self._dest_vbo_array.nbytes * min((self._vbo_instances_index + 1) / self._vbo_instances_length, 1))
+        size = int(self._dest_vbo_array.nbytes *
+                   min((self._vbo_instances_index + 1) / self._vbo_instances_length, 1))
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._dest_vbo)
         GL.glBufferSubData(GL.GL_ARRAY_BUFFER, 0, size, self._dest_vbo_array)
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._source_or_color_vbo)
-        GL.glBufferSubData(GL.GL_ARRAY_BUFFER, 0, size, self._source_or_color_vbo_array)
+        GL.glBufferSubData(GL.GL_ARRAY_BUFFER, 0, size,
+                           self._source_or_color_vbo_array)
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._shape_transform_vbo)
-        GL.glBufferSubData(GL.GL_ARRAY_BUFFER, 0, size, self._shape_transform_vbo_array)
+        GL.glBufferSubData(GL.GL_ARRAY_BUFFER, 0, size,
+                           self._shape_transform_vbo_array)
 
         # Draw
         GL.glClear(GL.GL_COLOR_BUFFER_BIT)
-        GL.glDrawElementsInstanced(GL.GL_TRIANGLES, 6, GL.GL_UNSIGNED_INT, None, self._vbo_instances_index)
+        GL.glDrawElementsInstanced(
+            GL.GL_TRIANGLES, 6, GL.GL_UNSIGNED_INT, None, self._vbo_instances_index)
         pygame.display.flip()
 
         # Reset instance index
@@ -518,7 +566,8 @@ class Window:
         self.options["antialiasing"] = level
         if self.options["antialiasing"]:
             pygame.display.gl_set_attribute(pygame.GL_MULTISAMPLEBUFFERS, 1)
-            pygame.display.gl_set_attribute(pygame.GL_MULTISAMPLESAMPLES, self.options["antialiasing"])
+            pygame.display.gl_set_attribute(
+                pygame.GL_MULTISAMPLESAMPLES, self.options["antialiasing"])
             GL.glEnable(GL.GL_MULTISAMPLE)
         else:
             pygame.display.gl_set_attribute(pygame.GL_MULTISAMPLEBUFFERS, 0)
@@ -572,7 +621,7 @@ class Window:
 
         # Quit window
         pygame.quit()
-        
+
         # Quit the program; can be catched for profiling
         raise SystemExit()
 
@@ -581,7 +630,7 @@ class Window:
         Clear the world view.
         """
         self.world_view.fill(0)
-    
+
     def _texture(self, image, blur=False):
         """
         Create a texture from an image.
@@ -589,16 +638,23 @@ class Window:
         data = pygame.image.tostring(image, "RGBA", 1)
         texture = GL.glGenTextures(1)
         GL.glBindTexture(GL.GL_TEXTURE_2D, texture)
-        GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA, *image.get_size(), 0, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, data)
+        GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA, *
+                        image.get_size(), 0, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, data)
 
         if blur:
-            GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR)
-            GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR)
+            GL.glTexParameteri(
+                GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR)
+            GL.glTexParameteri(
+                GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR)
         else:
-            GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_NEAREST)
-            GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_NEAREST)
-        GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP_TO_EDGE)
-        GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP_TO_EDGE)
+            GL.glTexParameteri(
+                GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_NEAREST)
+            GL.glTexParameteri(
+                GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_NEAREST)
+        GL.glTexParameteri(
+            GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP_TO_EDGE)
+        GL.glTexParameteri(
+            GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP_TO_EDGE)
 
         GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
         return texture
@@ -609,15 +665,17 @@ class Window:
         """
         # Offset of world as a fraction of blocks
         offset = (
-            self.camera.pos[0] % 1 - (self.width / 2 / self.camera.pixels_per_meter) % 1 + self.options["simulation distance"],
-            self.camera.pos[1] % 1 - (self.height / 2 / self.camera.pixels_per_meter) % 1 + self.options["simulation distance"]
+            self.camera.pos[0] % 1 - (self.width / 2 / self.camera.pixels_per_meter) % 1 +
+            self.options["simulation distance"],
+            self.camera.pos[1] % 1 - (self.height / 2 / self.camera.pixels_per_meter) % 1 +
+            self.options["simulation distance"]
         )
 
         if not all(self.world_view.shape):
             if not self._texWorld is None:
                 GL.glDeleteTextures(1, (self._texWorld,))
                 self._texWorld = None
-                self._world_size =  (0, 0)
+                self._world_size = (0, 0)
             return
 
         # Draw shadows
@@ -633,23 +691,29 @@ class Window:
 
         # View size
         size = self.world_view.shape[:2]
-        data = numpy.array(numpy.swapaxes(self.world_view, 0, 1), dtype=numpy.int32)
+        data = numpy.array(numpy.swapaxes(
+            self.world_view, 0, 1), dtype=numpy.int32)
 
         if self._world_size != size:
             if not self._texWorld is None:
                 GL.glDeleteTextures(1, (self._texWorld,))
                 self._texWorld = None
             self._world_size = size
-        
+
         if self._texWorld is None:
             # Generate new texture
             texture = GL.glGenTextures(1)
             GL.glBindTexture(GL.GL_TEXTURE_2D, texture)
-            GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA32I, *self._world_size, 0, GL.GL_RGBA_INTEGER, GL.GL_INT, data)
-            GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_NEAREST)
-            GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_NEAREST)
-            GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP_TO_EDGE)
-            GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP_TO_EDGE)
+            GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA32I, *
+                            self._world_size, 0, GL.GL_RGBA_INTEGER, GL.GL_INT, data)
+            GL.glTexParameteri(
+                GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_NEAREST)
+            GL.glTexParameteri(
+                GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_NEAREST)
+            GL.glTexParameteri(
+                GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP_TO_EDGE)
+            GL.glTexParameteri(
+                GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP_TO_EDGE)
             GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
             GL.glActiveTexture(GL.GL_TEXTURE3)
             GL.glBindTexture(GL.GL_TEXTURE_2D, texture)
@@ -657,15 +721,16 @@ class Window:
         else:
             # Write world data into texture
             GL.glBindTexture(GL.GL_TEXTURE_2D, self._texWorld)
-            #GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA32I, *self._world_size, 0, GL.GL_RGBA_INTEGER, GL.GL_INT, data)
-            GL.glTexSubImage2D(GL.GL_TEXTURE_2D, 0, 0, 0, *self._world_size, GL.GL_RGBA_INTEGER, GL.GL_INT, data)
-            #GL.glBufferData(GL.GL_TEXTURE_2D, data.nbytes, data, GL.GL_STREAM_COPY)
+            # GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA32I, *self._world_size, 0, GL.GL_RGBA_INTEGER, GL.GL_INT, data)
+            GL.glTexSubImage2D(GL.GL_TEXTURE_2D, 0, 0, 0, *
+                               self._world_size, GL.GL_RGBA_INTEGER, GL.GL_INT, data)
+            # GL.glBufferData(GL.GL_TEXTURE_2D, data.nbytes, data, GL.GL_STREAM_COPY)
 
     def _draw_shadows(self, offset, player_position):
         """
         Calculate and draw shadows.
         """
-        #t = time.time()
+        # t = time.time()
         # Create view copy
         view = self.world_view.copy()[:, :, 0]
         view[0, :] = 0
@@ -675,7 +740,8 @@ class Window:
 
         # Create shadow surface
         shadow_resolution = self.options["shadow resolution"]
-        surface_size = (round(view.shape[0] * shadow_resolution), round(view.shape[1] * shadow_resolution))
+        surface_size = (round(
+            view.shape[0] * shadow_resolution), round(view.shape[1] * shadow_resolution))
         surface = pygame.Surface(surface_size)
 
         # Use torches as light source
@@ -688,10 +754,11 @@ class Window:
 
         # Use player as light source
         center = (floor(self.camera.pos[0]),
-                    floor(self.camera.pos[1]))
+                  floor(self.camera.pos[1]))
         start = (center[0] - floor(self.width / 2 / self.camera.pixels_per_meter) - self.options["simulation distance"],
-                    center[1] - floor(self.height / 2 / self.camera.pixels_per_meter) - self.options["simulation distance"])
-        player_position = (player_position[0] - start[0] - 1.0, player_position[1] - start[1] - 1.0)
+                 center[1] - floor(self.height / 2 / self.camera.pixels_per_meter) - self.options["simulation distance"])
+        player_position = (
+            player_position[0] - start[0] - 1.0, player_position[1] - start[1] - 1.0)
 
         # Find corners
         corners, additional_corners = shadow.find_corners(view)
@@ -701,59 +768,68 @@ class Window:
 
         # Generate triangle_points
         corners = list(additional_corners.union(corners))
-        triangle_points = shadow.get_triangle_points(view, shadow.List(player_position), numpy.array(corners), shadow.List(edges))
+        triangle_points = shadow.get_triangle_points(view, shadow.List(
+            player_position), numpy.array(corners), shadow.List(edges))
         triangle_points.sort(key=lambda n: n[0], reverse=False)
 
         # Draw to shadow surface
-        triangle_points = tuple(map(lambda n: (round(n[1] * shadow_resolution), round(n[2] * shadow_resolution)), triangle_points))
+        triangle_points = tuple(map(lambda n: (round(
+            n[1] * shadow_resolution), round(n[2] * shadow_resolution)), triangle_points))
         if len(triangle_points) > 2:
             pygame.draw.polygon(surface, (255, 0, 0), triangle_points)
 
-        #print(1, time.time() - t)
-        #t = time.time()
+        # print(1, time.time() - t)
+        # t = time.time()
 
         # Convert shadow surface to numpy array
         surface_data = pygame.surfarray.pixels_red(surface).transpose()
 
-        #print(2, time.time() - t)
-        #t = time.time()
+        # print(2, time.time() - t)
+        # t = time.time()
 
         # Convert shadow surface array to texture
         if surface_size != self._shadow_texture_size:
-            #print(4)
+            # print(4)
             self._shadow_texture_size = surface_size
             GL.glActiveTexture(GL.GL_TEXTURE4)
             GL.glBindTexture(GL.GL_TEXTURE_2D, self._texShadow)
-            GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RED, *surface_data.shape[::-1], 0, GL.GL_RED, GL.GL_UNSIGNED_BYTE, surface_data)
-            #GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_NEAREST)
-            #GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_NEAREST)
+            GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RED, *
+                            surface_data.shape[::-1], 0, GL.GL_RED, GL.GL_UNSIGNED_BYTE, surface_data)
+            # GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_NEAREST)
+            # GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_NEAREST)
             GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
             GL.glActiveTexture(GL.GL_TEXTURE4)
             GL.glBindTexture(GL.GL_TEXTURE_2D, self._texShadow)
         else:
             GL.glBindTexture(GL.GL_TEXTURE_2D, self._texShadow)
-            #GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, 0, 0, *surface_data.shape[::-1], GL.GL_RED, GL.GL_UNSIGNED_BYTE, surface_data)
-            GL.glTexSubImage2D(GL.GL_TEXTURE_2D, 0, 0, 0, *surface_data.shape[::-1], GL.GL_RED, GL.GL_UNSIGNED_BYTE, surface_data)
-            #GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RED, *surface_data.shape[::-1], 0, GL.GL_RED, GL.GL_UNSIGNED_BYTE, surface_data)
+            # GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, 0, 0, *surface_data.shape[::-1], GL.GL_RED, GL.GL_UNSIGNED_BYTE, surface_data)
+            GL.glTexSubImage2D(GL.GL_TEXTURE_2D, 0, 0, 0, *
+                               surface_data.shape[::-1], GL.GL_RED, GL.GL_UNSIGNED_BYTE, surface_data)
+            # GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RED, *surface_data.shape[::-1], 0, GL.GL_RED, GL.GL_UNSIGNED_BYTE, surface_data)
             GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
 
-        #print(3, time.time() - t)
+        # print(3, time.time() - t)
 
-    def _centered_text(self, position: [float], text: str, color: [int], size: int=1, spacing: float=1.25, fixed_size: int=1):
+    def _centered_text(self, position: [float], text: str, color: [int], size: int = 1, spacing: float = 1.25, fixed_size: int = 1):
         """
         Draw centered text. Called from draw_text.
         """
         x_offset = 0
-        x_factor_fixed = 1 / self.width * self.screen_size[0] # Used when fixed_size == 1
-        y_factor_fixed = 1 / self.height * self.screen_size[1] # Used when fixed_size == 1
-        y_factor_relational = 1 / self.height * self.screen_size[1] * self.width / self.screen_size[0] # Used when fixed_size == 2
+        x_factor_fixed = 1 / self.width * \
+            self.screen_size[0]  # Used when fixed_size == 1
+        y_factor_fixed = 1 / self.height * \
+            self.screen_size[1]  # Used when fixed_size == 1
+        y_factor_relational = 1 / self.height * \
+            self.screen_size[1] * self.width / \
+            self.screen_size[0]  # Used when fixed_size == 2
         if len(color) == 3:
             color = (*color, 255)
         char_size = self._font.get_rect("A")[2:]
 
         # Get start offset
         if fixed_size == 2:
-            x_offset -= char_size[0] * spacing * size * (len(text) - 1) * x_factor_fixed
+            x_offset -= char_size[0] * spacing * \
+                size * (len(text) - 1) * x_factor_fixed
         else:
             x_offset -= char_size[0] * spacing * size * (len(text) - 1)
 
@@ -761,24 +837,31 @@ class Window:
             rect = self._font.get_rect(letter)
 
             if fixed_size == 0:
-                dest_rect = (position[0] + x_offset + rect[2], position[1], rect[2] * size, rect[3] * 2 * size)
+                dest_rect = (position[0] + x_offset + rect[2],
+                             position[1], rect[2] * size, rect[3] * 2 * size)
                 x_offset += rect[2] * spacing * size * 2
             elif fixed_size == 1:
-                dest_rect = (position[0] + x_offset, position[1], rect[2] * size, rect[3] * 2 * size * y_factor_relational)
+                dest_rect = (position[0] + x_offset, position[1], rect[2]
+                             * size, rect[3] * 2 * size * y_factor_relational)
                 x_offset += char_size[0] * spacing * size * 2
             else:
-                dest_rect = (position[0] + x_offset + rect[2], position[1], rect[2] * size * x_factor_fixed, rect[3] * 2 * size * y_factor_fixed)
+                dest_rect = (position[0] + x_offset + rect[2], position[1], rect[2]
+                             * size * x_factor_fixed, rect[3] * 2 * size * y_factor_fixed)
                 x_offset += rect[2] * spacing * size * x_factor_fixed * 2
 
             if letter == " ":
-                continue                
+                continue
             if self.stencil_rect:
                 org = dest_rect[:]
 
-                left = max(dest_rect[0] - dest_rect[2], self.stencil_rect[0] - self.stencil_rect[2])
-                right = min(dest_rect[0] + dest_rect[2], self.stencil_rect[0] + self.stencil_rect[2])
-                top = max(dest_rect[1] - dest_rect[3], self.stencil_rect[1] - self.stencil_rect[3])
-                bottom = min(dest_rect[1] + dest_rect[3], self.stencil_rect[1] + self.stencil_rect[3])
+                left = max(dest_rect[0] - dest_rect[2],
+                           self.stencil_rect[0] - self.stencil_rect[2])
+                right = min(dest_rect[0] + dest_rect[2],
+                            self.stencil_rect[0] + self.stencil_rect[2])
+                top = max(dest_rect[1] - dest_rect[3],
+                          self.stencil_rect[1] - self.stencil_rect[3])
+                bottom = min(dest_rect[1] + dest_rect[3],
+                             self.stencil_rect[1] + self.stencil_rect[3])
 
                 width = (right - left) / 2
                 height = (bottom - top) / 2
@@ -789,10 +872,15 @@ class Window:
 
                 if org[2] - width > 0.0001 or org[3] - height > 0.0001:
                     source_and_color = (
-                        color[0] + rect[0] + rect[2] * ((1 - dest_rect[2] / org[2]) if dest_rect[0] > org[0] else 0),
-                        color[1] + rect[1] + rect[3] * (round(1 - dest_rect[3] / org[3], 6) if dest_rect[1] > org[1] else 0),
+                        color[0] + rect[0] + rect[2] *
+                        ((1 - dest_rect[2] / org[2])
+                         if dest_rect[0] > org[0] else 0),
+                        color[1] + rect[1] + rect[3] *
+                        (round(1 - dest_rect[3] / org[3], 6)
+                         if dest_rect[1] > org[1] else 0),
                         color[2] + rect[2] * (width / org[2]),
-                        color[3] + rect[3] * ((height / org[3]) if (height / org[3]) < 1 else 0)
+                        color[3] + rect[3] *
+                        ((height / org[3]) if (height / org[3]) < 1 else 0)
                     )
 
                 else:
@@ -810,18 +898,22 @@ class Window:
                     color[2] + rect[2],
                     color[3] + rect[3]
                 )
-                
+
             self._add_vbo_instance(dest_rect, source_and_color, (3, 0, 0, 0))
 
-    def _uncentered_text(self, position: [float], text: str, color: [int], size: int=1, spacing: float=1.25, fixed_size: int=1, wrap: float=None):
+    def _uncentered_text(self, position: [float], text: str, color: [int], size: int = 1, spacing: float = 1.25, fixed_size: int = 1, wrap: float = None):
         """
         Draw uncentered text. Called from draw_text.
         """
         x_offset = 0
         y_offset = 0
-        x_factor_fixed = 1 / self.width * self.screen_size[0] # Used when fixed_size == 1
-        y_factor_fixed = 1 / self.height * self.screen_size[1] # Used when fixed_size == 1
-        y_factor_relational = 1 / self.height * self.screen_size[1] * self.width / self.screen_size[0] # Used when fixed_size == 2
+        x_factor_fixed = 1 / self.width * \
+            self.screen_size[0]  # Used when fixed_size == 1
+        y_factor_fixed = 1 / self.height * \
+            self.screen_size[1]  # Used when fixed_size == 1
+        y_factor_relational = 1 / self.height * \
+            self.screen_size[1] * self.width / \
+            self.screen_size[0]  # Used when fixed_size == 2
         if len(color) == 3:
             color = (*color, 255)
         line_height = 5
@@ -837,7 +929,7 @@ class Window:
                     x_offset = 0
                     y_offset += 1
                     continue
-                
+
                 if letter == " " and i + 1 == len(text):
                     continue
 
@@ -846,14 +938,18 @@ class Window:
 
                 # Create destination rect
                 if fixed_size == 0:
-                    dest_rect = (position[0] + x_offset, position[1] - y_offset * rect[3] * line_height * size, rect[2] * size, rect[3] * 2 * size)
+                    dest_rect = (position[0] + x_offset, position[1] - y_offset *
+                                 rect[3] * line_height * size, rect[2] * size, rect[3] * 2 * size)
                     letter_x_offset = rect[2] * spacing * size * 2
                 elif fixed_size == 1:
-                    dest_rect = (position[0] + x_offset, position[1] - y_offset * rect[3] * line_height * size * y_factor_relational, rect[2] * size, rect[3] * 2 * size * y_factor_relational)
+                    dest_rect = (position[0] + x_offset, position[1] - y_offset * rect[3] * line_height *
+                                 size * y_factor_relational, rect[2] * size, rect[3] * 2 * size * y_factor_relational)
                     letter_x_offset = rect[2] * spacing * size * 2
                 else:
-                    dest_rect = (position[0] + x_offset, position[1] - y_offset * rect[3] * line_height * size * y_factor_fixed, rect[2] * size * x_factor_fixed, rect[3] * 2 * size * y_factor_fixed)
-                    letter_x_offset = rect[2] * spacing * size * x_factor_fixed * 2
+                    dest_rect = (position[0] + x_offset, position[1] - y_offset * rect[3] * line_height * size *
+                                 y_factor_fixed, rect[2] * size * x_factor_fixed, rect[3] * 2 * size * y_factor_fixed)
+                    letter_x_offset = rect[2] * \
+                        spacing * size * x_factor_fixed * 2
 
                 x_offset += letter_x_offset
 
@@ -869,10 +965,14 @@ class Window:
                 if self.stencil_rect:
                     org = dest_rect[:]
 
-                    left = max(dest_rect[0] - dest_rect[2], self.stencil_rect[0] - self.stencil_rect[2])
-                    right = min(dest_rect[0] + dest_rect[2], self.stencil_rect[0] + self.stencil_rect[2])
-                    top = max(dest_rect[1] - dest_rect[3], self.stencil_rect[1] - self.stencil_rect[3])
-                    bottom = min(dest_rect[1] + dest_rect[3], self.stencil_rect[1] + self.stencil_rect[3])
+                    left = max(dest_rect[0] - dest_rect[2],
+                               self.stencil_rect[0] - self.stencil_rect[2])
+                    right = min(dest_rect[0] + dest_rect[2],
+                                self.stencil_rect[0] + self.stencil_rect[2])
+                    top = max(dest_rect[1] - dest_rect[3],
+                              self.stencil_rect[1] - self.stencil_rect[3])
+                    bottom = min(
+                        dest_rect[1] + dest_rect[3], self.stencil_rect[1] + self.stencil_rect[3])
 
                     width = (right - left) / 2
                     height = (bottom - top) / 2
@@ -884,10 +984,14 @@ class Window:
 
                     if org[2] - width > 0.0001 or org[3] - height > 0.0001:
                         source_and_color = (
-                            color[0] + rect[0] + rect[2] * ((1 - dest_rect[2] / org[2]) if dest_rect[0] > org[0] else 0),
-                            color[1] + rect[1] + rect[3] * (round(1 - dest_rect[3] / org[3], 6) if dest_rect[1] > org[1] else 0),
+                            color[0] + rect[0] + rect[2] *
+                            ((1 - dest_rect[2] / org[2])
+                             if dest_rect[0] > org[0] else 0),
+                            color[1] + rect[1] + rect[3] * (
+                                round(1 - dest_rect[3] / org[3], 6) if dest_rect[1] > org[1] else 0),
                             color[2] + rect[2] * (width / org[2]),
-                            color[3] + rect[3] * ((height / org[3]) if (height / org[3]) < 1 else 0)
+                            color[3] + rect[3] *
+                            ((height / org[3]) if (height / org[3]) < 1 else 0)
                         )
 
                     else:
@@ -906,8 +1010,9 @@ class Window:
                         color[3] + rect[3]
                     )
 
-                self._add_vbo_instance(dest_rect, source_and_color, (3, 0, 0, 0))
-    
+                self._add_vbo_instance(
+                    dest_rect, source_and_color, (3, 0, 0, 0))
+
         # Return width and height of text
         y_offset += 1
         if fixed_size == 0:
@@ -918,28 +1023,35 @@ class Window:
         elif fixed_size == 1:
             return (
                 x_offset,
-                rect[3] * 2 - y_offset * rect[3] * 2 * line_height * size * y_factor_relational
+                rect[3] * 2 - y_offset * rect[3] * 2 *
+                line_height * size * y_factor_relational
             )
         elif fixed_size == 2:
             return (
                 x_offset,
-                rect[3] * 2 - y_offset * rect[3] * 2 * line_height * size * y_factor_fixed
+                rect[3] * 2 - y_offset * rect[3] * 2 *
+                line_height * size * y_factor_fixed
             )
-    
-    def draw_image(self, image: str, position: [float], size: [float], angle: float=0.0, flip: [int]=(0, 0), animation_offset: float=0):
+
+    def draw_image(self, image: str, position: [float], size: [float], angle: float = 0.0, flip: [int] = (0, 0), animation_offset: float = 0):
         """
         Draw an image on the window.
         """
         rect = get_sprite_rect(self, image, offset=animation_offset)
 
-        dest_rect = (position[0] + size[0] / 2, position[1] + size[1] / 2, size[0] / 2, size[1] / 2)
+        dest_rect = (position[0] + size[0] / 2, position[1] +
+                     size[1] / 2, size[0] / 2, size[1] / 2)
         if self.stencil_rect:
             org = dest_rect[:]
 
-            left = max(dest_rect[0] - dest_rect[2], self.stencil_rect[0] - self.stencil_rect[2])
-            right = min(dest_rect[0] + dest_rect[2], self.stencil_rect[0] + self.stencil_rect[2])
-            top = max(dest_rect[1] - dest_rect[3], self.stencil_rect[1] - self.stencil_rect[3])
-            bottom = min(dest_rect[1] + dest_rect[3], self.stencil_rect[1] + self.stencil_rect[3])
+            left = max(dest_rect[0] - dest_rect[2],
+                       self.stencil_rect[0] - self.stencil_rect[2])
+            right = min(dest_rect[0] + dest_rect[2],
+                        self.stencil_rect[0] + self.stencil_rect[2])
+            top = max(dest_rect[1] - dest_rect[3],
+                      self.stencil_rect[1] - self.stencil_rect[3])
+            bottom = min(dest_rect[1] + dest_rect[3],
+                         self.stencil_rect[1] + self.stencil_rect[3])
 
             width = (right - left) / 2
             height = (bottom - top) / 2
@@ -948,40 +1060,53 @@ class Window:
                 dest_rect = (left + width, top + height, width, height)
                 if org[2] - width > 0.0001 or org[3] - height > 0.0001:
                     rect = (
-                            rect[0] + rect[2] * ((1 - dest_rect[2] / org[2]) if dest_rect[0] > org[0] else 0),
-                            rect[1] + rect[3] * (round(1 - dest_rect[3] / org[3], 6) if dest_rect[1] > org[1] else 0),
-                            rect[2] * (width / org[2]),
-                            rect[3] * ((height / org[3]) if (height / org[3]) < 1 else 0)
-                        )
-                self._add_vbo_instance(dest_rect, rect, (0, *flip, angle / 180 * pi))
+                        rect[0] + rect[2] * ((1 - dest_rect[2] / org[2])
+                                             if dest_rect[0] > org[0] else 0),
+                        rect[1] + rect[3] * (round(1 - dest_rect[3] / org[3], 6)
+                                             if dest_rect[1] > org[1] else 0),
+                        rect[2] * (width / org[2]),
+                        rect[3] * ((height / org[3])
+                                   if (height / org[3]) < 1 else 0)
+                    )
+                self._add_vbo_instance(
+                    dest_rect, rect, (0, *flip, angle / 180 * pi))
         else:
-            self._add_vbo_instance(dest_rect, rect, (0, *flip, angle / 180 * pi))
+            self._add_vbo_instance(
+                dest_rect, rect, (0, *flip, angle / 180 * pi))
 
     def draw_rect(self, position: [float], size: [float], color: [int]):
         """
         Draw a rectangle on the window.
         """
-        dest_rect = (position[0] + size[0] / 2, position[1] + size[1] / 2, size[0] / 2, size[1] / 2)
+        dest_rect = (position[0] + size[0] / 2, position[1] +
+                     size[1] / 2, size[0] / 2, size[1] / 2)
         if self.stencil_rect:
-            left = max(dest_rect[0] - dest_rect[2], self.stencil_rect[0] - self.stencil_rect[2])
-            right = min(dest_rect[0] + dest_rect[2], self.stencil_rect[0] + self.stencil_rect[2])
-            top = max(dest_rect[1] - dest_rect[3], self.stencil_rect[1] - self.stencil_rect[3])
-            bottom = min(dest_rect[1] + dest_rect[3], self.stencil_rect[1] + self.stencil_rect[3])
+            left = max(dest_rect[0] - dest_rect[2],
+                       self.stencil_rect[0] - self.stencil_rect[2])
+            right = min(dest_rect[0] + dest_rect[2],
+                        self.stencil_rect[0] + self.stencil_rect[2])
+            top = max(dest_rect[1] - dest_rect[3],
+                      self.stencil_rect[1] - self.stencil_rect[3])
+            bottom = min(dest_rect[1] + dest_rect[3],
+                         self.stencil_rect[1] + self.stencil_rect[3])
 
             width = (right - left) / 2
             height = (bottom - top) / 2
 
             if width > 0 and height > 0:
                 dest_rect = [left + width, top + height, width, height]
-                self._add_vbo_instance(dest_rect, self.camera.map_color(color), (1, 0, 0, 0))
+                self._add_vbo_instance(
+                    dest_rect, self.camera.map_color(color), (1, 0, 0, 0))
         else:
-            self._add_vbo_instance(dest_rect, self.camera.map_color(color), (1, 0, 0, 0))
+            self._add_vbo_instance(
+                dest_rect, self.camera.map_color(color), (1, 0, 0, 0))
 
     def draw_circle(self, position: [float], radius: int, color: [int]):
         """
         Draw a circle on the window.
         """
-        self._add_vbo_instance((*position, radius / self.width * self.screen_size[1], radius / self.height * self.screen_size[1]), self.camera.map_color(color), (2, 0, 0, 0))
+        self._add_vbo_instance((*position, radius / self.width *
+                               self.screen_size[1], radius / self.height * self.screen_size[1]), self.camera.map_color(color), (2, 0, 0, 0))
 
     def draw_line(self, start: [float], end: [float], width: int, color: [int]):
         """
@@ -992,9 +1117,10 @@ class Window:
         sinAngle = abs(sin(angle))
         size = (sqrt(((start[0] - end[0]) / 2) ** 2 + ((start[1] - end[1]) / 2) ** 2),
                 width / self.width * sinAngle + width / self.height * (1 - sinAngle))
-        self._add_vbo_instance((*center, *size), self.camera.map_color(color), (1, 0, 0, angle))
+        self._add_vbo_instance(
+            (*center, *size), self.camera.map_color(color), (1, 0, 0, angle))
 
-    def draw_text(self, position: [float], text: str, color: [int], size: int=1, centered: bool=False, spacing: float=1.25, fixed_size: int=1, wrap: float=None):
+    def draw_text(self, position: [float], text: str, color: [int], size: int = 1, centered: bool = False, spacing: float = 1.25, fixed_size: int = 1, wrap: float = None):
         """
         Draw text on the window.
         fixed_size: 0 = stretch, 1 = relational size on both axis, 2 = fixed size
@@ -1008,8 +1134,9 @@ class Window:
 
         # Draw text
         if centered:
-            self._centered_text(position, text, color, size, spacing, fixed_size)
-        else: # Lines can wrap
+            self._centered_text(position, text, color,
+                                size, spacing, fixed_size)
+        else:  # Lines can wrap
             return self._uncentered_text(position, text, color, size, spacing, fixed_size, wrap)
 
     def draw_post_processing(self):

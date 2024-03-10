@@ -110,6 +110,8 @@ impl Window {
             &constants::FRAGMENT_SHADER_SOURCE,
         );
 
+        shader.add_var("texSprites", shader::UniformValue::Int(0), true);
+        shader.add_var("texFont", shader::UniformValue::Int(1), true);
         shader.add_var(
             "window_size_relation",
             shader::UniformValue::Float(height as f32 / width as f32),
@@ -120,10 +122,6 @@ impl Window {
             shader::UniformValue::IVec2([width, height]),
             true,
         );
-
-        unsafe {
-            gl::BindVertexArray(buffer.vao);
-        }
 
         let textures = image::Textures::new();
 
@@ -146,12 +144,21 @@ impl Window {
     pub fn update(&mut self) {
         self.events();
         self.shader.set_var(
-            0,
+            2,
             shader::UniformValue::Float(self.height as f32 / self.width as f32),
         );
-        self.shader.update();
 
         unsafe {
+            //gl::BindVertexArray(self.buffer.vao);
+
+            gl::ActiveTexture(gl::TEXTURE0);
+            gl::BindTexture(gl::TEXTURE_2D, self.textures.tex_sprites);
+
+            gl::ActiveTexture(gl::TEXTURE1);
+            gl::BindTexture(gl::TEXTURE_2D, self.textures.tex_font);
+
+            self.shader.update();
+
             gl::Clear(gl::COLOR_BUFFER_BIT);
             gl::DrawElementsInstanced(
                 gl::TRIANGLES,

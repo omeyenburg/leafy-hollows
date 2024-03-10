@@ -14,9 +14,9 @@ dest: vec4
 color: vec4
 
 Image
-[shape, rotation]: vec2
+[shape, image]: vec2
 dest: vec4
-[flipX, flipY, image, _]: vec4
+[flipX, flipY, rotation, _]: vec4
 
 Text
 [shape, char]: vec2
@@ -31,9 +31,9 @@ pub struct Buffer {
     pub vao: gl::types::GLuint,
     ebo_indices: gl::types::GLuint,
     vbo_vertices: gl::types::GLuint,
+    vbo_shape: gl::types::GLuint,
     vbo_dest: gl::types::GLuint,
-    vbo_source_color: gl::types::GLuint,
-    vbo_shape_transform: gl::types::GLuint,
+    vbo_color: gl::types::GLuint,
 }
 
 impl Buffer {
@@ -45,7 +45,7 @@ impl Buffer {
             gl::BindVertexArray(vao);
         }
 
-        let [ebo_indices, vbo_vertices, vbo_dest, vbo_source_color, vbo_shape_transform] = {
+        let [ebo_indices, vbo_vertices, vbo_dest, vbo_color, vbo_shape] = {
             let mut vbos: [gl::types::GLuint; 5] = [0; 5];
             unsafe {
                 gl::GenBuffers(5, vbos.as_mut_ptr());
@@ -108,23 +108,23 @@ impl Buffer {
                 gl::STATIC_DRAW,
             );
 
-            // VBO: dest
+            // VBO: shape
             gl::EnableVertexAttribArray(2);
-            gl::BindBuffer(gl::ARRAY_BUFFER, vbo_dest);
+            gl::BindBuffer(gl::ARRAY_BUFFER, vbo_shape);
             gl::BufferData(gl::ARRAY_BUFFER, 0, std::ptr::null(), gl::STREAM_COPY);
-            gl::VertexAttribPointer(2, 4, gl::FLOAT, gl::FALSE, 0, std::ptr::null());
+            gl::VertexAttribPointer(2, 2, gl::FLOAT, gl::FALSE, 0, std::ptr::null());
             gl::VertexAttribDivisor(2, 1);
 
-            // VBO: source / color
+            // VBO: dest
             gl::EnableVertexAttribArray(3);
-            gl::BindBuffer(gl::ARRAY_BUFFER, vbo_source_color);
+            gl::BindBuffer(gl::ARRAY_BUFFER, vbo_dest);
             gl::BufferData(gl::ARRAY_BUFFER, 0, std::ptr::null(), gl::STREAM_COPY);
             gl::VertexAttribPointer(3, 4, gl::FLOAT, gl::FALSE, 0, std::ptr::null());
             gl::VertexAttribDivisor(3, 1);
 
-            // VBO: shape | flip (x) | flip (y) | rotation
+            // VBO: color
             gl::EnableVertexAttribArray(4);
-            gl::BindBuffer(gl::ARRAY_BUFFER, vbo_shape_transform);
+            gl::BindBuffer(gl::ARRAY_BUFFER, vbo_color);
             gl::BufferData(gl::ARRAY_BUFFER, 0, std::ptr::null(), gl::STREAM_COPY);
             gl::VertexAttribPointer(4, 4, gl::FLOAT, gl::FALSE, 0, std::ptr::null());
             gl::VertexAttribDivisor(4, 1);
@@ -136,81 +136,84 @@ impl Buffer {
             vao,
             ebo_indices,
             vbo_vertices,
+            vbo_shape,
             vbo_dest,
-            vbo_source_color,
-            vbo_shape_transform,
+            vbo_color,
         }
     }
 
-    pub fn add_instance(
-        &mut self,
-        dest: [f32; 4],
-        source_color: [f32; 4],
-        shape_transform: [f32; 4],
-    ) {
+    pub fn add_instance(&mut self, shape: [f32; 2], dest: [f32; 4], color: [f32; 4]) {
         let f32_size: isize = std::mem::size_of::<f32>() as isize;
 
         if self.index >= self.size {
             // Resize buffers
             let new_size: isize = self.size + 10;
-            let new_buffer_size: isize = 4 * new_size * f32_size;
-            let old_buffer_size: isize = 4 * self.size * f32_size;
+            let new_buffer_size: isize = new_size * f32_size;
+            //let old_buffer_size: isize = self.size * f32_size;
 
             unsafe {
+                // Shape
+                gl::BindBuffer(gl::ARRAY_BUFFER, self.vbo_shape);
+                gl::BufferData(
+                    gl::ARRAY_BUFFER,
+                    new_buffer_size * 2,
+                    std::ptr::null(),
+                    gl::STREAM_COPY,
+                );
+                //gl::CopyBufferSubData(gl::ARRAY_BUFFER, gl::ARRAY_BUFFER, 0, 0, old_buffer_size * 2);
+
+                // Dest
                 gl::BindBuffer(gl::ARRAY_BUFFER, self.vbo_dest);
                 gl::BufferData(
                     gl::ARRAY_BUFFER,
-                    new_buffer_size,
+                    new_buffer_size * 4,
                     std::ptr::null(),
                     gl::STREAM_COPY,
                 );
-                gl::CopyBufferSubData(gl::ARRAY_BUFFER, gl::ARRAY_BUFFER, 0, 0, old_buffer_size);
+                //gl::CopyBufferSubData(gl::ARRAY_BUFFER, gl::ARRAY_BUFFER, 0, 0, old_buffer_size * 4);
 
-                gl::BindBuffer(gl::ARRAY_BUFFER, self.vbo_source_color);
+                // Color
+                gl::BindBuffer(gl::ARRAY_BUFFER, self.vbo_color);
                 gl::BufferData(
                     gl::ARRAY_BUFFER,
-                    new_buffer_size,
+                    new_buffer_size * 4,
                     std::ptr::null(),
                     gl::STREAM_COPY,
                 );
-                gl::CopyBufferSubData(gl::ARRAY_BUFFER, gl::ARRAY_BUFFER, 0, 0, old_buffer_size);
-
-                gl::BindBuffer(gl::ARRAY_BUFFER, self.vbo_shape_transform);
-                gl::BufferData(
-                    gl::ARRAY_BUFFER,
-                    new_buffer_size,
-                    std::ptr::null(),
-                    gl::STREAM_COPY,
-                );
-                gl::CopyBufferSubData(gl::ARRAY_BUFFER, gl::ARRAY_BUFFER, 0, 0, old_buffer_size);
+                //gl::CopyBufferSubData(gl::ARRAY_BUFFER, gl::ARRAY_BUFFER, 0, 0, old_buffer_size * 4);
             }
 
             self.size = new_size;
         }
 
-        let data_offset: isize = 4 * self.index * f32_size;
-        let data_size: isize = 4 * f32_size;
+        let data_offset: isize = self.index * f32_size;
+        let data_size: isize = f32_size;
         unsafe {
+            // Shape
+            gl::BindBuffer(gl::ARRAY_BUFFER, self.vbo_shape);
+            gl::BufferSubData(
+                gl::ARRAY_BUFFER,
+                2 * data_offset,
+                2 * data_size,
+                shape.as_ptr() as *const gl::types::GLvoid,
+            );
+
+            // Dest
             gl::BindBuffer(gl::ARRAY_BUFFER, self.vbo_dest);
             gl::BufferSubData(
                 gl::ARRAY_BUFFER,
-                data_offset,
-                data_size,
+                4 * data_offset,
+                4 * data_size,
                 dest.as_ptr() as *const gl::types::GLvoid,
             );
-            gl::BindBuffer(gl::ARRAY_BUFFER, self.vbo_source_color);
+
+            // Color
+            gl::BindBuffer(gl::ARRAY_BUFFER, self.vbo_color);
             gl::BufferSubData(
                 gl::ARRAY_BUFFER,
-                data_offset,
-                data_size,
-                source_color.as_ptr() as *const gl::types::GLvoid,
-            );
-            gl::BindBuffer(gl::ARRAY_BUFFER, self.vbo_shape_transform);
-            gl::BufferSubData(
-                gl::ARRAY_BUFFER,
-                data_offset,
-                data_size,
-                shape_transform.as_ptr() as *const gl::types::GLvoid,
+                4 * data_offset,
+                4 * data_size,
+                color.as_ptr() as *const gl::types::GLvoid,
             );
         }
         self.index += 1;

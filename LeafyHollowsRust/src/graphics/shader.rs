@@ -163,6 +163,7 @@ impl Shader {
 
     pub fn set_var(&mut self, index: usize, value: UniformValue) {
         self.variables[index].value = value;
+        self.variables[index].update = true;
     }
 }
 

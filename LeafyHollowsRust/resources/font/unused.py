@@ -9,6 +9,6 @@ data = {
 }
 
 for i, char in enumerate(chars):
-    data["chars"][char] = [i % 26, i // 26]
+    data["chars"][char] = i
 with open("font.json", "w+") as f:
     json.dump(data, f, indent=4, ensure_ascii=False)

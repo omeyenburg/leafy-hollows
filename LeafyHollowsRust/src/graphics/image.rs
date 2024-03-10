@@ -5,29 +5,94 @@ use image::DynamicImage;
 use image::GenericImageView;
 
 pub struct Textures {
-    tex_sprites: GLuint,
+    pub tex_sprites: GLuint,
     tex_blocks: GLuint,
-    tex_font: GLuint,
+    pub tex_font: GLuint,
     tex_world: GLuint,
     tex_shadow: GLuint,
 }
 
 impl Textures {
     pub fn new() -> Self {
+        /*
         let [tex_sprites, tex_blocks, tex_font, tex_world, tex_shadow] = {
             let mut textures: [gl::types::GLuint; 5] = [0; 5];
             unsafe {
                 gl::GenBuffers(5, textures.as_mut_ptr());
             }
             textures
-        };
-
-        Self::image_to_texture(tex_sprites, IMAGE_SPRITES);
+        };*/
+        let mut tex_sprites: gl::types::GLuint = 0;
+        let mut tex_blocks: gl::types::GLuint = 0;
+        let mut tex_font: gl::types::GLuint = 0;
+        let mut tex_world: gl::types::GLuint = 0;
+        let mut tex_shadow: gl::types::GLuint = 0;
 
         unsafe {
+            // Sprites
+            gl::GenTextures(1, &mut tex_sprites);
             gl::BindTexture(gl::TEXTURE_2D, tex_sprites);
+
             gl::ActiveTexture(gl::TEXTURE0);
-            gl::BindTexture(gl::TEXTURE_2D, 0);
+            //gl::BindTexture(gl::TEXTURE_2D, tex_sprites);
+            Self::image_to_texture(tex_sprites, SPRITES_IMAGE);
+
+            // Blocks
+            gl::GenTextures(1, &mut tex_blocks);
+            gl::BindTexture(gl::TEXTURE_2D, tex_blocks);
+
+            // Font
+            gl::GenTextures(1, &mut tex_font);
+            gl::BindTexture(gl::TEXTURE_2D, tex_font);
+
+            gl::ActiveTexture(gl::TEXTURE1);
+            //gl::BindTexture(gl::TEXTURE_2D, tex_font);
+            Self::image_to_texture(tex_font, FONT_IMAGE);
+
+            // World
+            gl::GenTextures(1, &mut tex_world);
+            gl::BindTexture(gl::TEXTURE_2D, tex_world);
+
+            // Shadow
+            gl::GenTextures(1, &mut tex_shadow);
+            gl::BindTexture(gl::TEXTURE_2D, tex_shadow);
+        }
+        /*
+        let mut tex_sprites: u32;
+        let mut tex_blocks: u32;
+        let mut tex_font: u32;
+        let mut tex_world: u32;
+        let mut tex_shadow: u32;
+        unsafe {
+            gl::GenTextures(1, tex_sprites.as_mut_ptr());
+            gl::BindTexture(gl::TEXTURE_2D, tex_sprites);
+
+            gl::GenTextures(1, *tex_blocks);
+            gl::BindTexture(gl::TEXTURE_2D, tex_blocks);
+
+            gl::GenTextures(1, &tex_font);
+            gl::BindTexture(gl::TEXTURE_2D, tex_font);
+
+            gl::GenTextures(1, &tex_world);
+            gl::BindTexture(gl::TEXTURE_2D, tex_world);
+
+            gl::GenTextures(1, &tex_shadow);
+            gl::BindTexture(gl::TEXTURE_2D, tex_shadow);
+        }*/
+
+
+
+        println!(
+            "Textures:\n- Sprites: {}\n- Blocks: {}\n- Font: {}",
+            tex_sprites, tex_blocks, tex_font
+        );
+
+        unsafe {
+            
+            gl::BindTexture(gl::TEXTURE_2D, tex_sprites);
+            
+            
+            gl::BindTexture(gl::TEXTURE_2D, tex_font);
         }
 
         Self {
