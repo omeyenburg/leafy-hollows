@@ -48,7 +48,12 @@ fn main() {
         }
 
         window.draw_circle([1.0, 0.3], [0.6, 0.2, 0.9, 0.7], 0.2);
-        window.draw_text([-1.0, 0.9], &window.clock.fps.round().to_string(), 0.1, [1.0, 1.0, 1.0, 1.0]);
+        window.draw_text(
+            [-1.0, 0.9],
+            &window.clock.fps.round().to_string(),
+            0.1,
+            [1.0, 1.0, 1.0, 1.0],
+        );
 
         window.update();
     }

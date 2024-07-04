@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from scripts.graphics.image import load_blocks
-#from scripts.graphics.window import Window
-from scripts.graphics.windowpg import Window
+from scripts.graphics.window import Window
+# from scripts.graphics.windowpg import Window
 from scripts.utility.geometry import *
 from scripts.game.world import World
 from scripts.utility.const import *
