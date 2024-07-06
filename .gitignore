@@ -1,5 +1,4 @@
-LeafyHollowsRust/target
-main/main.pyc
-**/__pycache__
-**/.DS_Store
-**/.vscode
+**/user/
+/target/
+/__pycache__/
+/.vscode/
