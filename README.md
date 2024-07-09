@@ -1,5 +1,4 @@
 # Leafy Hollows
-A cave game: You fell into a big cave full of monsters. Your goal is to escape alive. Fight monsters and upgrade your weapons to survive.
 Leafy Hollows is an immersive cave adventure game where you find yourself trapped in an underground cavern full of dangerous monsters. Your mission is to fight your way through these creatures, upgrade your weapons, and ultimately escape alive.
 
 ## Prototype
@@ -18,7 +17,7 @@ The prototype requires these packages alongside Python 3.11
 - noise
 
 ### Gameplay
-You have limited resources and health, and you must strategically manage your weapons. While your weapons are essential for fighting monsters, they can also be consumed to restore health. Balancing offense and self-preservation is crucial to making it out alive.
+You fell into a vast cave full of monsters. Your goal is to escape alive. To survive, you must fight monsters and upgrade your weapons, all while managing limited resources and health. While your weapons are essential for fighting monsters, they can also be consumed to restore health. Balancing offense and self-preservation is crucial to making it out alive.
 
 ### Creatures
 The game features a variety of hostile creatures:
