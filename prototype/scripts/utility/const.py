@@ -137,5 +137,5 @@ ATTRIBUTE_DESCRIPTIONS: dict = {
     "critical": "Increases the chance for a critical hit by %s%%.",
     "warrior": "Increases your weapon's damage by %s%% per enemy around you.",
     "assassin": "Increases your attack speed and crit chance by %s%% each.",
-    "longshot": "Expands your weapon's range by by %s%%, allowing you to hit enemies from a greater distance."
+    "longshot": "Expands your weapon's range by %s%%, allowing you to hit enemies from a greater distance."
 }
