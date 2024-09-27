@@ -1,4 +1,4 @@
-use crate::utility::file;
+use create::utility::file;
 use core::panic;
 use gl::types::{GLenum, GLint, GLuint};
 use gl::GetBooleani_v;
@@ -107,7 +107,7 @@ impl Shader {
         }
     }
 
-    fn attach_shader(program: &GLuint, source_code: &str, shader_type: GLenum) -> GLenum {
+    fn attach_shader(program: &GLuint, source_code: &str, shader_type: GLenum) -> GLuint {
         let source_code = CString::new(source_code).unwrap();
         let mut success: GLint = 0;
         let id: GLuint;
@@ -137,13 +137,14 @@ impl Shader {
                     gl::VERTEX_SHADER => file_path += "vertex.glsl",
                     gl::GEOMETRY_SHADER => file_path += "geometry.glsl",
                     gl::FRAGMENT_SHADER => file_path += "fragment.glsl",
-                    _ => panic!("Unkown shader type: {}", shader_type),
+                    _ => panic!("Unknown shader type: {}", shader_type),
                 };
                 panic!("\nShader Error: {}{}", file_path, &log[8..]);
             }
 
             gl::AttachShader(*program, id);
         }
+
         return id;
     }
 
