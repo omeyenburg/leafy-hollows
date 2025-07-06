@@ -1,4 +1,7 @@
-main/main.pyc
-**/__pycache__
-**/.DS_Store
-**/.vscode
+__pycache__/
+*.pyc
+debug_*
+
+.vscode/
+
+.DS_Store
