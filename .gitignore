@@ -1,7 +1,14 @@
+# Pyinstaller files
+build
+dist
+
+# Temporary python files
 __pycache__/
 *.pyc
 debug_*
 
+# VSCode
 .vscode/
 
+# MacOS Finder
 .DS_Store

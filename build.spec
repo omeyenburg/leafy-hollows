@@ -3,19 +3,27 @@ import platform
 import os
 
 
-name = "HelloWorld"
+system = platform.system()
+name = "LeafyHollows"
 
-if platform.system() == "Darwin":
+if system == "Darwin":
     icon = "icon/icon.icns"
-else:
+elif system == "Windows":
     icon = os.path.join("icon", "icon.ico")
+else:
+    icon = None
 
 a = Analysis(
-    ['main.py'],
+    ["src/main.py"],
     pathex=[],
     binaries=[],
-    datas=[('data', 'data')],
-    hiddenimports=[],
+    datas=[("data", "data")],
+    hiddenimports=[
+        "OpenGL.platform.egl",
+        "OpenGL.platform.glx",
+        "OpenGL.platform.x11",
+        "OpenGL.platform.baseplatform",
+    ],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -47,7 +55,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=[icon],
+    icon=[icon] if icon else None,
 )
 
 coll = COLLECT(
@@ -58,20 +66,22 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='main',
+    name="main",
 )
 
-if platform.system() == "Darwin":
+if system == "Darwin":
     app = BUNDLE(
         coll,
-        name=name + '.app',
-        icon='./' + icon,
+        name=name + ".app",
+        icon="./" + icon,
         bundle_identifier=None,
     )
-else:
+elif system == "Windows":
     app = BUNDLE(
         coll,
-        name=name + '.exe',
+        name=name + ".exe",
         icon=icon,
         bundle_identifier=None,
     )
+
+# vim: ft=python
