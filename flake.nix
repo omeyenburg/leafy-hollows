@@ -1,7 +1,10 @@
 {
   description = "Python environment";
 
-  inputs.flake-utils.url = "github:numtide/flake-utils";
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    flake-utils.url = "github:numtide/flake-utils";
+  };
 
   outputs = {
     nixpkgs,
@@ -15,14 +18,19 @@
       in {
         devShells.default = pkgs.mkShell {
           buildInputs = with pkgs.python312Packages; [
+            noise
+            numba
+            numpy
+            opensimplex
+            pygame-ce
+            pyinstaller
             pyopengl
             pyopengl-accelerate
-            pygame-ce
-            numba
-            opensimplex
-            numpy
-            noise
           ];
+
+          shellHook = ''
+            export SHELL=${pkgs.bashInteractive}/bin/bash
+          '';
         };
       }
     );
