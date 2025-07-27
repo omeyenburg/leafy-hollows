@@ -454,4 +454,3 @@ class Crate(LivingEntity):
 
     def update(self, world, window: Window):
         super().update(world, window)
-
