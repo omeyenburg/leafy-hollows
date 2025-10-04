@@ -1,1 +1,5 @@
-https://soundbible.com/1780-Bow-Fire-Arrow.html
+Filename: bow_fling.ogg
+Source: https://soundbible.com/1780-Bow-Fire-Arrow.html
+Author: Stephan Schutze
+License: Creative Commons Attribution-NonCommercial 3.0 (CC BY-NC 3.0) (https://creativecommons.org/licenses/by-nc/3.0/)
+Notes: Modified from original. Used as in-game sound effect.

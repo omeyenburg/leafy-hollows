@@ -1,0 +1,23 @@
+Filename: waterdrop_a.ogg
+Source: Original
+Author: Oskar Meyenburg
+License: All rights reserved
+Notes: Custom ambient sound created for this project.
+
+Filename: waterdrop_b.ogg
+Source: Original
+Author: Oskar Meyenburg
+License: All rights reserved
+Notes: Custom ambient sound created for this project.
+
+Filename: waterdrop_c.ogg
+Source: Original
+Author: Oskar Meyenburg
+License: All rights reserved
+Notes: Custom ambient sound created for this project.
+
+Filename: waterdrop_d.ogg
+Source: Original
+Author: Oskar Meyenburg
+License: All rights reserved
+Notes: Custom ambient sound created for this project.

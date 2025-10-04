@@ -1,10 +1,16 @@
-Filename: damage_a.ogg
+Filename: player_walk_stone0.ogg
 Source: Original
 Author: Oskar Meyenburg
 License: All rights reserved
 Notes: Custom ambient sound created for this project.
 
-Filename: damage_b.ogg
+Filename: player_walk_stone1.ogg
+Source: Original
+Author: Oskar Meyenburg
+License: All rights reserved
+Notes: Custom ambient sound created for this project.
+
+Filename: player_walk_stone2.ogg
 Source: Original
 Author: Oskar Meyenburg
 License: All rights reserved

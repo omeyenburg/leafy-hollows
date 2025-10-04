@@ -1,2 +1,35 @@
-a - f:
-https://pixabay.com/de/sound-effects/monster-grunts-174559/
+Filename: goblin_a.ogg
+Source: https://pixabay.com/de/sound-effects/monster-grunts-174559/
+Author: VoiceBosch
+License: Pixabay License (https://pixabay.com/service/license-summary/)
+Notes: Modified from original. Used as in-game sound effect.
+
+Filename: goblin_b.ogg
+Source: https://pixabay.com/de/sound-effects/monster-grunts-174559/
+Author: VoiceBosch
+License: Pixabay License (https://pixabay.com/service/license-summary/)
+Notes: Modified from original. Used as in-game sound effect.
+
+Filename: goblin_c.ogg
+Source: https://pixabay.com/de/sound-effects/monster-grunts-174559/
+Author: VoiceBosch
+License: Pixabay License (https://pixabay.com/service/license-summary/)
+Notes: Modified from original. Used as in-game sound effect.
+
+Filename: goblin_d.ogg
+Source: https://pixabay.com/de/sound-effects/monster-grunts-174559/
+Author: VoiceBosch
+License: Pixabay License (https://pixabay.com/service/license-summary/)
+Notes: Modified from original. Used as in-game sound effect.
+
+Filename: goblin_e.ogg
+Source: https://pixabay.com/de/sound-effects/monster-grunts-174559/
+Author: VoiceBosch
+License: Pixabay License (https://pixabay.com/service/license-summary/)
+Notes: Modified from original. Used as in-game sound effect.
+
+Filename: goblin_f.ogg
+Source: https://pixabay.com/de/sound-effects/monster-grunts-174559/
+Author: VoiceBosch
+License: Pixabay License (https://pixabay.com/service/license-summary/)
+Notes: Modified from original. Used as in-game sound effect.

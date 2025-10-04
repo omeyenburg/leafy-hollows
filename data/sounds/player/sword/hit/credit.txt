@@ -1,2 +1,23 @@
-a - d:
-https://mixkit.co/free-sound-effects/sword/
+Filename: sword_hit_a.ogg
+Source: https://mixkit.co/free-sound-effects/sword/
+Author: Mixkit
+License: Mixkit Sound Effects Free License (https://mixkit.co/free-sound-effects/)
+Notes: Modified from original. Used as in-game sound effect.
+
+Filename: sword_hit_b.ogg
+Source: https://mixkit.co/free-sound-effects/sword/
+Author: Mixkit
+License: Mixkit Sound Effects Free License (https://mixkit.co/free-sound-effects/)
+Notes: Modified from original. Used as in-game sound effect.
+
+Filename: sword_hit_c.ogg
+Source: https://mixkit.co/free-sound-effects/sword/
+Author: Mixkit
+License: Mixkit Sound Effects Free License (https://mixkit.co/free-sound-effects/)
+Notes: Modified from original. Used as in-game sound effect.
+
+Filename: sword_hit_d.ogg
+Source: https://mixkit.co/free-sound-effects/sword/
+Author: Mixkit
+License: Mixkit Sound Effects Free License (https://mixkit.co/free-sound-effects/)
+Notes: Modified from original. Used as in-game sound effect.

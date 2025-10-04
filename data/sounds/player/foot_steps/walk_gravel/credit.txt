@@ -1,0 +1,23 @@
+Filename: player_walk_gravel0.ogg
+Source: Original
+Author: Oskar Meyenburg
+License: All rights reserved
+Notes: Custom ambient sound created for this project.
+
+Filename: player_walk_gravel1.ogg
+Source: Original
+Author: Oskar Meyenburg
+License: All rights reserved
+Notes: Custom ambient sound created for this project.
+
+Filename: player_walk_gravel2.ogg
+Source: Original
+Author: Oskar Meyenburg
+License: All rights reserved
+Notes: Custom ambient sound created for this project.
+
+Filename: player_walk_gravel3.ogg
+Source: Original
+Author: Oskar Meyenburg
+License: All rights reserved
+Notes: Custom ambient sound created for this project.

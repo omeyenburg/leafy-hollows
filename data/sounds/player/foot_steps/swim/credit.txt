@@ -1,1 +1,23 @@
-https://pixabay.com/de/sound-effects/search/swimming/
+Filename: player_swim0.ogg
+Source: https://pixabay.com/de/sound-effects/lake-swimming-53833/
+Author: dawidwmika (Freesound)
+License: Pixabay License (https://pixabay.com/service/license-summary/)
+Notes: Modified from original. Used as in-game sound effect.
+
+Filename: player_swim1.ogg
+Source: https://pixabay.com/de/sound-effects/lake-swimming-53833/
+Author: dawidwmika (Freesound)
+License: Pixabay License (https://pixabay.com/service/license-summary/)
+Notes: Modified from original. Used as in-game sound effect.
+
+Filename: player_swim2.ogg
+Source: https://pixabay.com/de/sound-effects/lake-swimming-53833/
+Author: dawidwmika (Freesound)
+License: Pixabay License (https://pixabay.com/service/license-summary/)
+Notes: Modified from original. Used as in-game sound effect.
+
+Filename: player_swim3.ogg
+Source: https://pixabay.com/de/sound-effects/lake-swimming-53833/
+Author: dawidwmika (Freesound)
+License: Pixabay License (https://pixabay.com/service/license-summary/)
+Notes: Modified from original. Used as in-game sound effect.

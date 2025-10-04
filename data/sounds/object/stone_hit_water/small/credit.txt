@@ -1,0 +1,5 @@
+Filename: small_stone_hit_water0.ogg
+Source: Original
+Author: Oskar Meyenburg
+License: All rights reserved
+Notes: Custom ambient sound created for this project.

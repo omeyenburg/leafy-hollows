@@ -1,0 +1,23 @@
+Filename: player_walk_snow0.ogg
+Source: Original
+Author: Oskar Meyenburg
+License: All rights reserved
+Notes: Custom ambient sound created for this project.
+
+Filename: player_walk_snow1.ogg
+Source: Original
+Author: Oskar Meyenburg
+License: All rights reserved
+Notes: Custom ambient sound created for this project.
+
+Filename: player_walk_snow2.ogg
+Source: Original
+Author: Oskar Meyenburg
+License: All rights reserved
+Notes: Custom ambient sound created for this project.
+
+Filename: player_walk_snow3.ogg
+Source: Original
+Author: Oskar Meyenburg
+License: All rights reserved
+Notes: Custom ambient sound created for this project.

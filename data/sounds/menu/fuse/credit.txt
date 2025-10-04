@@ -1,1 +1,5 @@
-https://mixkit.co/free-sound-effects/magic/
+Filename: fuse.ogg
+Source: https://mixkit.co/free-sound-effects/magic/
+Author: Mixkit
+License: Mixkit Sound Effects Free License (https://mixkit.co/free-sound-effects/)
+Notes: Modified from original. Used as in-game sound effect.

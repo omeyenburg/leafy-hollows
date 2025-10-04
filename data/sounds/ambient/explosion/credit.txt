@@ -1,1 +1,5 @@
-https://pixabay.com/de/sound-effects/search/explosion/
+Filename: explosion.ogg
+Source: https://pixabay.com/de/sound-effects/explosion-312361/
+Author: Ahmed_Abdulaal
+License: Pixabay License (https://pixabay.com/service/license-summary/)
+Notes: Modified from original. Used as in-game sound effect.

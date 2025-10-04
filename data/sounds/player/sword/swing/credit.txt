@@ -1,1 +1,5 @@
-https://soundbible.com/706-Swoosh-3.html
+Filename: sword_swing.ogg
+Source: https://soundbible.com/706-Swoosh-3.html
+Author: man
+License: Sampling Plus 1.0 (https://creativecommons.org/licenses/sampling+/1.0/)
+Notes: Modified from original. Used as in-game sound effect.

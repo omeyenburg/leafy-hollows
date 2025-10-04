@@ -1,10 +1,10 @@
-Filename: damage_a.ogg
+Filename: large_stone_hit_water0.ogg
 Source: Original
 Author: Oskar Meyenburg
 License: All rights reserved
 Notes: Custom ambient sound created for this project.
 
-Filename: damage_b.ogg
+Filename: large_stone_hit_water1.ogg
 Source: Original
 Author: Oskar Meyenburg
 License: All rights reserved

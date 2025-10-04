@@ -1,2 +1,11 @@
-a, b:
-https://pixabay.com/de/sound-effects/walking-through-mud-27955/
+Filename: slime_a.ogg
+Source: https://pixabay.com/de/sound-effects/walking-through-mud-27955/
+Author: Breviceps (Freesound)
+License: Pixabay License (https://pixabay.com/service/license-summary/)
+Notes: Modified from original. Used as in-game sound effect.
+
+Filename: slime_b.ogg
+Source: https://pixabay.com/de/sound-effects/walking-through-mud-27955/
+Author: Breviceps (Freesound)
+License: Pixabay License (https://pixabay.com/service/license-summary/)
+Notes: Modified from original. Used as in-game sound effect.
