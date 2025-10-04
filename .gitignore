@@ -12,3 +12,6 @@ debug_*
 
 # MacOS Finder
 .DS_Store
+
+# Temporary game files
+data/user/
