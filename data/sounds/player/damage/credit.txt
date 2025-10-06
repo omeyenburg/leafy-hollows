@@ -1,11 +1,11 @@
 Filename: damage_a.ogg
-Source: Original
-Author: Oskar Meyenburg
-License: All rights reserved
-Notes: Custom ambient sound created for this project.
+Source: https://mixkit.co/free-sound-effects/hit/
+Author: Mixkit
+License: Mixkit Sound Effects Free License (https://mixkit.co/free-sound-effects/)
+Notes: Modified from original. Used as in-game sound effect.
 
 Filename: damage_b.ogg
-Source: Original
-Author: Oskar Meyenburg
-License: All rights reserved
-Notes: Custom ambient sound created for this project.
+Source: https://mixkit.co/free-sound-effects/hit/
+Author: Mixkit
+License: Mixkit Sound Effects Free License (https://mixkit.co/free-sound-effects/)
+Notes: Modified from original. Used as in-game sound effect.
