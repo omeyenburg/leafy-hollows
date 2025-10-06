@@ -19,7 +19,7 @@ Experiment with combinations to gain an advantage against tougher enemies and su
 
 ## About
 
-Leafy Hollows started as a school project and was developed over six months.  
+Leafy Hollows started as a school project and was developed over eight months.  
 It's a passion project that explores procedural generation, combat and movement mechanics, and parkour in a pixel-art underground world under the possibilities and limits of Python.
 
 ---
