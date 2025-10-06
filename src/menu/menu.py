@@ -852,9 +852,9 @@ class Menu:
         """
         Update all widgets on the currently opened page.
         """
-        if not Page.opened is None:
+        if Page.opened is not None:
             Page.opened.update(self.window)
-        if not self.hover_box is None:
+        if self.hover_box is not None:
             HoverBox(self.window, *self.hover_box)
             self.hover_box = None
 

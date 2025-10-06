@@ -14,7 +14,7 @@ except:
 OPENGL_VERSION: str = "3.3 core"
 PLATFORM: str = platform.system()  # E.g. Darwin, Linux
 OS_NAME: str = os.name  # E.g. posix
-CREATE_TEXTURE_ATLAS_FILE: bool = True
+CREATE_TEXTURE_ATLAS_FILE: bool = False
 
 MENU_SPACING: float = 0.05  # Spacing between buttons, etc.
 MENU_BUTTON_SMALL_WIDTH: float = 0.65  # Width of short buttons
